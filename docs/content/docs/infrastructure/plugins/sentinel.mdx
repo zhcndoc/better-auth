@@ -1,9 +1,9 @@
 ---
-title: Security Plugin (sentinel)
-description: The `sentinel()` plugin provides comprehensive security and abuse protection for your authentication system. It detects and prevents various attack vectors including credential stuffing, impossible travel, free trial abuse, and more.
+title: 安全插件（sentinel）
+description: "`sentinel()` 插件为您的认证系统提供全面的安全和滥用防护。它能够检测并防止多种攻击手段，包括凭证填充、不可能的旅行、免费试用滥用等。"
 ---
 
-## Installation
+## 安装
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -13,23 +13,23 @@ export const auth = betterAuth({
   plugins: [
     sentinel({
       security: {
-        // Configure security features here
+        // 在此配置安全功能
       },
     }),
   ],
 });
 ```
 
-## Configuration Options
+## 配置选项
 
 ### SentinelOptions
 
-| Option | Type | Description |
+| 选项 | 类型 | 说明 |
 |--------|------|-------------|
-| `apiUrl` | `string` | Better Auth Infrastructure API URL |
-| `kvUrl` | `string` | KV store URL for rate limiting data |
-| `apiKey` | `string` | Your API key for authentication |
-| `security` | `SecurityOptions` | Security feature configuration |
+| `apiUrl` | `string` | Better Auth基础设施 API URL |
+| `kvUrl` | `string` | 用于限速数据的KV存储URL |
+| `apiKey` | `string` | 用于认证的API密钥 |
+| `security` | `SecurityOptions` | 安全功能配置 |
 
 ### SecurityOptions
 
@@ -52,11 +52,11 @@ interface SecurityOptions {
 type SecurityAction = "log" | "challenge" | "block";
 ```
 
-## Security Features
+## 安全功能
 
-### Credential Stuffing Protection
+### 凭证填充防护
 
-Detects and blocks credential stuffing attacks by tracking failed login attempts per visitor.
+通过跟踪每个访客的登录失败次数，检测并阻止凭证填充攻击。
 
 ```ts
 sentinel({
@@ -65,25 +65,25 @@ sentinel({
     credentialStuffing: {
       enabled: true,
       thresholds: {
-        challenge: 3,  // Issue PoW challenge after 3 failures
-        block: 5,      // Block after 5 failures
+        challenge: 3,  // 失败3次后发起PoW挑战
+        block: 5,      // 失败5次后封禁
       },
-      windowSeconds: 3600,     // 1 hour window
-      cooldownSeconds: 900,    // 15 minute cooldown after block
+      windowSeconds: 3600,     // 1小时时间窗口
+      cooldownSeconds: 900,    // 封禁后15分钟冷却期
     },
   },
 }),
 ```
 
-**How it works:**
-1. Tracks failed login attempts per visitor ID
-2. After reaching the challenge threshold, issues a Proof-of-Work challenge
-3. After reaching the block threshold, blocks the visitor entirely
-4. Automatically clears failed attempts on successful login
+**工作原理：**
+1. 跟踪每个访客ID的登录失败次数
+2. 达到挑战阈值时，发起工作量证明（PoW）挑战
+3. 达到封禁阈值时，完全封禁该访客
+4. 登录成功时自动清除失败次数
 
-### Impossible Travel Detection
+### 不可能的旅行检测
 
-Detects logins from geographically distant locations in impossibly short timeframes.
+检测用户在极短时间内从地理上相距遥远的地方登录。
 
 ```ts
 sentinel({
@@ -91,18 +91,18 @@ sentinel({
   security: {
     impossibleTravel: {
       enabled: true,
-      maxSpeedKmh: 1000,    // Max realistic travel speed
-      action: "challenge",  // "log", "challenge", or "block"
+      maxSpeedKmh: 1000,    // 最大合理旅行速度
+      action: "challenge",  // 可选："log"、"challenge"或"block"
     },
   },
 }),
 ```
 
-**Example:** If a user logs in from New York and then 30 minutes later from Tokyo, this would be flagged as impossible travel (would require traveling faster than 1000 km/h).
+**示例：** 如果用户先后在纽约和30分钟后在东京登录，这被视为不可能的旅行（即需要超过1000公里/小时的速度）。
 
-### Free Trial Abuse Prevention
+### 免费试用滥用防护
 
-Prevents users from creating multiple accounts to abuse free trials using device fingerprinting.
+通过设备指纹防止用户创建多个账户以滥用免费试用。
 
 ```ts
 sentinel({
@@ -121,14 +121,14 @@ sentinel({
 }),
 ```
 
-**How it works:**
-1. Tracks account creations per visitor fingerprint
-2. When threshold is exceeded, blocks new account creation
-3. Useful for preventing free tier abuse
+**工作原理：**
+1. 跟踪每个访客指纹创建的账户数
+2. 超过阈值时阻止新账户的创建
+3. 有效防止免费套餐滥用
 
-### Compromised Password Detection
+### 已泄露密码检测
 
-Checks passwords against the HaveIBeenPwned database to detect compromised credentials.
+通过查询 HaveIBeenPwned 数据库检查密码，检测泄露凭证。
 
 ```ts
 sentinel({
@@ -136,18 +136,18 @@ sentinel({
   security: {
     compromisedPassword: {
       enabled: true,
-      action: "block",      // "log", "challenge", or "block"
-      minBreachCount: 1,    // Minimum breaches to trigger
+      action: "block",      // 可选："log"、"challenge"或"block"
+      minBreachCount: 1,    // 触发的最小泄露次数
     },
   },
 }),
 ```
 
-**Privacy:** Uses k-anonymity - only the first 5 characters of the password hash are sent to the API, never the full password.
+**隐私说明：** 采用k-匿名技术 — 仅将密码哈希的前5个字符发送到API，完整密码绝不发送。
 
-### Stale Account Monitoring
+### 过期账户监控
 
-Detects when dormant accounts suddenly become active, which could indicate account takeover.
+检测沉睡账户突然活跃，可能表示账户被接管。
 
 ```ts
 sentinel({
@@ -155,68 +155,68 @@ sentinel({
   security: {
     staleUsers: {
       enabled: true,
-      staleDays: 90,           // Account considered stale after 90 days
-      action: "log",           // "log", "challenge", or "block"
-      notifyUser: true,        // Send email to user
-      notifyAdmin: true,       // Send email to admin
+      staleDays: 90,           // 账户超过90天视为沉睡
+      action: "log",           // 可选："log"、"challenge"或"block"
+      notifyUser: true,        // 向用户发送邮件通知
+      notifyAdmin: true,       // 向管理员发送邮件通知
       adminEmail: "admin@yourapp.com",
     },
   },
 }),
 ```
 
-**Notifications include:**
-- Login time and location
-- Days since last activity
-- Device information
+**通知内容包括：**
+- 登录时间和地点
+- 距离上次活动的天数
+- 设备信息
 
-### Geo-Blocking
+### 地理封禁
 
-Block or challenge users from specific countries.
+封禁或挑战特定国家的用户。
 
 ```ts
 sentinel({
   apiKey: process.env.BETTER_AUTH_API_KEY,
   security: {
     geoBlocking: {
-      allowList: ["US", "CA", "GB"],  // Only allow these countries
-      // OR
-      denyList: ["XX", "YY"],          // Block these countries
-      action: "block",                  // "challenge" or "block"
+      allowList: ["US", "CA", "GB"],  // 仅允许这些国家
+      // 或者
+      denyList: ["XX", "YY"],          // 封禁这些国家
+      action: "block",                  // 可选："challenge"或"block"
     },
   },
 }),
 ```
 
-Use ISO 3166-1 alpha-2 country codes.
+使用 ISO 3166-1 alpha-2 国家代码。
 
-### Bot Blocking
+### 机器人封禁
 
-Detect and block automated bot traffic.
+检测并阻止自动化机器流量。
 
 ```ts
 sentinel({
   apiKey: process.env.BETTER_AUTH_API_KEY,
   security: {
     botBlocking: true,
-    // OR with custom action
+    // 或使用自定义操作
     botBlocking: {
-      action: "challenge",  // "log", "challenge", or "block"
+      action: "challenge",  // 可选："log"、"challenge"或"block"
     },
   },
 }),
 ```
 
-### Suspicious IP Detection
+### 可疑IP检测
 
-Block requests from known malicious IP addresses.
+封禁来自已知恶意IP地址的请求。
 
 ```ts
 sentinel({
   apiKey: process.env.BETTER_AUTH_API_KEY,
   security: {
     suspiciousIpBlocking: true,
-    // OR with custom action
+    // 或使用自定义操作
     suspiciousIpBlocking: {
       action: "block",
     },
@@ -224,9 +224,9 @@ sentinel({
 }),
 ```
 
-### Velocity / Rate Limiting
+### 访问速率限制 / 频率控制
 
-Limit the rate of various operations.
+限制各种操作的请求速率。
 
 ```ts
 sentinel({
@@ -248,9 +248,9 @@ sentinel({
 }),
 ```
 
-### Email Validation
+### 邮箱验证
 
-Block disposable email addresses and validate email domains.
+封禁一次性邮箱地址并验证邮箱域名。
 
 ```ts
 sentinel({
@@ -258,47 +258,47 @@ sentinel({
   security: {
     emailValidation: {
       enabled: true,
-      strictness: "medium",  // "low", "medium", or "high"
+      strictness: "medium",  // 可选："low"、"medium"、"high"
       action: "block",
     },
   },
 }),
 ```
 
-**Strictness levels:**
-- `low` - Block only known disposable domains
-- `medium` - Also check for valid MX records
-- `high` - Additional heuristic checks
+**严格级别：**
+- `low` - 仅封禁已知一次性邮箱域名
+- `medium` - 还会检查有效 MX 记录
+- `high` - 追加启发式检查
 
-## Proof-of-Work Challenges
+## 工作量证明（PoW）挑战
 
-When a security check results in a "challenge" action, Sentinel issues a Proof-of-Work (PoW) challenge that must be solved by the client.
+当安全检查导致“challenge”动作时，Sentinel会发起工作量证明（PoW）挑战，客户端必须完成挑战。
 
-### How PoW Works
+### PoW 工作原理
 
-1. Server issues a cryptographic challenge
-2. Client must find a solution that satisfies difficulty requirements
-3. Solution is computationally expensive but verification is fast
-4. Prevents automated attacks while allowing legitimate users through
+1. 服务器发出加密挑战
+2. 客户端必须找到满足难度要求的解答
+3. 解答计算开销大，但验证快速
+4. 有效阻止自动化攻击，允许合法用户通过
 
-### Challenge Difficulty
+### 挑战难度
 
 ```ts
 sentinel({
   apiKey: process.env.BETTER_AUTH_API_KEY,
   security: {
-    challengeDifficulty: 18,  // Default difficulty level
+    challengeDifficulty: 18,  // 默认难度等级
   },
 }),
 ```
 
-Higher difficulty = more computation required = slower for attackers.
+难度越高 = 计算量越大 = 攻击者越慢。
 
-## Client Integration
+## 客户端集成
 
 ### sentinelClient()
 
-The client plugin handles device fingerprinting and automatic PoW challenge solving.
+客户端插件负责设备指纹识别及自动完成PoW挑战。
 
 ```ts
 import { createAuthClient } from "better-auth/client";
@@ -313,45 +313,45 @@ export const authClient = createAuthClient({
 });
 ```
 
-### Configuration
+### 配置项
 
-| Option | Type | Default | Description |
+| 选项 | 类型 | 默认值 | 说明 |
 |--------|------|---------|-------------|
-| `autoSolveChallenge` | `boolean` | `true` | Automatically solve PoW challenges |
+| `autoSolveChallenge` | `boolean` | `true` | 自动解决PoW挑战 |
 
-### Browser Fingerprinting
+### 浏览器指纹
 
-The client automatically includes a visitor ID in requests via the `X-Visitor-ID` header. This fingerprint is used for:
+客户端通过 `X-Visitor-ID` 请求头自动包含访客ID指纹，用于：
 
-- Credential stuffing detection
-- Free trial abuse prevention
-- Device tracking
+- 凭证填充检测
+- 免费试用滥用防护
+- 设备追踪
 
-### PoW Solution Header
+### PoW解答请求头
 
-When auto-solving is enabled, solved challenges are sent via the `X-PoW-Solution` header.
+启用自动解决后，解答通过 `X-PoW-Solution` 头发送。
 
-## Security Events
+## 安全事件
 
-Sentinel tracks the following security event types:
+Sentinel跟踪以下安全事件类型：
 
-| Event Type | Description |
+| 事件类型 | 说明 |
 |------------|-------------|
-| `security_blocked` | Request was blocked |
-| `security_allowed` | Request was allowed after challenge |
-| `security_credential_stuffing` | Credential stuffing detected |
-| `security_impossible_travel` | Impossible travel detected |
-| `security_geo_blocked` | Geo-blocking triggered |
-| `security_bot_blocked` | Bot detected and blocked |
-| `security_suspicious_ip` | Suspicious IP detected |
-| `security_velocity_exceeded` | Rate limit exceeded |
-| `security_free_trial_abuse` | Free trial abuse detected |
-| `security_compromised_password` | Compromised password detected |
-| `security_stale_account` | Stale account reactivation |
+| `security_blocked` | 请求被封禁 |
+| `security_allowed` | 挑战通过后请求被允许 |
+| `security_credential_stuffing` | 检测到凭证填充 |
+| `security_impossible_travel` | 检测到不可能的旅行 |
+| `security_geo_blocked` | 地理封禁触发 |
+| `security_bot_blocked` | 机器人被检测并封禁 |
+| `security_suspicious_ip` | 检测到异常IP |
+| `security_velocity_exceeded` | 超出速率限制 |
+| `security_free_trial_abuse` | 检测到免费试用滥用 |
+| `security_compromised_password` | 检测到泄露密码 |
+| `security_stale_account` | 沉睡账户重新激活 |
 
-These events are visible in the Security dashboard and included in audit logs.
+这些事件可在安全控制台查看，并包含在审计日志中。
 
-## Complete Example
+## 完整示例
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -362,7 +362,7 @@ export const auth = betterAuth({
     sentinel({
       apiKey: process.env.BETTER_AUTH_API_KEY,
       security: {
-        // Core protections
+        // 核心防护
         credentialStuffing: {
           enabled: true,
           thresholds: { challenge: 3, block: 5 },
@@ -377,7 +377,7 @@ export const auth = betterAuth({
           action: "block",
         },
         
-        // Location-based
+        // 基于位置的策略
         impossibleTravel: {
           enabled: true,
           action: "challenge",
@@ -387,7 +387,7 @@ export const auth = betterAuth({
           action: "block",
         },
         
-        // Abuse prevention
+        // 滥用防护
         freeTrialAbuse: {
           enabled: true,
           maxAccountsPerVisitor: 3,
@@ -399,11 +399,11 @@ export const auth = betterAuth({
           action: "challenge",
         },
         
-        // Bot protection
+        // 机器人防护
         botBlocking: { action: "challenge" },
         suspiciousIpBlocking: { action: "block" },
         
-        // Account monitoring
+        // 账户监控
         staleUsers: {
           enabled: true,
           staleDays: 90,
@@ -417,40 +417,40 @@ export const auth = betterAuth({
 });
 ```
 
-## Best Practices
+## 最佳实践
 
-1. **Start with logging** - Set actions to "log" initially to understand your traffic patterns before blocking.
+1. **先从日志开始** - 初期将动作设置为“log”，以了解流量模式，再决定是否封禁。
 
-2. **Tune thresholds** - Every application is different. Monitor false positives and adjust thresholds accordingly.
+2. **调整阈值** - 每个应用都不同，监控误报率并相应调整阈值。
 
-3. **Use challenges before blocks** - Challenges allow legitimate users through while stopping automated attacks.
+3. **先使用挑战，后使用封禁** - 挑战能阻挡自动化攻击，同时允许合法用户访问。
 
-4. **Enable client-side auto-solve** - Make sure `sentinelClient({ autoSolveChallenge: true })` is configured for smooth user experience.
+4. **启用客户端自动解答** - 确保配置了 `sentinelClient({ autoSolveChallenge: true })` ，以优化用户体验。
 
-5. **Monitor security events** - Regularly review the Security dashboard to identify attack patterns.
+5. **监控安全事件** - 定期查看安全控制台，识别攻击趋势。
 
-6. **Set up admin notifications** - Enable `notifyAdmin` for critical events like stale account reactivations.
+6. **设置管理员通知** - 对关键事件如沉睡账户激活启用 `notifyAdmin`。
 
-## Troubleshooting
+## 疑难解答
 
-### Missing API Key Warning
+### 缺少API密钥警告
 
 ```
 [Sentinel] Missing BETTER_AUTH_API_KEY. Security checks may fall back to allow mode.
 ```
 
-Make sure your API key environment variable is set correctly.
+请确保正确设置了API密钥环境变量。
 
-### Challenges Not Working
+### 挑战无法执行
 
-If PoW challenges aren't being solved:
-1. Verify `sentinelClient()` is installed on the client
-2. Check that `autoSolveChallenge` is `true`
-3. Ensure the client can reach the server
+如果PoW挑战无法自动完成：
+1. 确认客户端已安装 `sentinelClient()` 插件
+2. 检查 `autoSolveChallenge` 是否为 `true`
+3. 确认客户端能够访问服务器
 
-### High False Positive Rate
+### 误报率过高
 
-If legitimate users are being blocked:
-1. Increase thresholds
-2. Change action from "block" to "challenge"
-3. Review security events to identify patterns
+如果误伤合法用户：
+1. 提高阈值
+2. 将动作从“block”改为“challenge”
+3. 查看安全事件，找出误报原因

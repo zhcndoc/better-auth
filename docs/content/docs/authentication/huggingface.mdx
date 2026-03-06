@@ -1,19 +1,19 @@
 ---
 title: Hugging Face
-description: Hugging Face provider setup and usage.
+description: Hugging Face 提供者的设置与使用。
 ---
 
 <Steps>
     <Step> 
-        ### Get your Hugging Face credentials
-        To use Hugging Face sign in, you need a client ID and client secret. [Hugging Face OAuth documentation](https://huggingface.co/docs/hub/oauth). Make sure the created oauth app on Hugging Face has the "email" scope.
+        ### 获取你的 Hugging Face 凭据
+        要使用 Hugging Face 登录，你需要一个客户端 ID 和客户端密钥。[Hugging Face OAuth 文档](https://huggingface.co/docs/hub/oauth)。确保在 Hugging Face 上创建的 oauth 应用具备 "email" 权限范围。
 
-        Make sure to set the redirect URL to `http://localhost:3000/api/auth/callback/huggingface` for local development. For production, you should set it to the URL of your application. If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/huggingface` 以用于本地开发。生产环境中，你应将其设置为你的应用的 URL。如果你更改了认证路由的基本路径，也应相应更新重定向 URL。
     </Step>
 
   <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供者
+        要配置提供者，你需要导入该提供者并将其传递给 auth 实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -29,9 +29,9 @@ description: Hugging Face provider setup and usage.
         ```
     </Step>
        <Step>
-        ### Sign In with Hugging Face
-        To sign in with Hugging Face, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-        - `provider`: The provider to use. It should be set to `huggingface`.
+        ### 使用 Hugging Face 登录
+        要使用 Hugging Face 登录，可以使用客户端提供的 `signIn.social` 方法。`signIn` 方法接收一个带有以下属性的对象：
+        - `provider`：使用的提供者，应设置为 `huggingface`。
 
         ```ts title="auth-client.ts"  
         import { createAuthClient } from "better-auth/client"

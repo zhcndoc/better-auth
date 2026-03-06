@@ -1,21 +1,21 @@
 ---
 title: GitHub
-description: GitHub provider setup and usage.
+description: GitHub 提供者的设置和使用。
 ---
 
 <Steps>
     <Step> 
-        ### Get your GitHub credentials
-        To use GitHub sign in, you need a client ID and client secret. You can get them from the [GitHub Developer Portal](https://github.com/settings/developers).
+        ### 获取你的 GitHub 凭据
+        要使用 GitHub 登录，你需要一个客户端 ID 和客户端密钥。你可以从 [GitHub 开发者门户](https://github.com/settings/developers) 获取它们。
 
-        Make sure to set the redirect URL to `http://localhost:3000/api/auth/callback/github` for local development. For production, you should set it to the URL of your application. If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/github` 以便本地开发。对于生产环境，你应该将其设置为你的应用程序的 URL。如果你更改了认证路由的基础路径，也应相应更新重定向 URL。
 
-        Important: You MUST include the user:email scope in your GitHub app. See details below.
+        重要：你必须在你的 GitHub 应用中包含 user:email 权限范围。详情见下。
     </Step>
 
   <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供者
+        要配置提供者，你需要导入该提供者并将其传递给认证实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -31,9 +31,9 @@ description: GitHub provider setup and usage.
         ```
     </Step>
        <Step>
-        ### Sign In with GitHub
-        To sign in with GitHub, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-        - `provider`: The provider to use. It should be set to `github`.
+        ### 使用 GitHub 登录
+        要使用 GitHub 登录，可以调用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个带有以下属性的对象：
+        - `provider`：要使用的提供者，应设置为 `github`。
 
         ```ts title="auth-client.ts"  
         import { createAuthClient } from "better-auth/client"
@@ -48,27 +48,26 @@ description: GitHub provider setup and usage.
     </Step>
 </Steps>
 
-## Usage
+## 使用说明
 
-### Setting up your Github app
+### 设置你的 Github 应用
 
-Github has two types of apps: Github apps and OAuth apps.
+Github 有两种应用类型：Github 应用和 OAuth 应用。
 
-For OAuth apps, you don't have to do anything special (just follow the steps above). For Github apps, you DO have to add one more thing, which is enable it to read the user's email:
+对于 OAuth 应用，你无需做特殊操作（只需按照上述步骤操作）。对于 Github 应用，你需要额外完成一项设置，即开启读取用户邮箱的权限：
 
-1. After creating your app, go to *Permissions and Events* > *Account Permissions* > *Email Addresses* and select "Read-Only"
+1. 创建应用后，进入 *Permissions and Events* > *Account Permissions* > *Email Addresses* 并选择“只读”（Read-Only）
 
-2. Save changes. 
+2. 保存更改。
 
-That's all! Now you can copy the Client ID and Client Secret of your app! 
+就是这样！现在你可以复制你的应用的客户端 ID 和客户端密钥了！
 
 <Callout>
-If you get "email_not_found" error, it's because you selected a Github app & did not configure this part!
+如果你遇到 "email_not_found" 错误，说明你选择的是 Github 应用但没有配置此部分！
 </Callout>
 
-### Why don't I have a refresh token?
+### 为什么我没有刷新令牌？
 
-Github doesn't issue refresh tokens for OAuth apps. For regular OAuth apps,
-GitHub issues access tokens that remain valid indefinitely unless the user revokes them,
-the app revokes them, or they go unused for a year.
-There's no need for a refresh token because the access token doesn't expire on a short interval like Google or Discord.
+Github 不为 OAuth 应用发放刷新令牌。对于常规 OAuth 应用，GitHub 发放的访问令牌除非用户撤销、应用撤销，或者一年内未使用，否则将一直有效。
+
+不需要刷新令牌是因为访问令牌不像 Google 或 Discord 那样在短时间内过期。

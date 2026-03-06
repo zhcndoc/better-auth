@@ -1,12 +1,12 @@
 ---
-title: 1.2 Release
-description: Stripe, Captcha, API Keys, Teams, Init CLI, and more.
+title: 1.2 版本发布
+description: Stripe、验证码、API 密钥、团队、Init CLI 等功能。
 date: 2025-03-01
 ---
 
-# Better Auth 1.2 – Stripe, Captcha, API Keys, Teams, Init CLI, and more
+# Better Auth 1.2 – Stripe、验证码、API 密钥、团队、Init CLI 等功能
 
-To upgrade, run:
+升级请运行：
 
 ```package-install
 npm install better-auth@1.2
@@ -14,9 +14,9 @@ npm install better-auth@1.2
 
 ---
 
-### **Stripe Plugin (Beta)**
+### **Stripe 插件（测试版）**
 
-Stripe integration for customer management, subscriptions, and webhooks.
+集成 Stripe 用于客户管理、订阅和 Webhook。
 
 ```package-install
 npm install @better-auth/stripe
@@ -44,11 +44,11 @@ export const auth = betterAuth({
 });
 ```
 
-Read the [Stripe Plugin docs](/docs/plugins/stripe) for more information.
+更多信息请参阅 [Stripe 插件文档](/docs/plugins/stripe)。
 
-### **Captcha Plugin**
+### **验证码插件**
 
-Protect your authentication flows with Google reCAPTCHA and Cloudflare Turnstile. Works for signup, signin, and password resets.
+通过 Google reCAPTCHA 和 Cloudflare Turnstile 保护你的认证流程。支持注册、登录和密码重置。
 
 ```ts title="auth.ts"
 import { captcha } from "better-auth/plugins";
@@ -58,18 +58,18 @@ const auth = betterAuth({
     // [!code highlight]
     captcha({
       // [!code highlight]
-      provider: "cloudflare-turnstile", // or "google-recaptcha" // [!code highlight]
+      provider: "cloudflare-turnstile", // 或 "google-recaptcha" // [!code highlight]
       secretKey: process.env.TURNSTILE_SECRET_KEY!, // [!code highlight]
     }), // [!code highlight]
   ], // [!code highlight]
 });
 ```
 
-Read the [Captcha Plugin docs](/docs/plugins/captcha) for more information.
+更多信息请参阅 [验证码插件文档](/docs/plugins/captcha)。
 
-### **API Key Plugin**
+### **API 密钥插件**
 
-Generate and manage API keys with rate limiting, expiration, and metadata. Supports session creation from API keys.
+生成和管理带有速率限制、过期和元数据的 API 密钥。支持通过 API 密钥创建会话。
 
 ```ts title="auth.ts"
 import { apiKey } from "better-auth/plugins";
@@ -79,11 +79,11 @@ const auth = betterAuth({
 });
 ```
 
-Read the [API Key Plugin docs](/docs/plugins/api-key) for more information.
+更多信息请参阅 [API 密钥插件文档](/docs/plugins/api-key)。
 
-### **Teams/Sub-Organizations**
+### **团队/子组织**
 
-Organizations can now have teams or sub-organizations under them.
+组织现在可以拥有团队或子组织。
 
 ```ts title="auth.ts"
 const auth = betterAuth({
@@ -97,38 +97,37 @@ const auth = betterAuth({
 });
 ```
 
-Read the [Organization Plugin docs](/docs/plugins/organization#teams) for more information.
+更多信息请参阅 [组织插件文档](/docs/plugins/organization#teams)。
 
 ### **Init CLI**
 
-The CLI now includes an `init` command to add Better Auth to your project.
+CLI 现包含 `init` 命令，可将 Better Auth 添加到你的项目中。
 
 ```bash title="terminal"
 npx auth init
 ```
 
-### **Username**
+### **用户名**
 
-- Added `displayName` for case-insensitive lookups while preserving original formatting.
-- Built-in validation.
+- 新增 `displayName` 用于不区分大小写的查找，同时保留原格式。
+- 内置校验。
 
 <Callout type="info">
-  If you're using the Username plugin, make sure to add the `displayName` field
-  to your schema.
+  如果你正在使用用户名插件，请确保在你的 schema 中添加 `displayName` 字段。
 </Callout>
 
-### **Organization**
+### **组织**
 
-- **Multiple Roles per User** – Assign more than one role to a user.
+- **用户可拥有多个角色** – 允许为用户分配多个角色。
 
-### **Admin Plugin**
+### **管理员插件**
 
-- Manage roles and permissions within the admin plugin. [Learn more](/docs/plugins/admin)
-- `adminUserIds` option to grant specific users admin privileges. [Learn more](/docs/plugins/admin#usage)
+- 在管理员插件中管理角色和权限。[了解更多](/docs/plugins/admin)
+- `adminUserIds` 选项，授予特定用户管理员权限。[了解更多](/docs/plugins/admin#usage)
 
 ---
 
-## 🎭 New Social Providers
+## 🎭 新增社交登录提供商
 
 - [TikTok](/docs/authentication/tiktok)
 - [Roblox](/docs/authentication/roblox)
@@ -136,42 +135,42 @@ npx auth init
 
 ---
 
-## ✨ Core Enhancements
+## ✨ 核心增强功能
 
-- **Auto Cleanup** for expired verification data
-- **Improved Google One Tap** integration with JWT verification and enhanced prompt handling
-- **Phone-based Password Reset** functionality
-- **Provider Control Options**:
-  - Disable signups for specific providers
-  - Disable implicit signups for specific providers
-  - Control default scopes and allow custom scopes on request
-- **Enhanced Database Hooks** with additional context information
-
----
-
-## 🚀 Performance Boosts
-
-We rewrote **better-call** (the core library behind Better Auth) to fix TypeScript editor lag. Your IDE should now feel much snappier when working with Better Auth.
+- 过期验证数据的**自动清理**
+- 更完善的 Google One Tap 集成，支持 JWT 验证和改进的提示处理
+- 基于电话的密码重置功能
+- 提供者控制选项：
+  - 禁用特定提供者的注册
+  - 禁用特定提供者的隐式注册
+  - 控制默认权限范围，并允许请求时指定自定义权限范围
+- 增强数据库钩子，包含更多上下文信息
 
 ---
 
-## ⚡ CLI Enhancements
+## 🚀 性能提升
 
-### **`init` Command**
-
-The CLI now includes an `init` command to speed up setup:
-
-- Scaffold new projects
-- Generate schemas
-- Run migrations
-
-[Learn more](/docs/concepts/cli)
+我们重写了 **better-call**（Better Auth 的核心库）以解决 TypeScript 编辑器卡顿问题。现在你的 IDE 使用 Better Auth 时会更加流畅。
 
 ---
 
-## 🛠 Bug Fixes & Stability Improvements
+## ⚡ CLI 功能增强
 
-A lot of fixes and refinements to make everything smoother, faster, and more reliable. Check out the [changelog](https://github.com/better-auth/better-auth/releases/tag/v1.2.0) for more details.
+### **`init` 命令**
+
+CLI 现包含 `init` 命令，加快初始化速度：
+
+- 脚手架新项目
+- 生成 schema
+- 运行迁移
+
+[了解更多](/docs/concepts/cli)
+
+---
+
+## 🛠  bug 修复与稳定性改进
+
+大量修复与优化，让功能更流畅、更快速、更稳定。详情请查看[更新日志](https://github.com/better-auth/better-auth/releases/tag/v1.2.0)。
 
 ---
 
@@ -179,4 +178,4 @@ A lot of fixes and refinements to make everything smoother, faster, and more rel
 npm install better-auth@1.2.0
 ```
 
-**Upgrade now and take advantage of these powerful new features!** 🚀
+**马上升级，体验这些强大新功能！** 🚀

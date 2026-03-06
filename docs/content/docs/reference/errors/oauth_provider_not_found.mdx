@@ -1,47 +1,42 @@
 ---
 title: oauth_provider_not_found
-description: The OAuth provider was not found.
+description: 未找到 OAuth 提供者。
 ---
 
-## What is it?
+## 什么是这个错误？
 
-This error occurs when Better Auth cannot identify a provider for the callback path—either because the provider
-segment is missing or because no provider with that id is configured.
+当 Better Auth 无法识别回调路径对应的提供者时会出现此错误——可能是因为缺少提供者部分，或者没有配置对应 ID 的提供者。
 
-Better Auth expects the callback route to be shaped like `/api/auth/callback/<provider>`.
-If the `<provider>` segment is absent (e.g., request hits `/api/auth/callback`),
-we cannot determine which integration should handle the callback and the
-request is rejected.
+Better Auth 期望回调路由的格式为 `/api/auth/callback/<provider>`。  
+如果 `<provider>` 部分缺失（例如请求到达 `/api/auth/callback`），  
+我们无法确定由哪个集成处理回调，请求将被拒绝。
 
-## Common Causes
+## 常见原因
 
-* Visiting `/api/auth/callback` directly without the trailing provider segment.
+* 直接访问 `/api/auth/callback`，未带上提供者段。
 
-## How to resolve
+## 如何解决
 
-### Use the correct callback route shape
+### 使用正确的回调路由格式
 
-* Ensure your application exposes a callback route like `/api/auth/callback/[provider]` (framework-specific).
-* When initiating the OAuth flow, ensure the redirect URI includes the provider segment so the provider
-  returns to `/api/auth/callback/<provider>`.
+* 确保你的应用暴露了类似 `/api/auth/callback/[provider]` 的回调路由（具体基于框架实现）。  
+* 启动 OAuth 流程时，确保重定向 URI 包含提供者段，这样提供者会返回到 `/api/auth/callback/<provider>`。
 
-### Configure infrastructure to preserve the path
+### 配置基础设施以保留路径
 
-* Check proxy/CDN rewrites (Vercel, Cloudflare, Nginx) to make sure they do not strip the final path segment.
-* Align trailing slash behavior across environments so that `/api/auth/callback/<provider>` is preserved.
+* 检查代理/CDN 重写设置（如 Vercel、Cloudflare、Nginx），确保不会移除最后的路径段。  
+* 在各环境中统一尾部斜杠行为，保证 `/api/auth/callback/<provider>` 路径被保留。
 
-### Avoid manual access to the base callback route
+### 避免手动访问基础回调路由
 
-* Do not navigate to `/api/auth/callback` directly; always start OAuth via Better Auth APIs which generate
-  the correct provider-specific callback URL.
+* 不要直接访问 `/api/auth/callback`；始终通过 Better Auth 的 API 启动 OAuth，这些 API 会生成正确的特定提供者回调 URL。
 
-## Debug locally
+## 本地调试
 
-* Inspect the request URL received by your server to confirm the `<provider>` segment is present.
-* Log router/path parameters in your callback handler to verify the provider value.
-* Compare environment configs (routes, basePath, rewrites) to ensure the same path structure is used everywhere.
+* 检查服务器接收到的请求 URL，确认包含 `<provider>` 段。  
+* 在回调处理器中记录路由/路径参数，验证提供者值。  
+* 对比环境配置（路由、basePath、重写规则）以确保路径结构一致。
 
-## Edge cases to consider
+## 需要注意的边缘情况
 
-* Trailing slash normalization may alter routing if your framework treats `/callback/google/` differently
-  from `/callback/google`. Configure consistent behavior.
+* 尾部斜杠规范化可能会影响路由，比如某些框架将 `/callback/google/` 和 `/callback/google` 视为不同路径，需配置行为一致。

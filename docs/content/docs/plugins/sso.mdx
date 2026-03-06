@@ -1,24 +1,24 @@
 ---
-title: Single Sign-On (SSO)
-description: Integrate Single Sign-On (SSO) with your application.
+title: 单点登录（SSO）
+description: 将单点登录（SSO）集成到您的应用程序中。
 ---
 
 `OIDC` `OAuth2` `SSO` `SAML`
 
-Single Sign-On (SSO) allows users to authenticate with multiple applications using a single set of credentials. This plugin supports OpenID Connect (OIDC), OAuth2 providers, and SAML 2.0.
+单点登录（SSO）允许用户使用一套凭证登陆多个应用。本插件支持 OpenID Connect（OIDC）、OAuth2 提供者和 SAML 2.0。
 
-## Installation
+## 安装
 
 <Steps>
     <Step>
-        ### Install the plugin
+        ### 安装插件
 
         ```package-install
         @better-auth/sso
         ```
     </Step>
     <Step>
-        ### Add Plugin to the server
+        ### 添加插件到服务器
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -32,9 +32,9 @@ Single Sign-On (SSO) allows users to authenticate with multiple applications usi
         ```
     </Step>
     <Step>
-        ### Migrate the database
+        ### 数据库迁移
 
-        Run the migration or generate the schema to add the necessary fields and tables to the database.
+        运行迁移或生成 schema 以向数据库添加所需的字段和表。
 
         <Tabs items={["migrate", "generate"]}>
             <Tab value="migrate">
@@ -48,10 +48,10 @@ Single Sign-On (SSO) allows users to authenticate with multiple applications usi
             ```
             </Tab>
         </Tabs>
-        See the [Schema](#schema) section to add the fields manually.
+        请参考 [Schema](#schema) 部分了解手动添加字段的方法。
     </Step>
     <Step>
-        ### Add the client plugin
+        ### 添加客户端插件
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
@@ -66,30 +66,30 @@ Single Sign-On (SSO) allows users to authenticate with multiple applications usi
     </Step>
 </Steps>
 
-## Usage
+## 使用方法
 
-### Register an OIDC Provider
+### 注册 OIDC 提供者
 
-To register an OIDC provider, use the `registerSSOProvider` endpoint and provide the necessary configuration details for the provider.
+要注册一个 OIDC 提供者，使用 `registerSSOProvider` 接口并提供相应的配置。
 
-A redirect URL will be automatically generated using the provider ID. For instance, if the provider ID is `hydra`, the redirect URL would be `{baseURL}/api/auth/sso/callback/hydra`. Note that `/api/auth` may vary depending on your base path configuration.
+重定向 URL 会自动使用提供者 ID 生成。例如，若提供者 ID 是 `hydra`，则回调 URL 为 `{baseURL}/api/auth/sso/callback/hydra`。注意 `/api/auth` 视您的基础路径配置可能会有所不同。
 
 <Callout type="info">
-If you need all providers to share a single callback URL (e.g., when migrating from another auth provider), see [Shared Redirect URI](#shared-redirect-uri).
+如果您想让所有提供者共享一个回调 URL（例如迁移自其他认证提供者时），请参阅 [共享重定向 URI](#shared-redirect-uri)。
 </Callout>
 
 <Callout type="info">
-When you register an OIDC provider, Better Auth automatically fetches and validates the IdP's [OIDC discovery document](#oidc-discovery). Most endpoint fields are optional — see [OIDC Discovery](#oidc-discovery) for details on auto-discovered fields and possible registration errors.
+注册 OIDC 提供者时，Better Auth 会自动抓取并校验身份提供者（IdP）的 [OIDC 发现文档](#oidc-discovery)。大多数端点字段可选 — 查看 [OIDC 发现](#oidc-discovery) 了解自动发现的字段及注册时可能的错误。
 </Callout>
 
-#### Example
+#### 示例
 
 <Tabs items={["client", "server"]}>
     <Tab value="client">
 ```ts title="register-oidc-provider.ts"
 import { authClient } from "@/lib/auth-client";
 
-// Register with OIDC configuration
+// 使用 OIDC 配置进行注册
 await authClient.sso.register({
     providerId: "example-provider",
     issuer: "https://idp.example.com",
@@ -155,41 +155,41 @@ await auth.api.registerSSOProvider({
     </Tab>
 </Tabs>
 
-### OIDC Discovery
+### OIDC 发现
 
-Better Auth automatically fetches and validates the provider's [OpenID Connect Discovery Document](https://openid.net/specs/openid-connect-discovery-1_0.html) from:
+Better Auth 会自动从以下地址抓取并验证提供者的 [OpenID Connect Discovery Document](https://openid.net/specs/openid-connect-discovery-1_0.html)：
 
 ```
 {issuer}/.well-known/openid-configuration
 ```
 
-This allows most endpoint-related fields in `oidcConfig` to be **optional** — they will be hydrated automatically from the Identity Provider (IdP).
+这使得大部分 `oidcConfig` 中的端点字段变为**可选**，它们会从身份提供者（IdP）自动填充。
 
-<APIMethod path="/sso/register" method="POST" requireSession note="Minimal OIDC configuration — endpoints are discovered automatically from the issuer.">
+<APIMethod path="/sso/register" method="POST" requireSession note="最小 OIDC 配置 — 端点会自动从 issuer 发现。">
 ```ts
 type registerSSOProvider = {
     /**
-     * Unique identifier for the provider
+     * 提供者唯一标识符
      */
     providerId: string = "okta"
     /**
-     * The OIDC issuer URL. Discovery document is fetched from `{issuer}/.well-known/openid-configuration`
+     * OIDC 发行者 URL。发现文档在 `{issuer}/.well-known/openid-configuration` 位置
      */
     issuer: string = "https://your-org.okta.com"
     /**
-     * Email domain for this provider
+     * 该提供者对应的邮箱域名
      */
     domain: string = "yourcompany.com"
     /**
-     * OIDC configuration (most fields are auto-discovered)
+     * OIDC 配置（大多数字段自动发现）
      */
     oidcConfig: {
         /**
-         * OAuth client ID from your IdP
+         * 您 IdP 的 OAuth 客户端 ID
          */
         clientId: string = "your-client-id"
         /**
-         * OAuth client secret from your IdP
+         * 您 IdP 的 OAuth 客户端密钥
          */
         clientSecret: string = "your-client-secret"
     }
@@ -197,49 +197,48 @@ type registerSSOProvider = {
 ```
 </APIMethod>
 
-#### Fields Automatically Discovered
+#### 自动发现字段
 
-Better Auth fills in the following fields by reading the IdP's discovery document (if not explicitly provided):
+如果未显式提供，Better Auth 会根据 IdP 的发现文档填充以下字段：
 
 - `authorizationEndpoint`
 - `tokenEndpoint`
 - `jwksEndpoint`
 - `userInfoEndpoint`
 - `discoveryEndpoint`
-- `tokenEndpointAuthentication` (method for token endpoint client authentication)
+- `tokenEndpointAuthentication`（token 端点客户端认证方式）
 
-Following the spec, our discovery process expects all URLs to be valid and to be absolute urls. Relative paths are also supported and resolved relative to the issuer's base URL preserving the path when available.
+根据规范，我们的发现流程期望所有 URL 必须有效且是绝对 URL。相对路径也支持，会相对于 issuer 的基础 URL 解析，保留路径（如有）。
 
-Example of relative endpoint and issuer without base path:
+相对端点和无基础路径的 issuer 示例：
 
 - `issuer`: `"https://your-org.okta.com"`
 - `token_endpoint`: `"/v1/tokens"`
-- normalized `token_endpoint`: `"https://your-org.okta.com/v1/tokens"`
+- 规范化后 `token_endpoint`: `"https://your-org.okta.com/v1/tokens"`
 
-
-Example of relative endpoint and issuer with base path:
+相对端点和带基础路径的 issuer 示例：
 
 - `issuer`: `"https://your-org.okta.com/v1"`
 - `token_endpoint`: `"/tokens"`
-- normalized `token_endpoint`: `"https://your-org.okta.com/v1/tokens"`
+- 规范化后 `token_endpoint`: `"https://your-org.okta.com/v1/tokens"`
 
 <Callout type="info">
-If you explicitly set these fields in `oidcConfig`, your values override the discovered ones.
-This is useful when you need to override the IdP's advertised metadata or when using incomplete mock servers.
+如果您在 `oidcConfig` 中显式设置这些字段，您的设置将覆盖自动发现的值。
+这在需要覆盖 IdP 广告元数据或使用不完整模拟服务器时非常有用。
 </Callout>
 
-#### Trusted origins
+#### 受信任的来源
 
-Both the discovery endpoint as well as any URL resolved through the discovery process are subject to your app's [`trustedOrigins`](/docs/reference/security#trusted-origins) configuration.
-Discovery will fail with the `discovery_untrusted_origin` code unless you explicitly update your `trustedOrigins` configuration:
+发现端点及发现过程中解析到的任意 URL 都必须符合您应用的[`trustedOrigins`](/docs/reference/security#trusted-origins)配置。
+若未明确添加，将导致发现失败，报错代码为 `discovery_untrusted_origin`。
 
 ```ts
 trustedOrigins: ["https://your-org.okta.com"],
 ```
 
-If your use-case requires to support multiple arbitrary but known IDPs (e.g Okta), we recommend to:
+若需支持多个已知 IDP（例如 Okta），我们建议：
 
-1. Register a list of well known IDPs ahead of time
+1. 事先注册一批已知 IDP 源：
 
 ```ts
 trustedOrigins: [
@@ -251,82 +250,81 @@ trustedOrigins: [
 ],
 ```
 
-2. Or dynamically compute the `trustedOrigins` by specifying a callback function:
+2. 或者通过回调函数动态计算 `trustedOrigins`：
 
 ```ts
 trustedOrigins: async (request) => {
-    // request is undefined during initialization and auth.api calls
+    // 初始化和 auth.api 调用时 request 可能为 undefined
     if (!request) {
         return ["https://my-frontend.com"];
     }
 
-    // SSO trusted origin list
+    // SSO 注册接口的受信列表
     if (request.url.endsWith("/sso/register")) {
         const trustedOrigins = await fetchOriginList();
         return trustedOrigins;
     }
 
-    // Your normal origin list for everything else
+    // 其它请求使用正常的来源列表
     return [];
 }
 ```
 
-See the [`trustedOrigins`](/docs/reference/security#trusted-origins) docs for more information.
+更详细信息见 [`trustedOrigins`](/docs/reference/security#trusted-origins) 文档。
 
-#### Why Discovery Can Fail
+#### 为什么发生发现失败
 
-Better Auth validates that the IdP's metadata is correct and complete **before** allowing registration. This prevents subtle runtime failures during sign-in or token validation.
+Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，避免登录或令牌校验时出现细微故障。
 
 <Callout type="info">
-Better Auth does **not** support implicit-only OIDC flows.
-For this reason, `token_endpoint` and `jwks_uri` are required even though the OIDC spec allows implicit-only providers to omit `token_endpoint`.
+Better Auth 不支持仅隐式（implicit-only）的 OIDC 流程。因此，即使 OIDC 规范允许隐式提供者省略 `token_endpoint`，但本插件仍要求提供 `token_endpoint` 和 `jwks_uri`。
 </Callout>
 
-#### Discovery Errors
+#### 发现错误
 
-If the Identity Provider is misconfigured or unreachable, registration will fail with a structured error.
+若身份提供者配置错误或无法访问，注册将失败并返回结构化错误：
 
-| Error Code | Meaning |
-|------------|---------|
-| `issuer_mismatch` | The IdP's discovery document reports a different `issuer` than the one you configured |
-| `discovery_incomplete` | Required fields (`authorization_endpoint`, `token_endpoint`, `jwks_uri`) are missing |
-| `discovery_not_found` | The discovery document endpoint returned 404 |
-| `discovery_timeout` | The IdP did not respond within the timeout window (default: 10 seconds) |
-| `discovery_invalid_url` | The discovery URL is malformed or uses an unsupported protocol |
-| `discovery_untrusted_origin` | The discovery URL or one of the URLs discovered as part of this process was not trusted by your app's trusted origins configuration |
-| `discovery_invalid_json` | The discovery response is empty or not valid JSON |
-| `unsupported_token_auth_method` | The IdP only supports token auth methods that Better Auth doesn't support |
+| 错误代码                 | 含义                                                           |
+|--------------------------|----------------------------------------------------------------|
+| `issuer_mismatch`        | IdP 的发现文档中 `issuer` 与您配置的不符                       |
+| `discovery_incomplete`   | 缺少必要字段（如 `authorization_endpoint`、`token_endpoint`、`jwks_uri`） |
+| `discovery_not_found`    | 发现文档地址返回 404                                            |
+| `discovery_timeout`      | IdP 超时（默认 10 秒）                                          |
+| `discovery_invalid_url`  | 发现 URL 格式错误或使用不支持的协议                             |
+| `discovery_untrusted_origin` | 发现 URL 或其中解析的 URL 不在您应用的 trustedOrigins 中      |
+| `discovery_invalid_json` | 发现响应为空或非有效 JSON                                       |
+| `unsupported_token_auth_method` | IdP 支持的 token 认证方式不被支持                            |
 
-**Supported token auth methods:**
+**支持的 token 认证方法：**
 - `client_secret_basic`
 - `client_secret_post`
 
 <Callout type="warning">
-If your IdP advertises only unsupported methods (e.g., `private_key_jwt`, `tls_client_auth`, or `"none"` for public clients), you can explicitly override the method:
+如果您的 IdP 只支持不被支持的认证方式（如 `private_key_jwt`、`tls_client_auth`，或者是公用客户端的 `"none"`），您可以显式覆盖：
 
 ```ts
 oidcConfig: {
     clientId: "your-client-id",
     clientSecret: "your-client-secret",
-    tokenEndpointAuthentication: "client_secret_basic", // Override discovery
+    tokenEndpointAuthentication: "client_secret_basic", // 覆盖发现
 }
 ```
 
-This is especially common with mock OIDC servers or development IdPs that only advertise `"none"` as the supported method.
+此问题常见于模拟 OIDC 服务或开发用 IdP，只支持 `"none"`。
 </Callout>
 
-#### Summary
+#### 总结
 
-- Better Auth automatically performs OIDC discovery at registration time
-- Most endpoint settings in `oidcConfig` become optional
-- Explicit user configuration always overrides discovery
-- Registration fails fast if the IdP is misconfigured
-- Discovery errors are structured and well-defined
-- Public-client IdPs or mock servers may require overriding `tokenEndpointAuthentication`
+- Better Auth 会在注册时自动进行 OIDC 发现
+- 大多数 `oidcConfig` 端点设置变为可选
+- 显式配置永远覆盖发现结果
+- IdP 配置错误时注册会快速失败
+- 发现错误结构清晰明确定义
+- 公用客户端 IdP 或模拟服务器可能需要覆盖 `tokenEndpointAuthentication`
 
-### Register a SAML Provider
+### 注册 SAML 提供者
 
-To register a SAML provider, use the `registerSSOProvider` endpoint with SAML configuration details. The provider will act as a Service Provider (SP) and integrate with your Identity Provider (IdP).
+使用带有 SAML 配置的 `registerSSOProvider` 接口注册 SAML 提供者。该提供者作为服务提供者（SP）与您的身份提供者（IdP）集成。
 
 <Tabs items={["client", "server"]}>
     <Tab value="client">
@@ -434,13 +432,13 @@ await auth.api.registerSSOProvider({
     </Tab>
 </Tabs>
 
-### IdP-Initiated SSO
+### IdP 发起的 SSO
 
- For IdP-initiated flows (e.g., via Okta dashboard), your framework may require an explicit route handler to manage the redirect if the default handler doesn't support the `GET` request following the SAML POST.
+对于 IdP 发起的流程（例如 Okta 仪表盘），如果您的框架默认处理不支持 SAML POST 后的 `GET` 请求，可能需要显式创建路由处理器。
 
- <Tabs items={["next-js-app-router"]}>
+<Tabs items={["next-js-app-router"]}>
    <Tab value="next-js-app-router">
-     Create this file to prevent 404 errors:
+     创建此文件以避免 404 错误：
 
      ```ts title="app/api/auth/sso/saml2/callback/[providerId]/route.ts"
      import { auth } from "@/lib/auth";
@@ -451,22 +449,22 @@ await auth.api.registerSSOProvider({
      }
 
      export async function GET(req: Request) {
-         // Required: IdP-initiated flows redirect to this URL after POST
+         // 必需：IdP 发起的流程会在 POST 后重定向到此 URL
          return NextResponse.redirect(new URL("/", req.url));
      }
      ```
    </Tab>
 </Tabs>
 
-### Get Service Provider Metadata
+### 获取服务提供者元数据
 
-For SAML providers, you can retrieve the Service Provider metadata XML that needs to be configured in your Identity Provider:
+对于 SAML 提供者，您可以获取需配置至 IdP 的服务提供者（SP）元数据 XML：
 
 ```ts title="get-sp-metadata.ts"
 const response = await auth.api.spMetadata({
     query: {
         providerId: "saml-provider",
-        format: "xml" // or "json"
+        format: "xml" // 可选 "xml" 或 "json"
     }
 });
 
@@ -474,11 +472,11 @@ const metadataXML = await response.text();
 console.log(metadataXML);
 ```
 
-### Sign In with SSO
+### 使用 SSO 登录
 
-To sign in with an SSO provider, you can call `signIn.sso`
+调用 `signIn.sso` 即可使用 SSO 提供者登录。
 
-You can sign in using the email with domain matching:
+您可以用带域名的邮箱登录：
 
 ```ts title="sign-in.ts"
 import { authClient } from "@/lib/auth-client"
@@ -489,7 +487,7 @@ const res = await authClient.signIn.sso({
 });
 ```
 
-or you can specify the domain:
+或者您可以单独指定域名：
 
 ```ts title="sign-in-domain.ts"
 import { authClient } from "@/lib/auth-client"
@@ -500,7 +498,7 @@ const res = await authClient.signIn.sso({
 });
 ```
 
-You can also sign in using the organization slug if a provider is associated with an organization:
+如果提供者与组织关联，还可以用组织 slug 登录：
 
 ```ts title="sign-in-org.ts"
 import { authClient } from "@/lib/auth-client"
@@ -511,7 +509,7 @@ const res = await authClient.signIn.sso({
 });
 ```
 
-Alternatively, you can sign in using the provider's ID:
+也可以使用提供者 ID 登录：
 
 ```ts title="sign-in-provider-id.ts"
 import { authClient } from "@/lib/auth-client"
@@ -522,7 +520,7 @@ const res = await authClient.signIn.sso({
 });
 ```
 
-Optionally, you can pass a login hint (for example, an email address or another identifier) to prefill or direct the identity provider:
+可选地，传递登录提示（例如邮箱或其他标识符）用于预填或引导身份提供者：
 
 ```ts title="sign-in-with-login-hint.ts"
 import { authClient } from "@/lib/auth-client"
@@ -534,7 +532,7 @@ const res = await authClient.signIn.sso({
 });
 ```
 
-To use the server API you can use `signInSSO`
+使用服务端 API 可调用 `signInSSO`：
 
 ```ts title="sign-in-org.ts"
 import { authClient } from "@/lib/auth-client"
@@ -547,58 +545,59 @@ const res = await auth.api.signInSSO({
 });
 ```
 
-#### Full method
+#### 完整方法
 
 <APIMethod path="/sign-in/sso" method="POST">
 ```ts
 type signInSSO = {
     /**
-     * The email address to sign in with. This is used to identify the issuer to sign in with. It's optional if the issuer is provided. 
+     * 用于登录的邮箱，用以识别登录的发行者。若 issuer 已提供，该字段可选。
      */
     email?: string = "john@example.com"
     /**
-     * The slug of the organization to sign in with. 
+     * 组织的标识 slug。
      */
     organizationSlug?: string = "example-org"
     /**
-     * The ID of the provider to sign in with. This can be provided instead of email or issuer. 
+     * 用于登录的提供者 ID，可替代 email 或 issuer。
      */
     providerId?: string = "example-provider"
     /**
-     * The domain of the provider. 
+     * 提供者的域名。
      */
     domain?: string = "example.com"
     /**
-     * The URL to redirect to after login. 
+     * 登录后重定向的 URL。
      */
     callbackURL: string = "https://example.com/callback"
     /**
-     * The URL to redirect to after login. 
+     * 登录失败时重定向的 URL。
      */
     errorCallbackURL?: string = "https://example.com/callback"
     /**
-     * The URL to redirect to after login if the user is new. 
+     * 用户是新用户时重定向的 URL。
      */
     newUserCallbackURL?: string = "https://example.com/new-user"
     /**
-     * Scopes to request from the provider. 
+     * 请求的权限范围。
      */
     scopes?: string[] = ["openid", "email", "profile", "offline_access"]
     /**
-     * Login hint to send to the identity provider (e.g., email or identifier). 
+     * 发送给身份提供者的登录提示（例如邮箱或标识符）。
      */
     loginHint?: string = "user@example.com"
     /**
-     * Explicitly request sign-up. Useful when disableImplicitSignUp is true for this provider. 
+     * 显式请求注册。若该提供者禁用了隐式注册，则需要设置为 true。
      */
     requestSignUp?: boolean = true
 }
 ```
 </APIMethod>
 
-Note: If email is provided and loginHint is not specified, email will be sent as the login_hint to OIDC providers automatically. SAML flows do not support login_hint.
+注意：若提供了 email 且未指定 loginHint，email 将自动作为登录提示发送给 OIDC 提供者。SAML 流程不支持 loginHint。
 
-When a user is authenticated, if the user does not exist, the user will be provisioned using the `provisionUser` function. If the organization provisioning is enabled and a provider is associated with an organization, the user will be added to the organization.
+用户认证成功后，如用户不存在，会使用 `provisionUser` 函数创建用户。
+若启用了组织自动添加且提供者关联了组织，用户也将被自动添加至该组织。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -608,13 +607,13 @@ const auth = betterAuth({
     plugins: [
         sso({
             provisionUser: async (user) => {
-                // provision user
+                // 用户预置逻辑
             },
             organizationProvisioning: {
                 disabled: false,
                 defaultRole: "member",
                 getRole: async (user) => {
-                    // get role if needed
+                    // 需要时获取角色
                 },
             },
         }),
@@ -622,19 +621,19 @@ const auth = betterAuth({
 });
 ```
 
-## Provisioning
+## 预置（Provisioning）
 
-The SSO plugin provides powerful provisioning capabilities to automatically set up users and manage their organization memberships when they sign in through SSO providers.
+SSO 插件提供强大的预置功能，可在用户通过 SSO 登录时自动设置用户并管理其组织成员身份。
 
-### User Provisioning
+### 用户预置
 
-User provisioning allows you to run custom logic whenever a user signs in through an SSO provider. This is useful for:
+用户预置允许您在用户通过 SSO 登录时执行自定义逻辑，适用于：
 
-- Setting up user profiles with additional data from the SSO provider
-- Synchronizing user attributes with external systems
-- Creating user-specific resources
-- Logging SSO sign-ins
-- Updating user information from the SSO provider
+- 使用 SSO 提供者数据设置用户资料
+- 同步用户属性到外部系统
+- 创建用户专属资源
+- 记录 SSO 登录事件
+- 更新用户信息
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -644,7 +643,7 @@ const auth = betterAuth({
     plugins: [
         sso({
             provisionUser: async ({ user, userInfo, token, provider }) => {
-                // Update user profile with SSO data
+                // 用 SSO 数据更新用户资料
                 await updateUserProfile(user.id, {
                     department: userInfo.attributes?.department,
                     jobTitle: userInfo.attributes?.jobTitle,
@@ -652,13 +651,13 @@ const auth = betterAuth({
                     lastSSOLogin: new Date(),
                 });
 
-                // Create user-specific resources
+                // 创建用户专属工作区
                 await createUserWorkspace(user.id);
 
-                // Sync with external systems
+                // 与 CRM 同步用户
                 await syncUserWithCRM(user.id, userInfo);
 
-                // Log the SSO sign-in
+                // 记录 SSO 登录事件
                 await auditLog.create({
                     userId: user.id,
                     action: 'sso_signin',
@@ -674,21 +673,22 @@ const auth = betterAuth({
 });
 ```
 
-The `provisionUser` function receives:
-- **user**: The user object from the database
-- **userInfo**: User information from the SSO provider (includes attributes, email, name, etc.)
-- **token**: OAuth2 tokens (for OIDC providers) - may be undefined for SAML
-- **provider**: The SSO provider configuration
+`provisionUser` 函数接收的参数：
 
-### Organization Provisioning
+- **user**：数据库中的用户对象
+- **userInfo**：SSO 提供者返回的用户信息（包含属性、邮箱、姓名等）
+- **token**：OAuth2 token（仅 OIDC 提供者，SAML 可能未定义）
+- **provider**：SSO 提供者配置
 
-Organization provisioning automatically manages user memberships in organizations when SSO providers are linked to specific organizations. This is particularly useful for:
+### 组织预置
 
-- Enterprise SSO where each company/domain maps to an organization
-- Automatic role assignment based on SSO attributes
-- Managing team memberships through SSO
+组织预置用于自动管理用户在组织中的权限，当 SSO 提供者关联到特定组织时特别有用，适合于：
 
-#### Basic Organization Provisioning
+- 企业 SSO 场景，一个公司/域对应一个组织
+- 基于 SSO 属性自动角色分配
+- 通过 SSO 管理团队成员身份
+
+#### 基础组织预置
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -698,15 +698,15 @@ const auth = betterAuth({
     plugins: [
         sso({
             organizationProvisioning: {
-                disabled: false,           // Enable org provisioning
-                defaultRole: "member",     // Default role for new members
+                disabled: false,           // 开启组织预置
+                defaultRole: "member",     // 新成员默认角色
             },
         }),
     ],
 });
 ```
 
-#### Advanced Organization Provisioning with Custom Roles
+#### 进阶组织预置与自定义角色
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -719,23 +719,23 @@ const auth = betterAuth({
                 disabled: false,
                 defaultRole: "member",
                 getRole: async ({ user, userInfo, provider }) => {
-                    // Assign roles based on SSO attributes
+                    // 根据 SSO 属性分配角色
                     const department = userInfo.attributes?.department;
                     const jobTitle = userInfo.attributes?.jobTitle;
                     
-                    // Admins based on job title
+                    // 基于职位判断管理员
                     if (jobTitle?.toLowerCase().includes('manager') || 
                         jobTitle?.toLowerCase().includes('director') ||
                         jobTitle?.toLowerCase().includes('vp')) {
                         return "admin";
                     }
                     
-                    // Special roles for IT department
+                    // IT 部门特殊角色
                     if (department?.toLowerCase() === 'it') {
                         return "admin";
                     }
                     
-                    // Default to member for everyone else
+                    // 其它默认成员权限
                     return "member";
                 },
             },
@@ -744,9 +744,9 @@ const auth = betterAuth({
 });
 ```
 
-#### Linking SSO Providers to Organizations
+#### 将 SSO 提供者关联至组织
 
-When registering an SSO provider, you can link it to a specific organization:
+注册 SSO 提供者时可指定所属组织：
 
 ```ts title="register-org-provider.ts"
 import { auth } from "@/lib/auth"
@@ -756,43 +756,43 @@ await auth.api.registerSSOProvider({
         providerId: "acme-corp-saml",
         issuer: "https://acme-corp.okta.com",
         domain: "acmecorp.com",
-        organizationId: "org_acme_corp_id", // Link to organization
+        organizationId: "org_acme_corp_id", // 关联组织
         samlConfig: {
-            // SAML configuration...
+            // SAML 配置...
         },
     },
-    headers: await headers() // headers containing the user's session token
+    headers: await headers() // 包含用户会话令牌的头
 });
 ```
 
-Now when users from `acmecorp.com` sign in through this provider, they'll automatically be added to the "Acme Corp" organization with the appropriate role.
+来自 `acmecorp.com` 的用户登录此提供者时，自动加入 Acme Corp 组织并分配对应角色。
 
-#### Self-Service SSO Dashboard
+#### 自助 SSO 管理面板
 
-If you're using [Better Auth Infrastructure](https://dash.better-auth.com/sign-in), you get access to a self-service SSO dashboard that simplifies onboarding enterprise customers. Instead of manually exchanging SAML metadata and certificates, organization admins can generate a shareable onboarding link that guides enterprise IT teams through configuring their identity provider.
+使用 [Better Auth Infrastructure](https://dash.better-auth.com/sign-in) 可访问自助 SSO 面板，简化企业客户接入流程。组织管理员可生成分享链接，指导企业 IT 配置身份提供者，无需手动交换 SAML 元数据和证书。
 
-The dashboard is available at:
+地址：
 
 ```
 https://dash.better-auth.com/[project]/organization/[orgId]/enterprise
 ```
 
-From the dashboard you can:
+面板功能：
 
-- **Generate onboarding links** for enterprise customers to self-configure their SAML provider
-- **Monitor SSO connection status** for each organization
-- **Manage provider configurations** without writing code
+- **生成企业客户上手共享链接**
+- **监控各组织 SSO 连接状态**
+- **无代码管理提供者配置**
 
-This eliminates the back-and-forth typically required when setting up enterprise SSO, reducing onboarding time from days to minutes.
+极大减少企业 SSO 上线时间，从数天缩短至几分钟。
 
-#### Multiple Organizations Example
+#### 多组织示例
 
-You can set up multiple SSO providers for different organizations:
+可为多个组织配置不同 SSO 提供者：
 
 ```ts title="multi-org-setup.ts"
 import { auth } from "@/lib/auth"
 
-// Acme Corp SAML provider
+// Acme Corp SAML 提供者
 await auth.api.registerSSOProvider({
     body: {
         providerId: "acme-corp",
@@ -804,7 +804,7 @@ await auth.api.registerSSOProvider({
     headers,
 });
 
-// TechStart OIDC provider
+// TechStart OIDC 提供者
 await auth.api.registerSSOProvider({
     body: {
         providerId: "techstart-google",
@@ -817,57 +817,60 @@ await auth.api.registerSSOProvider({
 });
 ```
 
-#### Organization Provisioning Flow
+#### 组织预置流程
 
-1. **User signs in** through an SSO provider linked to an organization
-2. **User is authenticated** and either found or created in the database
-3. **Organization membership is checked** - if the user isn't already a member of the linked organization
-4. **Role is determined** using either the `defaultRole` or `getRole` function
-5. **User is added** to the organization with the determined role
-6. **User provisioning runs** (if configured) for additional setup
+1. 用户使用关联组织的 SSO 提供者登录
+2. 用户认证成功，在数据库中找到或创建
+3. 检查组织成员身份 — 如未加入关联组织
+4. 通过 `defaultRole` 或 `getRole` 函数确定角色
+5. 将用户加入组织并赋予角色
+6. 如配置，执行用户预置进一步设置
 
-### Provisioning Best Practices
+### 预置最佳实践
 
-#### 1. Idempotent Operations
-Make sure your provisioning functions can be safely run multiple times:
+#### 1. 幂等操作
+
+确保预置操作可多次安全执行：
 
 ```ts
 provisionUser: async ({ user, userInfo }) => {
-    // Check if already provisioned
+    // 判断是否已预置
     const existingProfile = await getUserProfile(user.id);
     if (!existingProfile.ssoProvisioned) {
         await createUserResources(user.id);
         await markAsProvisioned(user.id);
     }
     
-    // Always update attributes (they might change)
+    // 总是更新属性（可能发生变更）
     await updateUserAttributes(user.id, userInfo.attributes);
 },
 ```
 
-#### 2. Error Handling
-Handle errors gracefully to avoid blocking user sign-in:
+#### 2. 错误处理
+
+优雅处理错误，避免阻碍登录流程：
 
 ```ts
 provisionUser: async ({ user, userInfo }) => {
     try {
         await syncWithExternalSystem(user, userInfo);
     } catch (error) {
-        // Log error but don't throw - user can still sign in
-        console.error('Failed to sync user with external system:', error);
+        // 记录错误但不抛出 — 用户仍能登录
+        console.error('同步外部系统失败:', error);
         await logProvisioningError(user.id, error);
     }
 },
 ```
 
-#### 3. Conditional Provisioning
-Only run certain provisioning steps when needed:
+#### 3. 条件预置
+
+仅在满足条件时执行部分预置步骤：
 
 ```ts
 organizationProvisioning: {
     disabled: false,
     getRole: async ({ user, userInfo, provider }) => {
-        // Only process role assignment for certain providers
+        // 仅为特定提供者处理角色分配
         if (provider.providerId.includes('enterprise')) {
             return determineEnterpriseRole(userInfo);
         }
@@ -876,10 +879,9 @@ organizationProvisioning: {
 },
 ```
 
-## SAML Configuration
+## SAML 配置
 
-
-### Default SSO Provider
+### 默认 SSO 提供者
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -890,7 +892,7 @@ const auth = betterAuth({
         sso({
             defaultSSO: [
                 {
-                    providerId: "default-saml", // Provider ID for the default provider
+                    providerId: "default-saml", // 默认提供者 ID
                     domain: "http://your-app.com",
                     samlConfig: {
                         issuer: "https://your-app.com",
@@ -909,30 +911,29 @@ const auth = betterAuth({
 });
 ```
 
-The defaultSSO provider will be used when:
-1. No matching provider is found in the database
+当数据库中无匹配提供者时，使用 defaultSSO。
 
-This allows you to test SAML authentication without setting up providers in the database. The defaultSSO provider supports all the same configuration options as regular SAML providers.
+这允许您无需数据库配置便测试 SAML 认证。defaultSSO 支持与正常 SAML 提供者相同的配置选项。
 
-### Service Provider Configuration
+### 服务提供者配置
 
-When registering a SAML provider, you need to provide Service Provider (SP) metadata configuration:
+注册 SAML 提供者时须提供服务提供者（SP）元数据：
 
-- **metadata**: XML metadata for the Service Provider
-- **binding**: The binding method, typically "post" or "redirect"
-- **privateKey**: Private key for signing AuthnRequests
-- **privateKeyPass**: Password for the private key
-- **isAssertionEncrypted**: Whether assertions should be encrypted
-- **encPrivateKey**: Private key for decryption (if encryption is enabled)
-- **encPrivateKeyPass**: Password for the encryption private key
+- **metadata**: 服务提供者的 XML 元数据
+- **binding**: 绑定方式，一般为 "post" 或 "redirect"
+- **privateKey**: 用于签名 AuthnRequests 的私钥
+- **privateKeyPass**: 私钥密码
+- **isAssertionEncrypted**: 是否加密断言
+- **encPrivateKey**: 解密用私钥（若启用加密）
+- **encPrivateKeyPass**: 解密私钥密码
 
-### Signed AuthnRequests
+### 签名 AuthnRequests
 
-Some enterprise IdPs (Okta, Azure AD, ADFS) require signed AuthnRequests. Enable this with:
+部分企业 IdP（如 Okta、Azure AD、ADFS）要求签名的 AuthnRequests。可通过：
 
 ```ts
 samlConfig: {
-    // ... other config
+    // ... 其他配置
     authnRequestsSigned: true,
     spMetadata: {
         privateKey: "-----BEGIN RSA PRIVATE KEY-----\n...",
@@ -940,30 +941,30 @@ samlConfig: {
 }
 ```
 
-The SP metadata endpoint will automatically include `AuthnRequestsSigned="true"` when enabled.
+启用后，SP 元数据端点自动包含 `AuthnRequestsSigned="true"`。
 
-### Identity Provider Configuration
+### 身份提供者配置
 
-You also need to provide Identity Provider (IdP) configuration:
+还须提供身份提供者（IdP）配置：
 
-- **metadata**: XML metadata from your Identity Provider
-- **privateKey**: Private key for the IdP communication (optional)
-- **privateKeyPass**: Password for the IdP private key (if encrypted)
-- **isAssertionEncrypted**: Whether assertions from IdP are encrypted
-- **encPrivateKey**: Private key for IdP assertion decryption
-- **encPrivateKeyPass**: Password for the IdP decryption key
+- **metadata**: IdP 的 XML 元数据
+- **privateKey**: IdP 通信私钥（可选）
+- **privateKeyPass**: 私钥密码（若加密）
+- **isAssertionEncrypted**: IdP 的断言是否加密
+- **encPrivateKey**: IdP 断言解密用私钥
+- **encPrivateKeyPass**: IdP 解密私钥密码
 
-### SAML Attribute Mapping
+### SAML 属性映射
 
-Configure how SAML attributes map to user fields:
+配置 SAML 属性与用户字段的映射：
 
 ```ts
 mapping: {
-    id: "nameID",           // Default: "nameID"
-    email: "email",         // Default: "email" or "nameID"
-    name: "displayName",    // Default: "displayName"
-    firstName: "givenName", // Default: "givenName"
-    lastName: "surname",    // Default: "surname"
+    id: "nameID",           // 默认: "nameID"
+    email: "email",         // 默认: "email" 或 "nameID"
+    name: "displayName",    // 默认: "displayName"
+    firstName: "givenName", // 默认: "givenName"
+    lastName: "surname",    // 默认: "surname"
     extraFields: {
         department: "department",
         role: "jobTitle",
@@ -972,25 +973,25 @@ mapping: {
 }
 ```
 
-## SAML Security
+## SAML 安全
 
-The SSO plugin includes optional security features to protect against common SAML vulnerabilities.
+此插件包括可选的安全特性，防护常见的 SAML 漏洞。
 
-### AuthnRequest / InResponseTo Validation
+### AuthnRequest / InResponseTo 校验
 
-You can enable InResponseTo validation for SP-initiated SAML flows. When enabled, the plugin tracks AuthnRequest IDs and validates the `InResponseTo` attribute in SAML responses. This prevents:
+可启用 SP 发起的 SAML 流程中的 InResponseTo 校验。启用后插件会跟踪 AuthnRequest ID 并验证 SAML 响应的 `InResponseTo` 属性，以防范：
 
-- **Unsolicited responses**: Responses not triggered by a legitimate login request
-- **Replay attacks**: Reusing old SAML responses
-- **Cross-provider injection**: Responses meant for a different provider
+- **未请求的响应**：未经合法登录请求触发的响应
+- **重放攻击**：重复利用旧响应
+- **跨提供者注入**：针对其它提供者的响应注入
 
 <Callout type="info">
-This feature is **opt-in** to ensure backward compatibility. Enable it explicitly for enhanced security.
+此特性为**可选，需显式启用**，保证向后兼容。
 </Callout>
 
-#### Enabling Validation (Single Instance)
+#### 启用校验（单实例）
 
-For single-instance deployments, enable validation with the built-in in-memory store:
+单实例部署可用内存存储启用校验：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -1000,84 +1001,86 @@ const auth = betterAuth({
     plugins: [
         sso({
             saml: {
-                // Enable InResponseTo validation
+                // 启用 InResponseTo 校验
                 enableInResponseToValidation: true,
-                // Optionally reject IdP-initiated SSO (stricter security)
+                // 可选：禁止 IdP 发起的 SSO（更严安全）
                 allowIdpInitiated: false,
-                // Custom TTL for AuthnRequest validity (default: 5 minutes)
-                requestTTL: 10 * 60 * 1000, // 10 minutes
+                // AuthnRequest 有效期（默认 5 分钟）
+                requestTTL: 10 * 60 * 1000, // 10 分钟
             },
         }),
     ],
 });
 ```
 
-#### Options
+#### 选项说明
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `enableInResponseToValidation` | `boolean` | `false` | Enable InResponseTo validation for SP-initiated flows. |
-| `allowIdpInitiated` | `boolean` | `true` | Allow IdP-initiated SSO (responses without InResponseTo). Set to `false` for stricter security. Only applies when validation is enabled. |
-| `requestTTL` | `number` | `300000` (5 min) | Time-to-live for AuthnRequest records in milliseconds. Requests older than this will be rejected. |
+| 选项                      | 类型      | 默认     | 描述                                          |
+|---------------------------|-----------|----------|-----------------------------------------------|
+| `enableInResponseToValidation` | `boolean` | `false`  | 启用 SP 发起 SAML 流程的 InResponseTo 校验。         |
+| `allowIdpInitiated`        | `boolean` | `true`   | 允许 IdP 发起的 SSO（无 InResponseTo 的响应）。设置为 `false` 启用更严格安全，仅在校验启用时有效。 |
+| `requestTTL`               | `number`  | `300000` | AuthnRequest 记录 TTL，单位毫秒。仅在校验启用时生效。     |
 
-#### Error Handling
+#### 错误处理
 
-When InResponseTo validation fails, users are redirected with an error query parameter:
+校验失败时用户会被重定向并附带错误参数：
 
-- `?error=invalid_saml_response&error_description=Unknown+or+expired+request+ID` — The request ID was not found or has expired
-- `?error=invalid_saml_response&error_description=Provider+mismatch` — The response was meant for a different provider
-- `?error=unsolicited_response&error_description=IdP-initiated+SSO+not+allowed` — IdP-initiated SSO is disabled
+- `?error=invalid_saml_response&error_description=Unknown+or+expired+request+ID` — 请求 ID 未找到或已过期
+- `?error=invalid_saml_response&error_description=Provider+mismatch` — 响应对应其它提供者
+- `?error=unsolicited_response&error_description=IdP-initiated+SSO+not+allowed` — 禁止 IdP 发起的 SSO
 
-### Assertion Replay Protection
+### 断言重放保护
 
-The SSO plugin includes assertion replay protection to prevent attackers from capturing and resubmitting valid SAML responses. Each SAML Assertion ID is tracked and rejected if reused.
+插件包含断言重放保护，防止攻击者捕获并重新提交有效的 SAML 响应。每个断言 ID 会被追踪，重复使用将被拒绝。
 
 <Callout type="info">
-Replay protection is **always enabled**. This is a critical security feature that prevents attackers from reusing intercepted SAML responses.
+重放保护**始终启用**。此为关键安全特性，防止已截获的 SAML 响应被重用。
 </Callout>
 
-#### How It Works
+#### 工作原理
 
-1. When a SAML response is received, the Assertion ID is extracted from the XML
-2. The system checks if this Assertion ID has been seen before
-3. If it's a new assertion, it's stored in the database until its `NotOnOrAfter` expiration
-4. If it's a duplicate (replay attack), the request is rejected
+1. 接收 SAML 响应时，从 XML 中提取断言 ID
+2. 系统检查该 ID 是否出现过
+3. 新断言时，存储 ID 直到其 `NotOnOrAfter` 到期
+4. 重复断言（重放攻击）则拒绝
 
-**Both SAML endpoints are protected:**
+**两个 SAML 端点受保护：**
 - `/sso/saml2/callback/:providerId`
 - `/sso/saml2/sp/acs/:providerId`
 
 <Callout type="info">
-Replay protection uses the database verification table, so it works correctly in multi-instance deployments without additional configuration.
+重放保护使用数据库验证表，多实例部署可正常支持，无需额外配置。
 </Callout>
 
-#### Error Handling
+#### 错误处理
 
-When a replay attack is detected, users are redirected with an error:
+检测到重放攻击时重定向并附加错误：
 
-- `?error=replay_detected&error_description=SAML+assertion+has+already+been+used` — The assertion ID was already used
+- `?error=replay_detected&error_description=SAML+assertion+has+already+been+used` — 断言 ID 已经使用过
 
-### Timestamp Validation
+### 时间戳校验
 
-The SSO plugin validates SAML assertion timestamps (`NotBefore` and `NotOnOrAfter`) to prevent acceptance of expired or future-dated assertions. This validation includes a configurable clock skew tolerance to account for time differences between servers.
+插件验证 SAML 断言的时间戳（`NotBefore` 和 `NotOnOrAfter`），避免接收过期或未来时间的断言。验证包含可配置的时钟偏差，以兼容 IdP 与 SP 服务器间的时间差。
 
-#### SAML Specification Background
+#### SAML 规范背景
 
-According to the **SAML 2.0 Core specification**, `NotBefore` and `NotOnOrAfter` attributes are **optional**. However, the widely-adopted **SAML2Int** (SAML V2.0 Implementation Profile for Federation Interoperability) specification **requires** these timestamps:
+根据 **SAML 2.0 Core 规范**，`NotBefore` 和 `NotOnOrAfter` 是**可选**属性，但广泛采纳的 **SAML2Int**（联邦互操作实现规范）要求：
 
-> "The Identity Provider MUST include a `<saml:Conditions>` element. Conditions restricting the period when the assertion is valid, the `@NotBefore` and `@NotOnOrAfter` MUST be included."
+> “身份提供者必须包含 `<saml:Conditions>` 元素，且必须包括限制断言有效期的 `@NotBefore` 和 `@NotOnOrAfter`。”
 
-Better Auth provides flexibility to support both:
-- **Default behavior**: Accepts assertions without timestamps (SAML 2.0 Core compliant) but logs a warning
-- **Strict mode**: Rejects assertions without timestamps (SAML2Int compliant)
+Better Auth 支持灵活配置：
 
-#### How It Works
+- **默认行为**：接受不含时间戳断言（符合 SAML 2.0 Core），但记录警告
+- **严格模式**：拒绝无时间戳断言（符合 SAML2Int）
 
-For each SAML assertion:
-- **NotBefore**: The assertion is rejected if current time is before `NotBefore - clockSkew`
-- **NotOnOrAfter**: The assertion is rejected if current time is after `NotOnOrAfter + clockSkew`
+#### 工作流程
 
-#### Configuration
+对于每个断言：
+
+- **NotBefore**：当前时间早于 `NotBefore - clockSkew` 则拒绝
+- **NotOnOrAfter**：当前时间晚于 `NotOnOrAfter + clockSkew` 则拒绝
+
+#### 配置示例
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -1087,9 +1090,9 @@ const auth = betterAuth({
     plugins: [
         sso({
             saml: {
-                // Clock skew tolerance (default: 5 minutes)
+                // 时钟偏差容忍（默认 5 分钟）
                 clockSkew: 5 * 60 * 1000,
-                // Require timestamps in assertions (default: false)
+                // 是否强制要求断言必须有时间戳（默认 false）
                 requireTimestamps: false,
             },
         }),
@@ -1097,71 +1100,71 @@ const auth = betterAuth({
 });
 ```
 
-#### Options
+#### 选项说明
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `clockSkew` | `number` | `300000` (5 min) | Clock skew tolerance in milliseconds. Allows for time differences between IdP and SP servers. |
-| `requireTimestamps` | `boolean` | `false` | When `true`, assertions without `NotBefore`/`NotOnOrAfter` conditions are rejected. When `false`, they are accepted but a warning is logged. |
+| 选项               | 类型      | 默认      | 描述 |
+|---------------------|-----------|-----------|---------------|
+| `clockSkew`         | `number`  | `300000`（5 分钟） | 时钟偏差容差，单位毫秒。允许 IdP 与 SP 服务器时间微小差异。 |
+| `requireTimestamps` | `boolean` | `false`   | 若为 `true`，无时间戳断言会被拒绝；若为 `false`，接受但记录警告。 |
 
-#### When to Enable `requireTimestamps`
+#### 何时启用 `requireTimestamps`
 
 <Callout type="info">
-**Recommendation**: Enable `requireTimestamps: true` for enterprise and high-security deployments.
+**建议**：企业及高安全部署启用 `requireTimestamps: true`。
 </Callout>
 
-Enable `requireTimestamps: true` when:
-- Your IdP follows **SAML2Int** (most enterprise IdPs like Okta, Azure AD, OneLogin)
-- You need **SOC 2**, **ISO 27001**, or similar compliance
-- You want to prevent acceptance of malformed or test assertions
-- You're in a **production environment** with proper IdP configuration
+启用场景：
 
-Keep `requireTimestamps: false` (default) when:
-- Integrating with **legacy IdPs** that may not include timestamps
-- During **development/testing** with mock IdPs
-- You need **maximum compatibility** with various IdP implementations
+- IdP 遵从 **SAML2Int**（大多数企业 IdP 如 Okta、Azure AD、OneLogin）
+- 需要符合 **SOC 2**、**ISO 27001** 等合规要求
+- 防止接受畸形或测试断言
+- 生产环境且 IdP 配置正确
 
-#### Stricter Security (Enterprise/Production)
+默认关闭时适合：
 
-For enterprise environments following SAML2Int, configure stricter validation:
+- 集成遗留 IdP，可能不包含时间戳
+- 开发测试及模拟 IdP
+- 追求最大兼容性的场景
+
+#### 更严格的企业/生产环境配置
 
 ```ts title="auth.ts"
 sso({
     saml: {
-        clockSkew: 60 * 1000,      // 1 minute tolerance
-        requireTimestamps: true,   // Reject assertions without timestamps (SAML2Int)
+        clockSkew: 60 * 1000,      // 1 分钟容忍
+        requireTimestamps: true,   // 严格拒绝无时间戳断言（SAML2Int）
     },
 })
 ```
 
-#### Error Messages
+#### 错误提示
 
-- **"SAML assertion is not yet valid"** — Current time is before the `NotBefore` timestamp (minus clock skew)
-- **"SAML assertion has expired"** — Current time is after the `NotOnOrAfter` timestamp (plus clock skew)
-- **"SAML assertion missing required timestamp conditions"** — Assertion has no timestamps and `requireTimestamps` is enabled
+- **"SAML assertion is not yet valid"** — 当前时间早于 `NotBefore` 扣除偏差
+- **"SAML assertion has expired"** — 当前时间晚于 `NotOnOrAfter` 加上偏差
+- **"SAML assertion missing required timestamp conditions"** — 断言无时间戳且启用了强制校验
 
-### Algorithm Validation
+### 算法校验
 
-Better Auth validates SAML cryptographic algorithms and warns about deprecated ones (SHA-1, RSA 1.5, 3DES) by default.
+Better Auth 默认验证 SAML 加密算法，警告已废弃的算法（SHA-1、RSA 1.5、3DES）。
 
 ```ts title="auth.ts"
 sso({
     saml: {
         algorithms: {
-            // "warn" (default) | "reject" | "allow"
+            // "warn"（默认） | "reject" | "allow"
             onDeprecated: "warn",
         },
     },
 })
 ```
 
-| Value | Behavior |
-|-------|----------|
-| `"warn"` | Log warning, allow authentication (default) |
-| `"reject"` | Throw error, block authentication |
-| `"allow"` | Silent, no validation |
+| 取值    | 行为                             |
+|---------|--------------------------------|
+| `"warn"`  | 记录警告，允许认证（默认）            |
+| `"reject"`| 抛错，阻止认证                        |
+| `"allow"` | 静默，不做验证                      |
 
-For strict security (production):
+生产环境严格配置示例：
 
 ```ts title="auth.ts"
 sso({
@@ -1173,48 +1176,49 @@ sso({
 })
 ```
 
-#### Supported Algorithms
+#### 支持算法
 
-**Signature algorithms:**
-- `RSA-SHA256`, `RSA-SHA384`, `RSA-SHA512`
-- `ECDSA-SHA256`, `ECDSA-SHA384`, `ECDSA-SHA512`
+**签名算法：**
+- `RSA-SHA256`、`RSA-SHA384`、`RSA-SHA512`
+- `ECDSA-SHA256`、`ECDSA-SHA384`、`ECDSA-SHA512`
 
-**Digest algorithms:**
-- `SHA256`, `SHA384`, `SHA512`
+**摘要算法：**
+- `SHA256`、`SHA384`、`SHA512`
 
-**Deprecated (triggers warning/rejection):**
-- `RSA-SHA1` (signature)
-- `SHA1` (digest)
-- `RSA 1.5` (key encryption)
-- `3DES` (data encryption)
+**废弃（触发警告/拒绝）：**
+- `RSA-SHA1`（签名）
+- `SHA1`（摘要）
+- `RSA 1.5`（密钥加密）
+- `3DES`（数据加密）
 
-### Size Limits
+### 尺寸限制
 
-Better Auth enforces size limits on SAML payloads to protect against denial-of-service attacks via oversized XML.
+Better Auth 强制限制 SAML 负载大小，防止通过大型 XML 发起拒绝服务攻击。
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `maxResponseSize` | 256KB | Maximum SAML response size in bytes |
-| `maxMetadataSize` | 100KB | Maximum IdP metadata size in bytes |
+| 选项             | 默认值      | 描述                       |
+|------------------|-------------|----------------------------|
+| `maxResponseSize` | 256 KB      | SAML 响应最大大小（字节）       |
+| `maxMetadataSize` | 100 KB      | IdP 元数据最大大小（字节）       |
 
-#### Customizing Limits
+#### 自定义限制
 
 ```ts title="auth.ts"
 sso({
     saml: {
-        maxResponseSize: 512 * 1024, // 512KB for enterprise IdPs with large group claims
+        // 企业级 IdP 可能需要更大响应限制
+        maxResponseSize: 512 * 1024, // 512KB
         maxMetadataSize: 100 * 1024, // 100KB
     },
 })
 ```
 
 <Callout type="info">
-For true early rejection of oversized payloads (before they reach your application), configure size limits at your infrastructure level (nginx `client_max_body_size`, CDN settings, load balancer).
+若需真正早期拒绝超大负载（在请求到应用前），应在基础设施层面配置限流（如 nginx 的 `client_max_body_size`，CDN 设置，负载均衡器）。
 </Callout>
 
-## Shared Redirect URI
+## 共享重定向 URI
 
-By default, each OIDC provider gets its own callback URL (`/sso/callback/:providerId`). You can configure all providers to share a single redirect URI instead:
+默认每个 OIDC 提供者都有单独的回调 URL（`/sso/callback/:providerId`）。您可配置所有提供者共用单个回调 URI：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -1229,36 +1233,35 @@ const auth = betterAuth({
 });
 ```
 
-The value can be a relative path or a full URL:
+该值可为相对路径或完整 URL：
 
 ```ts
-// Relative path (appended to your baseURL)
+// 相对路径（追加到 baseURL）
 sso({ redirectURI: "/sso/callback" })
 
-// Full URL
+// 完整 URL
 sso({ redirectURI: "https://login.example.com/callback" })
 ```
 
-The provider ID is stored in the OAuth state so the callback can identify which provider initiated the flow.
+提供者 ID 会存储在 OAuth 状态中，以便回调时识别发起的提供者。
 
 <Callout type="info">
-When using a full URL, make sure it routes to your Better Auth instance.
+使用完整 URL 时，请确保能路由到您的 Better Auth 实例。
 </Callout>
 
 <Callout type="info">
-This option only affects OIDC providers. SAML providers already support custom callback URLs via `callbackUrl` in `samlConfig`.
+此选项仅影响 OIDC 提供者。SAML 提供者已通过 `samlConfig` 的 `callbackUrl` 支持自定义回调 URL。
 </Callout>
 
 <Callout type="info">
-Both the shared endpoint (`/sso/callback`) and the per-provider endpoints (`/sso/callback/:providerId`) are always registered for backward compatibility, so existing integrations continue to work regardless of this setting.
+共享端点（`/sso/callback`）和单独端点（`/sso/callback/:providerId`）始终同时注册，保持向后兼容，已有集成无影响。
 </Callout>
 
-## Domain verification
+## 域名验证
 
-Domain verification allows your application to automatically trust a new SSO provider
-by automatically validating ownership via the associated domain.
+域名验证让您的应用自动信任新的 SSO 提供者，通过关联域名自动验证所有权。
 
-When a provider's domain is verified, it is also trusted for **automatic account linking**. This means that if a user signs in with an SSO provider (OIDC or SAML) and an existing account with the same email exists, the accounts will be linked automatically — as long as the user's email domain matches the provider's verified domain.
+验证域名后，该域对应的提供者被允许 **自动账户关联**。即用户使用 SSO 登录且邮箱匹配已存在账户时，会自动关联两者，前提是用户邮箱的域名已通过验证。
 
 <Tabs items={["client", "server"]}>
     <Tab value="client">
@@ -1293,7 +1296,7 @@ const auth = betterAuth({
     </Tab>
 </Tabs>
 
-Once enabled, make sure you migrate the database schema (again).
+启用后请确保再次迁移数据库 schema。
 
 <Tabs items={["migrate", "generate"]}>
     <Tab value="migrate">
@@ -1308,221 +1311,215 @@ Once enabled, make sure you migrate the database schema (again).
     </Tab>
 </Tabs>
 
-See the [Schema](#if-you-have-enabled-domain-verification) section to add the fields manually.
+请参考 [Schema](#if-you-have-enabled-domain-verification) 部分手动添加字段。
 
-### Verify your domain
+### 验证您的域
 
-When domain verification is enabled, every new SSO provider will be untrusted at first.
-This means that new sign-ups or sign-ins will be allowed until the domain ownership has been verified.
+启用域名验证后，所有新注册的 SSO 提供者初始均为未信任状态。
+这意味着新用户注册或登录会被允许，直至完成域所有权验证。
 
-To verify your ownership over a domain, follow these steps:
+进行域名验证流程：
 
 <Steps>
     <Step>
-#### Acquire verification token
-When an SSO provider is registered, a **verification token** will be issued to the provider (it will be returned as part of the response).
-You can use this token to prove ownership over the domain.
+#### 获取验证令牌
+注册 SSO 提供者成功后，会返回一个**验证令牌**。
+您可以用该令牌证明您拥有该域名。
     </Step>
     <Step>
-#### Create `TXT` DNS record
-To do this, you'll need to add a `TXT` record to your domain's DNS settings:
+#### 添加 `TXT` DNS 记录
+需要在域名的 DNS 设置中添加一条 TXT 记录：
 
-    *   **Host:** `_better-auth-token-{your-provider-id}` (**Note:** An underscore is automatically prepended to follow DNS infrastructure subdomain conventions. The `better-auth-token` part can be customized through the `domainVerification.tokenPrefix` option)
-    *   **Value:** The verification token you were given.
+    *   **主机名**：`_better-auth-token-{您的-provider-id}`（**注意**：会自动加前导下划线以符合 DNS 子域规则，`better-auth-token` 可通过 `domainVerification.tokenPrefix` 自定义）
+    *   **记录值**：您获得的验证令牌
 
-**Save the record and wait for it to propagate.** This can take up to 48 hours, but it's usually much faster.
+**保存记录并等待生效（通常几分钟至 48 小时）。**
     </Step>
     <Step>
-#### Submit a validation request
-**Once the DNS record has propagated**, you can submit a validation request (See below)
+#### 提交验证请求
+**DNS 记录生效后**，即可提交验证请求（见下方）。
     </Step>
 </Steps>
 
-### Domain validation request
+### 域名验证请求
 
-Once you have configured your domain, you can use your `auth` instance to submit a validation request.
-This request will either result in a rejection (could not prove your ownership over the domain)
-or if the verification is successful, your SSO provider domain will be marked as verified.
+配置好 DNS 记录后，您可以通过 `auth` 实例提交域名验证请求。
+请求会判定所有权是否验证成功，验证完成则标记该 SSO 提供者对应域名为已验证。
 
 <APIMethod path="/sso/verify-domain" method="POST" requireSession>
 ```ts
 type verifyDomain = {
   /**
-  * The provider id
+  * 提供者 ID
   */
   providerId: string = "acme-corp"
 }
 ```
 </APIMethod>
 
-### Creating a new verification token
+### 申请新的验证令牌
 
-Every domain verification token will have a default expiry of 1 week since the moment it was issued
-or the moment when the SSO provider was registered.
+每个域名验证令牌默认有效期为 1 周（自颁发或注册时起）。
 
-After that time, the token will expire and cannot longer be used. When that happens,
-you can create a new verification token:
+令牌过期后无法使用，您可重新申请：
 
 <APIMethod path="/sso/request-domain-verification" method="POST" requireSession>
 ```ts
 type requestDomainVerification = {
   /**
-  * The provider id
+  * 提供者 ID
   */
   providerId: string = "acme-corp"
 }
 ```
 </APIMethod>
 
-### SAML Endpoints
+### SAML 端点
 
-The plugin automatically creates the following SAML endpoints:
+插件会自动创建以下 SAML 端点：
 
-- **SP Metadata**: `/api/auth/sso/saml2/sp/metadata?providerId={providerId}`
-- **SAML Callback**: `/api/auth/sso/saml2/callback/{providerId}` (supports both GET and POST)
+- **SP 元数据**：`/api/auth/sso/saml2/sp/metadata?providerId={providerId}`
+- **SAML 回调**：`/api/auth/sso/saml2/callback/{providerId}`（支持 GET 和 POST）
 
-### SAML Callback URL Configuration
+### SAML 回调 URL 配置
 
-The SAML callback endpoint (`/api/auth/sso/saml2/callback/{providerId}`) handles both **SP-initiated** and **IdP-initiated** SSO flows:
+SAML 回调端点 (`/api/auth/sso/saml2/callback/{providerId}`) 支持：
 
-- **SP-initiated**: User clicks "Sign in with SSO" in your app → redirects to IdP → IdP POSTs SAMLResponse to callback
-- **IdP-initiated**: User clicks app icon in IdP dashboard (Okta, Azure AD, etc.) → IdP POSTs SAMLResponse to callback
+- **SP 发起**：用户点击应用内“用 SSO 登录”→跳转 IdP→IdP 向回调端点 POST SAMLResponse
+- **IdP 发起**：用户在 IdP 仪表盘（Okta、Azure AD 等）点击应用图标→IdP 向回调端点 POST SAMLResponse
 
-**Important**: The `callbackUrl` in your SAML configuration should point to your application's destination URL (e.g., `/dashboard`), **not** the callback route itself. Better Auth automatically handles the callback route and redirects users to your specified `callbackUrl` after successful authentication.
+**重要**：您 SAML 配置中的 `callbackUrl` 应是用户登录后跳转的应用界面地址（例 `/dashboard`），**不要**指定回调路由自身。Better Auth 会自动处理回调，成功后重定向至 `callbackUrl`。
 
 ```ts
 samlConfig: {
-  callbackUrl: "/dashboard", // Correct - points to your app destination
-  // callbackUrl: "/api/auth/sso/saml2/callback/my-provider" // Incorrect - don't point to callback route
+  callbackUrl: "/dashboard", // 正确：指向应用终点
+  // callbackUrl: "/api/auth/sso/saml2/callback/my-provider" // 错误：不要指向回调接口
 }
 ```
 
-The callback route supports both GET and POST methods automatically, so you don't need to create any additional route handlers in your framework.
+回调路由自动支持 GET 和 POST，无需您额外创建路由处理。
 
 ## Schema
 
-The plugin requires additional fields in the `ssoProvider` table to store the provider's configuration.
+插件要求在 `ssoProvider` 表添加存储提供者配置的字段。
 
 <DatabaseTable
     fields={[
         {
-            name: "id", type: "string", description: "A database identifier", isRequired: true, isPrimaryKey: true,
+            name: "id", type: "string", description: "数据库标识符", isRequired: true, isPrimaryKey: true,
         },
-        { name: "issuer", type: "string", description: "The issuer identifier", isRequired: true },
-        { name: "domain", type: "string", description: "The domain of the provider", isRequired: true },
-        { name: "oidcConfig", type: "string", description: "The OIDC configuration (JSON string)", isRequired: false },
-        { name: "samlConfig", type: "string", description: "The SAML configuration (JSON string)", isRequired: false },
-        { name: "userId", type: "string", description: "The user ID", isRequired: true, references: { model: "user", field: "id" } },
-        { name: "providerId", type: "string", description: "The provider ID. Used to identify a provider and to generate a redirect URL.", isRequired: true, isUnique: true },
-        { name: "organizationId", type: "string", description: "The organization Id. If provider is linked to an organization.", isRequired: false }
+        { name: "issuer", type: "string", description: "发行者标识", isRequired: true },
+        { name: "domain", type: "string", description: "提供者对应域名", isRequired: true },
+        { name: "oidcConfig", type: "string", description: "OIDC 配置（JSON 字符串）", isRequired: false },
+        { name: "samlConfig", type: "string", description: "SAML 配置（JSON 字符串）", isRequired: false },
+        { name: "userId", type: "string", description: "用户 ID", isRequired: true, references: { model: "user", field: "id" } },
+        { name: "providerId", type: "string", description: "提供者 ID，用于识别提供者及生成重定向 URL", isRequired: true, isUnique: true },
+        { name: "organizationId", type: "string", description: "组织 ID，如提供者关联组织", isRequired: false }
     ]}
 />
 
-### If you have enabled domain verification:
+### 若已启用域名验证：
 
-The `ssoProvider` schema is extended as follows:
+`ssProvider` schema 增加：
 
 <DatabaseTable
     fields={[
-        { name: "domainVerified", type: "boolean", description: "A flag indicating whether the provider domain has been verified.", isRequired: false },
+        { name: "domainVerified", type: "boolean", description: "标记提供者域名是否已验证", isRequired: false },
     ]}
 />
 
-### IdP-Initiated SAML SSO
+### IdP 发起的 SAML SSO
 
-Better Auth supports **IdP-initiated SSO flows**, where users access your application directly from their Identity Provider dashboard (e.g., Okta, Azure AD, OneLogin). This is common in enterprise environments where IT admins prefer centralized app access.
+Better Auth 支持 **IdP 发起的 SSO 流程**，用户从身份提供者仪表盘（如 Okta、Azure AD、OneLogin）直接进入应用，常见于企业集中管理场景。
 
-**How it works:**
+**流程：**
 
-1. User clicks your app icon in the IdP dashboard
-2. IdP POSTs SAMLResponse to `/api/auth/sso/saml2/callback/{providerId}`
-3. Better Auth processes the assertion, creates a session, and redirects to your `callbackUrl`
-4. Browser follows the redirect with a GET request (handled automatically)
+1. 用户点击 IdP 仪表盘应用图标
+2. IdP 向 `/api/auth/sso/saml2/callback/{providerId}` POST SAMLResponse
+3. Better Auth 处理断言、创建会话，重定向到您的 `callbackUrl`
+4. 浏览器执行重定向的 GET 请求（自动处理）
 
-**No additional configuration required** - the callback route automatically handles both GET and POST requests.
+**无需额外配置**，回调接口自动支持 GET 和 POST。
 
 <Callout type="info">
-If you previously created a manual GET handler for the SAML callback route as a workaround, you can remove it after upgrading. Better Auth now handles GET requests automatically.
+升级后若此前为此回调路由自定义了 GET 处理，可删除，Better Auth 现自动支持。
 </Callout>
 
 <Callout type="info">
-**Security:** Better Auth validates all redirect URLs to prevent open redirect attacks. Only relative paths (e.g., `/dashboard`) and URLs matching your configured `trustedOrigins` are allowed. Malicious URLs like `https://evil.com` or protocol-relative URLs (`//evil.com`) are automatically blocked.
+**安全警告**：Better Auth 验证所有重定向 URL，防止开放重定向攻击。仅允许相对路径（如 `/dashboard`）和符合配置的 `trustedOrigins` 的 URL。恶意链接如 `https://evil.com` 或协议相对 URL (`//evil.com`) 自动阻止。
 </Callout>
 
-For a detailed guide on setting up SAML SSO with examples for Okta and testing with DummyIDP, see our [SAML SSO with Okta](/docs/guides/saml-sso-with-okta).
+有关 Okta 和 DummyIDP 的详细 SAML SSO 教程，见 [SAML SSO with Okta](/docs/guides/saml-sso-with-okta)。
 
-## Options
+## 选项
 
-### Server
+### 服务器端
 
-**provisionUser**: A custom function to provision a user when they sign in with an SSO provider.
+- **provisionUser**：用户登录时的自定义预置函数。
+- **organizationProvisioning**：用户自动加入组织的相关配置。
+- **defaultOverrideUserInfo**：默认用提供者信息覆盖用户信息。
+- **disableImplicitSignUp**：禁用隐式自动注册，需显式请求注册。
 
-**organizationProvisioning**: Options for provisioning users to an organization.
-
-**defaultOverrideUserInfo**: Override user info with the provider info by default.
-
-**disableImplicitSignUp**: Disable implicit sign up for new users.
-
-If you want to allow account linking for specific trusted providers, enable the `accountLinking` option in your auth config and specify those providers in the `trustedProviders` list.
+若您想允许受信任提供者间的账号关联，可在认证配置中启用 `accountLinking` 并在 `trustedProviders` 列表中指定提供者。
 
 <TypeTable
   type={{
     provisionUser: {
-        description: "A custom function to provision a user when they sign in with an SSO provider.",
+        description: "用户通过 SSO 登录时执行的自定义预置函数。",
         type: "function",
     },
     organizationProvisioning: {
-        description: "Options for provisioning users to an organization.",
+        description: "管理用户自动加入组织的选项。",
         type: "object",
         properties: {
             disabled: {
-                description: "Disable organization provisioning.",
+                description: "禁用组织预置。",
                 type: "boolean",
                 default: false,
             },
             defaultRole: {
-                description: "The default role for new users.",
+                description: "新用户默认角色。",
                 type: "string",
                 enum: ["member", "admin"],
                 default: "member",
             },
             getRole: {
-                description: "A custom function to determine the role for new users.",
+                description: "自定义获取新用户角色的函数。",
                 type: "function",
             },
         },
     },
     defaultOverrideUserInfo: {
-        description: "Override user info with the provider info by default.",
+        description: "默认用提供者信息覆盖用户信息。",
         type: "boolean",
         default: false,
     },
     disableImplicitSignUp: {
-        description: "Disable implicit sign up for new users. When set to true, sign-in needs to be called with requestSignUp as true to create new users.",
+        description: "禁用隐式注册。设置为 true 后，新用户需调用登录接口时显式设置 `requestSignUp` 为 true 才能创建。",
         type: "boolean",
         default: false,
     },
     providersLimit: {
-        description: "Configure the maximum number of SSO providers a user can register. Set to 0 to disable SSO provider registration.",
+        description: "限制用户可注册的最大 SSO 提供者数。设为 0 禁止注册。",
         type: "number | function",
         default: 10,
     },
     redirectURI: {
-        description: "Custom redirect URI for OIDC SSO callbacks. When set, all OIDC providers share this single callback URL instead of per-provider URLs. The provider ID is stored in the OAuth state. Can be a relative path (e.g., '/sso/callback') or a full URL.",
+        description: "OIDC SSO 回调的自定义重定向 URI。设置后所有 OIDC 提供者共享该回调地址。提供者 ID 存储在 OAuth 状态中。可为相对路径或完整 URL。",
         type: "string",
         required: false,
     },
     domainVerification: {
-        description: "Configure the domain verification feature",
+        description: "域名验证功能配置。",
         type: "object",
         properties: {
             enabled: {
-                description: "Enables or disables the domain verification feature",
+                description: "启用或禁用域名验证功能。",
                 type: "boolean",
                 required: false
             },
             tokenPrefix: {
-                description: "Prefix used to generate the domain verification identifier. An underscore is automatically prepended.",
+                description: "用于生成域名验证标识符的前缀，会自动添加下划线。",
                 type: "string",
                 required: false,
                 default: "better-auth-token"
@@ -1530,28 +1527,28 @@ If you want to allow account linking for specific trusted providers, enable the 
         },
     },
     defaultSSO: {
-        description: "Configure a default SSO provider for testing and development. This provider will be used when no matching provider is found in the database.",
+        description: "测试和开发用默认 SSO 提供者配置。数据库无匹配时使用此配置。",
         type: "array",
         items: {
             type: "object",
             properties: {
                 domain: {
-                    description: "The domain to match for this default provider.",
+                    description: "匹配的域名。",
                     type: "string",
                     required: true,
                 },
                 providerId: {
-                    description: "The provider ID to use for the default provider.",
+                    description: "默认提供者的 ID。",
                     type: "string",
                     required: true,
                 },
                 samlConfig: {
-                    description: "SAML configuration for the default provider.",
+                    description: "默认提供者的 SAML 配置。",
                     type: "SAMLConfig",
                     required: false,
                 },
                 oidcConfig: {
-                    description: "OIDC configuration for the default provider.",
+                    description: "默认提供者的 OIDC 配置。",
                     type: "OIDCConfig",
                     required: false,
                 },
@@ -1559,40 +1556,40 @@ If you want to allow account linking for specific trusted providers, enable the 
         },
     },
     saml: {
-        description: "SAML security options for AuthnRequest/InResponseTo validation, replay protection, and timestamp handling.",
+        description: "SAML 安全选项，包括 AuthnRequest/响应验证、重放保护和时间戳处理。",
         type: "object",
         properties: {
             enableInResponseToValidation: {
-                description: "Enable InResponseTo validation for SP-initiated SAML flows. Opt-in for backward compatibility.",
+                description: "启用 SP 发起 SAML 流程的 InResponseTo 校验。该功能为可选，保证向后兼容。",
                 type: "boolean",
                 default: false,
             },
             allowIdpInitiated: {
-                description: "Allow IdP-initiated SSO (unsolicited SAML responses). Set to false for stricter security. Only applies when validation is enabled.",
+                description: "允许 IdP 发起的 SSO（未请求的 SAML 响应）。设置为 false 则更严格。仅在启用校验时生效。",
                 type: "boolean",
                 default: true,
             },
             requestTTL: {
-                description: "TTL for AuthnRequest records in milliseconds. Only applies when validation is enabled.",
+                description: "AuthnRequest 记录在数据库中的存活时间，单位毫秒。仅在启用校验时生效。",
                 type: "number",
                 default: 300000,
             },
             clockSkew: {
-                description: "Clock skew tolerance for SAML assertion timestamp validation (NotBefore/NotOnOrAfter) in milliseconds. Allows for minor time differences between IdP and SP servers.",
+                description: "SAML 断言时间戳校验时钟偏差容忍，单位毫秒。用于处理 IdP 和 SP 服务器时间差。",
                 type: "number",
                 default: 300000,
             },
             requireTimestamps: {
-                description: "Require timestamp conditions (NotBefore/NotOnOrAfter) in SAML assertions. When enabled, assertions without timestamps are rejected. When disabled, they are accepted with a warning logged.",
+                description: "是否要求断言必须带时间戳。开启则无时间戳断言被拒绝，关闭则接受但会警告。",
                 type: "boolean",
                 default: false,
             },
             algorithms: {
-                description: "Algorithm validation options.",
+                description: "算法验证选项。",
                 type: "object",
                 properties: {
                     onDeprecated: {
-                        description: "Behavior for deprecated algorithms (SHA-1, RSA 1.5, 3DES).",
+                        description: "对废弃算法（SHA-1, RSA 1.5, 3DES）的处理。",
                         type: "string",
                         enum: ["reject", "warn", "allow"],
                         default: "warn",
@@ -1600,55 +1597,55 @@ If you want to allow account linking for specific trusted providers, enable the 
                 },
             },
             maxResponseSize: {
-                description: "Maximum allowed size for SAML responses in bytes.",
+                description: "允许的最大 SAML 响应大小（字节）。",
                 type: "number",
                 default: 262144,
             },
             maxMetadataSize: {
-                description: "Maximum allowed size for IdP metadata XML in bytes.",
+                description: "允许的 IdP 元数据 XML 最大大小（字节）。",
                 type: "number",
                 default: 102400,
             },
         },
     },
     modelName: {
-        description: "The model name for the SSO provider table",
+        description: "SSO 提供者表模型名称",
         type: "string",
         default: "ssoProvider"
     },
     fields: {
         issuer: {
-            description: "Custom name for the issuer column",
+            description: "issuer 列自定义名称",
             type: "string",
             default: "issuer",
         },
 		oidcConfig: {
-            description: "Custom name for the oidcConfig column",
+            description: "oidcConfig 列自定义名称",
             type: "string",
             default: "oidcConfig",
         },
 		samlConfig: {
-            description: "Custom name for the samlConfig column",
+            description: "samlConfig 列自定义名称",
             type: "string",
             default: "samlConfig",
         },
 		userId: {
-            description: "Custom name for the userId column",
+            description: "userId 列自定义名称",
             type: "string",
             default: "userId",
         },
 		providerId: {
-            description: "Custom name for the providerId column",
+            description: "providerId 列自定义名称",
             type: "string",
             default: "providerId",
         },
 		organizationId: {
-            description: "Custom name for the organizationId column",
+            description: "organizationId 列自定义名称",
             type: "string",
             default: "organizationId",
         },
 		domain: {
-            description: "Custom name for the domain column",
+            description: "domain 列自定义名称",
             type: "string",
             default: "domain",
         }

@@ -1,80 +1,80 @@
 ---
-title: Security
-description: Better Auth security features.
+title: 安全性
+description: Better Auth 的安全功能。
 ---
 
-This page contains information about security features of Better Auth.
+本页面包含有关 Better Auth 安全功能的信息。
 
 
-## Password Hashing
+## 密码哈希
 
-Better Auth uses the `scrypt` algorithm to hash passwords by default. This algorithm is designed to be memory-hard and CPU-intensive, making it resistant to brute-force attacks. You can customize the password hashing function by setting the `password` option in the configuration. This option should include a `hash` function to hash passwords and a `verify` function to verify them.
+Better Auth 默认使用 `scrypt` 算法进行密码哈希。该算法设计为内存硬和 CPU 密集型，能够抵抗暴力破解攻击。您可以通过配置中的 `password` 选项自定义密码哈希函数。该选项应包含用于哈希密码的 `hash` 函数和用于验证密码的 `verify` 函数。
 
-## Secret Rotation
+## 秘钥轮换
 
-Better Auth supports non-destructive rotation of `BETTER_AUTH_SECRET`. When you configure versioned secrets via the `secrets` option or the `BETTER_AUTH_SECRETS` environment variable, all new encrypted data includes a key version identifier. Decryption performs a direct key lookup by version — no trial decryption.
+Better Auth 支持对 `BETTER_AUTH_SECRET` 进行非破坏性的轮换。当您通过 `secrets` 选项或 `BETTER_AUTH_SECRETS` 环境变量配置版本化秘钥时，所有新的加密数据都会包含一个密钥版本标识符。解密时会直接通过版本号查找密钥——无需尝试性解密。
 
-Legacy data encrypted before rotation (bare-hex format) is still decryptable using the original `BETTER_AUTH_SECRET` as a fallback. No database migrations or downtime are required. Data is lazily re-encrypted with the current key when it is next written.
+轮换前使用旧秘钥加密的遗留数据（裸十六进制格式）仍可通过原始的 `BETTER_AUTH_SECRET` 作为回退进行解密。无需数据库迁移或停机。数据在下一次写入时会懒惰地使用当前密钥重新加密。
 
-See the [`secrets` option](/docs/reference/options#secrets) for configuration details.
+配置细节请参见 [`secrets` 选项](/docs/reference/options#secrets)。
 
-## Session Management
+## 会话管理
 
-### Session Expiration
+### 会话过期
 
-Better Auth uses secure session management to protect user data. Sessions are stored in the database or a secondary storage, if configured, to prevent unauthorized access. By default, sessions expire after 7 days, but you can customize this value in the configuration. Additionally, each time a session is used, if it reaches the `updateAge` threshold, the expiration date is extended, which by default is set to 1 day.
+Better Auth 使用安全的会话管理来保护用户数据。会话存储在数据库或次级存储（如果配置了）中，以防止未经授权的访问。默认情况下，会话在 7 天后过期，您可以在配置中自定义这个值。此外，每次使用会话时，如果达到 `updateAge` 阈值（默认 1 天），过期时间将被延长。
 
-### Session Revocation
+### 会话撤销
 
-Better Auth allows you to revoke sessions to enhance security. When a session is revoked, the user is logged out and can no longer access the application. A logged in user can also revoke their own sessions to log out from different devices or browsers.
+Better Auth 允许您撤销会话以增强安全性。当会话被撤销后，用户会退出登录，无法再访问应用。已登录用户还可以撤销自己的会话，以便从不同设备或浏览器登出。
 
-See the [session management](/docs/concepts/session-management) for more details.
+更多详情请参见 [会话管理](/docs/concepts/session-management)。
 
-## CSRF Protection
+## CSRF 保护
 
-Better Auth includes multiple safeguards to prevent Cross-Site Request Forgery (CSRF) attacks:
+Better Auth 包含多重防护措施以防止跨站请求伪造（CSRF）攻击：
 
-1. **Avoid simple requests**
-   See [Avoiding simple requests](https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/CSRF#avoiding_simple_requests) for more details. Better Auth only allows requests with a non-simple header or a `Content-Type` header of `application/json`.
+1. **避免简单请求**  
+   详情请参见 [避免简单请求](https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/CSRF#avoiding_simple_requests)。Better Auth 只允许带有非简单头部或 `Content-Type` 为 `application/json` 的请求。
    
-2. **Origin Validation**
-   Each request’s `Origin` header is verified to confirm it comes from your application or another explicitly trusted source. Requests from untrusted origins are rejected. By default, Better Auth trusts the base URL of your app, but you can specify additional trusted origins via the `trustedOrigins` configuration option.
+2. **Origin 验证**  
+   每个请求的 `Origin` 头都会校验，确保来自您的应用或其他明确可信来源。不受信任来源的请求将被拒绝。默认情况下，Better Auth 信任应用的基础 URL，您也可以通过 `trustedOrigins` 配置额外的可信来源。
 
-3. **Secure Cookie Settings**
-   Session cookies use the `SameSite=Lax` attribute by default, preventing browsers from sending cookies with most cross-site requests. You can override this behavior using the `defaultCookieAttributes` option.
+3. **安全 Cookie 设置**  
+   会话 Cookie 默认使用 `SameSite=Lax` 属性，防止浏览器随大多数跨站请求发送 Cookie。您可以通过 `defaultCookieAttributes` 选项覆盖此行为。
 
-4. **Fetch Metadata Protection for First-Login CSRF**
-   Better Auth also uses [Fetch Metadata headers](https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/CSRF#fetch_metadata) (`Sec-Fetch-Site`, `Sec-Fetch-Mode`, `Sec-Fetch-Dest`) to provide additional CSRF protection specifically for **first-login scenarios**, where the client does not yet have any cookies.
+4. **首登录 CSRF 的 Fetch Metadata 保护**  
+   Better Auth 还利用 [Fetch Metadata 头部](https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/CSRF#fetch_metadata)（`Sec-Fetch-Site`、`Sec-Fetch-Mode`、`Sec-Fetch-Dest`）对**首登录场景**提供额外防护，此时客户端还没有任何 Cookie。
    
-   This protection applies to **sign-in and sign-up email routes**, which accept form submissions (simple requests) to support progressive enhancement patterns.
+   此保护适用于**登录和注册的邮件路由**，它们接受表单提交（简单请求），以支持渐进式增强模式。
    
-   When a sign-in or sign-up request is received **without** any cookies:
+   当接收到没有任何 Cookie 的登录或注册请求时：
    
-   - If the browser indicates a **cross-site navigation** (for example: `Sec-Fetch-Site: cross-site` and `Sec-Fetch-Mode: navigate`), Better Auth **blocks** the request as a potential login CSRF attack.
+   - 如果浏览器标示这是一次**跨站导航**（例如：`Sec-Fetch-Site: cross-site` 且 `Sec-Fetch-Mode: navigate`），Better Auth 会将该请求**阻止**，视为潜在的登录 CSRF 攻击。
    
-   - If the request is **same-origin** or **same-site**, Better Auth still validates the `Origin`/`Referer` against your `trustedOrigins` configuration, using the existing origin validation logic.
+   - 如果请求是**同源**或**同站**，Better Auth 仍会根据配置的 `trustedOrigins` 验证 `Origin`/`Referer`，使用现有的源验证逻辑。
    
-   - If the client does **not** send Fetch Metadata headers (older browsers, some mobile WebViews, non-browser clients), Better Auth falls back to its **previous behavior** and only performs origin validation when cookies are present, preserving backward compatibility.
+   - 如果客户端不发送 Fetch Metadata 头（老旧浏览器、部分移动 WebView、非浏览器客户端），Better Auth 会回退到**之前的行为**，只有在存在 Cookie 时才进行源验证，保持向后兼容。
    
-   This mechanism allows modern browsers to receive stronger protection against first-login CSRF attacks **without requiring CSRF tokens or client-side JavaScript**, and works seamlessly with progressive enhancement patterns.
+   该机制允许现代浏览器在无需 CSRF 令牌或客户端 JavaScript 的情况下，获得更强的首登录 CSRF 防护，并与渐进式增强模式无缝配合。
    
    <Callout type="info">
-     Non-browser HTTP clients (mobile apps, server-to-server) should set the `Origin` or `Referer` header appropriately when making requests that include cookies. This ensures proper CSRF validation regardless of Fetch Metadata support.
-   </Callout> 
+     非浏览器 HTTP 客户端（移动应用、服务器间调用）应在包含 Cookie 的请求中正确设置 `Origin` 或 `Referer` 头。这可确保无论是否支持 Fetch Metadata 都能正确进行 CSRF 验证。
+   </Callout>
 
-5. **No Mutations on GET Requests (with additional safeguards)**
-  `GET` requests are assumed to be read-only and should not alter the application's state. In cases where a `GET` request must perform a mutation—such as during OAuth callbacks - Better Auth applies extra security measures, including validating `nonce` and `state` parameters to ensure the request's authenticity.
+5. **GET 请求无状态变更（带额外防护）**  
+   认为 `GET` 请求是只读的，不应用于更改应用状态。必须在 `GET` 请求中执行状态变更的情况，如 OAuth 回调时，Better Auth 会采取额外安全措施，包括校验 `nonce` 和 `state` 参数以确保请求的真实性。
 
-### Disabling Security Checks
+### 禁用安全检查
 
-Better Auth provides two separate options to disable security checks. These options control different aspects of security:
+Better Auth 提供了两个单独选项用于禁用安全检查，分别控制不同的安全方面：
 
 #### `disableCSRFCheck`
 
-Disables **all CSRF protection**, including:
-- Origin header validation when cookies are present
-- Fetch Metadata checks (`Sec-Fetch-Site`, `Sec-Fetch-Mode`, `Sec-Fetch-Dest`)
-- Cross-site navigation blocking for first-login scenarios
+禁用**所有 CSRF 保护**，包括：  
+- 在存在 Cookie 时校验 Origin 头  
+- Fetch Metadata 检查（`Sec-Fetch-Site`、`Sec-Fetch-Mode`、`Sec-Fetch-Dest`）  
+- 首登录场景中的跨站导航阻止
 
 ```typescript
 {
@@ -85,16 +85,16 @@ Disables **all CSRF protection**, including:
 ```
 
 <Callout type="warning">
-  Disabling CSRF checks allows requests from any origin to use cookies and perform actions on behalf of users. This opens your application to CSRF attacks.
+禁用 CSRF 检查允许任意来源的请求携带 Cookies，并以用户身份执行操作。这会使您的应用暴露于 CSRF 攻击风险。
 </Callout>
 
 #### `disableOriginCheck`
 
-Disables **URL validation** against `trustedOrigins`, including:
-- `callbackURL` validation
-- `redirectTo` validation
-- `errorCallbackURL` validation
-- `newUserCallbackURL` validation
+禁用针对 `trustedOrigins` 的**URL 验证**，包括：  
+- `callbackURL` 验证  
+- `redirectTo` 验证  
+- `errorCallbackURL` 验证  
+- `newUserCallbackURL` 验证
 
 ```typescript
 {
@@ -105,70 +105,70 @@ Disables **URL validation** against `trustedOrigins`, including:
 ```
 
 <Callout type="warning">
-  Disabling origin checks allows any URL to be used in redirects and callbacks. This opens your application to open redirect vulnerabilities.
+禁用源检查允许任何 URL 用于重定向和回调。这会使您的应用暴露于开放重定向漏洞。
 </Callout>
 
 <Callout type="info">
-  For backward compatibility, `disableOriginCheck: true` also disables CSRF protection. If you only want to disable URL validation without affecting CSRF protection, this is not currently possible - both checks are disabled together when using this option.
+为保持向后兼容，设置 `disableOriginCheck: true` 也会禁用 CSRF 保护。如果您只想禁用 URL 验证而不影响 CSRF 保护，目前尚不可行——启用此选项时，两者都会被一起禁用。
 </Callout>
 
-#### Summary
+#### 总结
 
-| Option | What it disables |
-|--------|-----------------|
-| `disableCSRFCheck` | CSRF protection only (origin header validation, Fetch Metadata checks) |
-| `disableOriginCheck` | URL validation AND CSRF protection (for backward compatibility) |
+| 选项               | 禁用的功能                         |
+|--------------------|----------------------------------|
+| `disableCSRFCheck`  | 仅禁用 CSRF 保护（Origin 头验证、Fetch Metadata 检查） |
+| `disableOriginCheck`| 禁用 URL 验证和 CSRF 保护（用于向后兼容）          |
 
-## OAuth State and PKCE
+## OAuth 状态和 PKCE
 
-To secure OAuth flows, Better Auth stores the OAuth state and PKCE (Proof Key for Code Exchange) in the database. The state helps prevent CSRF attacks, while PKCE protects against code injection threats. Once the OAuth process completes, these values are removed from the database.
+为保障 OAuth 流程安全，Better Auth 将 OAuth 状态和 PKCE（Proof Key for Code Exchange）存储在数据库中。状态用于防止 CSRF 攻击，PKCE 防止代码注入攻击。OAuth 流程完成后，这些值将从数据库中移除。
 
 ## Cookies
 
-Better Auth assigns secure cookies by default when the base URL uses `https`. These secure cookies are encrypted and only sent over secure connections, adding an extra layer of protection. They are also set with the `sameSite` attribute to `lax` by default to prevent cross-site request forgery attacks. And the `httpOnly` attribute is enabled to prevent client-side JavaScript from accessing the cookie. 
+Better Auth 默认当基础 URL 使用 `https` 时分配安全 Cookie。这些安全 Cookie 会加密且只通过安全连接发送，增加一层保护。默认设置 `sameSite` 属性为 `lax`，防止跨站请求伪造攻击，并启用 `httpOnly`，防止客户端 JavaScript 访问 Cookie。
 
-For Cross-Subdomain Cookies, you can set the `crossSubDomainCookies` option in the configuration. This option allows cookies to be shared across subdomains, enabling seamless authentication across multiple subdomains.
+对于跨子域 Cookie，您可以在配置中设置 `crossSubDomainCookies` 选项。该选项允许跨子域共享 Cookie，实现不同子域间的无缝认证。
 
-### Customizing Cookies
+### 自定义 Cookies
 
-You can customize cookie names to minimize the risk of fingerprinting attacks and set specific cookie options as needed for additional control. For more information, refer to the [cookie options](/docs/concepts/cookies).
+您可以自定义 Cookie 名称，以减小指纹识别攻击风险，并根据需要设置具体的 Cookie 选项以获得更细粒度的控制。详情请参见 [Cookie 选项](/docs/concepts/cookies)。
 
-Plugins can also set custom cookie options to align with specific security needs. If you're using Better Auth in non-browser environments, plugins offer ways to manage cookies securely in those contexts as well.
+插件也可以设置自定义 Cookie 选项，以满足特定安全需求。如果在非浏览器环境中使用 Better Auth，插件也提供了安全管理 Cookie 的方法。
 
-## Rate Limiting
+## 速率限制
 
-Better Auth includes built-in rate limiting to safeguard against brute-force attacks. Rate limits are applied across all routes by default, with specific routes subject to stricter limits based on potential risk.
+Better Auth 内置了速率限制功能以防御暴力破解攻击。速率限制默认应用于所有路由，对潜在风险较高的特定路由会实施更严格的限制。
 
-## IP Address Headers
+## IP 地址头部
 
-Better Auth uses client IP addresses for rate limiting and security monitoring. By default, it reads the IP address from the standard `X-Forwarded-For` header. However, you can configure a specific trusted header to ensure accurate IP address detection and prevent IP spoofing attacks.
+Better Auth 使用客户端 IP 地址进行速率限制和安全监控。默认情况下，它从标准的 `X-Forwarded-For` 头读取 IP 地址。但您可以配置特定的受信任头部，以确保准确的 IP 地址检测并防止 IP 欺骗攻击。
 
-You can configure the IP address header in your Better Auth configuration:
+您可以在 Better Auth 配置中设置 IP 地址头部：
 
 ```typescript
 {
   advanced: {
     ipAddress: {
-      ipAddressHeaders: ['cf-connecting-ip'] // or any other custom header
+      ipAddressHeaders: ['cf-connecting-ip'] // 或其它自定义头部
     }
   }
 }
 ```
 
-This ensures that Better Auth only accepts IP addresses from your trusted proxy's header, making it more difficult for attackers to bypass rate limiting or other IP-based security measures by spoofing headers.
+这确保 Better Auth 只接受来自您可信代理的头部中的 IP 地址，使攻击者更难通过伪造头部绕过速率限制或其它基于 IP 的安全措施。
 
 <Callout type="info">
-**Important**
+**重要提示**
 
-- When setting a custom IP address header, ensure that your proxy or load balancer is properly configured to set this header, and that it cannot be set by end users directly.
-- In dev/test environments, if the IP cannot be retrieved from headers, 127.0.0.1 is used as a fallback.
+- 设置自定义 IP 地址头时，请确保您的代理或负载均衡器正确配置了该头，并且无法被终端用户直接设置。
+- 在开发或测试环境中，如果无法从头部获取 IP，则使用 127.0.0.1 作为回退。
 </Callout>
 
-## Trusted Proxy Headers
+## 受信任代理头
 
-If your application runs behind a reverse proxy or load balancer, Better Auth can derive the base URL from the inbound request's `X-Forwarded-Host` and `X-Forwarded-Proto` headers. This is useful when your app is accessible from multiple domains (e.g. `example.com` and `app.example.dev`) and you don't want to hardcode a single `baseURL` in the configuration.
+如果您的应用运行在反向代理或负载均衡器后，Better Auth 可以从入站请求的 `X-Forwarded-Host` 和 `X-Forwarded-Proto` 头推断基础 URL。这在应用可通过多个域名（例如 `example.com` 和 `app.example.dev`）访问，且您不想在配置中硬编码单一 `baseURL` 时非常实用。
 
-When `trustedProxyHeaders` is enabled and no `baseURL` is set in the configuration (or via environment variables), Better Auth uses the forwarded headers to construct the base URL on each request. This means OAuth callbacks, email verification links, and redirects will automatically use whichever domain the user loaded the app on.
+启用 `trustedProxyHeaders` 且配置中（或环境变量中）未设置 `baseURL` 时，Better Auth 会在每个请求中使用转发头构建基础 URL。这意味着 OAuth 回调、邮件验证链接和重定向会自动使用用户加载应用时的域名。
 
 ```typescript
 {
@@ -179,28 +179,29 @@ When `trustedProxyHeaders` is enabled and no `baseURL` is set in the configurati
 ```
 
 <Callout type="warning">
-Only enable this option if you trust the proxy headers reaching your application. Your reverse proxy or load balancer must be configured to set `X-Forwarded-Host` and `X-Forwarded-Proto` correctly, and end users must not be able to set these headers directly. If untrusted clients can forge these headers, they could manipulate redirects and callback URLs.
+仅当您信任到达应用的代理头时启用此选项。您的反向代理或负载均衡器必须正确设置 `X-Forwarded-Host` 和 `X-Forwarded-Proto`，且终端用户不能直接设置这些头。否则，未授权客户端可能伪造这些头，从而操控重定向和回调 URL。
 </Callout>
 
-When enabled, the base URL resolution follows this priority:
+启用后，基础 URL 解析优先级如下：
 
-1. Static `baseURL` from the configuration (if set, proxy headers are ignored)
-2. Environment variables (`BETTER_AUTH_URL`, `NEXT_PUBLIC_BETTER_AUTH_URL`, etc.)
-3. `X-Forwarded-Host` + `X-Forwarded-Proto` headers (when `trustedProxyHeaders` is `true`)
-4. The request URL origin as a final fallback
+1. 配置中的静态 `baseURL`（如果设置，代理头会被忽略）  
+2. 环境变量（`BETTER_AUTH_URL`、`NEXT_PUBLIC_BETTER_AUTH_URL` 等）  
+3. 当 `trustedProxyHeaders` 为 `true` 时，使用 `X-Forwarded-Host` + `X-Forwarded-Proto` 头  
+4. 请求 URL 源作为最终回退
 
-If you're serving your app from multiple approved domains, you'll typically want to:
-- **Omit `baseURL`** from the configuration so it's derived per-request from the proxy headers
-- Set **`trustedOrigins`** to an allowlist of your approved domains (see below)
-- Leave `crossSubDomainCookies` disabled — cookies are host-only by default, which means each domain gets its own independent session
+如果您从多个经过批准的域提供应用，通常应：
 
-## Trusted Origins
+- **省略配置中的 `baseURL`**，使其基于代理头按照请求动态推断  
+- 将 **`trustedOrigins`** 设为您批准域名的白名单（见下文）  
+- 保持 `crossSubDomainCookies` 未启用——默认 Cookie 仅限于主机，每个域拥有独立会话
 
-Trusted origins prevent CSRF attacks and block open redirects. You can set a list of trusted origins in the `trustedOrigins` configuration option. Requests from origins not on this list are automatically blocked.
+## 受信任来源
 
-### Basic Usage
+受信任来源可以防止 CSRF 攻击并阻止开放重定向。您可以在 `trustedOrigins` 配置选项中设置受信任来源列表。不在该列表中的请求来源会被自动阻止。
 
-The most basic usage is to specify exact origins:
+### 基本用法
+
+最基本的用法是指定精确的来源：
 
 ```typescript
 {
@@ -212,51 +213,51 @@ The most basic usage is to specify exact origins:
 }
 ```
 
-### Wildcard Origins
+### 通配符来源
 
-Better Auth supports wildcard patterns in trusted origins, which allows you to trust multiple subdomains with a single entry:
-
-```typescript
-{
-  trustedOrigins: [
-    "*.example.com",             // Trust all subdomains of example.com (any protocol)
-    "https://*.example.com",     // Trust only HTTPS subdomains of example.com
-    "http://*.dev.example.com"   // Trust all HTTP subdomains of dev.example.com
-  ]
-}
-```
-
-#### Protocol-specific wildcards
-
-When using a wildcard pattern with a protocol prefix (like `https://`):
-- The protocol must match exactly
-- The domain can have any subdomain in place of the `*`
-- Requests using a different protocol will be rejected, even if the domain matches
-
-#### Protocol-agnostic wildcards
-
-When using a wildcard pattern without a protocol prefix (like `*.example.com`):
-- Any protocol (http, https, etc.) will be accepted
-- The domain must match the wildcard pattern
-
-### Custom Schemes
-
-Trusted origins also support custom schemes for mobile apps and browser extensions:
+Better Auth 支持受信任来源中的通配符模式，允许通过单条规则信任多个子域：
 
 ```typescript
 {
   trustedOrigins: [
-    "myapp://",                               // Mobile app scheme
-    "chrome-extension://YOUR_EXTENSION_ID",   // Browser extension
-    "exp://**",                               // Trust all Expo development URLs
-    "exp://10.0.0.*:*/**",                    // Trust 10.0.0.x IP range with any port
+    "*.example.com",             // 信任 example.com 的所有子域（任意协议）
+    "https://*.example.com",     // 仅信任 example.com 的 HTTPS 子域
+    "http://*.dev.example.com"   // 信任 dev.example.com 的所有 HTTP 子域
   ]
 }
 ```
 
-### Dynamic origin list
+#### 特定协议通配符
 
-You can also dynamically set the list of trusted origins by providing a function that returns it:
+当使用带协议前缀的通配符（如 `https://`）时：  
+- 协议必须完全匹配  
+- 域名中 `*` 可匹配任意子域  
+- 协议不同的请求即使域名匹配也会被拒绝
+
+#### 协议无关通配符
+
+当使用无协议前缀的通配符（如 `*.example.com`）时：  
+- 允许任意协议（http、https 等）  
+- 域名必须匹配通配符模式
+
+### 自定义协议
+
+受信任来源还支持移动应用和浏览器扩展的自定义协议：
+
+```typescript
+{
+  trustedOrigins: [
+    "myapp://",                               // 移动应用协议
+    "chrome-extension://YOUR_EXTENSION_ID",  // 浏览器扩展
+    "exp://**",                               // 信任所有 Expo 开发 URL
+    "exp://10.0.0.*:*/**",                    // 信任 IP 范围 10.0.0.x 及任意端口
+  ]
+}
+```
+
+### 动态来源列表
+
+您也可以通过函数动态设置受信任来源列表：
 
 ```typescript
 {
@@ -268,15 +269,15 @@ You can also dynamically set the list of trusted origins by providing a function
 ```
 
 <Callout>
-**Important**: This function will be invoked per incoming request, so be careful if you decide to dynamically fetch your list of trusted domains.
+**重要**：该函数会对每个传入请求调用，若动态获取受信任域列表，请注意性能和频率。
 </Callout>
 
-## Email Enumeration Protection
+## 邮箱枚举保护
 
-Better Auth prevents email enumeration on the sign-up and change-email endpoints. When `requireEmailVerification` is enabled or `autoSignIn` is set to `false`, the sign-up endpoint returns the same `200` response whether the email is already registered or not, following [OWASP authentication best practices](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-and-error-messages). Timing attacks are mitigated by simulating password hashing on duplicate sign-up attempts.
+Better Auth 在注册和更改邮箱端点防止邮箱枚举。当启用 `requireEmailVerification` 或 `autoSignIn` 设置为 `false` 时，注册端点对已注册和未注册邮箱返回相同的 `200` 响应，遵循 [OWASP 认证最佳实践](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-and-error-messages)。通过模拟密码哈希处理重复注册请求以减缓时间攻击。
 
-See [Email and Password — Email Enumeration Protection](/docs/authentication/email-password#email-enumeration-protection) for configuration details.
+配置细节请参见 [邮箱和密码 — 邮箱枚举保护](/docs/authentication/email-password#email-enumeration-protection)。
 
-## Reporting Vulnerabilities
+## 安全漏洞报告
 
-If you discover a security vulnerability in Better Auth, please report it to us at [security@better-auth.com](mailto:security@better-auth.com). We address all reports promptly, and credits will be given for validated discoveries.
+如果您发现 Better Auth 的安全漏洞，请通过 [security@better-auth.com](mailto:security@better-auth.com) 向我们报告。我们将及时处理所有报告，并对经验证的漏洞发现予以鸣谢。

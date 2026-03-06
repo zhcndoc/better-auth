@@ -1,16 +1,15 @@
 ---
 title: TypeScript
-description: Better Auth TypeScript integration.
+description: 更好的 Auth TypeScript 集成。
 ---
 
-Better Auth is designed to be type-safe. Both the client and server are built with TypeScript, allowing you to easily infer types.
+Better Auth 设计为类型安全的。客户端和服务器均使用 TypeScript 构建，允许你轻松推断类型。
 
+## TypeScript 配置
 
-## TypeScript Config
+### 严格模式
 
-### Strict Mode
-
-Better Auth is designed to work with TypeScript's strict mode. We recommend enabling strict mode in your TypeScript config file:
+Better Auth 设计为与 TypeScript 的严格模式配合使用。我们建议在你的 TypeScript 配置文件中启用严格模式：
 
 ```json title="tsconfig.json"
 {
@@ -20,7 +19,7 @@ Better Auth is designed to work with TypeScript's strict mode. We recommend enab
 }
 ```
 
-if you can't set `strict` to `true`, you can enable `strictNullChecks`:
+如果你无法将 `strict` 设置为 `true`，你可以启用 `strictNullChecks`：
 
 ```json title="tsconfig.json"
 {
@@ -30,16 +29,15 @@ if you can't set `strict` to `true`, you can enable `strictNullChecks`:
 }
 ```
 
-When `strict` is `true`, `strictNullChecks` is enabled as well. If you explicitly set `strictNullChecks` to `false`, type inference issues could occur.
+当 `strict` 设置为 `true` 时，`strictNullChecks` 也会被启用。如果你显式地将 `strictNullChecks` 设置为 `false`，可能会导致类型推断问题。
 
 <Callout type="warn">
-If you're running into issues with TypeScript inference exceeding maximum length the compiler will serialize,
-then please make sure you're following the instructions above, as well as ensuring that both `declaration` and `composite` are not enabled.
+如果你遇到 TypeScript 推断超过编译器序列化最大长度的问题，请确保你遵循了上述说明，并确保没有同时启用 `declaration` 和 `composite`。
 </Callout>
 
-## Inferring Types
+## 类型推断
 
-Both the client SDK and the server offer types that can be inferred using the `$Infer` property. Plugins can extend base types like `User` and `Session`, and you can use `$Infer` to infer these types. Additionally, plugins can provide extra types that can also be inferred through `$Infer`.
+客户端 SDK 和服务器端都提供可通过 `$Infer` 属性推断的类型。插件可以扩展基础类型如 `User` 和 `Session`，你可以使用 `$Infer` 来推断这些类型。此外，插件还可以提供额外的类型，也可以通过 `$Infer` 进行推断。
 
 ```ts title="auth-client.ts" 
 import { createAuthClient } from "better-auth/client"
@@ -49,9 +47,9 @@ const authClient = createAuthClient()
 export type Session = typeof authClient.$Infer.Session
 ```
 
-The `Session` type includes both `session` and `user` properties. The user property represents the user object type, and the `session` property represents the `session` object type.
+`Session` 类型包含 `session` 和 `user` 两个属性。`user` 属性表示用户对象类型，`session` 属性表示会话对象类型。
 
-You can also infer types on the server side.
+你也可以在服务器端推断类型。
 
 ```ts title="auth.ts" 
 import { betterAuth } from "better-auth"
@@ -64,10 +62,9 @@ export const auth = betterAuth({
 type Session = typeof auth.$Infer.Session
 ```
 
+## 额外字段
 
-## Additional Fields
-
-Better Auth allows you to add additional fields to the user and session objects. All additional fields are properly inferred and available on the server and client side.
+Better Auth 允许你为用户和会话对象添加额外字段。所有额外字段都会被正确推断，并且在服务器和客户端都可用。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -89,14 +86,13 @@ export const auth = betterAuth({
 type Session = typeof auth.$Infer.Session
 ```
 
-In the example above, we added a `role` field to the user object. This field is now available on the `Session` type.
+在上面的示例中，我们向用户对象添加了一个 `role` 字段。该字段现在可在 `Session` 类型中使用。
 
+### `input` 属性
 
-### The `input` property
+额外字段配置中的 `input` 属性决定该字段是否应包含在用户输入中。此属性默认值为 `true`，意味着字段会成为用户在注册等操作时的输入部分。
 
-The `input` property in an additional field configuration determines whether the field should be included in the user input. This property defaults to `true`, meaning the field will be part of the user input during operations like registration.
-
-To prevent a field from being part of the user input, you must explicitly set `input: false`:
+若要阻止某字段成为用户输入部分，必须显式设置 `input: false`：
 
 ```ts
 additionalFields: {
@@ -107,31 +103,31 @@ additionalFields: {
 }
 ```
 
-When `input` is set to `false`, the field will be excluded from user input, preventing users from passing a value for it.
+当 `input` 设置为 `false` 时，该字段将被排除在用户输入之外，防止用户传入该字段的值。
 
-By default, additional fields are included in the user input, which can lead to security vulnerabilities if not handled carefully. For fields that should not be set by the user, like a `role`, it is crucial to set `input: false` in the configuration.
+默认情况下，额外字段包含在用户输入中，如果处理不当可能带来安全隐患。对于不应由用户设置的字段，如 `role`，务必在配置中将 `input` 设置为 `false`。
 
-### Inferring Additional Fields on Client
+### 在客户端推断额外字段
 
-To make sure proper type inference for additional fields on the client side, you need to inform the client about these fields. There are two approaches to achieve this, depending on your project structure:
+为了确保客户端正确推断额外字段的类型，你需要告知客户端这些字段。根据项目结构，有两种方法：
 
-1. For Monorepo or Single-Project Setups
+1. 对于 Monorepo 或单一项目设置
 
-If your server and client code reside in the same project, you can use the `inferAdditionalFields` plugin to automatically infer the additional fields from your server configuration.
+如果你的服务器和客户端代码在同一个项目中，可以使用 `inferAdditionalFields` 插件从服务器配置自动推断额外字段。
 
 ```ts title="auth-client.ts"
 import { inferAdditionalFields } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/client";
-import type { auth } from "@/lib/auth"; // Import the auth instance as a type
+import type { auth } from "@/lib/auth"; // 将 auth 实例作为类型导入
 
 export const authClient = createAuthClient({
   plugins: [inferAdditionalFields<typeof auth>()],
 });
 ```
 
-2. For Separate Client-Server Projects
+2. 对于客户端和服务器分离的项目
 
-If your client and server are in separate projects, you'll need to manually specify the additional fields when creating the auth client.
+如果客户端和服务器在不同项目中，你需要在创建认证客户端时手动指定额外字段。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client";

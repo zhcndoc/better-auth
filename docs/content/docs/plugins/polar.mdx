@@ -1,48 +1,47 @@
 ---
 title: Polar
-description: Better Auth Plugin for Payment and Checkouts using Polar
+description: 使用 Polar 实现更佳的支付和结账验证插件
 ---
 
-[Polar](https://polar.sh) is a developer first payment infrastructure. Out of the box it provides a lot of developer first integrations for payments, checkouts and more. This plugin helps you integrate Polar with Better Auth to make your auth + payments flow seamless.
+[Polar](https://polar.sh) 是一个以开发者为中心的支付基础设施。开箱即用，提供了许多面向开发者的支付、结账等集成。此插件帮助你将 Polar 与 Better Auth 集成，实现无缝的身份验证和支付流程。
 
 <Callout>
-  This plugin is maintained by Polar team. For bugs, issues or feature requests,
-  please visit the [Polar GitHub
-  repo](https://github.com/polarsource/polar-adapters).
+  本插件由 Polar 团队维护。如遇错误、问题或功能请求，
+  请访问 [Polar GitHub 仓库](https://github.com/polarsource/polar-adapters)。
 </Callout>
 
-## Features
+## 功能
 
-- Checkout Integration
-- Customer Portal
-- Automatic Customer creation on signup
-- Event Ingestion & Customer Meters for flexible Usage Based Billing
-- Handle Polar Webhooks securely with signature verification
-- Reference System to associate purchases with organizations
+- 结账集成
+- 客户门户
+- 注册时自动创建客户
+- 事件摄取与客户计量器，支持灵活的基于用量的计费
+- 使用签名验证安全处理 Polar Webhooks
+- 引用系统以将购买关联至组织
 
-## Installation
+## 安装
 
 ```bash
 pnpm add better-auth @polar-sh/better-auth @polar-sh/sdk
 ```
 
-## Preparation
+## 准备工作
 
-Go to your Polar Organization Settings, and create an Organization Access Token. Add it to your environment.
+进入你的 Polar 组织设置，创建一个组织访问令牌，并添加到你的环境变量中。
 
 ```bash
 # .env
 POLAR_ACCESS_TOKEN=...
 ```
 
-### Configuring BetterAuth Server
+### 配置 BetterAuth 服务端
 
-The Polar plugin comes with a handful additional plugins which adds functionality to your stack.
+Polar 插件包含若干附加插件，为你的堆栈增加功能。
 
-- Checkout - Enables a seamless checkout integration
-- Portal - Makes it possible for your customers to manage their orders, subscriptions & granted benefits
-- Usage - Simple extension for listing customer meters & ingesting events for Usage Based Billing
-- Webhooks - Listen for relevant Polar webhooks
+- Checkout - 实现无缝的结账集成
+- Portal - 让客户管理订单、订阅及授予的权益
+- Usage - 简单扩展，用于列出客户计量器及摄取事件，支持基于用量计费
+- Webhooks - 监听相关的 Polar webhook 事件
 
 ```typescript
 import { betterAuth } from "better-auth";
@@ -51,14 +50,14 @@ import { Polar } from "@polar-sh/sdk";
 
 const polarClient = new Polar({
     accessToken: process.env.POLAR_ACCESS_TOKEN,
-    // Use 'sandbox' if you're using the Polar Sandbox environment
-    // Remember that access tokens, products, etc. are completely separated between environments.
-    // Access tokens obtained in Production are for instance not usable in the Sandbox environment.
+    // 如果使用 Polar 沙盒环境，则使用 'sandbox'
+    // 记住，访问令牌、产品等在不同环境间完全分隔。
+    // 生产环境获取的访问令牌不能在沙盒环境使用。
     server: 'sandbox'
 });
 
 const auth = betterAuth({
-    // ... Better Auth config
+    // ... Better Auth 配置
     plugins: [
         polar({
             client: polarClient,
@@ -67,8 +66,8 @@ const auth = betterAuth({
                 checkout({
                     products: [
                         {
-                            productId: "123-456-789", // ID of Product from Polar Dashboard
-                            slug: "pro" // Custom slug for easy reference in Checkout URL, e.g. /checkout/pro
+                            productId: "123-456-789", // 来自 Polar 仪表盘的产品 ID
+                            slug: "pro" // 自定义 slug 以便在结账 URL 中引用，例如 /checkout/pro
                         }
                     ],
                     successUrl: "/success?checkout_id={CHECKOUT_ID}",
@@ -78,10 +77,10 @@ const auth = betterAuth({
                 usage(),
                 webhooks({
                     secret: process.env.POLAR_WEBHOOK_SECRET,
-                    onCustomerStateChanged: (payload) => // Triggered when anything regarding a customer changes
-                    onOrderPaid: (payload) => // Triggered when an order was paid (purchase, subscription renewal, etc.)
-                    ...  // Over 25 granular webhook handlers
-                    onPayload: (payload) => // Catch-all for all events
+                    onCustomerStateChanged: (payload) => // 当客户相关信息变更时触发
+                    onOrderPaid: (payload) => // 当订单付款成功时触发（购买、订阅续费等）
+                    ...  // 超过 25 个细粒度 webhook 处理器
+                    onPayload: (payload) => // 捕获所有事件的通用处理器
                 })
             ],
         })
@@ -89,22 +88,22 @@ const auth = betterAuth({
 });
 ```
 
-### Configuring BetterAuth Client
+### 配置 BetterAuth 客户端
 
-You will be using the BetterAuth Client to interact with the Polar functionalities.
+你将使用 BetterAuth 客户端与 Polar 功能交互。
 
 ```typescript
 import { createAuthClient } from "better-auth/react";
 import { polarClient } from "@polar-sh/better-auth/client";
 
-// This is all that is needed
-// All Polar plugins, etc. should be attached to the server-side BetterAuth config
+// 就这么简单
+// 所有 Polar 插件应绑定到服务端的 BetterAuth 配置上
 export const authClient = createAuthClient({
   plugins: [polarClient()],
 });
 ```
 
-## Configuration Options
+## 配置选项
 
 ```typescript
 import { betterAuth } from "better-auth";
@@ -119,14 +118,14 @@ import { Polar } from "@polar-sh/sdk";
 
 const polarClient = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN,
-  // Use 'sandbox' if you're using the Polar Sandbox environment
-  // Remember that access tokens, products, etc. are completely separated between environments.
-  // Access tokens obtained in Production are for instance not usable in the Sandbox environment.
+  // 如果使用 Polar 沙盒环境，则使用 'sandbox'
+  // 记住，访问令牌、产品等在不同环境间完全分隔。
+  // 生产环境获取的访问令牌不能在沙盒环境使用。
   server: "sandbox",
 });
 
 const auth = betterAuth({
-  // ... Better Auth config
+  // ... Better Auth 配置
   plugins: [
     polar({
       client: polarClient,
@@ -137,47 +136,47 @@ const auth = betterAuth({
         },
       }),
       use: [
-        // This is where you add Polar plugins
+        // 这里添加 Polar 插件
       ],
     }),
   ],
 });
 ```
 
-### Required Options
+### 必需选项
 
-- `client`: Polar SDK client instance
+- `client`: Polar SDK 客户端实例
 
-### Optional Options
+### 可选选项
 
-- `createCustomerOnSignUp`: Automatically create a Polar customer when a user signs up
-- `getCustomerCreateParams`: Custom function to provide additional customer creation metadata
+- `createCustomerOnSignUp`: 用户注册时自动创建 Polar 客户
+- `getCustomerCreateParams`: 自定义函数，提供额外的客户创建元数据
 
-### Customers
+### 客户管理
 
-When `createCustomerOnSignUp` is enabled, a new Polar Customer is automatically created when a new User is added in the Better-Auth Database.
+启用 `createCustomerOnSignUp` 后，当在 Better-Auth 数据库中新增用户时，系统会自动创建对应的 Polar 用户。
 
-All new customers are created with an associated `externalId`, which is the ID of your User in the Database. This allows us to skip any Polar to User mapping in your Database.
+所有新客户均带有关联的 `externalId`，即数据库中用户的 ID，避免了在数据库中维护 Polar 与用户的映射。
 
-## Checkout Plugin
+## 结账插件
 
-To support checkouts in your app, simply pass the Checkout plugin to the use-property.
+为了支持你的应用内结账，只需将 Checkout 插件通过 `use` 属性传入。
 
 ```typescript
 import { polar, checkout } from "@polar-sh/better-auth";
 
 const auth = betterAuth({
-    // ... Better Auth config
+    // ... Better Auth 配置
     plugins: [
         polar({
             ...
             use: [
                 checkout({
-                    // Optional field - will make it possible to pass a slug to checkout instead of Product ID
+                    // 可选字段 - 允许通过 slug 而非产品 ID 触发结账
                     products: [ { productId: "123-456-789", slug: "pro" } ],
-                    // Relative URL to return to when checkout is successfully completed
+                    // 结账成功后跳转的相对 URL
                     successUrl: "/success?checkout_id={CHECKOUT_ID}",
-                    // Whether you want to allow unauthenticated checkout sessions or not
+                    // 是否仅允许认证用户结账
                     authenticatedUsersOnly: true
                 })
             ],
@@ -186,47 +185,47 @@ const auth = betterAuth({
 });
 ```
 
-When checkouts are enabled, you're able to initialize Checkout Sessions using the checkout-method on the BetterAuth Client. This will redirect the user to the Product Checkout.
+启用结账后，可以通过 BetterAuth 客户端的 `checkout` 方法初始化结账会话，用户将被重定向到产品结账页面。
 
 ```typescript
 await authClient.checkout({
-  // Any Polar Product ID can be passed here
+  // 这里可传任何 Polar 产品 ID
   products: ["e651f46d-ac20-4f26-b769-ad088b123df2"],
-  // Or, if you setup "products" in the Checkout Config, you can pass the slug
+  // 或者，如果你在结账配置中设置了“products”，可以传递 slug
   slug: "pro",
 });
 ```
 
-Checkouts will automatically carry the authenticated User as the customer to the checkout. Email-address will be "locked-in".
+结账会自动将认证用户作为客户关联，邮箱地址将被“锁定”。
 
-If `authenticatedUsersOnly` is `false` - then it will be possible to trigger checkout sessions without any associated customer.
+如果 `authenticatedUsersOnly` 为 `false`，则可触发无关联客户的结账会话。
 
-### Organization Support
+### 组织支持
 
-This plugin supports the Organization plugin. If you pass the organization ID to the Checkout referenceId, you will be able to keep track of purchases made from organization members.
+此插件支持组织插件。如果你将组织 ID 传给结账的 `referenceId`，你可以追踪组织成员的购买记录。
 
 ```typescript
-const organizationId = (await authClient.organization.list())?.data?.[0]?.id,
+const organizationId = (await authClient.organization.list())?.data?.[0]?.id;
 
 await authClient.checkout({
-    // Any Polar Product ID can be passed here
+    // 这里可传任何 Polar 产品 ID
     products: ["e651f46d-ac20-4f26-b769-ad088b123df2"],
-    // Or, if you setup "products" in the Checkout Config, you can pass the slug
+    // 或者，如果你在结账配置中设置了“products”，可以传递 slug
     slug: 'pro',
-    // Reference ID will be saved as `referenceId` in the metadata of the checkout, order & subscription object
+    // referenceId 会保存为结账、订单与订阅对象的 metadata 中的 `referenceId`
     referenceId: organizationId
 });
 ```
 
-## Portal Plugin
+## 门户插件
 
-A plugin which enables customer management of their purchases, orders and subscriptions.
+允许客户管理其购买、订单及订阅的插件。
 
 ```typescript
 import { polar, checkout, portal } from "@polar-sh/better-auth";
 
 const auth = betterAuth({
-    // ... Better Auth config
+    // ... Better Auth 配置
     plugins: [
         polar({
             ...
@@ -239,45 +238,45 @@ const auth = betterAuth({
 });
 ```
 
-The portal-plugin gives the BetterAuth Client a set of customer management methods, scoped under `authClient.customer`.
+portal 插件为 BetterAuth 客户端提供了一组客户管理方法，位于 `authClient.customer` 下。
 
-### Customer Portal Management
+### 客户门户管理
 
-The following method will redirect the user to the Polar Customer Portal, where they can see orders, purchases, subscriptions, benefits, etc.
+以下方法可将用户重定向至 Polar 客户门户，查看订单、购买、订阅、权益等。
 
 ```typescript
 await authClient.customer.portal();
 ```
 
-### Customer State
+### 客户状态
 
-The portal plugin also adds a convenient state-method for retrieving the general Customer State.
+portal 插件还添加了方便的状态查询方法，可获取通用客户状态。
 
 ```typescript
 const { data: customerState } = await authClient.customer.state();
 ```
 
-The customer state object contains:
+客户状态对象包含：
 
-- All the data about the customer.
-- The list of their active subscriptions
-  - Note: This does not include subscriptions done by a parent organization. See the subscription list-method below for more information.
-- The list of their granted benefits.
-- The list of their active meters, with their current balance.
+- 客户的所有数据
+- 其活跃的订阅列表
+  - 注意：不含父组织的订阅。详见下方订阅列表方法
+- 授权权益列表
+- 活跃计量器列表及其当前余额
 
-Thus, with that single object, you have all the required information to check if you should provision access to your service or not.
+因此，凭该对象即可判定用户是否应获得服务访问权限。
 
-[You can learn more about the Polar Customer State in the Polar Docs](https://docs.polar.sh/integrate/customer-state).
+[你可在 Polar 文档中了解更多关于客户状态的信息](https://docs.polar.sh/integrate/customer-state)。
 
-### Benefits, Orders & Subscriptions
+### 权益、订单与订阅
 
-The portal plugin adds 3 convenient methods for listing benefits, orders & subscriptions relevant to the authenticated user/customer.
+portal 插件提供三个方便方法，列出认证用户/客户相关的权益、订单与订阅。
 
-[All of these methods use the Polar CustomerPortal APIs](https://docs.polar.sh/api-reference/customer-portal)
+[所有这些方法均使用 Polar CustomerPortal API](https://docs.polar.sh/api-reference/customer-portal)
 
-#### Benefits
+#### 权益
 
-This method only lists granted benefits for the authenticated user/customer.
+此方法仅列出认证用户/客户的已授予权益。
 
 ```typescript
 const { data: benefits } = await authClient.customer.benefits.list({
@@ -288,23 +287,23 @@ const { data: benefits } = await authClient.customer.benefits.list({
 });
 ```
 
-#### Orders
+#### 订单
 
-This method lists orders like purchases and subscription renewals for the authenticated user/customer.
+此方法列出认证用户/客户的订单，如购买及订阅续费。
 
 ```typescript
 const { data: orders } = await authClient.customer.orders.list({
   query: {
     page: 1,
     limit: 10,
-    productBillingType: "one_time", // or 'recurring'
+    productBillingType: "one_time", // 或 'recurring'
   },
 });
 ```
 
-#### Subscriptions
+#### 订阅
 
-This method lists the subscriptions associated with authenticated user/customer.
+此方法列出认证用户/客户的订阅。
 
 ```typescript
 const { data: subscriptions } = await authClient.customer.subscriptions.list({
@@ -316,40 +315,40 @@ const { data: subscriptions } = await authClient.customer.subscriptions.list({
 });
 ```
 
-**Important** - Organization Support
+**重要** — 组织支持
 
-This will **not** return subscriptions made by a parent organization to the authenticated user.
+此方法**不会**返回由父组织为认证用户订购的订阅。
 
-However, you can pass a `referenceId` to this method. This will return all subscriptions associated with that referenceId instead of subscriptions associated with the user.
+你可以向此方法传入 `referenceId`，它将返回与该 `referenceId` 关联的所有订阅，而非用户的订阅。
 
-So in order to figure out if a user should have access, pass the user's organization ID to see if there is an active subscription for that organization.
+因此，要判断用户是否应有权限，可传入用户所属组织的 ID，查看该组织是否有活跃订阅。
 
 ```typescript
-const organizationId = (await authClient.organization.list())?.data?.[0]?.id,
+const organizationId = (await authClient.organization.list())?.data?.[0]?.id;
 
 const { data: subscriptions } = await authClient.customer.orders.list({
     query: {
-	    page: 1,
-		limit: 10,
-		active: true,
-        referenceId: organizationId
+      page: 1,
+      limit: 10,
+      active: true,
+      referenceId: organizationId
     },
 });
 
 const userShouldHaveAccess = subscriptions.some(
-    sub => // Your logic to check subscription product or whatever.
+    sub => // 你的逻辑以检查订阅产品等。
 )
 ```
 
-## Usage Plugin
+## 用量插件
 
-A simple plugin for Usage Based Billing.
+用于基于用量计费的简易插件。
 
 ```typescript
 import { polar, checkout, portal, usage } from "@polar-sh/better-auth";
 
 const auth = betterAuth({
-    // ... Better Auth config
+    // ... Better Auth 配置
     plugins: [
         polar({
             ...
@@ -363,11 +362,11 @@ const auth = betterAuth({
 });
 ```
 
-### Event Ingestion
+### 事件摄取
 
-Polar's Usage Based Billing builds entirely on event ingestion. Ingest events from your application, create Meters to represent that usage, and add metered prices to Products to charge for it.
+Polar 的基于用量计费完全依赖事件摄取。你可以从应用中摄取事件，创建计量器表示该使用量，并为产品添加计量价格进行计费。
 
-[Learn more about Usage Based Billing in the Polar Docs.](https://docs.polar.sh/features/usage-based-billing/introduction)
+[在 Polar 文档中了解更多关于基于用量计费](https://docs.polar.sh/features/usage-based-billing/introduction)。
 
 ```typescript
 const { data: ingested } = await authClient.usage.ingest({
@@ -378,20 +377,20 @@ const { data: ingested } = await authClient.usage.ingest({
 });
 ```
 
-The authenticated user is automatically associated with the ingested event.
+认证用户会自动与摄取事件关联。
 
-### Customer Meters
+### 客户计量器
 
-A simple method for listing the authenticated user's Usage Meters, or as we call them, Customer Meters.
+一个简单方法列出认证用户的用量计量器，即“客户计量器”。
 
-Customer Meter's contains all information about their consumption on your defined meters.
+客户计量器包含其定义计量器的所有用量信息：
 
-- Customer Information
-- Meter Information
-- Customer Meter Information
-  - Consumed Units
-  - Credited Units
-  - Balance
+- 客户信息
+- 计量器信息
+- 客户计量器信息
+  - 已消费单位
+  - 已计入单位
+  - 余额
 
 ```typescript
 const { data: customerMeters } = await authClient.usage.meters.list({
@@ -402,25 +401,25 @@ const { data: customerMeters } = await authClient.usage.meters.list({
 });
 ```
 
-## Webhooks Plugin
+## Webhooks 插件
 
-The Webhooks plugin can be used to capture incoming events from your Polar organization.
+Webhooks 插件可用于捕获来自你的 Polar 组织的事件。
 
 ```typescript
 import { polar, webhooks } from "@polar-sh/better-auth";
 
 const auth = betterAuth({
-    // ... Better Auth config
+    // ... Better Auth 配置
     plugins: [
         polar({
             ...
             use: [
                 webhooks({
                     secret: process.env.POLAR_WEBHOOK_SECRET,
-                    onCustomerStateChanged: (payload) => // Triggered when anything regarding a customer changes
-                    onOrderPaid: (payload) => // Triggered when an order was paid (purchase, subscription renewal, etc.)
-                    ...  // Over 25 granular webhook handlers
-                    onPayload: (payload) => // Catch-all for all events
+                    onCustomerStateChanged: (payload) => // 当客户相关信息变更时触发
+                    onOrderPaid: (payload) => // 当订单付款成功时触发（购买、订阅续费等）
+                    ...  // 超过 25 个细粒度 webhook 处理器
+                    onPayload: (payload) => // 捕获所有事件的通用处理器
                 })
             ],
         })
@@ -428,40 +427,40 @@ const auth = betterAuth({
 });
 ```
 
-Configure a Webhook endpoint in your Polar Organization Settings page. Webhook endpoint is configured at /polar/webhooks.
+在你的 Polar 组织设置页面配置 Webhook 端点，Webhook 地址为 `/polar/webhooks`。
 
-Add the secret to your environment.
+将密钥添加到环境变量。
 
 ```bash
 # .env
 POLAR_WEBHOOK_SECRET=...
 ```
 
-The plugin supports handlers for all Polar webhook events:
+插件支持所有 Polar webhook 事件的处理：
 
-- `onPayload` - Catch-all handler for any incoming Webhook event
-- `onCheckoutCreated` - Triggered when a checkout is created
-- `onCheckoutUpdated` - Triggered when a checkout is updated
-- `onOrderCreated` - Triggered when an order is created
-- `onOrderPaid` - Triggered when an order is paid
-- `onOrderRefunded` - Triggered when an order is refunded
-- `onRefundCreated` - Triggered when a refund is created
-- `onRefundUpdated` - Triggered when a refund is updated
-- `onSubscriptionCreated` - Triggered when a subscription is created
-- `onSubscriptionUpdated` - Triggered when a subscription is updated
-- `onSubscriptionActive` - Triggered when a subscription becomes active
-- `onSubscriptionCanceled` - Triggered when a subscription is canceled
-- `onSubscriptionRevoked` - Triggered when a subscription is revoked
-- `onSubscriptionUncanceled` - Triggered when a subscription cancellation is reversed
-- `onProductCreated` - Triggered when a product is created
-- `onProductUpdated` - Triggered when a product is updated
-- `onOrganizationUpdated` - Triggered when an organization is updated
-- `onBenefitCreated` - Triggered when a benefit is created
-- `onBenefitUpdated` - Triggered when a benefit is updated
-- `onBenefitGrantCreated` - Triggered when a benefit grant is created
-- `onBenefitGrantUpdated` - Triggered when a benefit grant is updated
-- `onBenefitGrantRevoked` - Triggered when a benefit grant is revoked
-- `onCustomerCreated` - Triggered when a customer is created
-- `onCustomerUpdated` - Triggered when a customer is updated
-- `onCustomerDeleted` - Triggered when a customer is deleted
-- `onCustomerStateChanged` - Triggered when a customer is created
+- `onPayload` - 捕获所有传入 Webhook 事件的通用处理器
+- `onCheckoutCreated` - 当结账创建时触发
+- `onCheckoutUpdated` - 当结账更新时触发
+- `onOrderCreated` - 当订单创建时触发
+- `onOrderPaid` - 当订单付款时触发
+- `onOrderRefunded` - 当订单退款时触发
+- `onRefundCreated` - 当退款创建时触发
+- `onRefundUpdated` - 当退款更新时触发
+- `onSubscriptionCreated` - 当订阅创建时触发
+- `onSubscriptionUpdated` - 当订阅更新时触发
+- `onSubscriptionActive` - 当订阅激活时触发
+- `onSubscriptionCanceled` - 当订阅取消时触发
+- `onSubscriptionRevoked` - 当订阅撤销时触发
+- `onSubscriptionUncanceled` - 当订阅取消被撤销时触发
+- `onProductCreated` - 当产品创建时触发
+- `onProductUpdated` - 当产品更新时触发
+- `onOrganizationUpdated` - 当组织更新时触发
+- `onBenefitCreated` - 当权益创建时触发
+- `onBenefitUpdated` - 当权益更新时触发
+- `onBenefitGrantCreated` - 当权益授权创建时触发
+- `onBenefitGrantUpdated` - 当权益授权更新时触发
+- `onBenefitGrantRevoked` - 当权益授权撤销时触发
+- `onCustomerCreated` - 当客户创建时触发
+- `onCustomerUpdated` - 当客户更新时触发
+- `onCustomerDeleted` - 当客户删除时触发
+- `onCustomerStateChanged` - 当客户状态变更时触发

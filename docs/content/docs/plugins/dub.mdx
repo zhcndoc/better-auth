@@ -1,36 +1,36 @@
 ---
 title: Dub
-description: Better Auth Plugin for Lead Tracking using Dub links and OAuth Linking
+description: 使用 Dub 链接和 OAuth 关联进行更好的潜在客户跟踪认证插件
 ---
 
-[Dub](https://dub.co/) is an open source modern link management platform for entrepreneurs, creators, and growth teams.
+[Dub](https://dub.co/) 是一个面向创业者、创作者和增长团队的开源现代链接管理平台。
 
-This plugins allows you to track leads when a user signs up using a Dub link. It also adds OAuth linking support to allow you to build integrations extending Dub's linking management infrastructure.
+此插件允许您在用户通过 Dub 链接注册时跟踪潜在客户。它还添加了 OAuth 关联支持，以便您构建扩展 Dub 的链接管理基础设施的集成。
 
-## Installation
+## 安装
 
 <Steps>
     <Step>
-        ### Install the plugin
-        First, install the plugin:
+        ### 安装插件
+        首先，安装插件：
 
         ```package-install
         @dub/better-auth
         ```
     </Step>
     <Step>
-        ### Install the Dub SDK
+        ### 安装 Dub SDK
 
-        Next, install the Dub SDK on your server:
+        接下来，在服务器上安装 Dub SDK：
 
         ```package-install
         dub
         ```
     </Step>
     <Step>
-        ### Configure the plugin
+        ### 配置插件
 
-        Add the plugin to your auth config:
+        将插件添加到您的认证配置中：
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -49,11 +49,11 @@ This plugins allows you to track leads when a user signs up using a Dub link. It
 
 </Steps>
 
-## Usage
+## 使用
 
-### Lead Tracking
+### 潜在客户跟踪
 
-By default, the plugin will track sign up events as leads. You can disable this by setting `disableLeadTracking` to `true`.
+默认情况下，插件将跟踪注册事件作为潜在客户。您可以通过将 `disableLeadTracking` 设置为 `true` 来禁用此功能。
 
 ```ts
 import { dubAnalytics } from "@dub/better-auth";
@@ -66,19 +66,19 @@ const betterAuth = betterAuth({
   plugins: [
     dubAnalytics({
       dubClient: dub,
-      disableLeadTracking: true, // Disable lead tracking
+      disableLeadTracking: true, // 禁用潜在客户跟踪
     }),
   ],
 });
 ```
 
-### OAuth Linking
+### OAuth 关联
 
-The plugin supports OAuth for account linking.
+该插件支持用于账户关联的 OAuth。
 
-First, you need to setup OAuth app in Dub. Dub supports OAuth 2.0 authentication, which is recommended if you build integrations extending Dub’s functionality [Learn more about OAuth](https://dub.co/docs/integrations/quickstart#integrating-via-oauth-2-0-recommended).
+首先，您需要在 Dub 中设置 OAuth 应用。Dub 支持 OAuth 2.0 认证，推荐用于构建扩展 Dub 功能的集成。[了解更多关于 OAuth 的信息](https://dub.co/docs/integrations/quickstart#integrating-via-oauth-2-0-recommended)。
 
-Once you get the client ID and client secret, you can configure the plugin.
+获取客户端 ID 和客户端密钥后，您可以配置该插件。
 
 ```ts
 dubAnalytics({
@@ -90,7 +90,7 @@ dubAnalytics({
 });
 ```
 
-And in the client, you need to use the `dubAnalyticsClient` plugin.
+在客户端，您需要使用 `dubAnalyticsClient` 插件。
 
 ```ts
 import { createAuthClient } from "better-auth/client";
@@ -101,13 +101,13 @@ const authClient = createAuthClient({
 });
 ```
 
-To link account with Dub, you need to use the `dub.link`.
+要与 Dub 关联账户，您需要使用 `dub.link`。
 
 <APIMethod path="/dub/link" method="POST" requireSession>
 ```ts
 type dubLink = {
   /**
-   * URL to redirect to after linking
+   * 关联后重定向的 URL
    * @clientOnly
   */
   callbackURL: string = "/dashboard"
@@ -115,38 +115,38 @@ type dubLink = {
 ```
 </APIMethod>
 
-## Options
+## 选项
 
-You can pass the following options to the plugin:
+您可以向插件传递以下选项：
 
 ### `dubClient`
 
-The Dub client instance.
+Dub 客户端实例。
 
 ### `disableLeadTracking`
 
-Disable lead tracking for sign up events.
+禁用注册事件的潜在客户跟踪。
 
 ### `leadEventName`
 
-Event name for sign up leads.
+注册潜在客户的事件名称。
 
 ### `customLeadTrack`
 
-Custom lead track function.
+自定义潜在客户跟踪函数。
 
 ### `oauth`
 
-Dub OAuth configuration.
+Dub OAuth 配置。
 
 ### `oauth.clientId`
 
-Client ID for Dub OAuth.
+Dub OAuth 的客户端 ID。
 
 ### `oauth.clientSecret`
 
-Client secret for Dub OAuth.
+Dub OAuth 的客户端密钥。
 
 ### `oauth.pkce`
 
-Enable PKCE for Dub OAuth.
+启用 Dub OAuth 的 PKCE。

@@ -1,47 +1,45 @@
 ---
 title: invalid_callback_request
-description: The callback request is invalid.
+description: 回调请求无效。
 ---
 
-## What is it?
+## 什么是它？
 
-This error is thrown during the OAuth callback when the incoming request cannot be parsed or is missing
-required fields. 
+当传入的 OAuth 回调请求无法解析或缺少必需字段时，会抛出此错误。
 
-## Common Causes
+## 常见原因
 
-* Query or body parameters were stripped by a reverse proxy, CDN, or framework rewrite.
-* Double-encoding or improper URL encoding of parameters causes parsing to fail.
-* Callback URL mismatch at the provider triggers an intermediate redirect that drops parameters.
-* Middleware or route grouping sends the request to a different handler than intended.
-* Very long URLs get truncated by an intermediary (rare but possible with some proxies).
+* 查询参数或请求体参数被反向代理、CDN 或框架重写时剥离。
+* 参数双重编码或编码不正确导致解析失败。
+* 提供商处回调 URL 不匹配，触发中间重定向，导致参数丢失。
+* 中间件或路由分组将请求发送到意图之外的处理程序。
+* 非常长的 URL 被中间环节截断（某些代理下虽少见但可能发生）。
 
-## How to resolve
+## 如何解决
 
-### Verify callback method and parameters
+### 验证回调方法和参数
 
-* Ensure your provider is configured to use the method your route expects (commonly GET with query parameters for Authorization Code flow).
-* Confirm the callback includes required parameters (e.g., `code` and `state` for standard OAuth flows).
+* 确保您的提供商配置了与路由预期方法相符（常见为授权码流程中使用带查询参数的 GET 方法）。
+* 确认回调包含必需参数（例如，标准 OAuth 流程中的 `code` 和 `state`）。
 
-### Preserve query/body through infrastructure
+### 通过基础设施保持查询/请求体完整
 
-* Check that reverse proxies (Vercel, Cloudflare, Nginx) and app rewrites forward the full query string and request body intact.
-* If middleware intercepts or rewrites the callback, make sure it forwards all parameters without modification.
+* 检查反向代理（如 Vercel、Cloudflare、Nginx）和应用重写是否完整转发查询字符串和请求体。
+* 如果中间件拦截或重写回调，请确保它无修改地转发所有参数。
 
-### Debug locally
+### 本地调试
 
-* In DevTools → Network, inspect the callback request and verify parameters are present and well-formed.
-* Compare dev/staging/prod credentials to ensure there are no environment differences causing different flows or endpoints.
+* 在开发者工具的网络(Network)中，检查回调请求，确认参数存在且格式正确。
+* 比较开发/测试/生产环境凭据，确保不存在环境差异导致流程或终端节点不同。
 
-### Edge cases to consider
+### 需要考虑的边缘情况
 
-* Mobile/WebView or deep-link flows can drop query parameters during handoff.
-* Some providers can return parameters in fragments; your server will not receive fragments—ensure the provider uses query/body for server-side callbacks.
-* Multiple redirects (including HTTP → HTTPS) can lose parameters if not configured correctly.
+* 移动端/WebView 或深度链接流程在交接时可能会丢失查询参数。
+* 有些提供商可能通过片段（fragment）返回参数；服务器不会接收到片段 — 确保提供商使用查询或请求体来处理服务器端回调。
+* 多次重定向（包括 HTTP → HTTPS）若配置不当会丢失参数。
 
 <Callout type="info">
-    Callback parameters are normally handled automatically by Better Auth. If this error appears, it often
-    indicates manual access to the `/api/auth/callback` route, a proxy/redirect that stripped parameters,
-    or an integration mismatch. Double-check provider settings and infrastructure rewrites to ensure the
-    full request reaches the callback unchanged.
+    回调参数通常由 Better Auth 自动处理。如果出现此错误，通常表示手动访问 `/api/auth/callback` 路由、
+    代理/重定向剥离了参数，或集成配置不匹配。请仔细检查提供商设置和基础设施重写，确保完整请求
+    不变地到达回调。
 </Callout>

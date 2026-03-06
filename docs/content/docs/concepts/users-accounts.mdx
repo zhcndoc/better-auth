@@ -1,19 +1,19 @@
 ---
-title: User & Accounts
-description: User and account management.
+title: 用户与账户
+description: 用户和账户管理。
 ---
 
-Beyond authenticating users, Better Auth also provides a set of methods to manage users. This includes, updating user information, changing passwords, and more.
+除了认证用户外，Better Auth 还提供了一组管理用户的方法。这包括更新用户信息、更改密码等。
 
-The user table stores the authentication data of the user [Click here to view the schema](/docs/concepts/database#user).
+用户表存储用户的认证数据 [点击此处查看模式](/docs/concepts/database#user)。
 
-The user table can be extended using [additional fields](/docs/concepts/database#extending-core-schema) or by plugins to store additional data.
+用户表可以通过[附加字段](/docs/concepts/database#extending-core-schema)或插件进行扩展，以存储额外的数据。
 
-## Update User
+## 更新用户
 
-### Update User Information
+### 更新用户信息
 
-To update user information, you can use the `updateUser` function provided by the client. The `updateUser` function takes an object with the following properties:
+要更新用户信息，可以使用客户端提供的 `updateUser` 函数。`updateUser` 函数接收一个具有以下属性的对象：
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -23,13 +23,14 @@ await authClient.updateUser({
     name: "John Doe",
 })
 ```
-### Change Email
 
-To allow users to change their email, first enable the `changeEmail` feature, which is disabled by default. Set `changeEmail.enabled` to `true`:
+### 更改电子邮件
+
+要允许用户更改他们的邮箱，首先需要启用默认关闭的 `changeEmail` 功能。将 `changeEmail.enabled` 设置为 `true`：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
-import { sendEmail } from './email'; // your email sending function
+import { sendEmail } from './email'; // 你的发送邮件函数
 
 export const auth = betterAuth({
     user: {
@@ -38,7 +39,7 @@ export const auth = betterAuth({
         }
     },
     emailVerification: {
-        // Required to send the verification email
+        // 发送验证邮件所需
         sendVerificationEmail: async ({ user, url, token }) => {
             void sendEmail({
                 to: user.email,
@@ -49,22 +50,19 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warn">
-  Avoid awaiting the email sending to prevent 
-  timing attacks. On serverless platforms, use `waitUntil` or similar to ensure the email is sent.
+  避免等待邮件发送完成以防止时序攻击。在无服务器平台上，使用 `waitUntil` 或类似功能确保邮件被发送。
 </Callout>
 
-By default, when a user requests to change their email, a verification email is sent to the **new** email address.
-The email is only updated after the user verifies the new email.
+默认情况下，当用户请求更改邮箱时，验证邮件会发送到**新的**邮箱地址。
+用户验证新邮箱后，邮箱才会被更新。
 
+#### 使用当前邮箱确认
 
-#### Confirming with Current Email
-
-For added security, you can require users to confirm the change via their **current** email before
-the verification email is sent to the new address. To do this, provide the `sendChangeEmailConfirmation` function.
+为加强安全性，可以要求用户先通过其**当前**邮箱确认更改，然后再向新邮箱发送验证邮件。实现此功能，需要提供 `sendChangeEmailConfirmation` 函数。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
-import { sendEmail } from './email'; // your email sending function
+import { sendEmail } from './email'; // 你的发送邮件函数
 
 export const auth = betterAuth({
     user: {
@@ -72,9 +70,9 @@ export const auth = betterAuth({
             enabled: true,
             sendChangeEmailConfirmation: async ({ user, newEmail, url, token }, request) => { 
                 void sendEmail({
-                    to: user.email, // Sent to the CURRENT email
-                    subject: 'Approve email change',
-                    text: `Click the link to approve the change to ${newEmail}: ${url}`
+                    to: user.email, // 发送到当前邮箱
+                    subject: '批准邮箱更改',
+                    text: `点击链接批准将邮箱更改为 ${newEmail}: ${url}`
                 })
             }
         }
@@ -83,9 +81,9 @@ export const auth = betterAuth({
 })
 ```
 
-#### Updating Without Verification
+#### 无需验证即可更新
 
-If you want to allow users to update their email immediately without verification (only if their current email is NOT verified), you can enable `updateEmailWithoutVerification`.
+如果你允许用户立即更新邮箱（仅当当前邮箱未验证时），可以启用 `updateEmailWithoutVerification`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -101,48 +99,48 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warn">
-    If `updateEmailWithoutVerification` is false (default), the email will not be updated until the new email is verified, even if the current email is unverified.
+    如果 `updateEmailWithoutVerification` 为假（默认），即使当前邮箱未验证，新邮箱未验证之前邮箱也不会被更新。
 </Callout>
 
-#### Client Usage
+#### 客户端用法
 
-Use the `changeEmail` function on the client to initiate the process.
+在客户端使用 `changeEmail` 函数启动流程。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
 
 await authClient.changeEmail({
     newEmail: "new-email@email.com",
-    callbackURL: "/dashboard", // to redirect after verification
+    callbackURL: "/dashboard", // 验证后跳转
 });
 ```
- 
-### Change Password
-A user's password isn't stored in the user table. Instead, it's stored in the account table. To change the password of a user, you can use one of the following approaches:
 
+### 更改密码
+
+用户密码不存储在用户表中，而是存储在账户表中。要更改用户密码，可以使用以下方法之一：
 
 <APIMethod path="/change-password" method="POST" requireSession>
 ```ts
 type changePassword = {
     /**
-     * The new password to set 
+     * 要设置的新密码 
      */
     newPassword: string = "newpassword1234"
     /**
-     * The current user password 
+     * 当前用户密码 
      */
     currentPassword: string = "oldpassword1234"
     /**
-     * When set to true, all other active sessions for this user will be invalidated
+     * 设置为真时，将使此用户的其他所有活跃会话失效
      */
     revokeOtherSessions?: boolean = true
 }
 ```
 </APIMethod>
 
-### Set Password
+### 设置密码
 
-If a user was registered using OAuth or other providers, they won't have a password or a credential account. In this case, you can use the `setPassword` action to set a password for the user. For security reasons, this function can only be called from the server. We recommend having users go through a 'forgot password' flow to set a password for their account.
+如果用户通过 OAuth 或其他提供者注册，则不会有密码或凭证账户。这种情况下，可以使用 `setPassword` 操作为用户设置密码。出于安全考虑，此函数只能在服务器端调用。建议用户通过“忘记密码”流程来设置密码。
 
 ```ts title="set-password.ts"
 import { auth } from "@/lib/auth"
@@ -151,36 +149,38 @@ await auth.api.setPassword({
     body: {
         newPassword: "new-password",
     },
-    headers: await headers() // headers containing the user's session token
+    headers: await headers() // 包含用户会话令牌的请求头
 });
 ```
-### Verify Password
 
-The `verifyPassword` function allows you to verify a user's current password. This is useful for confirming user identity before performing sensitive operations like updating security settings. This function can only be called from the server.
+### 验证密码
+
+`verifyPassword` 函数允许验证用户当前密码。适用于执行敏感操作（如更新安全设置）前确认用户身份。此函数只能在服务器端调用。
 
 ```ts title="verify-password.ts"
 import { auth } from "@/lib/auth"
 
 await auth.api.verifyPassword({
     body: {
-        password: "user-password" // required
+        password: "user-password" // 必填
     },
-    headers: await headers() // headers containing the user's session token
+    headers: await headers() // 包含用户会话令牌的请求头
 });
 ```
+
 <Callout type="info">
-For OAuth users who don't have passwords, consider using email verification or fresh session checks for sensitive operations instead.
+对于无密码的 OAuth 用户，建议对敏感操作使用邮箱验证或新鲜会话检查替代。
 </Callout>
 
-## Delete User
+## 删除用户
 
-Better Auth provides a utility to hard delete a user from your database. It's disabled by default, but you can enable it easily by passing `enabled:true`
+Better Auth 提供了一个工具可从数据库硬删除用户。默认禁用，但可通过传递 `enabled:true` 轻松启用。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    //...other config
+    //...其它配置
     user: {
         deleteUser: { // [!code highlight]
             enabled: true // [!code highlight]
@@ -189,14 +189,14 @@ export const auth = betterAuth({
 })
 ```
 
-Once enabled, you can call `authClient.deleteUser` to permanently delete user data from your database.
+启用后，可调用 `authClient.deleteUser` 永久删除数据库中的用户数据。
 
-### Adding Verification Before Deletion
+### 删除前添加验证
 
-For added security, you’ll likely want to confirm the user’s intent before deleting their account. A common approach is to send a verification email. Better Auth provides a `sendDeleteAccountVerification` utility for this purpose. 
-This is especially needed if you have OAuth setup and want them to be able to delete their account without forcing them to login again for a fresh session.
+为增强安全，通常会确认用户删除账户的意愿。常用方法是发送验证邮件。Better Auth 提供 `sendDeleteAccountVerification` 工具用于此目的。
+尤其适用于配置了 OAuth，又希望用户无需再次登录即可删除账户的场景。
 
-Here’s how you can set it up:
+配置示例如下：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -207,36 +207,35 @@ export const auth = betterAuth({
             enabled: true,
             sendDeleteAccountVerification: async (
                 {
-                    user,   // The user object
-                    url, // The auto-generated URL for deletion
-                    token  // The verification token  (can be used to generate custom URL)
+                    user,   // 用户对象
+                    url,    // 自动生成的删除链接
+                    token   // 验证令牌（可用于生成自定义链接）
                 },
-                request  // The original request object (optional)
+                request  // 原始请求对象（可选）
             ) => {
-                // Your email sending logic here
-                // Example: sendEmail(data.user.email, "Verify Deletion", data.url);
+                // 你的邮件发送逻辑
+                // 例如：sendEmail(user.email, "验证删除", url);
             },
         },
     },
 });
 ```
 
-**How callback verification works:**
+**回调验证工作原理：**
 
-- **Callback URL**: The URL provided in `sendDeleteAccountVerification` is a pre-generated link that deletes the user data when accessed.
+- **回调 URL**：`sendDeleteAccountVerification` 中提供的 URL 是访问后删除用户数据的预生成链接。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
 
 await authClient.deleteUser({
-    callbackURL: "/goodbye" // you can provide a callback URL to redirect after deletion
+    callbackURL: "/goodbye" // 可提供删除后跳转 URL
 });
 ```
 
-- **Authentication Check**: The user must be signed in to the account they’re attempting to delete.
-If they aren’t signed in, the deletion process will fail. 
+- **认证检查**：用户必须登录欲删除的账户，否则删除失败。
 
-If you have sent a custom URL, you can use the `deleteUser` method with the token to delete the user.
+如果已发送自定义 URL，则可通过带 token 的 `deleteUser` 方法删除用户。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -246,13 +245,13 @@ await authClient.deleteUser({
 });
 ```
 
-### Authentication Requirements
+### 认证要求
 
-To delete a user, the user must meet one of the following requirements:
+删除用户需满足以下条件之一：
 
-1. A valid password
+1. 有效密码
 
-if the user has a password, they can delete their account by providing the password.
+如用户有密码，提供密码即可删除账户。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -262,12 +261,12 @@ await authClient.deleteUser({
 });
 ```
 
-2. Fresh session
+2. 新鲜会话
 
-The user must have a `fresh` session token, meaning the user must have signed in recently. This is checked if the password is not provided.
+用户需拥有“新鲜”会话令牌，意即最近登录过。若未提供密码，则检测该条件。
 
 <Callout type="warn">
-By default `session.freshAge` is set to `60 * 60 * 24` (1 day). You can change this value by passing the `session` object to the `auth` configuration. If it is set to `0`, the freshness check is disabled. It is recommended not to disable this check if you are not using email verification for deleting the account.
+默认 `session.freshAge` 设为 `60 * 60 * 24`（1 天）。可通过 `auth` 配置传入 `session` 对象更改。若设为 `0`，则禁用新鲜度检查。建议未启用邮箱验证删除时不要禁用此检查。
 </Callout>
 
 ```ts
@@ -276,9 +275,9 @@ import { authClient } from "@/lib/auth-client"
 await authClient.deleteUser();
 ```
 
-3. Enabled email verification (needed for OAuth users)
+3. 启用邮箱验证（用于 OAuth 用户）
 
-As OAuth users don't have a password, we need to send a verification email to confirm the user's intent to delete their account. If you have already added the `sendDeleteAccountVerification` callback, you can just call the `deleteUser` method without providing any other information.
+OAuth 用户无密码，需发送验证邮件以确认删除意愿。若已添加 `sendDeleteAccountVerification` 回调，调用 `deleteUser` 无需其他信息即可。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -286,8 +285,9 @@ import { authClient } from "@/lib/auth-client"
 await authClient.deleteUser();
 ```
 
-4. If you have a custom delete account page and sent that url via the `sendDeleteAccountVerification` callback.
-Then you need to call the `deleteUser` method with the token to complete the deletion.
+4. 自定义删除账户页面
+
+如发送了自定义删除链接（通过 `sendDeleteAccountVerification` 回调），需使用包含 token 的 `deleteUser` 方法完成删除。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -297,9 +297,9 @@ await authClient.deleteUser({
 });
 ```
 
-### Callbacks
+### 回调函数
 
-**beforeDelete**: This callback is called before the user is deleted. You can use this callback to perform any cleanup or additional checks before deleting the user.
+**beforeDelete**：此回调在删除用户前调用。可用来执行清理或额外检查。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -309,13 +309,14 @@ export const auth = betterAuth({
         deleteUser: {
             enabled: true,
             beforeDelete: async (user) => {
-                // Perform any cleanup or additional checks here
+                // 在这里执行清理或额外检查
             },
         },
     },
 });
 ```
-you can also throw `APIError` to interrupt the deletion process.
+
+你也可以抛出 `APIError` 来中断删除流程。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -328,7 +329,7 @@ export const auth = betterAuth({
             beforeDelete: async (user, request) => {
                 if (user.email.includes("admin")) {
                     throw new APIError("BAD_REQUEST", {
-                        message: "Admin accounts can't be deleted",
+                        message: "管理员账户无法删除",
                     });
                 }
             },
@@ -337,7 +338,7 @@ export const auth = betterAuth({
 });
 ```
 
-**afterDelete**: This callback is called after the user is deleted. You can use this callback to perform any cleanup or additional actions after the user is deleted.
+**afterDelete**：此回调在删除用户后调用。可用于执行清理或其他操作。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -347,25 +348,24 @@ export const auth = betterAuth({
         deleteUser: {
             enabled: true,
             afterDelete: async (user, request) => {
-                // Perform any cleanup or additional actions here
+                // 在这里执行清理或其他操作
             },
         },
     },
 });
 ```
 
-## Accounts
+## 账户
 
-Better Auth supports multiple authentication methods. Each authentication method is called a provider. For example, email and password authentication is a provider, Google authentication is a provider, etc.
+Better Auth 支持多种认证方式。每种认证方式称为一个提供者。例如，邮箱密码认证是一个提供者，Google 认证也是一个提供者。
 
-When a user signs in using a provider, an account is created for the user. The account stores the authentication data returned by the provider. This data includes the access token, refresh token, and other information returned by the provider.
+当用户使用提供者登录时，会为该用户创建一个账户，账户存储提供者返回的认证数据，包括访问令牌、刷新令牌等。
 
-The account table stores the authentication data of the user [Click here to view the schema](/docs/concepts/database#account)
+账户表存储用户的认证数据 [点击此处查看模式](/docs/concepts/database#account)
 
+### 列出用户账户
 
-### List User Accounts
-
-To list user accounts you can use `client.user.listAccounts` method. Which will return all accounts associated with a user.
+要列出用户账户，可以使用 `client.user.listAccounts` 方法，返回与用户关联的所有账户。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -373,9 +373,9 @@ import { authClient } from "@/lib/auth-client"
 const accounts = await authClient.listAccounts();
 ```
 
-### Token Encryption
+### 令牌加密
 
-Better Auth doesn’t encrypt tokens by default and that’s intentional. We want you to have full control over how encryption and decryption are handled, rather than baking in behavior that could be confusing or limiting. If you need to store encrypted tokens (like accessToken or refreshToken), you can use databaseHooks to encrypt them before they’re saved to your database.
+Better Auth 默认不加密令牌，这是有意为之。我们希望你完全控制加密和解密的方式，而不是内置可能混淆或限制的行为。如果你需要存储加密的令牌（例如 accessToken 或 refreshToken），可以使用数据库钩子（databaseHooks）在保存前加密。
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -404,13 +404,13 @@ export const auth = betterAuth({
 })
 ```
 
-Then whenever you retrieve back the account make sure to decrypt the tokens before using them.
+然后每次取回账户时，记得先解密令牌再使用。
 
-### Account Linking
+### 账户关联
 
-Account linking is [enabled by default](https://www.better-auth.com/docs/reference/options#accountlinking) and lets users associate multiple authentication methods with a single account. With Better Auth, users can connect additional social sign-ons or OAuth providers to their existing accounts if the provider confirms the user's email as verified.
+账户关联在[默认启用](https://www.better-auth.com/docs/reference/options#accountlinking)，允许用户将多种认证方式关联到同一账户。使用 Better Auth，用户可为现有账户连接额外的社交登录或 OAuth 提供者（前提是提供者确认用户邮箱已验证）。
 
-If account linking is disabled, no accounts can be linked, regardless of the provider or email verification status.
+若禁用账户关联，则不论提供者或邮箱验证状态如何，均无法关联账户。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -424,9 +424,9 @@ export const auth = betterAuth({
 });
 ```
 
-#### Forced Linking
+#### 强制关联
 
-You can specify a list of "trusted providers." When a user logs in using a trusted provider, their account will be automatically linked even if the provider doesn’t confirm the email verification status. Use this with caution as it may increase the risk of account takeover.
+你可以指定一组“受信任提供者”。当用户通过该类提供者登录时，即使提供者未确认邮箱验证状态，其账户也会自动关联。请慎用此功能，因可能增加账户被接管风险。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -441,22 +441,22 @@ export const auth = betterAuth({
 });
 ```
 
-#### Manually Linking Accounts
+#### 手动关联账户
 
-Users already signed in can manually link their account to additional social providers or credential-based accounts.
+已登录用户可手动将账户关联到额外的社交提供者或凭证账户。
 
-- **Linking Social Accounts:** Use the `linkSocial` method on the client to link a social provider to the user's account.
+- **关联社交账户:** 使用客户端的 `linkSocial` 方法将社交提供者关联到用户账户。
 
   ```ts
   import { authClient } from "@/lib/auth-client"
 
   await authClient.linkSocial({
-      provider: "google", // Provider to link
-      callbackURL: "/callback" // Callback URL after linking completes
+      provider: "google", // 要关联的提供者
+      callbackURL: "/callback" // 关联完成后的回调 URL
   });
   ```
 
-  You can also request specific scopes when linking a social account, which can be different from the scopes used during the initial authentication:
+  你也可以在关联社交账户时请求特定权限范围，与初次认证时的权限不同：
 
   ```ts
   import { authClient } from "@/lib/auth-client"
@@ -464,11 +464,11 @@ Users already signed in can manually link their account to additional social pro
   await authClient.linkSocial({
       provider: "google",
       callbackURL: "/callback",
-      scopes: ["https://www.googleapis.com/auth/drive.readonly"] // Request additional scopes
+      scopes: ["https://www.googleapis.com/auth/drive.readonly"] // 请求额外权限
   });
   ```
 
-  You can also link accounts using ID tokens directly, without redirecting to the provider's OAuth flow:
+  还可以直接使用 ID 令牌关联账户，无需跳转到提供者的 OAuth 流程：
 
   ```ts
   import { authClient } from "@/lib/auth-client"
@@ -477,21 +477,22 @@ Users already signed in can manually link their account to additional social pro
       provider: "google",
       idToken: {
           token: "id_token_from_provider",
-          nonce: "nonce_used_for_token", // Optional
-          accessToken: "access_token", // Optional, may be required by some providers
-          refreshToken: "refresh_token" // Optional
+          nonce: "nonce_used_for_token", // 可选
+          accessToken: "access_token", // 可选，部分提供者需要
+          refreshToken: "refresh_token" // 可选
       }
   });
   ```
 
-  This is useful when you already have valid tokens from the provider, for example:
-  - After signing in with a native SDK
-  - When using a mobile app that handles authentication
-  - When implementing custom OAuth flows
+  这适用于你已持有有效令牌的情况，例如：
+  - 使用原生 SDK 登录后
+  - 移动端应用处理认证时
+  - 自定义 OAuth 流程时
 
-  The ID token must be valid and the provider must support ID token verification.
+  ID 令牌必须有效且提供者支持验证。
 
-  If you want your users to be able to link a social account with a different email address than the user, or if you want to use a provider that does not return email addresses, you will need to enable this in the account linking settings. 
+  如果希望用户可以用与账户邮箱不同的邮箱关联社交账户，或使用不返回邮箱的提供者，需要在账户关联设置中启用此功能。
+
   ```ts title="auth.ts"
   import { betterAuth } from "better-auth";
 
@@ -504,7 +505,7 @@ Users already signed in can manually link their account to additional social pro
   });
   ```
 
-  If you want the newly linked accounts to update the user information, you need to enable this in the account linking settings. 
+  如果希望关联的账户信息能更新用户资料，需要在账户关联设置中启用。
 
   ```ts title="auth.ts"
   import { betterAuth } from "better-auth";
@@ -518,26 +519,26 @@ Users already signed in can manually link their account to additional social pro
   });
   ```
 
-- **Linking Credential-Based Accounts:** To link a credential-based account (e.g., email and password), users can initiate a "forgot password" flow, or you can call the `setPassword` method on the server. 
+- **关联凭证账户:** 要关联凭证账户（如邮箱密码），用户可发起“忘记密码”流程，或你可在服务器端调用 `setPassword`。
 
   ```ts title="set-password.ts"
   import { auth } from "@/lib/auth"
 
   await auth.api.setPassword({
     body: {
-        newPassword: "new-password", // required
+        newPassword: "new-password", // 必填
     },
-    headers: await headers() // headers containing the user's session token
+    headers: await headers() // 包含用户会话令牌的请求头
   });
   ```
 
 <Callout>
-`setPassword` can't be called from the client for security reasons.
+出于安全考虑，`setPassword` 不可在客户端调用。
 </Callout>
 
-### Account Unlinking
+### 账户解除关联
 
-You can unlink a user account by providing a `providerId`.
+你可以通过提供 `providerId` 来解除用户账户的关联。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -546,14 +547,14 @@ await authClient.unlinkAccount({
     providerId: "google"
 });
 
-// Unlink a specific account
+// 解除特定账户关联
 await authClient.unlinkAccount({
     providerId: "google",
     accountId: "123"
 });
 ```
 
-If the account doesn't exist, it will throw an error. Additionally, if the user only has one account, unlinking will be prevented to stop account lockout (unless `allowUnlinkingAll` is set to `true`).
+如果账户不存在，则会抛出错误。另外，如果用户只有一个账户，解除关联将被阻止以防止账户锁定（除非设置 `allowUnlinkingAll` 为 `true`）。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";

@@ -1,13 +1,12 @@
 ---
-title: Astro Example
-description: Better Auth Astro example.
+title: Astro 示例
+description: Better Auth Astro 示例。
 ---
 
-This is an example of how to use Better Auth with Astro. It uses Solid for building the components.
+这是一个如何在 Astro 中使用 Better Auth 的示例。它使用 Solid 来构建组件。
 
-
-**Implements the following features:**
-Email & Password . Social Sign-in with Google . Passkeys . Email Verification . Password Reset . Two Factor Authentication . Profile Update . Session Management
+**实现以下功能：**  
+邮箱与密码 · 谷歌社交登录 · 通行密钥 · 邮箱验证 · 重置密码 · 双重验证 · 资料更新 · 会话管理
 
 <ForkButton url="better-auth/examples/tree/main/astro-example"  />
 
@@ -19,27 +18,27 @@ Email & Password . Social Sign-in with Google . Passkeys . Email Verification . 
       borderRadius: "4px",
       overflow: "hidden"
    }}
-   title="Better Auth Astro+Solid Example"
+   title="Better Auth Astro+Solid 示例"
    allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
    sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
    >
 </iframe>
 
 
-## How to run
+## 如何运行
 
-1. Clone the code sandbox (or the repo) and open it in your code editor
-2. Provide .env file with the following variables
+1. 克隆代码沙箱（或仓库），并在代码编辑器中打开
+2. 提供包含以下变量的 .env 文件
    ```txt
    GOOGLE_CLIENT_ID=
    GOOGLE_CLIENT_SECRET=
    BETTER_AUTH_SECRET=
    ```
-   //if you don't have these, you can get them from the google developer console. If you don't want to use google sign-in, you can remove the google config from the `auth.ts` file.
+   // 如果没有这些，可以从谷歌开发者控制台获取。如果不想使用谷歌登录，可以从 `auth.ts` 文件中移除谷歌配置。
 
-3. Run the following commands
+3. 运行以下命令
    ```bash
    pnpm install
    pnpm run dev
    ```
-4. Open the browser and navigate to `http://localhost:3000`
+4. 打开浏览器并访问 `http://localhost:3000`

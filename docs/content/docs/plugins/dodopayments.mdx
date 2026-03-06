@@ -1,53 +1,53 @@
 ---
 title: Dodo Payments
-description: Better Auth Plugin for Dodo Payments
+description: 更好的 Dodo Payments 认证插件
 ---
 
-[Dodo Payments](https://dodopayments.com) is a global Merchant-of-Record platform that lets AI, SaaS and digital businesses sell in 150+ countries without touching tax, fraud, or compliance. A single, developer-friendly API powers checkout, billing, and payouts so you can launch worldwide in minutes.
+[Dodo Payments](https://dodopayments.com) 是一个全球商户记录平台，帮助 AI、SaaS 和数字业务在 150 多个国家销售产品，无需处理税务、欺诈或合规问题。一个简单且开发者友好的 API 支持结账、计费和付款，让您几分钟内即可全球上线。
 
 <Callout>
-  This plugin is maintained by the Dodo Payments team. For bugs, issues or feature requests,
-  please visit the [Dodo Payments GitHub repo](https://github.com/dodopayments/dodo-adapters).
+  本插件由 Dodo Payments 团队维护。如有 BUG、问题或功能请求，
+  请访问 [Dodo Payments GitHub 仓库](https://github.com/dodopayments/dodo-adapters)。
 </Callout>
 
 <Card
   href="https://discord.gg/bYqAp4ayYh"
-  title="Get support on Dodo Payments' Discord"
+  title="在 Dodo Payments 的 Discord 获取支持"
 >
-  Have questions? Our team is available on Discord to assist you anytime.
+  有疑问？我们的团队随时在 Discord 上为您提供帮助。
 </Card>
 
-## Features
+## 功能
 
-- Automatic customer creation on sign-up
-- Type-safe checkout flows with product slug mapping
-- Self-service customer portal
-- Real-time webhook event processing with signature verification
+- 注册时自动创建客户
+- 具有产品 slug 映射的类型安全结账流程
+- 自助客户门户
+- 实时 Webhook 事件处理及签名验证
 
-<Card href="https://app.dodopayments.com" title="Get started with Dodo Payments">
-  You need a Dodo Payments account and API keys to use this integration.
+<Card href="https://app.dodopayments.com" title="开始使用 Dodo Payments">
+  您需要一个 Dodo Payments 账户和 API 密钥才能使用此集成。
 </Card>
 
-## Installation
+## 安装
 
 <Steps>
-  <Step title="Install dependencies">
-    Run the following command in your project root:
+  <Step title="安装依赖">
+    在项目根目录运行以下命令：
 ```bash
 npm install @dodopayments/better-auth dodopayments better-auth zod
 ```
   
   </Step>
-  <Step title="Configure environment variables">
-    Add these to your `.env` file:
+  <Step title="配置环境变量">
+    添加以下内容到您的 `.env` 文件：
 ```txt
 DODO_PAYMENTS_API_KEY=your_api_key_here
 DODO_PAYMENTS_WEBHOOK_SECRET=your_webhook_secret_here
 ```
   </Step>
 
-  <Step title="Set up server-side integration">
-    Create or update `src/lib/auth.ts`:
+  <Step title="设置服务端集成">
+    创建或更新 `src/lib/auth.ts`：
 ```typescript
 import { betterAuth } from "better-auth";
 import {
@@ -92,12 +92,12 @@ export const auth = betterAuth({
 });
 ```
     <Card>
-      Set `environment` to `live_mode` for production.
+      将 `environment` 设置为 `live_mode` 即为生产环境。
     </Card>
   </Step>
 
-  <Step title="Set up client-side integration">
-    Create or update `src/lib/auth-client.ts`:
+  <Step title="设置客户端集成">
+    创建或更新 `src/lib/auth-client.ts`：
 ```typescript
 import { dodopaymentsClient } from "@dodopayments/better-auth";
 
@@ -109,9 +109,9 @@ export const authClient = createAuthClient({
   </Step>
 </Steps>
 
-## Usage
+## 使用
 
-### Creating a Checkout Session
+### 创建结账会话
 
 ```typescript
 const { data: checkout, error } = await authClient.dodopayments.checkout({
@@ -135,7 +135,7 @@ if (checkout) {
 }
 ```
 
-### Accessing the Customer Portal
+### 访问客户门户
 
 ```typescript
 const { data: customerPortal, error } = await authClient.dodopayments.customer.portal();
@@ -144,10 +144,10 @@ if (customerPortal && customerPortal.redirect) {
 }
 ```
 
-### Listing Customer Data
+### 列出客户数据
 
 ```typescript
-// Get subscriptions
+// 获取订阅
 const { data: subscriptions, error } =
   await authClient.dodopayments.customer.subscriptions.list({
     query: {
@@ -157,7 +157,7 @@ const { data: subscriptions, error } =
     },
   });
 
-// Get payment history
+// 获取付款历史
 const { data: payments, error } = await authClient.dodopayments.customer.payments.list({
   query: {
     limit: 10,
@@ -170,19 +170,19 @@ const { data: payments, error } = await authClient.dodopayments.customer.payment
 ### Webhooks
 
 <Card>
-  The webhooks plugin processes real-time payment events from Dodo Payments with secure signature verification. The default endpoint is `/api/auth/dodopayments/webhooks`.
+  Webhooks 插件处理来自 Dodo Payments 的实时支付事件，具备安全的签名验证。默认端点为 `/api/auth/dodopayments/webhooks`。
 </Card>
 
 <Steps>
-  <Step title="Generate and set webhook secret">
-    Generate a webhook secret for your endpoint URL (e.g., `https://your-domain.com/api/auth/dodopayments/webhooks`) in the Dodo Payments Dashboard and set it in your .env file:
+  <Step title="生成并设置 webhook 密钥">
+    在 Dodo Payments 控制台为您的端点 URL（如 `https://your-domain.com/api/auth/dodopayments/webhooks`）生成 webhook 密钥，并将其设置到您的 .env 文件：
 ```txt
 DODO_PAYMENTS_WEBHOOK_SECRET=your_webhook_secret_here
 ```
   </Step>
 
-  <Step title="Handle webhook events">
-    Example handler:
+  <Step title="处理 webhook 事件">
+    示例处理器：
 ```typescript
 webhooks({
   webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
@@ -194,18 +194,18 @@ webhooks({
   </Step>
 </Steps>
 
-## Configuration Reference
+## 配置参考
 
-### Plugin Options
+### 插件选项
 
-- **client** (required): DodoPayments client instance
-- **createCustomerOnSignUp** (optional): Auto-create customers on user signup  
-- **use** (required): Array of plugins to enable (checkout, portal, webhooks)
+- **client**（必填）：DodoPayments 客户端实例
+- **createCustomerOnSignUp**（可选）：用户注册时自动创建客户  
+- **use**（必填）：启用的插件数组（checkout，portal，webhooks）
 
-### Checkout Plugin Options
+### 结账插件选项
 
-- **products**: Array of products or async function returning products
-- **successUrl**: URL to redirect after successful payment
-- **authenticatedUsersOnly**: Require user authentication (default: false)
+- **products**：产品数组或返回产品的异步函数
+- **successUrl**：付款成功后跳转的 URL
+- **authenticatedUsersOnly**：是否要求用户认证（默认：false）
 
-If you encounter any issues, please refer to the [Dodo Payments documentation](https://docs.dodopayments.com) for troubleshooting steps.
+如果遇到任何问题，请参考 [Dodo Payments 文档](https://docs.dodopayments.com) 进行排查。

@@ -1,37 +1,36 @@
 ---
-title: Telemetry
-description: Better Auth now collects anonymous telemetry data about general usage.
+title: 远程测量
+description: Better Auth 现收集有关一般使用情况的匿名远程测量数据。
 ---
 
-Better Auth collects anonymous usage data to help us improve the project. This is optional, transparent, and disabled by default.
+Better Auth 会收集匿名的使用数据，帮助我们改进项目。这是可选的、透明的，且默认情况下关闭。
 
-## Why is telemetry collected?
+## 为什么要收集远程测量？
 
-Since v1.3.5, Better Auth collects anonymous telemetry data about general usage if enabled.
+从 v1.3.5 版本开始，如果启用，Better Auth 会收集有关一般使用情况的匿名远程测量数据。
 
-Telemetry data helps us understand how Better Auth is being used across different environments so we can improve performance, prioritize features, and fix issues more effectively. It guides our decisions on performance optimizations, feature development, and bug fixes. All data is collected completely anonymously and with privacy in mind, and users can opt out at any time. We strive to keep what we collect as transparent as possible.
+远程测量数据帮助我们了解 Better Auth 在不同环境中的使用情况，以便提升性能、优先开发功能和更有效地修复问题。它指导我们在性能优化、功能开发和修复漏洞上的决策。所有数据的收集都是完全匿名的，且以隐私为重，用户可随时选择退出。我们努力保持收集内容的透明度。
 
-## What is being collected?
+## 收集了什么数据？
 
-The following data points may be reported. Everything is anonymous and intended for aggregate insights only.
+可能报告以下数据点。所有数据均为匿名，仅用于汇总分析。
 
-- **Anonymous identifier**: A non-reversible hash derived from your project (`package.json` name and optionally `baseURL`). This lets us de‑duplicate events per project without knowing who you are.
-- **Runtime**: `{ name: "node" | "bun" | "deno", version }`.
-- **Environment**: one of `development`, `production`, `test`, or `ci`.
-- **Framework (if detected)**: `{ name, version }` for frameworks like Next.js, Nuxt, React Router, Astro, SvelteKit, etc.
-- **Database (if detected)**: `{ name, version }` for integrations like PostgreSQL, MySQL, SQLite, Prisma, Drizzle, MongoDB, etc.
-- **System info**: platform, OS release, architecture, CPU count/model/speed, total memory, and flags like `isDocker`, `isWSL`, `isTTY`.
-- **Package manager**: `{ name, version }` derived from the npm user agent.
-- **Redacted auth config snapshot**: A minimized, privacy‑preserving view of your `betterAuth` options produced by `getTelemetryAuthConfig`.
+- **匿名标识符**：来自你的项目（`package.json` 的 name 字段和可选的 `baseURL`）的不可逆哈希。这样我们可以在不知晓你身份的情况下，去重每个项目的事件。
+- **运行时**：`{ name: "node" | "bun" | "deno", version }`。
+- **环境**：`development`、`production`、`test` 或 `ci` 之一。
+- **框架（若探测到）**：像 Next.js、Nuxt、React Router、Astro、SvelteKit 等的 `{ name, version }`。
+- **数据库（若探测到）**：如 PostgreSQL、MySQL、SQLite、Prisma、Drizzle、MongoDB 等集成的 `{ name, version }`。
+- **系统信息**：平台、操作系统版本、架构、CPU 数量/型号/频率、总内存，以及如 `isDocker`、`isWSL`、`isTTY` 等标识。
+- **包管理器**：来自 npm 用户代理的 `{ name, version }`。
+- **脱敏的身份验证配置快照**：通过 `getTelemetryAuthConfig` 生成的精简并保护隐私的 `betterAuth` 配置视图。
 
-We also collect anonymous telemetry from the CLI:
+我们还收集来自 CLI 的匿名远程测量：
 
-- **CLI generate (`cli_generate`)**: outcome `generated | overwritten | appended | no_changes | aborted` plus redacted config.
-- **CLI migrate (`cli_migrate`)**: outcome `migrated | no_changes | aborted | unsupported_adapter` plus adapter id (when relevant) and redacted config.
-
+- **CLI 生成（`cli_generate`）**：操作结果 `generated | overwritten | appended | no_changes | aborted` 加上脱敏配置。
+- **CLI 迁移（`cli_migrate`）**：操作结果 `migrated | no_changes | aborted | unsupported_adapter`，相关时还包括适配器 ID 及脱敏配置。
 
 <Callout type="info">
-  You can audit telemetry locally by setting the `BETTER_AUTH_TELEMETRY_DEBUG=1` environment variable when running your project or by setting `telemetry: { debug: true }` in your auth config. In this debug mode, telemetry events are logged only to the console.
+  你可以通过设置环境变量 `BETTER_AUTH_TELEMETRY_DEBUG=1` 本地审计远程测量，或在身份验证配置中设置 `telemetry: { debug: true }`。在此调试模式下，远程测量事件仅记录到控制台。
 
   ```ts title="auth.ts"
   export const auth = betterAuth({
@@ -43,43 +42,42 @@ We also collect anonymous telemetry from the CLI:
   ```
 </Callout>
 
-## How is my data protected?
+## 我的数据如何受到保护？
 
-All collected data is fully anonymous and only useful in aggregate. It cannot be traced back to any individual source and is accessible only to a small group of core Better Auth maintainers to guide roadmap decisions.
+所有收集的数据完全匿名，仅在汇总时有用。无法追溯到任何个人来源，仅由少数 Better Auth 核心维护者访问，用于指导产品路线图决策。
 
-- **No PII or secrets**: We do not collect emails, usernames, tokens, secrets, client IDs, client secrets, or database URLs.
-- **No full config**: We never send your full `betterAuth` configuration. Instead we send a reduced, redacted snapshot of non‑sensitive toggles and counts.
-- **Redaction by design**: See [detect-auth-config.ts](https://github.com/better-auth/better-auth/blob/canary/packages/telemetry/src/detectors/detect-auth-config.ts) in the Better Auth source for the exact shape of what is included. It purposely converts sensitive values to booleans, counts, or generic identifiers.
+- **无个人身份信息或秘密**：我们不收集电子邮件、用户名、令牌、密钥、客户端 ID、客户端密钥或数据库 URL。
+- **无完整配置**：我们绝不发送完整的 `betterAuth` 配置，而仅发送精简且脱敏的非敏感开关和计数快照。
+- **设计即脱敏**：详见 Better Auth 源码中的 [detect-auth-config.ts](https://github.com/better-auth/better-auth/blob/canary/packages/telemetry/src/detectors/detect-auth-config.ts)。敏感值被刻意转换为布尔值、计数或通用标识符。
 
-## How can I enable it?
+## 如何启用？
 
-You can enable telemetry collection in your auth config or by setting an environment variable.
+你可以在身份验证配置中启用远程测量，或设置环境变量。
 
-- Via your auth config.
+- 通过身份验证配置启用。
 
   ```ts title="auth.ts"
   export const auth = betterAuth({
     // [!code highlight]
     telemetry: { // [!code highlight]
-      enabled: true// [!code highlight]
+      enabled: true // [!code highlight]
     } // [!code highlight]
   });
   ```
 
-- Via an environment variable.
+- 通过环境变量启用。
 
   ```txt title=".env"
-  # Enable telemetry
+  # 启用远程测量
   BETTER_AUTH_TELEMETRY=1
 
-  # Disable telemetry
+  # 禁用远程测量
   BETTER_AUTH_TELEMETRY=0
   ```
 
+### 何时发送远程测量数据？
 
-### When is telemetry sent?
+- 在 `betterAuth` 初始化时（`type: "init"`）。
+- 在 CLI 操作时：如上文所述的 `generate` 和 `migrate`。
 
-- On `betterAuth` initialization (`type: "init"`).
-- On CLI actions: `generate` and `migrate` as described above.
-
-Telemetry is disabled automatically in tests (`NODE_ENV=test`) unless explicitly overridden by internal tooling.
+默认测试环境（`NODE_ENV=test`）下自动禁用远程测量，除非内部工具显式覆盖。

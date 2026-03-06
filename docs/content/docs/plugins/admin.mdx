@@ -1,24 +1,24 @@
 ---
-title: Admin
-description: Admin plugin for Better Auth
+title: 管理员
+description: Better Auth 的管理员插件
 ---
 
-The Admin plugin provides a set of administrative functions for user management in your application. It allows administrators to perform various operations such as creating users, managing user roles, banning/unbanning users, impersonating users, and more.
+管理员插件为您的应用程序提供了一套用户管理的管理功能。它允许管理员执行各种操作，如创建用户、管理用户角色、禁止/解禁用户、模拟用户身份等。
 
-## Installation
+## 安装
 
 <Steps>
   <Step>
-    ### Add the plugin to your auth config
+    ### 在您的 auth 配置中添加插件
 
-    To use the Admin plugin, add it to your auth config.
+    使用管理员插件时，将其添加到您的 auth 配置中。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
     import { admin } from "better-auth/plugins" // [!code highlight]
 
     export const auth = betterAuth({
-        // ... other config options
+        // ... 其他配置选项
         plugins: [
             admin() // [!code highlight]
         ]
@@ -28,9 +28,9 @@ The Admin plugin provides a set of administrative functions for user management 
   </Step>
 
     <Step>
-        ### Migrate the database
+        ### 迁移数据库
 
-        Run the migration or generate the schema to add the necessary fields and tables to the database.
+        运行迁移或生成架构，为数据库添加必要的字段和表。
 
         <Tabs items={["migrate", "generate"]}>
             <Tab value="migrate">
@@ -44,13 +44,13 @@ The Admin plugin provides a set of administrative functions for user management 
             ```
             </Tab>
         </Tabs>
-        See the [Schema](#schema) section to add the fields manually.
+        参见 [架构](#schema) 部分了解如何手动添加字段。
     </Step>
 
   <Step>
-    ### Add the client plugin
+    ### 添加客户端插件
 
-    Next, include the admin client plugin in your authentication client instance.
+    接下来，在您的身份验证客户端实例中包含管理员客户端插件。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -66,13 +66,13 @@ The Admin plugin provides a set of administrative functions for user management 
   </Step>
 </Steps>
 
-## Usage
+## 使用
 
-Before performing any admin operations, the user must be authenticated with an admin account. An admin is any user assigned the `admin` role or any user whose ID is included in the `adminUserIds` option.
+在执行任何管理员操作之前，用户必须使用管理员帐户进行身份验证。管理员是指分配了 `admin` 角色的任何用户，或者其 ID 包含在 `adminUserIds` 选项中的任何用户。
 
-### Create User
+### 创建用户
 
-Allows an admin to create a new user.
+允许管理员创建新用户。
 
 <APIMethod
   path="/admin/create-user"
@@ -82,80 +82,80 @@ Allows an admin to create a new user.
 ```ts
 type createUser = {
     /**
-     * The email of the user. 
+     * 用户的电子邮件。
      */
     email: string = "user@example.com"
     /**
-     * The password of the user. 
+     * 用户的密码。
      */
     password: string = "some-secure-password"
     /**
-     * The name of the user. 
+     * 用户的姓名。
      */
     name: string = "James Smith"
     /**
-     * A string or array of strings representing the roles to apply to the new user. 
+     * 表示要应用于新用户的角色的字符串或字符串数组。
      */
     role?: string | string[] = "user"
     /**
-     * Extra fields for the user. Including custom additional fields. 
+     * 用户的额外字段。包括自定义的附加字段。
      */
     data?: Record<string, any> = { customField: "customValue" }
 }
 ```
 </APIMethod>
 
-### List Users
+### 列出用户
 
-Allows an admin to list all users in the database.
+允许管理员列出数据库中所有用户。
 
 <APIMethod
   path="/admin/list-users"
   method="GET"
   requireSession
-  note={"All properties are optional to configure. By default, 100 rows are returned, you can configure this by the `limit` property."}
+  note={"所有属性都是可选配置。默认返回 100 行，您可以通过 `limit` 属性进行配置。"}
   resultVariable={"users"}
 >
 ```ts
 type listUsers = {
   /**
-   * The value to search for. 
+   * 搜索值。
    */
   searchValue?: string = "some name"
   /**
-   * The field to search in, defaults to email. Can be `email` or `name`. 
+   * 搜索字段，默认为 email。可为 `email` 或 `name`。
    */
   searchField?: "email" | "name" = "name"
   /**
-   * The operator to use for the search. Can be `contains`, `starts_with` or `ends_with`. 
+   * 搜索操作符。可为 `contains`、`starts_with` 或 `ends_with`。
    */
   searchOperator?: "contains" | "starts_with" | "ends_with" = "contains"
   /**
-   * The number of users to return. Defaults to 100.
+   * 要返回的用户数量。默认为 100。
    */
   limit?: string | number = 100
   /**
-   * The offset to start from. 
+   * 开始的偏移量。
    */
   offset?: string | number = 100
   /**
-   * The field to sort by. 
+   * 用于排序的字段。
    */
   sortBy?: string = "name"
   /**
-   * The direction to sort by. 
+   * 排序方向。
    */
   sortDirection?: "asc" | "desc" = "desc"
   /**
-   * The field to filter by. 
+   * 用于过滤的字段。
    */
   filterField?: string = "email"
   /**
-   * The value to filter by. 
+   * 过滤值。
    */
   filterValue?: string | number | boolean | string[] | number[] = "hello@example.com"
   /**
-   * The operator to use for the filter.
+   * 过滤所用的操作符。
    */
   filterOperator?: "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "in" | "not_in" | "contains" | "starts_with" | "ends_with" = "eq"
 }
@@ -163,35 +163,35 @@ type listUsers = {
 </APIMethod>
 
 
-#### Query Filtering
+#### 查询过滤
 
-The `listUsers` function supports various filter operators including `eq`, `contains`, `starts_with`, and `ends_with`.
+`listUsers` 支持多种过滤操作符，包括 `eq`、`contains`、`starts_with` 和 `ends_with`。
 
-#### Pagination
+#### 分页
 
-The `listUsers` function supports pagination by returning metadata alongside the user list. The response includes the following fields:
+`listUsers` 函数支持分页，响应中会返回用户列表和元数据。返回字段如下：
 
 ```ts
 {
-  users: User[],   // Array of returned users
-  total: number,   // Total number of users after filters and search queries
-  limit: number | undefined,   // The limit provided in the query
-  offset: number | undefined   // The offset provided in the query
+  users: User[],   // 返回的用户数组
+  total: number,   // 过滤和搜索后用户总数
+  limit: number | undefined,   // 查询中提供的 limit
+  offset: number | undefined   // 查询中提供的 offset
 }
 ```
 
-##### How to Implement Pagination
+##### 如何实现分页
 
-To paginate results, use the `total`, `limit`, and `offset` values to calculate:
+使用 `total`、`limit` 和 `offset` 计算：
 
-- **Total pages:** `Math.ceil(total / limit)`
-- **Current page:** `(offset / limit) + 1`
-- **Next page offset:** `Math.min(offset + limit, (total - 1))` – The value to use as `offset` for the next page, ensuring it does not exceed the total number of pages.
-- **Previous page offset:** `Math.max(0, offset - limit)` – The value to use as `offset` for the previous page (ensuring it doesn’t go below zero).
+- **总页数:** `Math.ceil(total / limit)`
+- **当前页:** `(offset / limit) + 1`
+- **下一页偏移量:** `Math.min(offset + limit, (total - 1))` – 用于下一页的 offset，确保不超过总页数。
+- **上一页偏移量:** `Math.max(0, offset - limit)` – 用于上一页的 offset（确保不小于零）。
 
-##### Example Usage
+##### 示例用法
 
-Fetching the second page with 10 users per page:
+获取第二页，每页 10 个用户：
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -210,9 +210,9 @@ const totalUsers = users.total;
 const totalPages = Math.ceil(totalUsers / pageSize)
 ```
 
-### Get User
+### 获取用户
 
-Fetches a user's information using an id.
+通过 ID 获取用户信息。
 
 <APIMethod
   path="/admin/get-user"
@@ -222,29 +222,30 @@ Fetches a user's information using an id.
 ```ts
 type getUser = {
   /**
-  * The id of the user you want to fetch.
+  * 你想获取的用户 ID。
   */
   id: string = "user-id"
 }
 ```
 </APIMethod>
 
-#### Returns
-On success, `data` contains the user object. On failure, `error` is populated by `code`, `message`, `status`, and `statusText`.
+#### 返回
+成功时，`data` 包含用户对象。失败时，`error` 包含 `code`、`message`、`status` 和 `statusText`。
+
 ```ts
 type GetUserResponse = {
   data: User | null;
   error: null | {
     message: string;
-    status: number; //HTTP status code
+    status: number; // HTTP 状态码
     statusText: string;
     code: string;
 }
 ```
 
-### Set User Role
+### 设置用户角色
 
-Changes the role of a user.
+更改用户角色。
 
 <APIMethod
   path="/admin/set-role"
@@ -254,20 +255,20 @@ Changes the role of a user.
 ```ts
 type setRole = {
     /**
-     * The user id which you want to set the role for.
+     * 要设置角色的用户 ID。
      */
     userId?: string = "user-id"
     /**
-     * The role to set, this can be a string or an array of strings. 
+     * 角色，可为字符串或字符串数组。
      */
     role: string | string[] = "admin"
 }
 ```
 </APIMethod>
 
-### Set User Password
+### 设置用户密码
 
-Changes the password of a user.
+更改用户密码。
 
 <APIMethod
   path="/admin/set-user-password"
@@ -277,20 +278,20 @@ Changes the password of a user.
 ```ts
 type setUserPassword = {
     /**
-     * The new password. 
+     * 新密码。
      */
     newPassword: string = 'new-password'
     /**
-     * The user id which you want to set the password for.
+     * 要设置密码的用户 ID。
      */
     userId: string = 'user-id'
 }
 ```
 </APIMethod>
 
-### Update user
+### 更新用户
 
-Update a user's details.
+更新用户详情。
 
 <APIMethod
   path="/admin/update-user"
@@ -300,21 +301,20 @@ Update a user's details.
 ```ts
 type adminUpdateUser = {
     /**
-     * The user id which you want to update.
+     * 要更新的用户 ID。
      */
     userId: string = "user-id"
     /**
-     * The data to update.
+     * 要更新的数据。
      */
     data: Record<string, any> = { name: "John Doe" }
 }
 ```
 </APIMethod>
 
-### Ban User
+### 禁止用户
 
-Bans a user, preventing them from signing in and revokes all of their existing sessions.
-
+禁止用户登录并撤销其所有现有会话。
 
 <APIMethod
   path="/admin/ban-user"
@@ -325,24 +325,24 @@ Bans a user, preventing them from signing in and revokes all of their existing s
 ```ts
 type banUser = {
     /**
-     * The user id which you want to ban.
+     * 要禁止的用户 ID。
      */
     userId: string = "user-id"
     /**
-     * The reason for the ban. 
+     * 禁止原因。
      */
     banReason?: string = "Spamming"
     /**
-     * The number of seconds until the ban expires. If not provided, the ban will never expire. 
+     * 禁止持续时间（秒）。若未提供，禁止永久有效。
      */
     banExpiresIn?: number = 60 * 60 * 24 * 7
 }
 ```
 </APIMethod>
 
-### Unban User
+### 解禁用户
 
-Removes the ban from a user, allowing them to sign in again.
+解除用户禁止状态，允许用户重新登录。
 
 <APIMethod
   path="/admin/unban-user"
@@ -353,16 +353,16 @@ Removes the ban from a user, allowing them to sign in again.
 ```ts
 type unbanUser = {
     /**
-     * The user id which you want to unban.
+     * 要解禁的用户 ID。
      */
     userId: string = "user-id"
 }
 ```
 </APIMethod>
 
-### List User Sessions
+### 列出用户会话
 
-Lists all sessions for a user.
+列出用户所有会话。
 
 <APIMethod
   path="/admin/list-user-sessions"
@@ -372,17 +372,16 @@ Lists all sessions for a user.
 ```ts
 type listUserSessions = {
     /**
-     * The user id. 
+     * 用户 ID。
      */
     userId: string = "user-id"
 }
 ```
 </APIMethod>
 
-### Revoke User Session
+### 撤销用户会话
 
-Revokes a specific session for a user.
-
+撤销指定的用户会话。
 
 <APIMethod
   path="/admin/revoke-user-session"
@@ -392,16 +391,16 @@ Revokes a specific session for a user.
 ```ts
 type revokeUserSession = {
     /**
-     * The session token which you want to revoke. 
+     * 要撤销的会话令牌。
      */
     sessionToken: string = "session_token_here"
 }
 ```
 </APIMethod>
 
-### Revoke All Sessions for a User
+### 撤销用户所有会话
 
-Revokes all sessions for a user.
+撤销用户的所有会话。
 
 <APIMethod
   path="/admin/revoke-user-sessions"
@@ -411,16 +410,16 @@ Revokes all sessions for a user.
 ```ts
 type revokeUserSessions = {
     /**
-     * The user id which you want to revoke all sessions for. 
+     * 要撤销所有会话的用户 ID。
      */
     userId: string = "user-id"
 }
 ```
 </APIMethod>
 
-### Impersonate User
+### 模拟用户
 
-This feature allows an admin to create a session that mimics the specified user. The session will remain active until either the browser session ends or it reaches 1 hour. You can change this duration by setting the `impersonationSessionDuration` option.
+此功能允许管理员创建一个模拟指定用户的会话。该会话将在浏览器会话结束或达到 1 小时后失效。您可以通过设置 `impersonationSessionDuration` 选项更改此时长。
 
 <APIMethod
   path="/admin/impersonate-user"
@@ -430,14 +429,14 @@ This feature allows an admin to create a session that mimics the specified user.
 ```ts
 type impersonateUser = {
     /**
-     * The user id which you want to impersonate. 
+     * 要模拟的用户 ID。
      */
     userId: string = "user-id"
 }
 ```
 </APIMethod>
 
-By default, admins cannot impersonate other admin users. To allow this, grant the `impersonate-admins` permission to a role:
+默认情况下，管理员不能模拟其他管理员用户。若要允许此操作，请为角色授予 `impersonate-admins` 权限：
 
 ```ts title="auth.ts"
 const superAdmin = ac.newRole({
@@ -447,12 +446,12 @@ const superAdmin = ac.newRole({
 ```
 
 <Callout type="info">
-  The legacy `allowImpersonatingAdmins` option is still supported, but is deprecated and will be removed in a future version.
+  旧版选项 `allowImpersonatingAdmins` 仍受支持，但已弃用，将在未来版本中移除。
 </Callout>
 
-### Stop Impersonating User
+### 停止模拟用户
 
-To stop impersonating a user and continue with the admin account, you can use `stopImpersonating`
+停止模拟用户，继续使用管理员账号。
 
 <APIMethod path="/admin/stop-impersonating" method="POST" noResult requireSession>
 ```ts
@@ -461,9 +460,9 @@ type stopImpersonating = {
 ```
 </APIMethod>
 
-### Remove User
+### 删除用户
 
-Hard deletes a user from the database.
+从数据库中彻底删除用户。
 
 <APIMethod
   path="/admin/remove-user"
@@ -474,32 +473,32 @@ Hard deletes a user from the database.
 ```ts
 type removeUser = {
     /**
-     * The user id which you want to remove. 
+     * 要删除的用户 ID。
      */
     userId: string = "user-id"
 }
 ```
 </APIMethod>
 
-## Access Control
+## 访问控制
 
-The admin plugin offers a highly flexible access control system, allowing you to manage user permissions based on their role. You can define custom permission sets to fit your needs.
+管理员插件提供了高度灵活的访问控制系统，允许您基于用户角色管理权限。您可以定义自定义权限集以满足需求。
 
-### Roles
+### 角色
 
-By default, there are two roles:
+默认情况下，有两个角色：
 
-`admin`: Users with the admin role have full control over other users.
+`admin`：具有管理员角色的用户对其他用户拥有完全控制权。
 
-`user`: Users with the user role have no control over other users.
+`user`：具有用户角色的用户对其他用户无任何控制权。
 
 <Callout>
-  A user can have multiple roles. Multiple roles are stored as string separated by comma (",").
+  一个用户可以拥有多个角色。多个角色以逗号（","）分隔字符串存储。
 </Callout>
 
-### Permissions
+### 权限
 
-By default, there are two resources with up to six permissions.
+默认情况下，有两个资源及最多六种权限。
 
 **user**:
   `create` `list` `set-role` `ban` `impersonate` `impersonate-admins` `delete` `set-password`
@@ -507,22 +506,23 @@ By default, there are two resources with up to six permissions.
 **session**:
   `list` `revoke` `delete`
 
-Users with the admin role have full control over all the resources and actions. Users with the user role have no control over any of those actions.
+拥有管理员角色的用户对所有资源和操作拥有完全控制权。拥有用户角色的用户对任何操作均无控制权。
 
-### Custom Permissions
+### 自定义权限
 
-The plugin provides an easy way to define your own set of permissions for each role.
+该插件提供简便的方式为每个角色定义自己的权限集。
 
 <Steps>
     <Step>
-    #### Create Access Control
+    #### 创建访问控制
 
-    You first need to create an access controller by calling the `createAccessControl` function and passing the statement object. The statement object should have the resource name as the key and the array of actions as the value.
+    首先，通过调用 `createAccessControl` 并传入声明对象来创建访问控制器。声明对象以资源名称为键，动作数组为值。
+
     ```ts title="permissions.ts"
     import { createAccessControl } from "better-auth/plugins/access";
 
     /**
-     * make sure to use `as const` so typescript can infer the type correctly
+     * 确保使用 `as const`，以便 TypeScript 正确推断类型
      */
     const statement = { // [!code highlight]
         project: ["create", "share", "update", "delete"], // [!code highlight]
@@ -532,20 +532,20 @@ The plugin provides an easy way to define your own set of permissions for each r
     ```
     
     <Callout type="warning">
-      To keep bundle sizes small, make sure to import from `better-auth/plugins/access` instead of `better-auth/plugins`.
+      为减小包体积，请确保从 `better-auth/plugins/access` 导入，而非 `better-auth/plugins`。
     </Callout>
     </Step>
 
     <Step>
-    #### Create Roles
+    #### 创建角色
 
-    Once you have created the access controller you can create roles with the permissions you have defined.
+    创建完访问控制器后，即可为定义的权限创建角色。
 
     ```ts title="permissions.ts"
     import { createAccessControl } from "better-auth/plugins/access";
 
     export const statement = {
-        project: ["create", "share", "update", "delete"], // <-- Permissions available for created roles
+        project: ["create", "share", "update", "delete"], // <-- 创建角色可用的权限
     } as const;
 
     export const ac = createAccessControl(statement);
@@ -564,7 +564,7 @@ The plugin provides an easy way to define your own set of permissions for each r
     }); // [!code highlight]
     ```
 
-      When you create custom roles for existing roles, the predefined permissions for those roles will be overridden. To add the existing permissions to the custom role, you need to import `defaultStatements` and merge it with your new statement, plus merge the roles' permissions set with the default roles.
+      创建自定义角色时，会覆盖现有角色的预定义权限。若要在自定义角色中添加现有权限，需导入 `defaultStatements` 并与您的新声明合并，同时合并角色的权限集合与默认角色。
 
     ```ts title="permissions.ts"
     import { createAccessControl } from "better-auth/plugins/access";
@@ -586,9 +586,9 @@ The plugin provides an easy way to define your own set of permissions for each r
     </Step>
 
     <Step>
-        #### Pass Roles to the Plugin
+        #### 向插件传递角色
 
-        Once you have created the roles you can pass them to the admin plugin both on the client and the server.
+        创建角色后，您可以将它们连同访问控制器一起传递给服务器端和客户端的管理员插件。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -609,7 +609,7 @@ The plugin provides an easy way to define your own set of permissions for each r
         });
         ```
 
-        You also need to pass the access controller and the roles to the client plugin.
+        同时需要将访问控制器和角色传递给客户端插件。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
@@ -633,38 +633,37 @@ The plugin provides an easy way to define your own set of permissions for each r
 
 </Steps>
 
-### Access Control Usage
+### 访问控制用法
 
-**Has Permission**:
+**拥有权限**：
 
-To check a user's permissions, you can use the `hasPermission` function provided by the client.
-
+使用客户端提供的 `hasPermission` 函数检查用户权限。
 
 <APIMethod path="/admin/has-permission" method="POST">
 ```ts
 type userHasPermission = {
     /**
-     * The user id which you want to check the permissions for. 
+     * 要检查权限的用户 ID。
      */
     userId?: string = "user-id"
     /**
-     * Check role permissions.
+     * 检查角色权限。
      * @serverOnly
      */
     role?: string = "admin"
     /**
-     * Optionally check if a single permission is granted. Must use this, or permissions. 
+     * 可选地检查单个权限。必须使用此项或 `permissions`。
      */
-    permission?: Record<string, string[]> = { "project": ["create", "update"] } /* Must use this, or permissions */,
+    permission?: Record<string, string[]> = { "project": ["create", "update"] } /* 必须使用此项或 permissions */,
     /**
-     * Optionally check if multiple permissions are granted. Must use this, or permission. 
+     * 可选地检查多个权限。必须使用此项或 `permission`。
      */
     permissions?: Record<string, string[]>
 }
 ```
 </APIMethod>
 
-Example usage:
+示例用法：
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -675,7 +674,7 @@ const canCreateProject = await authClient.admin.hasPermission({
   },
 });
 
-// You can also check multiple resource permissions at the same time
+// 也可以同时检查多个资源权限
 const canCreateProjectAndCreateSale = await authClient.admin.hasPermission({
   permissions: {
     project: ["create"],
@@ -684,50 +683,47 @@ const canCreateProjectAndCreateSale = await authClient.admin.hasPermission({
 });
 ```
 
-If you want to check a user's permissions server-side, you can use the `userHasPermission` action provided by the `api` to check the user's permissions.
-
-
+若要在服务器端检查用户权限，可以使用 `api` 提供的 `userHasPermission` 操作。
 
 ```ts title="permission.ts"
 import { auth } from "@/lib/auth"
 
 await auth.api.userHasPermission({
   body: {
-    userId: 'id', //the user id
+    userId: 'id', // 用户 id
     permissions: {
-      project: ["create"], // This must match the structure in your access control
+      project: ["create"], // 必须匹配访问控制中的结构
     },
   },
 });
 
-// You can also just pass the role directly
+// 也可以直接传递角色
 await auth.api.userHasPermission({
   body: {
    role: "admin",
     permissions: {
-      project: ["create"], // This must match the structure in your access control
+      project: ["create"], // 必须匹配访问控制中的结构
     },
   },
 });
 
-// You can also check multiple resource permissions at the same time
+// 也可以同时检查多个资源权限
 await auth.api.userHasPermission({
   body: {
    role: "admin",
     permissions: {
-      project: ["create"], // This must match the structure in your access control
+      project: ["create"], // 必须匹配访问控制中的结构
       sale: ["create"]
     },
   },
 });
 ```
 
+**检查角色权限**：
 
-**Check Role Permission**:
+客户端使用 `checkRolePermission` 函数检查某个 **角色** 是否拥有指定的 **权限**。这在定义角色权限后很有用，允许无需请求服务器即可进行权限检查。
 
-Use the `checkRolePermission` function on the client side to verify whether a given **role** has a specific **permission**. This is helpful after defining roles and their permissions, as it allows you to perform permission checks without needing to contact the server.
-
-Note that this function does **not** check the permissions of the currently logged-in user directly. Instead, it checks what permissions are assigned to a specified role. The function is synchronous, so you don't need to use `await` when calling it.
+注意此函数不会直接检查当前登录用户权限，而是检查指定角色拥有哪些权限。该函数为同步函数，调用时无需 `await`。
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -739,7 +735,7 @@ const canCreateProject = authClient.admin.checkRolePermission({
   role: "admin",
 });
 
-// You can also check multiple resource permissions at the same time
+// 也可以同时检查多个资源权限
 const canDeleteUserAndRevokeSession = authClient.admin.checkRolePermission({
   permissions: {
     user: ["delete"],
@@ -749,9 +745,9 @@ const canDeleteUserAndRevokeSession = authClient.admin.checkRolePermission({
 });
 ```
 
-## Schema
+## 架构
 
-This plugin adds the following fields to the `user` table:
+该插件为 `user` 表添加以下字段：
 
 <DatabaseTable
   fields={[
@@ -759,46 +755,46 @@ This plugin adds the following fields to the `user` table:
       name: "role",
       type: "string",
       description:
-        "The user's role. Defaults to `user`. Admins will have the `admin` role.",
+        "用户的角色。默认是 `user`。管理员会有 `admin` 角色。",
       isOptional: true,
     },
     {
       name: "banned",
       type: "boolean",
-      description: "Indicates whether the user is banned.",
+      description: "指示用户是否被禁止。",
       isOptional: true,
     },
     {
       name: "banReason",
       type: "string",
-      description: "The reason for the user's ban.",
+      description: "禁止的原因。",
       isOptional: true,
     },
     {
       name: "banExpires",
       type: "date",
-      description: "The date when the user's ban will expire.",
+      description: "禁止的过期时间。",
       isOptional: true,
     },
   ]}
 />
 
-And adds one field in the `session` table:
+并在 `session` 表中添加一个字段：
 
 <DatabaseTable
   fields={[
     {
       name: "impersonatedBy",
       type: "string",
-      description: "The ID of the admin that is impersonating this session.",
+      description: "指示是哪个管理员在模拟此会话。",
       isOptional: true,
     },
   ]}
 />
 
-### Email Enumeration Protection
+### 电子邮件枚举保护
 
-If you use [email enumeration protection](/docs/authentication/email-password#email-enumeration-protection) (`requireEmailVerification` or `autoSignIn: false`), you need to configure `customSyntheticUser` to include the admin plugin fields in the fake sign-up response:
+如果您使用 [电子邮件枚举保护](/docs/authentication/email-password#email-enumeration-protection)（`requireEmailVerification` 或 `autoSignIn: false`），您需要配置 `customSyntheticUser`，在伪造的注册响应中包含管理员插件字段：
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -807,8 +803,8 @@ export const auth = betterAuth({
     requireEmailVerification: true,
     customSyntheticUser: ({ coreFields, additionalFields, id }) => ({
       ...coreFields,
-      // Admin plugin fields (in schema order)
-      role: "user", // or your configured defaultRole
+      // 管理员插件字段（按架构顺序）
+      role: "user", // 或您配置的 defaultRole
       banned: false,
       banReason: null,
       banExpires: null,
@@ -820,39 +816,40 @@ export const auth = betterAuth({
 });
 ```
 
-## Options
+## 选项
 
-### Default Role
+### 默认角色
 
-The default role for a user. Defaults to `user`.
+用户的默认角色。默认为 `user`。
 
 ```ts title="auth.ts"
 admin({
   defaultRole: "regular",
 });
 ```
-### Admin Roles
 
-Specifies which roles are considered admin roles. Defaults to `["admin"]`. Custom roles (for example, `superadmin`) must be defined in custom access control.
+### 管理员角色
+
+指定哪些角色被视为管理员角色。默认为 `["admin"]`。自定义角色（例如 `superadmin`）必须在自定义访问控制中定义。
 
 ```ts title="auth.ts"
 admin({
-  // Requires custom access control with `superadmin` defined in `roles`
+  // 需要在自定义访问控制中的 `roles` 里定义 `superadmin`
   adminRoles: ["admin", "superadmin"],
 });
 ```
 
 <Callout type="warning">
-  **Note:** The `adminRoles` option is **not required** when using custom access control (via `ac` and `roles`). When you define custom roles with specific permissions, those roles will have exactly the permissions you grant them through the access control system.  
+  **注意：** 使用自定义访问控制时（通过 `ac` 和 `roles`），**不需要** 设置 `adminRoles` 选项。当您定义了具体权限的自定义角色，这些角色将拥有访问控制系统授予的确切权限。
+
   
-  
-  **Warning:** When **not** using custom access control, only `admin` and `user` exist as valid roles. Any role that isn't in the `adminRoles` list will **not** be able to perform admin operations.
+  **警告：** 如果不使用自定义访问控制，仅存在 `admin` 和 `user` 这两个有效角色。任何不在 `adminRoles` 列表中的角色将**无法**执行管理员操作。
 
 </Callout>
 
-### Admin userIds
+### 管理员用户 ID
 
-You can pass an array of userIds that should be considered as admin. Default to `[]`
+您可以传入一个管理员用户 ID 数组，默认为 `[]`
 
 ```ts title="auth.ts"
 admin({
@@ -860,21 +857,21 @@ admin({
 })
 ```
 
-If a user is in the `adminUserIds` list, they will be able to perform any admin operation.
+如果用户 ID 在 `adminUserIds` 列表中，他们将能执行任何管理员操作。
 
 ### impersonationSessionDuration
 
-The duration of the impersonation session in seconds. Defaults to 1 hour.
+模拟会话的持续时长，单位秒。默认为 1 小时。
 
 ```ts title="auth.ts"
 admin({
-  impersonationSessionDuration: 60 * 60 * 24, // 1 day
+  impersonationSessionDuration: 60 * 60 * 24, // 1 天
 });
 ```
 
-### Default Ban Reason
+### 默认禁止原因
 
-The default ban reason for a user created by the admin. Defaults to `No reason`.
+管理员创建用户时的默认禁止原因。默认为 `No reason`。
 
 ```ts title="auth.ts"
 admin({
@@ -882,23 +879,22 @@ admin({
 });
 ```
 
-### Default Ban Expires In
+### 默认禁止过期时间
 
-The default ban expires in for a user created by the admin in seconds. Defaults to `undefined` (meaning the ban never expires).
-
-```ts title="auth.ts"
-admin({
-  defaultBanExpiresIn: 60 * 60 * 24, // 1 day
-});
-```
-
-### bannedUserMessage
-
-The message to show when a banned user tries to sign in. Defaults to "You have been banned from this application. Please contact support if you believe this is an error."
+管理员创建用户时的默认禁止过期时间，单位秒。默认为 `undefined`（即禁止永不过期）。
 
 ```ts title="auth.ts"
 admin({
-  bannedUserMessage: "Custom banned user message",
+  defaultBanExpiresIn: 60 * 60 * 24, // 1 天
 });
 ```
 
+### 禁止用户消息
+
+禁止用户尝试登录时显示的消息。默认为 "You have been banned from this application. Please contact support if you believe this is an error."
+
+```ts title="auth.ts"
+admin({
+  bannedUserMessage: "自定义禁止用户提示信息",
+});
+```

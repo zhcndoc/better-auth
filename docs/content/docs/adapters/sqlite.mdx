@@ -1,18 +1,18 @@
 ---
 title: SQLite
-description: Integrate Better Auth with SQLite.
+description: 将 Better Auth 与 SQLite 集成。
 ---
 
-SQLite is a lightweight, serverless, self-contained SQL database engine that is widely used for local data storage in applications.
-Read more [here.](https://www.sqlite.org/)
+SQLite 是一个轻量级、无服务器、自包含的 SQL 数据库引擎，广泛用于应用中的本地数据存储。  
+查看更多信息请访问 [这里。](https://www.sqlite.org/)
 
-## Example Usage
+## 示例用法
 
-Better Auth supports multiple SQLite drivers. Choose the one that best fits your environment:
+Better Auth 支持多种 SQLite 驱动。请选择最适合您环境的驱动：
 
-### Better-SQLite3 (Recommended)
+### Better-SQLite3（推荐）
 
-The most popular and stable SQLite driver for Node.js:
+Node.js 中最流行且稳定的 SQLite 驱动：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -24,17 +24,17 @@ export const auth = betterAuth({
 ```
 
 <Callout>
-  For more information, read Kysely's documentation to the
-  [SqliteDialect](https://kysely-org.github.io/kysely-apidoc/classes/SqliteDialect.html).
+  欲了解更多信息，请参考 Kysely 文档中的
+  [SqliteDialect](https://kysely-org.github.io/kysely-apidoc/classes/SqliteDialect.html)。
 </Callout>
 
-### Node.js Built-in SQLite (Experimental)
+### Node.js 内置 SQLite（实验性）
 
 <Callout type="warning">
-  The `node:sqlite` module is still experimental and may change at any time. It requires Node.js 22.5.0 or later.
+  `node:sqlite` 模块仍处于实验阶段，可能随时发生变化。需要 Node.js 22.5.0 或更高版本。
 </Callout>
 
-Starting from Node.js 22.5.0, you can use the built-in [SQLite](https://nodejs.org/api/sqlite.html) module:
+从 Node.js 22.5.0 开始，您可以使用内置的 [SQLite](https://nodejs.org/api/sqlite.html) 模块：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -45,18 +45,18 @@ export const auth = betterAuth({
 });
 ```
 
-To run your application with Node.js SQLite:
+使用 Node.js SQLite 运行您的应用：
 ```bash
 node your-app.js
 ```
 
-### Bun Built-in SQLite
+### Bun 内置 SQLite
 
 <Callout type="warning">
-  Use `bunx` with the `--bun` flag to run cli commands to prevent seeing type errors related to recognizing the `bun:sqlite` module, eg: `bunx --bun auth@latest generate`
+  使用 `bunx` 并添加 `--bun` 标志执行 CLI 命令，防止出现无法识别 `bun:sqlite` 模块相关的类型错误，例如：`bunx --bun auth@latest generate`
 </Callout>
 
-You can also use the built-in [SQLite](https://bun.com/docs/api/sqlite) module in Bun, which is similar to the Node.js version:
+您还可以使用 Bun 内置的 [SQLite](https://bun.com/docs/api/sqlite) 模块，语法与 Node.js 版本类似：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -67,26 +67,25 @@ export const auth = betterAuth({
 });
 ```
 
-## Schema generation & migration
+## 架构生成与迁移
 
-The [Better Auth CLI](/docs/concepts/cli) allows you to generate or migrate
-your database schema based on your Better Auth configuration and plugins.
+[Better Auth CLI](/docs/concepts/cli) 允许您根据 Better Auth 配置和插件生成或迁移数据库架构。
 
 <table>
   <thead>
     <tr className="border-b">
       <th>
-        <p className="font-bold text-[16px] mb-1">SQLite Schema Generation</p>
+        <p className="font-bold text-[16px] mb-1">SQLite 架构生成</p>
       </th>
       <th>
-        <p className="font-bold text-[16px] mb-1">SQLite Schema Migration</p>
+        <p className="font-bold text-[16px] mb-1">SQLite 架构迁移</p>
       </th>
     </tr>
   </thead>
   <tbody>
     <tr className="h-10">
-      <td>&#9989; Supported</td>
-      <td>&#9989; Supported</td>
+      <td>&#9989; 支持</td>
+      <td>&#9989; 支持</td>
     </tr>
   </tbody>
 </table>
@@ -102,28 +101,28 @@ your database schema based on your Better Auth configuration and plugins.
    npx auth@latest generate
    ```
    </Tab>
- </Tabs>
+</Tabs>
 
-## Joins (Experimental)
+## 联结（实验性）
 
-Database joins is useful when Better-Auth needs to fetch related data from multiple tables in a single query.
-Endpoints like `/get-session`, `/get-full-organization` and many others benefit greatly from this feature,
-seeing upwards of 2x to 3x performance improvements depending on database latency.
+数据库联结在 Better-Auth 需要从多个表中一次性获取相关数据时非常有用。  
+如 `/get-session`、`/get-full-organization` 等端点极大地受益于此功能，性能可提升 2 到 3 倍，具体取决于数据库延迟。
 
-The Kysely SQLite dialect supports joins out of the box since version `1.4.0`.
-To enable this feature, you need to set the `experimental.joins` option to `true` in your auth configuration.
+Kysely SQLite 方言自版本 `1.4.0` 起内置支持联结。  
+若要启用此功能，需要在您的 auth 配置中将 `experimental.joins` 选项设置为 `true`。
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
   experimental: { joins: true }
 });
 ```
+
 <Callout type="warn">
-  It's possible that you may need to run migrations after enabling this feature.
+  启用此功能后，可能需要执行迁移操作。
 </Callout>
 
-## Additional Information
+## 其他信息
 
-SQLite is supported under the hood via the [Kysely](https://kysely.dev/) adapter, any database supported by Kysely would also be supported. (<Link href="/docs/adapters/other-relational-databases">Read more here</Link>)
+SQLite 通过 [Kysely](https://kysely.dev/) 适配器在底层支持，Kysely 支持的任何数据库同样受到支持。(<Link href="/docs/adapters/other-relational-databases">点击这里了解更多</Link>)
 
-If you're looking for performance improvements or tips, take a look at our guide to <Link href="/docs/guides/optimizing-for-performance">performance optimizations</Link>.
+如果您在寻求性能提升或优化建议，请查看我们的 <Link href="/docs/guides/optimizing-for-performance">性能优化指南</Link>。

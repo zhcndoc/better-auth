@@ -1,9 +1,9 @@
 ---
-title: Dashboard Plugin (dash)
-description: The `dash()` plugin connects your Better Auth instance to Better Auth Infrastructure, enabling analytics tracking, event logging, and admin dashboard APIs.
+title: 仪表盘插件 (dash)
+description: "`dash()` 插件将你的 Better Auth 实例连接到 Better Auth 基础设施，支持分析跟踪、事件日志记录和管理仪表盘 API。"
 ---
 
-## Installation
+## 安装
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -20,219 +20,219 @@ export const auth = betterAuth({
 });
 ```
 
-## Configuration Options
+## 配置选项
 
 ### DashOptions
 
-| Option | Type | Description |
+| 选项 | 类型 | 说明 |
 |--------|------|-------------|
-| `apiUrl` | `string` | Better Auth Infrastructure API URL |
-| `kvUrl` | `string` | KV store URL for caching |
-| `apiKey` | `string` | Your API key for authentication |
-| `activityTracking` | `object` | Activity tracking configuration |
+| `apiUrl` | `string` | Better Auth 基础设施 API 地址 |
+| `kvUrl` | `string` | 用于缓存的 KV 存储地址 |
+| `apiKey` | `string` | 你的 API 密钥，用于身份认证 |
+| `activityTracking` | `object` | 活动跟踪配置 |
 
-### Activity Tracking
+### 活动跟踪
 
 ```ts
 dash({
   apiKey: process.env.BETTER_AUTH_API_KEY,
   activityTracking: {
-    enabled: true,           // Enable activity tracking
-    updateInterval: 300000,  // Update interval in ms (default: 5 minutes)
+    enabled: true,           // 启用活动跟踪
+    updateInterval: 300000,  // 更新间隔（毫秒），默认：5 分钟
   },
 }),
 ```
 
-When enabled, this adds a `lastActiveAt` field to your user schema that's automatically updated on user activity.
+启用后，会在用户 schema 中自动添加并更新 `lastActiveAt` 字段，记录用户最后活动时间。
 
-## Event Tracking
+## 事件跟踪
 
-The dash plugin automatically tracks the following events:
+dash 插件自动追踪以下事件：
 
-### User Events
+### 用户事件
 
-| Event | Trigger |
+| 事件 | 触发条件 |
 |-------|---------|
-| `user_signed_up` | New user registration |
-| `user_profile_updated` | User updates their profile |
-| `user_profile_image_updated` | User changes their avatar |
-| `user_email_verified` | Email verification completed |
-| `user_banned` | User is banned |
-| `user_unbanned` | User is unbanned |
-| `user_deleted` | User account deleted |
+| `user_signed_up` | 新用户注册 |
+| `user_profile_updated` | 用户更新个人资料 |
+| `user_profile_image_updated` | 用户更换头像 |
+| `user_email_verified` | 邮箱验证完成 |
+| `user_banned` | 用户被封禁 |
+| `user_unbanned` | 用户解封 |
+| `user_deleted` | 用户账号被删除 |
 
-### Session Events
+### 会话事件
 
-| Event | Trigger |
+| 事件 | 触发条件 |
 |-------|---------|
-| `user_signed_in` | Successful sign-in |
-| `user_signed_out` | User signs out |
-| `session_created` | New session created |
-| `session_revoked` | Single session revoked |
-| `sessions_revoked_all` | All sessions revoked |
-| `user_impersonated` | Admin starts impersonating user |
-| `user_impersonation_stopped` | Admin stops impersonating |
+| `user_signed_in` | 登录成功 |
+| `user_signed_out` | 用户登出 |
+| `session_created` | 新会话创建 |
+| `session_revoked` | 单个会话被撤销 |
+| `sessions_revoked_all` | 所有会话被撤销 |
+| `user_impersonated` | 管理员开始模拟用户操作 |
+| `user_impersonation_stopped` | 管理员停止模拟用户 |
 
-### Account Events
+### 账户事件
 
-| Event | Trigger |
+| 事件 | 触发条件 |
 |-------|---------|
-| `account_linked` | Social account linked |
-| `account_unlinked` | Social account unlinked |
-| `password_changed` | Password updated |
+| `account_linked` | 社交账户关联 |
+| `account_unlinked` | 社交账户解绑 |
+| `password_changed` | 密码更新 |
 
-### Verification Events
+### 验证事件
 
-| Event | Trigger |
+| 事件 | 触发条件 |
 |-------|---------|
-| `password_reset_requested` | Password reset initiated |
-| `password_reset_completed` | Password reset finished |
-| `email_verification_sent` | Verification email sent |
+| `password_reset_requested` | 发起密码重置 |
+| `password_reset_completed` | 密码重置完成 |
+| `email_verification_sent` | 发送验证邮件 |
 
-### Organization Events
+### 组织事件
 
-If you're using the organization plugin, these events are also tracked:
+如果你使用了组织插件，也会追踪以下事件：
 
-| Event | Trigger |
+| 事件 | 触发条件 |
 |-------|---------|
-| `organization_created` | New organization created |
-| `organization_updated` | Organization settings changed |
-| `member_added` | Member added to organization |
-| `member_removed` | Member removed from organization |
-| `member_role_updated` | Member role changed |
-| `member_invited` | Invitation sent |
-| `invite_accepted` | Invitation accepted |
-| `invite_rejected` | Invitation rejected |
-| `invite_cancelled` | Invitation cancelled |
-| `team_created` | Team created |
-| `team_updated` | Team updated |
-| `team_deleted` | Team deleted |
-| `team_member_added` | Member added to team |
-| `team_member_removed` | Member removed from team |
+| `organization_created` | 新组织创建 |
+| `organization_updated` | 组织设置变更 |
+| `member_added` | 添加成员到组织 |
+| `member_removed` | 从组织移除成员 |
+| `member_role_updated` | 成员角色变更 |
+| `member_invited` | 发送邀请 |
+| `invite_accepted` | 邀请被接受 |
+| `invite_rejected` | 邀请被拒绝 |
+| `invite_cancelled` | 邀请被取消 |
+| `team_created` | 新团队创建 |
+| `team_updated` | 团队信息更新 |
+| `team_deleted` | 团队被删除 |
+| `team_member_added` | 添加成员到团队 |
+| `team_member_removed` | 从团队移除成员 |
 
-## Dashboard Endpoints
+## 仪表盘端点
 
-The dash plugin registers numerous admin endpoints for the dashboard:
+dash 插件注册了众多管理员端点供仪表盘使用：
 
-### User Management
+### 用户管理
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 说明 |
 |----------|--------|-------------|
-| `/dash/users` | GET | List users with pagination |
-| `/dash/users/online-count` | GET | Get online users count |
-| `/dash/user` | GET | Get user details |
-| `/dash/user` | POST | Create a new user |
-| `/dash/user` | PATCH | Update user |
-| `/dash/user` | DELETE | Delete user |
-| `/dash/user/ban` | POST | Ban user |
-| `/dash/user/unban` | POST | Unban user |
-| `/dash/user/password` | POST | Set user password |
-| `/dash/user/impersonate` | POST | Impersonate user |
+| `/dash/users` | GET | 分页列出用户 |
+| `/dash/users/online-count` | GET | 获取在线用户数量 |
+| `/dash/user` | GET | 获取用户详情 |
+| `/dash/user` | POST | 创建新用户 |
+| `/dash/user` | PATCH | 更新用户 |
+| `/dash/user` | DELETE | 删除用户 |
+| `/dash/user/ban` | POST | 封禁用户 |
+| `/dash/user/unban` | POST | 解禁用户 |
+| `/dash/user/password` | POST | 设置用户密码 |
+| `/dash/user/impersonate` | POST | 模拟用户操作 |
 
-### Session Management
+### 会话管理
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 说明 |
 |----------|--------|-------------|
-| `/dash/sessions` | GET | List all sessions |
-| `/dash/sessions` | DELETE | Delete sessions |
-| `/dash/session/revoke` | POST | Revoke single session |
-| `/dash/sessions/revoke-all` | POST | Revoke all user sessions |
+| `/dash/sessions` | GET | 列出所有会话 |
+| `/dash/sessions` | DELETE | 删除会话 |
+| `/dash/session/revoke` | POST | 撤销单个会话 |
+| `/dash/sessions/revoke-all` | POST | 撤销所有用户会话 |
 
-### Organization Management
+### 组织管理
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 说明 |
 |----------|--------|-------------|
-| `/dash/organizations` | GET | List organizations |
-| `/dash/organization` | GET | Get organization details |
-| `/dash/organization` | POST | Create organization |
-| `/dash/organization` | PATCH | Update organization |
-| `/dash/organization` | DELETE | Delete organization |
-| `/dash/organization/members` | GET | List members |
-| `/dash/organization/member` | POST | Add member |
-| `/dash/organization/member` | DELETE | Remove member |
-| `/dash/organization/member/role` | PATCH | Update member role |
+| `/dash/organizations` | GET | 列出组织 |
+| `/dash/organization` | GET | 获取组织详情 |
+| `/dash/organization` | POST | 创建组织 |
+| `/dash/organization` | PATCH | 更新组织 |
+| `/dash/organization` | DELETE | 删除组织 |
+| `/dash/organization/members` | GET | 列出成员 |
+| `/dash/organization/member` | POST | 添加成员 |
+| `/dash/organization/member` | DELETE | 移除成员 |
+| `/dash/organization/member/role` | PATCH | 更新成员角色 |
 
-### Team Management
+### 团队管理
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 说明 |
 |----------|--------|-------------|
-| `/dash/organization/teams` | GET | List teams |
-| `/dash/organization/team` | POST | Create team |
-| `/dash/organization/team` | PATCH | Update team |
-| `/dash/organization/team` | DELETE | Delete team |
-| `/dash/organization/team/member` | POST | Add team member |
-| `/dash/organization/team/member` | DELETE | Remove team member |
+| `/dash/organization/teams` | GET | 列出团队 |
+| `/dash/organization/team` | POST | 创建团队 |
+| `/dash/organization/team` | PATCH | 更新团队 |
+| `/dash/organization/team` | DELETE | 删除团队 |
+| `/dash/organization/team/member` | POST | 添加团队成员 |
+| `/dash/organization/team/member` | DELETE | 移除团队成员 |
 
-### Invitation Management
+### 邀请管理
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 说明 |
 |----------|--------|-------------|
-| `/dash/organization/invitations` | GET | List invitations |
-| `/dash/organization/invite` | POST | Send invitation |
-| `/dash/organization/invite/cancel` | POST | Cancel invitation |
-| `/dash/organization/invite/resend` | POST | Resend invitation |
+| `/dash/organization/invitations` | GET | 列出邀请 |
+| `/dash/organization/invite` | POST | 发送邀请 |
+| `/dash/organization/invite/cancel` | POST | 取消邀请 |
+| `/dash/organization/invite/resend` | POST | 重新发送邀请 |
 
-### SSO Management
+### 单点登录管理（SSO）
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 说明 |
 |----------|--------|-------------|
-| `/dash/organization/sso-providers` | GET | List SSO providers |
-| `/dash/organization/sso-provider` | POST | Create SSO provider |
-| `/dash/organization/sso-provider` | PATCH | Update SSO provider |
-| `/dash/organization/sso-provider` | DELETE | Delete SSO provider |
-| `/dash/organization/sso-provider/verify-domain` | POST | Verify domain |
+| `/dash/organization/sso-providers` | GET | 列出单点登录提供商 |
+| `/dash/organization/sso-provider` | POST | 创建单点登录提供商 |
+| `/dash/organization/sso-provider` | PATCH | 更新单点登录提供商 |
+| `/dash/organization/sso-provider` | DELETE | 删除单点登录提供商 |
+| `/dash/organization/sso-provider/verify-domain` | POST | 验证域名 |
 
-### Directory Sync
+### 目录同步
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 说明 |
 |----------|--------|-------------|
-| `/dash/organization/directories` | GET | List directories |
-| `/dash/organization/directory` | POST | Create directory |
-| `/dash/organization/directory` | DELETE | Delete directory |
-| `/dash/organization/directory/token` | POST | Regenerate token |
+| `/dash/organization/directories` | GET | 列出目录 |
+| `/dash/organization/directory` | POST | 创建目录 |
+| `/dash/organization/directory` | DELETE | 删除目录 |
+| `/dash/organization/directory/token` | POST | 重新生成令牌 |
 
-### Log Drains
+### 日志转储管理
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 说明 |
 |----------|--------|-------------|
-| `/dash/organization/log-drains` | GET | List log drains |
-| `/dash/organization/log-drain` | POST | Create log drain |
-| `/dash/organization/log-drain` | PATCH | Update log drain |
-| `/dash/organization/log-drain` | DELETE | Delete log drain |
-| `/dash/organization/log-drain/test` | POST | Test log drain |
+| `/dash/organization/log-drains` | GET | 列出日志转储 |
+| `/dash/organization/log-drain` | POST | 创建日志转储 |
+| `/dash/organization/log-drain` | PATCH | 更新日志转储 |
+| `/dash/organization/log-drain` | DELETE | 删除日志转储 |
+| `/dash/organization/log-drain/test` | POST | 测试日志转储 |
 
-### Events & Audit Logs
+### 事件和审计日志
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 说明 |
 |----------|--------|-------------|
-| `/events/list` | GET | Get user events |
-| `/events/audit-logs` | GET | Get audit logs |
-| `/events/types` | GET | Get event types |
+| `/events/list` | GET | 获取用户事件 |
+| `/events/audit-logs` | GET | 获取审计日志 |
+| `/events/types` | GET | 获取事件类型 |
 
-### Analytics
+### 分析统计
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 说明 |
 |----------|--------|-------------|
-| `/dash/stats` | GET | Get user statistics |
-| `/dash/graph` | GET | Get graph data |
-| `/dash/retention` | GET | Get retention data |
-| `/dash/map` | GET | Get geographic data |
+| `/dash/stats` | GET | 获取用户统计数据 |
+| `/dash/graph` | GET | 获取图表数据 |
+| `/dash/retention` | GET | 获取用户留存数据 |
+| `/dash/map` | GET | 获取地理数据 |
 
-### Two-Factor Management
+### 双因素管理
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 说明 |
 |----------|--------|-------------|
-| `/dash/user/2fa/enable` | POST | Enable 2FA for user |
-| `/dash/user/2fa/disable` | POST | Disable 2FA for user |
-| `/dash/user/2fa/totp-uri` | GET | Get TOTP URI |
-| `/dash/user/2fa/backup-codes` | GET | View backup codes |
-| `/dash/user/2fa/backup-codes/generate` | POST | Generate new codes |
+| `/dash/user/2fa/enable` | POST | 启用用户双因素认证 |
+| `/dash/user/2fa/disable` | POST | 禁用用户双因素认证 |
+| `/dash/user/2fa/totp-uri` | GET | 获取 TOTP URI |
+| `/dash/user/2fa/backup-codes` | GET | 查看备份码 |
+| `/dash/user/2fa/backup-codes/generate` | POST | 生成新备份码 |
 
-## Client Integration
+## 客户端集成
 
 ### dashClient()
 
-The client plugin provides access to audit log queries:
+客户端插件支持审计日志查询功能：
 
 ```ts
 import { createAuthClient } from "better-auth/client";
@@ -243,18 +243,18 @@ export const authClient = createAuthClient({
 });
 ```
 
-### Configuration
+### 配置
 
 ```ts
 dashClient({
   resolveUserId: ({ userId, user, session }) => {
-    // Custom user ID resolution logic
+    // 自定义用户 ID 解析逻辑
     return userId || user?.id || session?.user?.id;
   },
 }),
 ```
 
-### Fetching Audit Logs
+### 拉取审计日志
 
 ```ts
 const session = await authClient.getSession();
@@ -265,27 +265,27 @@ const logs = await authClient.dash.getAuditLogs({
   offset: 0,
 });
 
-// Access the data
-console.log(logs.data?.events);  // Array of audit log events
-console.log(logs.data?.total);   // Total count
-console.log(logs.data?.limit);   // Page size
-console.log(logs.data?.offset);  // Current offset
+// 访问数据
+console.log(logs.data?.events);  // 审计日志事件数组
+console.log(logs.data?.total);   // 总数
+console.log(logs.data?.limit);   // 页面大小
+console.log(logs.data?.offset);  // 当前偏移量
 ```
 
-### Query Parameters
+### 查询参数
 
-| Parameter | Type | Description |
+| 参数 | 类型 | 说明 |
 |-----------|------|-------------|
-| `limit` | `number` | Results per page (max 100, default 50) |
-| `offset` | `number` | Pagination offset (default 0) |
-| `organizationId` | `string` | Filter by organization |
-| `identifier` | `string` | Filter by identifier |
-| `eventType` | `string` | Filter by event type |
-| `userId` | `string` | Filter by user ID |
-| `user` | `object` | User object with ID |
-| `session` | `object` | Session object with user |
+| `limit` | `number` | 每页结果数 (最大 100，默认 50) |
+| `offset` | `number` | 分页偏移 (默认 0) |
+| `organizationId` | `string` | 按组织过滤 |
+| `identifier` | `string` | 按标识符过滤 |
+| `eventType` | `string` | 按事件类型过滤 |
+| `userId` | `string` | 按用户 ID 过滤 |
+| `user` | `object` | 带 ID 的用户对象 |
+| `session` | `object` | 带用户信息的会话对象 |
 
-### Pagination Example
+### 分页示例
 
 ```ts
 async function getAllAuditLogs(session: unknown) {
@@ -311,22 +311,22 @@ async function getAllAuditLogs(session: unknown) {
 }
 ```
 
-### Filtering Examples
+### 过滤示例
 
 ```ts
-// Filter by event type
+// 按事件类型过滤
 const signIns = await authClient.dash.getAuditLogs({
   session,
   eventType: "user_signed_in",
 });
 
-// Filter by organization
+// 按组织过滤
 const orgLogs = await authClient.dash.getAuditLogs({
   session,
   organizationId: "org_123",
 });
 
-// Combine filters
+// 组合过滤
 const orgSignIns = await authClient.dash.getAuditLogs({
   session,
   organizationId: "org_123",
@@ -334,9 +334,9 @@ const orgSignIns = await authClient.dash.getAuditLogs({
 });
 ```
 
-## Schema Extensions
+## Schema 扩展
 
-When activity tracking is enabled, the plugin adds fields to your user schema:
+启用活动跟踪后，插件会在用户 schema 中添加字段：
 
 ```ts
 user: {
@@ -348,14 +348,14 @@ user: {
 }
 ```
 
-Make sure to run database migrations after enabling activity tracking.
+启用活动跟踪后，请确保执行数据库迁移。
 
-## Best Practices
+## 最佳实践
 
-1. **Always set an API key** - Without it, the plugin cannot communicate with the infrastructure API.
+1. **务必设置 API 密钥** —— 没有它，插件无法与基础设施 API 通信。
 
-2. **Use activity tracking wisely** - The update interval affects database writes. For high-traffic apps, consider a longer interval.
+2. **合理使用活动跟踪** —— 更新间隔影响数据库写入。在高流量应用中，建议使用较长间隔。
 
-3. **Monitor audit log retention** - Different plans have different retention periods. Check your plan limits.
+3. **关注审计日志保留时间** —— 不同套餐有不同的保留期限，请确认你的套餐。
 
-4. **Secure your endpoints** - Dashboard endpoints require authentication. Make sure your dashboard users have appropriate permissions.
+4. **保护你的端点安全** —— 仪表盘端点需身份验证，确保仪表盘用户拥有相应权限。

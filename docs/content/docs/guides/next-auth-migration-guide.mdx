@@ -1,21 +1,21 @@
 ---
-title: Migrating from Auth.js to Better Auth
-description: A step-by-step guide to transitioning from Auth.js to Better Auth.
+title: 从 Auth.js 迁移到 Better Auth
+description: 从 Auth.js 迁移到 Better Auth 的分步指南。
 ---
 
-## Introduction
+## 介绍
 
-In this guide, we'll walk through the steps to migrate a project from [Auth.js](https://authjs.dev/) (formerly [NextAuth.js](https://next-auth.js.org/)) to Better Auth. Since these projects have different design philosophies, the migration requires careful planning and work. If your current setup is working well, there's no urgent need to migrate. We continue to handle security patches and critical issues for Auth.js.
+在本指南中，我们将逐步演示如何将项目从 [Auth.js](https://authjs.dev/)（前身为 [NextAuth.js](https://next-auth.js.org/)）迁移到 Better Auth。由于这两个项目的设计理念不同，迁移需要仔细规划和实施。如果您当前的设置运行良好，则无需紧急迁移。我们仍然会为 Auth.js 处理安全补丁和关键问题。
 
-However, if you're starting a new project or facing challenges with your current setup, we strongly recommend using Better Auth. Our roadmap includes features previously exclusive to Auth.js, and we hope this will unite the ecosystem more strongly without causing fragmentation.
+但如果您正在启动新项目或在当前设置中遇到挑战，我们强烈建议使用 Better Auth。我们的路线图包括以前仅 Auth.js 才有的功能，我们希望这能加强生态系统的统一，而不会导致分裂。
 
 <Steps>
 <Step>
-## Create Better Auth Instance
+## 创建 Better Auth 实例
 
-Before starting the migration process, set up Better Auth in your project. Follow the [installation guide](/docs/installation) to get started.
+在开始迁移过程之前，请在项目中设置 Better Auth。请按照[安装指南](/docs/installation)开始。
 
-For example, if you use the GitHub OAuth provider, here is a comparison of the `auth.ts` file.
+例如，如果您使用 GitHub OAuth 提供商，以下是 `auth.ts` 文件的对比。
 
 <Tabs items={["Auth.js", "Better Auth"]}>
 <Tab value="Auth.js">
@@ -46,14 +46,14 @@ export const auth = betterAuth({
 </Tabs>
 
 <Callout type="info">
-Now Better Auth supports stateless session management without any database. If you were using a Database adapter in Auth.js, you can refer to the [Database models](#database-models) below to check the differences with Better Auth's core schema.
+Better Auth 现在支持无数据库的无状态会话管理。如果您之前在 Auth.js 中使用了数据库适配器，可以参阅下方的[数据库模型](#database-models)来了解 Better Auth 核心模式的差异。
 </Callout>
 </Step>
 
 <Step>
-## Create Client Instance
+## 创建客户端实例
 
-This client instance includes a set of functions for interacting with the Better Auth server instance. For more information, see [here](/docs/concepts/client).
+此客户端实例包含一组与 Better Auth 服务器实例交互的函数。详情请参见[此处](/docs/concepts/client)。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/react"
@@ -63,9 +63,9 @@ export const authClient = createAuthClient()
 </Step>
 
 <Step>
-## Update the Route Handler
+## 更新路由处理器
 
-Rename the `/app/api/auth/[...nextauth]` folder to `/app/api/auth/[...all]` to avoid confusion. Then, update the `route.ts` file as follows:
+将 `/app/api/auth/[...nextauth]` 文件夹重命名为 `/app/api/auth/[...all]` 以避免混淆。然后更新 `route.ts` 文件如下：
 
 <Tabs items={["Auth.js", "Better Auth"]}>
 <Tab value="Auth.js">
@@ -88,15 +88,15 @@ export const { POST, GET } = toNextJsHandler(auth)
 </Step>
 
 <Step>
-## Session Management
+## 会话管理
 
-In this section, we'll look at how to manage sessions in Better Auth compared to Auth.js. For more information, see [here](/docs/concepts/session-management).
+本节将对比 Auth.js 和 Better Auth 中的会话管理方式。详情请参见[此处](/docs/concepts/session-management)。
 
-### Client-side
+### 客户端
 
-#### Sign In
+#### 登入
 
-Here are the differences between Auth.js and Better Auth for signing in users. For example, with the GitHub OAuth provider:
+以下是使用 GitHub OAuth 提供商时，Auth.js 与 Better Auth 登录用户的差异示例：
 
 <Tabs items={["Auth.js", "Better Auth"]}>
 <Tab value="Auth.js">
@@ -122,9 +122,9 @@ const { data, error } = await authClient.signIn.social({
 </Tab>
 </Tabs>
 
-#### Sign Out
+#### 登出
 
-Here are the differences between Auth.js and Better Auth when signing out users.
+以下是 Auth.js 和 Better Auth 用户登出的差异示例。
 
 <Tabs items={["Auth.js", "Better Auth"]}>
 <Tab value="Auth.js">
@@ -148,9 +148,9 @@ const { data, error } = await authClient.signOut()
 </Tab>
 </Tabs>
 
-#### Get Session
+#### 获取会话
 
-Here are the differences between Auth.js and Better Auth for getting the current active session.
+以下是 Auth.js 和 Better Auth 获取当前活动会话的差异示例。
 
 <Tabs items={["Auth.js", "Better Auth"]}>
 <Tab value="Auth.js">
@@ -174,11 +174,11 @@ const { data, error, refetch, isPending, isRefetching } = authClient.useSession(
 </Tab>
 </Tabs>
 
-### Server-side
+### 服务器端
 
-#### Sign In
+#### 登入
 
-Here are the differences between Auth.js and Better Auth for signing in users. For example, with the GitHub OAuth provider:
+以下是使用 GitHub OAuth 提供商时，Auth.js 和 Better Auth 登录用户的差异示例：
 
 <Tabs items={["Auth.js", "Better Auth"]}>
 <Tab value="Auth.js">
@@ -202,9 +202,9 @@ const { redirect, url } = await auth.api.signInSocial({
 </Tab>
 </Tabs>
 
-#### Sign Out
+#### 登出
 
-Here are the differences between Auth.js and Better Auth when signing out users.
+以下是 Auth.js 和 Better Auth 用户登出的差异示例。
 
 <Tabs items={["Auth.js", "Better Auth"]}>
 <Tab value="Auth.js">
@@ -227,9 +227,9 @@ const { success } = await auth.api.signOut({
 </Tab>
 </Tabs>
 
-#### Get Session
+#### 获取会话
 
-Here are the differences between Auth.js and Better Auth for getting the current active session.
+以下是 Auth.js 和 Better Auth 获取当前活动会话的差异示例。
 
 <Tabs items={["Auth.js", "Better Auth"]}>
 <Tab value="Auth.js">
@@ -254,14 +254,14 @@ const session = await auth.api.getSession({
 </Step>
 
 <Step>
-## Protecting Resources
+## 保护资源
 
-> Proxy(Middleware) is not intended for slow data fetching. While Proxy can be helpful for optimistic checks such as permission-based redirects, it should not be used as a full session management or authorization solution. - [Next.js docs](https://nextjs.org/docs/app/getting-started/proxy#use-cases)
+> Proxy（中间件）并非为慢速数据获取设计。虽然 Proxy 可用于权限检查类的乐观性校验（如基于权限的重定向），但不应作为完整的会话管理或授权解决方案。- [Next.js 文档](https://nextjs.org/docs/app/getting-started/proxy#use-cases)
 
-Auth.js offers approaches using Proxy (Middleware), but we recommend handling auth checks on each page or route rather than in a Proxy or Layout. Here is a basic example of protecting resources with Better Auth.
+Auth.js 提供了使用 Proxy（中间件）的方式，但我们建议在每个页面或路由里进行身份验证检查，而非在 Proxy 或 Layout 中。以下是使用 Better Auth 保护资源的基本示例。
 
-<Tabs items={["Client-side", "Server-side"]}>
-<Tab value="Client-side">
+<Tabs items={["客户端", "服务器端"]}>
+<Tab value="客户端">
 ```ts title="app/dashboard/page.tsx"
 "use client";
 
@@ -272,7 +272,7 @@ const DashboardPage = () => {
   const { data, error, isPending } = authClient.useSession();
 
   if (isPending) {
-    return <div>Pending</div>;
+    return <div>加载中</div>;
   }
   if (!data || error) {
     redirect("/sign-in");
@@ -280,7 +280,7 @@ const DashboardPage = () => {
 
   return (
     <div>
-      <h1>Welcome {data.user.name}</h1>
+      <h1>欢迎 {data.user.name}</h1>
     </div>
   );
 };
@@ -289,7 +289,7 @@ export default DashboardPage;
 ```
 </Tab>
 
-<Tab value="Server-side">
+<Tab value="服务器端">
 ```ts title="app/dashboard/page.tsx"
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -306,7 +306,7 @@ const DashboardPage = async () => {
 
   return (
     <div>
-      <h1>Welcome {session.user.name}</h1>
+      <h1>欢迎 {session.user.name}</h1>
     </div>
   );
 };
@@ -319,11 +319,11 @@ export default DashboardPage;
 </Step>
 
 <Step>
-## Database models
+## 数据库模型
 
-Both Auth.js and Better Auth provide stateless (JWT) and database session strategies. If you were using the database session strategy in Auth.js and plan to continue using it in Better Auth, you will also need to migrate your database.
+Auth.js 和 Better Auth 都提供无状态（JWT）和数据库会话策略。如果您之前在 Auth.js 中使用数据库会话策略，并计划在 Better Auth 中继续使用，则需要迁移数据库。
 
-Just like Auth.js has database models, Better Auth also has a core schema. In this section, we'll compare the two and explore the differences between them.
+正如 Auth.js 有数据库模型，Better Auth 也有核心模式。本节将对比两者并探讨差异。
 
 ### User -> User
 
@@ -334,31 +334,31 @@ Just like Auth.js has database models, Better Auth also has a core schema. In th
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each user",
+      description: "用户的唯一标识符",
       isPrimaryKey: true,
     },
     {
       name: "name",
       type: "string",
-      description: "User's chosen display name",
+      description: "用户选择的显示名称",
       isOptional: true,
     },
     {
       name: "email",
       type: "string",
-      description: "User's email address for communication and login",
+      description: "用户的电子邮件地址，用于通信和登录",
       isOptional: true,
     },
     {
       name: "emailVerified",
       type: "Date",
-      description: "When the user's email was verified",
+      description: "用户电子邮件的验证时间",
       isOptional: true,
     },
     {
       name: "image",
       type: "string",
-      description: "User's image url",
+      description: "用户的头像链接",
       isOptional: true,
     },
   ]}
@@ -370,39 +370,39 @@ Just like Auth.js has database models, Better Auth also has a core schema. In th
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each user",
+      description: "用户的唯一标识符",
       isPrimaryKey: true,
     },
     {
       name: "name",
       type: "string",
-      description: "User's chosen display name",
+      description: "用户选择的显示名称",
     },
     {
       name: "email",
       type: "string",
-      description: "User's email address for communication and login",
+      description: "用户的电子邮件地址，用于通信和登录",
     },
     {
       name: "emailVerified",
       type: "boolean",
-      description: "Whether the user's email is verified",
+      description: "用户的电子邮件是否已验证",
     },
     {
       name: "image",
       type: "string",
-      description: "User's image url",
+      description: "用户的头像链接",
       isOptional: true,
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "Timestamp of when the user account was created",
+      description: "用户账户创建时间戳",
     },
     {
       name: "updatedAt",
       type: "Date",
-      description: "Timestamp of the last update to the user's information",
+      description: "用户信息最后更新时间戳",
     },
   ]}
 />
@@ -418,24 +418,24 @@ Just like Auth.js has database models, Better Auth also has a core schema. In th
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each session",
+      description: "每个会话的唯一标识符",
       isPrimaryKey: true,
     },
     {
       name: "userId",
       type: "string",
-      description: "The ID of the user",
+      description: "用户的 ID",
       isForeignKey: true,
     },
     {
       name: "sessionToken",
       type: "string",
-      description: "The unique session token",
+      description: "唯一的会话令牌",
     },
     {
       name: "expires",
       type: "Date",
-      description: "The time when the session expires",
+      description: "会话过期时间",
     },
   ]}
 />
@@ -446,47 +446,47 @@ Just like Auth.js has database models, Better Auth also has a core schema. In th
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each session",
+      description: "每个会话的唯一标识符",
       isPrimaryKey: true,
     },
     {
       name: "userId",
       type: "string",
-      description: "The ID of the user",
+      description: "用户的 ID",
       isForeignKey: true,
     },
     {
       name: "token",
       type: "string",
-      description: "The unique session token",
+      description: "唯一的会话令牌",
       isUnique: true,
     },
     {
       name: "expiresAt",
       type: "Date",
-      description: "The time when the session expires",
+      description: "会话过期时间",
     },
     {
       name: "ipAddress",
       type: "string",
-      description: "The IP address of the device",
+      description: "设备的 IP 地址",
       isOptional: true,
     },
     {
       name: "userAgent",
       type: "string",
-      description: "The user agent information of the device",
+      description: "设备的用户代理信息",
       isOptional: true,
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "Timestamp of when the session was created",
+      description: "会话创建时间戳",
     },
     {
       name: "updatedAt",
       type: "Date",
-      description: "Timestamp of when the session was updated",
+      description: "会话更新时间戳",
     },
   ]}
 />
@@ -502,70 +502,70 @@ Just like Auth.js has database models, Better Auth also has a core schema. In th
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each account",
+      description: "每个账号的唯一标识符",
       isPrimaryKey: true,
     },
     {
       name: "userId",
       type: "string",
-      description: "The ID of the user",
+      description: "用户 ID",
       isForeignKey: true,
     },
     {
       name: "type",
       type: "string",
-      description: "Type of the account (e.g. 'oauth', 'email', 'credentials')",
+      description: "账号类型（例如 'oauth'、'email'、'credentials'）",
     },
     {
       name: "provider",
       type: "string",
-      description: "Provider identifier",
+      description: "提供商标识",
     },
     {
       name: "providerAccountId",
       type: "string",
-      description: "Account ID from the provider",
+      description: "提供商的账号 ID",
     },
     {
       name: "refresh_token",
       type: "string",
-      description: "The refresh token of the account. Returned by the provider",
+      description: "账号的刷新令牌，由提供商返回",
       isOptional: true,
     },
     {
       name: "access_token",
       type: "string",
-      description: "The access token of the account. Returned by the provider",
+      description: "账号的访问令牌，由提供商返回",
       isOptional: true,
     },
     {
       name: "expires_at",
       type: "number",
-      description: "The time when the access token expires",
+      description: "访问令牌过期时间",
       isOptional: true,
     },
     {
       name: "token_type",
       type: "string",
-      description: "Type of the token",
+      description: "令牌类型",
       isOptional: true,
     },
     {
       name: "scope",
       type: "string",
-      description: "The scope of the account. Returned by the provider",
+      description: "账号权限范围，由提供商返回",
       isOptional: true,
     },
     {
       name: "id_token",
       type: "string",
-      description: "The ID token returned from the provider",
+      description: "提供商返回的 ID 令牌",
       isOptional: true,
     },
     {
       name: "session_state",
       type: "string",
-      description: "OAuth session state",
+      description: "OAuth 会话状态",
       isOptional: true,
     },
   ]}
@@ -577,78 +577,78 @@ Just like Auth.js has database models, Better Auth also has a core schema. In th
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each account",
+      description: "每个账号的唯一标识符",
       isPrimaryKey: true,
     },
     {
       name: "userId",
       type: "string",
-      description: "The ID of the user",
+      description: "用户 ID",
       isForeignKey: true,
     },
     {
       name: "accountId",
       type: "string",
       description:
-        "The ID of the account as provided by the SSO or equal to userId for credential accounts",
+        "账号由 SSO 提供的 ID，或凭证账号时与 userId 相同",
     },
     {
       name: "providerId",
       type: "string",
-      description: "The ID of the provider",
+      description: "提供商 ID",
     },
     {
       name: "accessToken",
       type: "string",
-      description: "The access token of the account. Returned by the provider",
+      description: "账号的访问令牌，由提供商返回",
       isOptional: true,
     },
     {
       name: "refreshToken",
       type: "string",
-      description: "The refresh token of the account. Returned by the provider",
+      description: "账号的刷新令牌，由提供商返回",
       isOptional: true,
     },
     {
       name: "accessTokenExpiresAt",
       type: "Date",
-      description: "The time when the access token expires",
+      description: "访问令牌过期时间",
       isOptional: true,
     },
     {
       name: "refreshTokenExpiresAt",
       type: "Date",
-      description: "The time when the refresh token expires",
+      description: "刷新令牌过期时间",
       isOptional: true,
     },
     {
       name: "scope",
       type: "string",
-      description: "The scope of the account. Returned by the provider",
+      description: "账号权限范围，由提供商返回",
       isOptional: true,
     },
     {
       name: "idToken",
       type: "string",
-      description: "The ID token returned from the provider",
+      description: "提供商返回的 ID 令牌",
       isOptional: true,
     },
     {
       name: "password",
       type: "string",
       description:
-        "The password of the account. Mainly used for email and password authentication",
+        "账号密码，主要用于邮件和密码认证",
       isOptional: true,
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "Timestamp of when the account was created",
+      description: "账号创建时间戳",
     },
     {
       name: "updatedAt",
       type: "Date",
-      description: "Timestamp of when the account was updated",
+      description: "账号更新时间戳",
     },
   ]}
 />
@@ -664,19 +664,19 @@ Just like Auth.js has database models, Better Auth also has a core schema. In th
     {
       name: "identifier",
       type: "string",
-      description: "Identifier for the verification request",
+      description: "验证请求的标识符",
       isPrimaryKey: true,
     },
     {
       name: "token",
       type: "string",
-      description: "The verification token",
+      description: "验证令牌",
       isPrimaryKey: true,
     },
     {
       name: "expires",
       type: "Date",
-      description: "The time when the verification token expires",
+      description: "验证令牌过期时间",
     },
   ]}
 />
@@ -687,81 +687,81 @@ Just like Auth.js has database models, Better Auth also has a core schema. In th
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each verification",
+      description: "每条验证的唯一标识符",
       isPrimaryKey: true,
     },
     {
       name: "identifier",
       type: "string",
-      description: "The identifier for the verification request",
+      description: "验证请求的标识",
     },
     {
       name: "value",
       type: "string",
-      description: "The value to be verified",
+      description: "需验证的值",
     },
     {
       name: "expiresAt",
       type: "Date",
-      description: "The time when the verification request expires",
+      description: "验证请求过期时间",
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "Timestamp of when the verification request was created",
+      description: "验证请求创建时间戳",
     },
     {
       name: "updatedAt",
       type: "Date",
-      description: "Timestamp of when the verification request was updated",
+      description: "验证请求更新时间戳",
     },
   ]}
 />
 </Tab>
 </Tabs>
 
-### Comparison
+### 比较总结
 
-Table: <strong className='underline italic'>User</strong>
-- `name`, `email`, and `emailVerified` are required in Better Auth, while optional in Auth.js
-- `emailVerified` uses a boolean in Better Auth, while Auth.js uses a timestamp
-- Better Auth includes `createdAt` and `updatedAt` timestamps
+表：<strong className='underline italic'>User</strong>
+- Better Auth 中 `name`、`email` 和 `emailVerified` 字段为必填，Auth.js 中为可选
+- Better Auth 使用布尔值表示 `emailVerified`，而 Auth.js 使用时间戳
+- Better Auth 增加了 `createdAt` 和 `updatedAt` 时间戳字段
 
-Table: <strong className='underline italic'>Session</strong>
-- Better Auth uses `token` instead of `sessionToken`
-- Better Auth uses `expiresAt` instead of `expires`
-- Better Auth includes `ipAddress` and `userAgent` fields
-- Better Auth includes `createdAt` and `updatedAt` timestamps
+表：<strong className='underline italic'>Session</strong>
+- Better Auth 使用 `token` 替代 `sessionToken`
+- Better Auth 使用 `expiresAt` 替代 `expires`
+- Better Auth 增加了 `ipAddress` 和 `userAgent` 字段
+- Better Auth 包括 `createdAt` 和 `updatedAt` 时间戳
 
-Table: <strong className='underline italic'>Account</strong>
-- Better Auth uses camelCase naming (e.g. `refreshToken` vs `refresh_token`)
-- Better Auth includes `accountId` to distinguish between the account ID and internal ID
-- Better Auth uses `providerId` instead of `provider`
-- Better Auth includes `accessTokenExpiresAt` and `refreshTokenExpiresAt` for token management
-- Better Auth includes `password` field to support built-in credential authentication
-- Better Auth does not have a `type` field as it's determined by the `providerId`
-- Better Auth removes `token_type` and `session_state` fields
-- Better Auth includes `createdAt` and `updatedAt` timestamps
+表：<strong className='underline italic'>Account</strong>
+- Better Auth 采用 camelCase 命名（如 `refreshToken` 替代 `refresh_token`）
+- Better Auth 增加了 `accountId`，用于区分账号外部 ID 和内部 ID
+- Better Auth 使用 `providerId` 替代 `provider`
+- Better Auth 增加了 `accessTokenExpiresAt` 和 `refreshTokenExpiresAt` 用于令牌管理
+- Better Auth 增加了 `password` 字段，支持内建的凭证认证
+- Better Auth 没有 `type` 字段，其类型由 `providerId` 决定
+- Better Auth 移除了 `token_type` 和 `session_state` 字段
+- Better Auth 增加了 `createdAt` 和 `updatedAt` 时间戳
 
-Table: <strong className='underline italic'>VerificationToken -> Verification</strong>
-- Better Auth uses `Verification` table instead of `VerificationToken`
-- Better Auth uses a single `id` primary key instead of composite primary key
-- Better Auth uses `value` instead of `token` to support various verification types
-- Better Auth uses `expiresAt` instead of `expires`
-- Better Auth includes `createdAt` and `updatedAt` timestamps
+表：<strong className='underline italic'>VerificationToken -> Verification</strong>
+- Better Auth 使用 `Verification` 表替代 `VerificationToken`
+- Better Auth 使用单一 `id` 作为主键，替代复合主键
+- Better Auth 使用 `value` 替代 `token`，支持多种验证类型
+- Better Auth 使用 `expiresAt` 替代 `expires`
+- Better Auth 增加了 `createdAt` 和 `updatedAt` 时间戳
 
 <Callout type="info">
-If you were using Auth.js v4, note that v5 does not introduce any breaking changes to the database schema. Optional fields like `oauth_token_secret` and `oauth_token` can be removed if you are not using them. Rarely used fields like `refresh_token_expires_in` can also be removed.
+如果您使用的是 Auth.js v4，注意 v5 在数据库模式方面没有破坏性变更。如果您不使用 `oauth_token_secret` 和 `oauth_token` 等可选字段，可以删除它们。像 `refresh_token_expires_in` 这样的少用字段也可以移除。
 </Callout>
 
-### Customization
+### 自定义
 
-You may have extended the database models or implemented additional logic in Auth.js. Better Auth allows you to customize the core schema in a type-safe way. You can also define custom logic during the lifecycle of database operations. For more details, see [Concepts - Database](/docs/concepts/database). 
+如果您扩展了数据库模型或在 Auth.js 中实现了额外逻辑，Better Auth 允许您以类型安全的方式自定义核心模式。您还可以在数据库操作的生命周期中定义自定义逻辑。更多详情请参见[概念 - 数据库](/docs/concepts/database)。
 </Step>
 </Steps>
 
-## Wrapping Up
+## 总结
 
-Now you're ready to migrate from Auth.js to Better Auth. For a complete implementation with multiple authentication methods, check out the [Next.js Demo App](https://github.com/better-auth/better-auth/tree/canary/demo/nextjs). Better Auth offers greater flexibility and more features, so be sure to explore the [documentation](/docs) to unlock its full potential.
+现在，您已准备好从 Auth.js 迁移到 Better Auth。欲了解包含多种认证方式的完整实现，请访问 [Next.js Demo 应用](https://github.com/better-auth/better-auth/tree/canary/demo/nextjs)。Better Auth 提供更灵活和更多功能，请务必探索[文档](/docs)以充分发挥其潜力。
 
-If you need help with migration, join our [community](/community) or reach out to [contact@better-auth.com](mailto:contact@better-auth.com).
+如果您需要迁移帮助，欢迎加入我们的[社区](/community)或联系 [contact@better-auth.com](mailto:contact@better-auth.com)。

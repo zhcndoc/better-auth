@@ -1,38 +1,38 @@
 ---
 title: no_code
-description: The code was not found in the request.
+description: 请求中未找到代码。
 ---
 
-## What is it?
+## 这是什么？
 
-This error occurs during the OAuth callback when the authorization code is missing from the request.
-In the Authorization Code flow, the provider redirects back to your `/api/auth/callback` route with a
-`code` parameter (and typically `state`). Without the `code`, Better Auth cannot exchange it for tokens,
-so the request is rejected.
+当请求中缺少授权代码时，会在 OAuth 回调期间发生此错误。
+在授权代码流程中，提供者会重定向回你的 `/api/auth/callback` 路由，
+并附带一个 `code` 参数（通常还有 `state` 参数）。如果没有 `code`，Better Auth 无法将其兑换为令牌，
+因此请求会被拒绝。
 
-## Common Causes
+## 常见原因
 
-* The OAuth flow was not started correctly (wrong response type or custom URL missing required params).
-* The provider returned an error instead of a code (e.g., user canceled consent), so only `error`/`error_description` are present.
-* Query parameters were stripped by a reverse proxy, CDN, or framework rewrite.
-* Callback URL mismatch at the provider caused an intermediate redirect that dropped query parameters.
-* Mobile/WebView or deep-link handoff opened a new context that lost the query string.
-* Using a response mode your handler does not read (e.g., form_post body vs query parameters).
+* OAuth 流程未正确启动（错误的响应类型或自定义 URL 缺少必需参数）。
+* 提供者返回了错误而非代码（例如，用户取消了授权），因此只有 `error`/`error_description` 参数存在。
+* 查询参数被反向代理、CDN 或框架重写剥离。
+* 提供者回调 URL 不匹配导致中间重定向，丢失了查询参数。
+* 移动端/WebView 或深度链接跳转打开了新环境，导致查询字符串丢失。
+* 使用了处理程序不读取的响应模式（例如，form_post 体而非查询参数）。
 
-## How to resolve
+## 如何解决
 
-### Use the standard Authorization Code flow
+### 使用标准授权代码流程
 
-* Start the flow through Better Auth so the provider receives the correct parameters and the app expects a `code`.
-* In the provider settings, ensure your app is configured for Authorization Code (with PKCE where applicable).
+* 通过 Better Auth 启动流程，确保提供者接收到正确参数，应用程序期望接收 `code`。
+* 在提供者设置中，确保你的应用配置为授权代码模式（在适用情况下使用 PKCE）。
 
-### Verify callback URL and parameter delivery
+### 验证回调 URL 和参数传递
 
-* Confirm the provider's configured redirect URI exactly matches your `/api/auth/callback` route (protocol, host, path).
-* Ensure infrastructure (proxies, rewrites, middleware) preserves the full query string and does not redirect in ways that drop parameters.
+* 确认提供者配置的重定向 URI 与你的 `/api/auth/callback` 路由完全匹配（协议、主机、路径）。
+* 确保基础设施（代理、重写、中间件）保留完整查询字符串，且不以丢弃参数的方式重定向。
 
-## Debug locally
+## 本地调试
 
-* In DevTools → Network, inspect the callback request and verify whether `code` or `error` parameters are present.
-* Log the raw query/body received by the callback handler during development to see exactly what arrived.
-* Compare dev/staging/prod credentials and redirect URIs to ensure they are consistent across environments.
+* 在开发者工具 → 网络中，检查回调请求，确认是否存在 `code` 或 `error` 参数。
+* 在开发期间记录回调处理程序接收到的原始查询/请求体，查看具体传入内容。
+* 对比开发/预发布/生产环境的凭证和重定向 URI，确保各环境配置一致。

@@ -1,91 +1,91 @@
 ---
 title: Openfort
-description: Better Auth Plugin for Openfort Web3 Wallet Infrastructure
+description: Openfort Web3 钱包基础设施的更佳身份验证插件
 ---
 
-[Openfort](https://www.openfort.io/) is an infrastructure provider for integrating blockchain wallets into applications. 
-It enables seamless wallet creation, management, and blockchain interactions with embedded wallets.
+[Openfort](https://www.openfort.io/) 是一个用于将区块链钱包集成到应用中的基础设施提供商。  
+它通过嵌入式钱包实现无缝的钱包创建、管理和区块链交互。
 
-This plugin is maintained by the Openfort team. For bugs, issues or feature requests, please visit the [Openfort Adapters GitHub repo](https://github.com/openfort-xyz/openfort-adapters).
+此插件由 Openfort 团队维护。有关 Bug、问题或功能请求，请访问 [Openfort Adapters GitHub 仓库](https://github.com/openfort-xyz/openfort-adapters)。
 
-<Card href="https://t.me/openfort" title="Get help on Openfort's Telegram">
-  Join the Openfort community for support and questions.
+<Card href="https://t.me/openfort" title="在 Openfort 的 Telegram 获取帮助">
+  加入 Openfort 社区，获取支持和答疑。
 </Card>
 
-## Features
+## 功能
 
-- Embedded wallet creation and management.
-- Seamless integration with Better Auth authentication.
-- Multi-chain support (Ethereum, Polygon, and more).
-- Gas sponsorship for user transactions.
-- Multiple recovery methods (passkey, password, automatic).
-- Sign messages and execute smart contract interactions.
+- 嵌入式钱包的创建和管理。
+- 与 Better Auth 身份验证无缝集成。
+- 多链支持（Ethereum、Polygon 等）。
+- 用户交易的 Gas 资助。
+- 多种恢复方式（Passkey、密码、自动恢复）。
+- 签名消息及执行智能合约交互。
 
-## Installation
+## 安装
 
 <Steps>
   <Step>
-    ### Install the Openfort SDK
+    ### 安装 Openfort SDK
 
-    #### Server
+    #### 服务器端
 
     ```package-install
     @openfort/openfort-node
     ```
 
-    #### Client
+    #### 客户端
 
     ```package-install
     @openfort/react wagmi viem @tanstack/react-query
     ```
 
     <Callout>
-      The `@openfort/react` package only supports **EVM chains** (Ethereum, Polygon, etc.). The React SDK integrates with Wagmi for blockchain interactions.
-      If you need support for non-EVM chains, use the Openfort JS SDK directly.
+      `@openfort/react` 仅支持 **EVM 链**（Ethereum、Polygon 等）。React SDK 通过 Wagmi 实现区块链交互。  
+      若需要支持非 EVM 链，请直接使用 Openfort JS SDK。
     </Callout>
   </Step>
 
   <Step>
-    ### Install the Bearer Plugin
+    ### 安装 Bearer 插件
 
-    The Openfort integration requires the Bearer plugin for token-based authentication.
+    Openfort 集成需要 Bearer 插件用于基于令牌的认证。
 
     ```package-install
     better-auth @openfort/better-auth 
     ```
 
-    The Bearer plugin is included in the Better Auth core package.
+    Bearer 插件包含在 Better Auth 核心包中。
   </Step>
 
   <Step>
-    ### Configure environment variables
+    ### 配置环境变量
 
-    #### Server (.env)
+    #### 服务器端 (.env)
 
     ```bash title=".env"
     # Better Auth
-    BETTER_AUTH_SECRET=your-random-secret-here  # Generate with: openssl rand -base64 32
+    BETTER_AUTH_SECRET=your-random-secret-here  # 生成方法：openssl rand -base64 32
     BETTER_AUTH_URL=http://localhost:3000
 
     # Openfort
     OPENFORT_SECRET_KEY=sk_test_...
 
-    # Shield Encryption (for embedded wallets)
+    # Shield 加密（用于嵌入式钱包）
     SHIELD_PUBLISHABLE_KEY=your-shield-api-key
     SHIELD_ENCRYPTION_SHARE=your-shield-encryption-share
     SHIELD_SECRET_KEY=your-shield-secret-key
 
-    # Frontend URL (for CORS)
+    # 前端 URL（用于 CORS）
     FRONTEND_URL=http://localhost:5173
     ```
 
-    #### Client (.env.local)
+    #### 客户端 (.env.local)
 
     ```bash title=".env.local"
     # Openfort
     VITE_OPENFORT_PUBLISHABLE_KEY=pk_test_...
     VITE_SHIELD_PUBLISHABLE_KEY=...
-    VITE_POLICY_ID=pol_...  # Transaction policy ID from Openfort dashboard
+    VITE_POLICY_ID=pol_...  # Openfort 控制面板中的交易策略 ID
 
     # Better Auth
     VITE_BETTERAUTH_URL=http://localhost:3000
@@ -93,14 +93,14 @@ This plugin is maintained by the Openfort team. For bugs, issues or feature requ
     ```
 
     <Callout>
-      Get your Openfort API keys from the [Openfort Dashboard](https://dashboard.openfort.io/). Shield credentials are required for embedded wallet encryption.
+      Openfort API 密钥请从 [Openfort 控制面板](https://dashboard.openfort.io/) 获取。嵌入式钱包加密需要 Shield 凭据。
     </Callout>
   </Step>
 
   <Step>
-    ### Initialize Openfort SDK (Server)
+    ### 初始化 Openfort SDK（服务器端）
 
-    Create an Openfort client instance on your server:
+    在服务器端创建 Openfort 客户端实例：
 
     ```ts title="openfort.ts"
     import Openfort from "@openfort/openfort-node";
@@ -110,7 +110,7 @@ This plugin is maintained by the Openfort team. For bugs, issues or feature requ
   </Step>
 
   <Step>
-    ### Add plugins to your Better Auth config
+    ### 在 Better Auth 配置中添加插件
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";
@@ -120,13 +120,13 @@ This plugin is maintained by the Openfort team. For bugs, issues or feature requ
 
     export const auth = betterAuth({
       database: {
-        // your database config
+        // 你的数据库配置
       },
       emailAndPassword: {
         enabled: true,
       },
       plugins: [
-        bearer(), // Required for token-based authentication
+        bearer(), // 令牌认证必需
         openfort({
           client: openfortSDK,
           use: [
@@ -144,12 +144,12 @@ This plugin is maintained by the Openfort team. For bugs, issues or feature requ
     ```
 
     <Callout>
-      The `bearer` plugin must be added before the `openfort` plugin to enable token-based authentication.
+      必须先添加 `bearer` 插件，再添加 `openfort` 插件，以启用基于令牌的认证。
     </Callout>
   </Step>
 
   <Step>
-    ### Create Better Auth client
+    ### 创建 Better Auth 客户端
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from 'better-auth/react';
@@ -163,9 +163,9 @@ This plugin is maintained by the Openfort team. For bugs, issues or feature requ
   </Step>
 
   <Step>
-    ### Add OpenfortProvider to your app
+    ### 在应用中添加 OpenfortProvider
 
-    Wrap your application with the OpenfortProvider, WagmiProvider, and QueryClientProvider:
+    使用 OpenfortProvider、WagmiProvider 和 QueryClientProvider 包裹应用：
 
     ```tsx title="app/providers.tsx"
     import { OpenfortProvider, ThirdPartyOAuthProvider, getDefaultConfig } from "@openfort/react";
@@ -235,32 +235,32 @@ This plugin is maintained by the Openfort team. For bugs, issues or feature requ
     ```
 
     <Callout>
-      The OpenfortProvider requires Wagmi and React Query providers. Set `recoverWalletAutomaticallyAfterAuth` to `false` if you want to handle wallet creation manually.
+      OpenfortProvider 需要 Wagmi 和 React Query 的提供者。若想手动处理钱包创建，请将 `recoverWalletAutomaticallyAfterAuth` 设置为 `false`。
     </Callout>
   </Step>
 
   <Step>
-    ### Configure Openfort Dashboard
+    ### 配置 Openfort 控制面板
 
-    In the [Openfort Dashboard](https://dashboard.openfort.io/):
+    在 [Openfort 控制面板](https://dashboard.openfort.io/)：
 
-    1. Navigate to **Authentication Providers**
-    2. Add **Better Auth** as a provider
-    3. Set the **Base URL** to your backend endpoint (use ngrok or similar for local development)
-    4. (optional) Create a **Policy** for transaction sponsorship
-    5. (optional) Copy the **Policy ID** to your environment variables
+    1. 进入 **身份验证提供商（Authentication Providers）**
+    2. 添加 **Better Auth** 作为提供商
+    3. 设置 **Base URL** 为你的后端端点（本地开发时可使用 ngrok 或类似工具）
+    4. （可选）创建用于交易资助的 **策略（Policy）**
+    5. （可选）将 **策略 ID（Policy ID）** 复制到环境变量
 
     <Callout type="warn">
-      For local development, use a tunneling service like ngrok to expose your backend to Openfort.
+      本地开发请使用 ngrok 等隧道服务将后端暴露给 Openfort。
     </Callout>
   </Step>
 </Steps>
 
-## Usage
+## 使用方法
 
-### Wallet Creation
+### 钱包创建
 
-Create an embedded wallet for authenticated users using the `useWallets` hook:
+使用 `useWallets` hook 为已认证用户创建嵌入式钱包：
 
 ```tsx
 import { RecoveryMethod, useWallets } from "@openfort/react";
@@ -268,12 +268,12 @@ import { RecoveryMethod, useWallets } from "@openfort/react";
 export default function CreateWallet() {
   const { isCreating, createWallet, error } = useWallets({
     onSuccess: () => {
-      console.log("Wallet created successfully!");
+      console.log("钱包创建成功！");
     },
   });
 
   if (isCreating) {
-    return <div>Creating wallet...</div>;
+    return <div>正在创建钱包...</div>;
   }
 
   return (
@@ -287,7 +287,7 @@ export default function CreateWallet() {
           })
         }
       >
-        Create with Passkey
+        使用 Passkey 创建
       </button>
 
       <button
@@ -299,7 +299,7 @@ export default function CreateWallet() {
           })
         }
       >
-        Create with Automatic Recovery
+        使用自动恢复创建
       </button>
 
       <button
@@ -312,18 +312,18 @@ export default function CreateWallet() {
           })
         }
       >
-        Create with Password
+        使用密码创建
       </button>
 
-      {error && <p className="text-red-500">Error: {error.message}</p>}
+      {error && <p className="text-red-500">错误：{error.message}</p>}
     </div>
   );
 }
 ```
 
-### Sign Messages
+### 签名消息
 
-Sign messages using Wagmi hooks:
+使用 Wagmi 的 hook 来签名消息：
 
 ```tsx
 import { useSignMessage } from "wagmi";
@@ -340,20 +340,20 @@ export default function SignMessage() {
           signMessage({ message: formData.get("message") as string });
         }}
       >
-        <input name="message" placeholder="Message to sign" />
-        <button type="submit">Sign Message</button>
+        <input name="message" placeholder="要签名的消息" />
+        <button type="submit">签名消息</button>
       </form>
 
-      {data && <p>Signature: {data}</p>}
+      {data && <p>签名结果：{data}</p>}
       {error && <p className="text-red-500">{error.message}</p>}
     </div>
   );
 }
 ```
 
-### Execute Transactions
+### 执行交易
 
-Execute smart contract transactions using Wagmi:
+使用 Wagmi 执行智能合约交易：
 
 ```tsx
 import { parseAbi } from "viem";
@@ -382,19 +382,19 @@ export default function MintTokens() {
         onClick={() => handleMint("1000")}
         disabled={isPending || !address}
       >
-        {isPending ? "Minting..." : "Mint Tokens"}
+        {isPending ? "铸造中..." : "铸造代币"}
       </button>
 
-      {hash && <p>Transaction hash: {hash}</p>}
+      {hash && <p>交易哈希：{hash}</p>}
       {error && <p className="text-red-500">{error.message}</p>}
     </div>
   );
 }
 ```
 
-### Access User Information
+### 访问用户信息
 
-Get user and wallet information:
+获取用户及钱包信息：
 
 ```tsx
 import { useUser } from "@openfort/react";
@@ -405,91 +405,91 @@ export default function UserProfile() {
   const { address, isConnected } = useAccount();
 
   if (!isConnected) {
-    return <p>No wallet connected</p>;
+    return <p>未连接钱包</p>;
   }
 
   return (
     <div>
-      <h2>Welcome, {user?.player?.name || user?.linkedAccounts[0]?.email}</h2>
-      <p>Wallet Address: {address}</p>
+      <h2>欢迎，{user?.player?.name || user?.linkedAccounts[0]?.email}</h2>
+      <p>钱包地址：{address}</p>
     </div>
   );
 }
 ```
 
-## Configuration Options
+## 配置选项
 
-### Server-Side Plugin Options
+### 服务器端插件参数
 
 ```ts
 interface OpenfortPluginOptions {
-  client: Openfort; // Openfort SDK instance (from @openfort/openfort-node)
-  use?: Array<EncryptionSession>; // Encryption session configuration
+  client: Openfort; // Openfort SDK 实例（来自 @openfort/openfort-node）
+  use?: Array<EncryptionSession>; // 加密会话配置
 }
 ```
 
-### Encryption Session Configuration
+### 加密会话配置
 
 ```ts
 interface EncryptionSessionConfig {
   config: {
-    apiKey: string; // Shield API key
-    secretKey: string; // Shield secret key
-    encryptionPart: string; // Shield encryption share
+    apiKey: string; // Shield API 密钥
+    secretKey: string; // Shield 秘钥
+    encryptionPart: string; // Shield 加密份额
   };
 }
 ```
 
-### Client-Side OpenfortProvider Props
+### 客户端 OpenfortProvider 属性
 
 ```ts
 interface OpenfortProviderProps {
-  publishableKey: string; // Openfort publishable key
+  publishableKey: string; // Openfort 发布钥匙
   walletConfig: {
-    shieldPublishableKey: string; // Shield publishable key
-    ethereumProviderPolicyId?: string; // Policy ID for gas sponsorship
-    getEncryptionSession: () => Promise<string | null>; // Retrieve encryption session ID
-    recoverWalletAutomaticallyAfterAuth?: boolean; // Auto-recover wallet after auth (default: false)
+    shieldPublishableKey: string; // Shield 发布钥匙
+    ethereumProviderPolicyId?: string; // 交易资助策略 ID
+    getEncryptionSession: () => Promise<string | null>; // 获取加密会话 ID
+    recoverWalletAutomaticallyAfterAuth?: boolean; // 认证后自动恢复钱包（默认：false）
   };
   thirdPartyAuth: {
-    getAccessToken: () => Promise<string | null>; // Retrieve Better Auth token
-    provider: ThirdPartyOAuthProvider; // Authentication provider type
+    getAccessToken: () => Promise<string | null>; // 获取 Better Auth 令牌
+    provider: ThirdPartyOAuthProvider; // 认证提供商类型
   };
-  debugMode?: boolean; // Enable debug logging
+  debugMode?: boolean; // 开启调试日志
   children: React.ReactNode;
 }
 ```
 
-## Advanced Usage
+## 高级用法
 
-### Recovery Methods
+### 恢复方式
 
-Openfort supports three wallet recovery methods:
+Openfort 支持三种钱包恢复方式：
 
-- **Automatic**: Shield encryption-based recovery (no user interaction required)
-- **Passkey**: Biometric authentication (Face ID, Touch ID, Windows Hello)
-- **Password**: User-defined password for recovery
+- **自动恢复**：基于 Shield 加密的恢复（无需用户交互）  
+- **Passkey**：生物认证（Face ID，Touch ID，Windows Hello）  
+- **密码**：用户自定义密码恢复  
 
 ```tsx
 import { RecoveryMethod, useWallets } from "@openfort/react";
 
 const { createWallet } = useWallets();
 
-// Passkey recovery
+// Passkey 恢复
 createWallet({
   recovery: {
     recoveryMethod: RecoveryMethod.PASSKEY,
   },
 });
 
-// Automatic recovery
+// 自动恢复
 createWallet({
   recovery: {
     recoveryMethod: RecoveryMethod.AUTOMATIC,
   },
 });
 
-// Password recovery
+// 密码恢复
 createWallet({
   recovery: {
     recoveryMethod: RecoveryMethod.PASSWORD,
@@ -498,9 +498,9 @@ createWallet({
 });
 ```
 
-### Reading Contract Data
+### 读取合约数据
 
-Use Wagmi's `useReadContract` hook to read data from smart contracts:
+使用 Wagmi 的 `useReadContract` hook 从智能合约读取数据：
 
 ```tsx
 import { useReadContract } from "wagmi";
@@ -521,28 +521,28 @@ export default function TokenBalance() {
     args: ["0x..."],
   });
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (isLoading) return <div>加载中...</div>;
+  if (error) return <div>错误：{error.message}</div>;
 
-  return <div>Balance: {balance?.toString()}</div>;
+  return <div>余额：{balance?.toString()}</div>;
 }
 ```
 
-## Troubleshooting
+## 故障排查
 
-### Encryption Session Errors
+### 加密会话错误
 
-If you encounter errors retrieving the encryption session:
+若获取加密会话报错：
 
-1. Ensure the Bearer plugin is enabled in your Better Auth config
-2. Verify that `SHIELD_PUBLISHABLE_KEY`, `SHIELD_SECRET_KEY`, and `SHIELD_ENCRYPTION_SHARE` are set correctly
-3. Confirm that the Better Auth session is active before calling `getEncryptionSession()`
+1. 确认 Bearer 插件已在 Better Auth 配置中启用  
+2. 确认 `SHIELD_PUBLISHABLE_KEY`、`SHIELD_SECRET_KEY` 和 `SHIELD_ENCRYPTION_SHARE` 配置正确  
+3. 调用 `getEncryptionSession()` 前确认 Better Auth 会话有效  
 
-### CORS Issues
+### CORS 问题
 
-If you encounter CORS errors:
+若遇到 CORS 错误：
 
-1. Add your frontend URL to `trustedOrigins` in your Better Auth config:
+1. 将前端 URL 添加到 Better Auth 配置中的 `trustedOrigins` 中：
 
 ```ts
 export const auth = betterAuth({
@@ -551,7 +551,7 @@ export const auth = betterAuth({
 });
 ```
 
-2. Ensure your Express server has CORS configured:
+2. 确保 Express 服务器配置了 CORS：
 
 ```ts
 import cors from "cors";
@@ -564,16 +564,16 @@ app.use(
 );
 ```
 
-### Authentication Provider Configuration
+### 身份验证提供商配置
 
-If Openfort cannot verify tokens:
+若 Openfort 无法验证令牌：
 
-1. Verify the **Base URL** in the Openfort Dashboard matches your backend
-2. For local development, use a tunneling service (ngrok, localtunnel)
-3. Ensure the `/api/auth/encryption-session` endpoint is accessible. The path `encryption-session` is introduced by the Openfort Better Auth plugin.
+1. 确认 Openfort 控制面板的 **Base URL** 与你的后端一致  
+2. 本地开发时使用隧道服务（ngrok、localtunnel）  
+3. 确认 `/api/auth/encryption-session` 接口可访问。`encryption-session` 路径由 Openfort Better Auth 插件添加
 
-## Resources
+## 资源
 
-- [Openfort Documentation](https://www.openfort.io/docs)
-- [Openfort Dashboard](https://dashboard.openfort.io/)
-- [Example Implementation](https://github.com/openfort-xyz/fortkit/tree/main/examples/quickstarts/betterauth)
+- [Openfort 文档](https://www.openfort.io/docs)
+- [Openfort 控制面板](https://dashboard.openfort.io/)
+- [示例实现](https://github.com/openfort-xyz/fortkit/tree/main/examples/quickstarts/betterauth)

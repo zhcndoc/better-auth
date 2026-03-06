@@ -1,23 +1,23 @@
 ---
 title: Vercel
-description: Vercel provider setup and usage.
+description: Vercel 提供者的设置与使用。
 ---
 
 <Steps>
     <Step>
-        ### Get your Vercel credentials
-        To use Sign in with Vercel, you need a client ID and client secret. You can get them from the [Vercel Dashboard](https://vercel.com/dashboard) by [creating a Vercel App](https://vercel.com/docs/sign-in-with-vercel/manage-from-dashboard).
+        ### 获取你的 Vercel 凭证
+        要使用 Vercel 登录（Sign in with Vercel），你需要一个客户端 ID 和客户端密钥。你可以通过 [Vercel 控制台](https://vercel.com/dashboard) 通过 [创建 Vercel 应用](https://vercel.com/docs/sign-in-with-vercel/manage-from-dashboard) 获取它们。
 
-        Make sure to set the redirect URL to `http://localhost:3000/api/auth/callback/vercel` for local development. For production, you should set it to the URL of your application. If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/vercel` 用于本地开发。生产环境则应设置为你应用的 URL。如果你更改了认证路由的基础路径，也应相应更新重定向 URL。
 
         <Callout type="info">
-            Vercel requires PKCE (Proof Key for Code Exchange) for enhanced security. This is automatically handled by Better Auth.
+            Vercel 需要 PKCE（Proof Key for Code Exchange，代码交换证明密钥）以增强安全性。Better Auth 会自动处理这一点。
         </Callout>
     </Step>
 
   <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供者
+        要配置提供者，你需要导入该提供者并将其传递给认证实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts" 
         import { betterAuth } from "better-auth"
@@ -34,13 +34,13 @@ description: Vercel provider setup and usage.
     </Step>
 </Steps>
 
-## Usage
+## 使用方法
 
-### Sign in with Vercel 
+### 使用 Vercel 登录
 
-To sign in with Vercel, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
+要使用 Vercel 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个对象，包含以下属性：
 
-- `provider`: The provider to use. It should be set to `vercel`.
+- `provider`：要使用的提供者，应设置为 `vercel`。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -53,22 +53,22 @@ const signIn = async () => {
 }
 ```
 
-## Options
+## 选项
 
-For the full list of options supported by all social providers, check the [Provider Options](/docs/concepts/oauth#provider-options).
+有关所有社交提供者支持的完整选项列表，请查看 [提供者选项](/docs/concepts/oauth#provider-options)。
 
-### Available Scopes
+### 可用作用域
 
-Vercel supports the following OpenID Connect scopes:
+Vercel 支持以下 OpenID Connect 作用域：
 
-- `openid` (default): Returns the user's unique identifier in the ID token
-- `email`: Returns the user's email address
-- `profile`: Returns the user's profile information (name, picture)
-- `offline_access`: Returns a refresh token for offline access
+- `openid`（默认）：在 ID 令牌中返回用户的唯一标识符
+- `email`：返回用户的电子邮件地址
+- `profile`：返回用户的个人资料信息（姓名、头像）
+- `offline_access`：返回用于离线访问的刷新令牌
 
-Scopes are configured on the Vercel App, and so it is not necessary to pass a `scope` parameter to the provider and it is more convenient to omit it.
+作用域在 Vercel 应用中配置，因此无需向提供者传递 `scope` 参数，且省略此参数更为方便。
 
-If you do pass a `scope` parameter, it has the effect of requesting a subset of the configured scopes:
+如果你传递了 `scope` 参数，则表示请求已配置作用域的一个子集：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -85,5 +85,5 @@ export const auth = betterAuth({
 ```
 
 <Callout type="info">
-    For more information about Vercel's scopes and API capabilities, refer to the [official Vercel documentation](https://vercel.com/docs/sign-in-with-vercel).
+    更多关于 Vercel 作用域及 API 功能的信息，请参阅 [官方 Vercel 文档](https://vercel.com/docs/sign-in-with-vercel)。
 </Callout>

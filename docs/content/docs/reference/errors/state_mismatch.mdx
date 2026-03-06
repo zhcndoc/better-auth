@@ -1,51 +1,51 @@
 ---
 title: state_mismatch
-description: The state parameter in the request doesn't match the state parameter in the cookie.
+description: 请求中的 state 参数与 cookie 中的 state 参数不匹配。
 ---
 
-## What is it?
+## 什么是 state_mismatch？
 
-When an OAuth flow begins, a unique `state` value is generated and stored in a cookie.
-After the user returns from the OAuth provider, this `state` is compared with the one provided in the callback.
-If they don't match, the request is rejected to prevent unauthorized access.
+当 OAuth 流程开始时，会生成一个唯一的 `state` 值并存储在 cookie 中。
+当用户从 OAuth 提供商返回时，会将该 `state` 值与回调中提供的值进行比较。
+如果它们不匹配，请求将被拒绝，以防止未经授权的访问。
 
-This check exists to prevent CSRF (Cross-Site Request Forgery) and replay attacks during the OAuth flow -
-basically, to make sure the callback that hits your `/api/auth/callback` endpoint really belongs to the
-same browser session that started it.
+此检查存在的目的是为了防止 OAuth 流程中的 CSRF（跨站请求伪造）和重放攻击——
+基本上，就是确保访问 `/api/auth/callback` 端点的回调请求确实属于
+启动该流程的同一浏览器会话。
 
 
-## Common Causes
+## 常见原因
 
-* The cookie wasn't set or readable during callback (common with `.vercel.app` preview domains or cross-domain issues).
-* The cookie domain/path doesn't match between your app and callback route.
-* The browser blocked third-party cookies (especially on Safari / iOS).
-* You started the OAuth flow in one tab but finished it in another (different cookie context).
-* The preview vs production domain mismatch (e.g., `preview.myapp.com` vs `myapp.com`).
+* 回调时 cookie 未设置或无法读取（在 `.vercel.app` 预览域或跨域问题中常见）。
+* 应用和回调路由之间的 cookie 域名或路径不匹配。
+* 浏览器阻止了第三方 cookie（尤其是在 Safari / iOS 上）。
+* 你在一个标签页启动 OAuth 流程，但在另一个标签页完成（cookie 上下文不同）。
+* 预览环境与生产环境域名不一致（例如，`preview.myapp.com` 与 `myapp.com`）。
 
-## How to resolve
-### Use a constant domain
+## 如何解决
+### 使用固定域名
 
-* The best fix is to use a constant domain for your app and callback route.
-* Avoid `.vercel.app` subdomains - browsers treat them as public suffixes, so cookies can't be shared across subdomains.
+* 最好的解决办法是为你的应用和回调路由使用固定域名。
+* 避免使用 `.vercel.app` 子域——浏览器会将其当作公共后缀，因此无法跨子域共享 cookie。
 
-### Verify cookie configurations
+### 验证 cookie 配置
 
-* It's possible that you've configured custom cookie attributes in your auth config that can cause this issue.
-* Check that cookies are not blocked by browser settings or privacy modes.
-* Ensure you're starting and ending the OAuth flow in the same browser session.
+* 你可能在身份验证配置中设置了自定义的 cookie 属性，导致此问题。
+* 检查浏览器设置或隐私模式中是否阻止了 cookie。
+* 确认你在同一浏览器会话中启动并结束 OAuth 流程。
 
-### Skip state cookie check
+### 跳过 state cookie 校验
 
-If you know what you are doing, you can skip the state cookie check by
-setting the `account.skipStateCookieCheck` option to `true` in your auth config.
+如果你知道自己在做什么，可以通过在身份验证配置中
+将 `account.skipStateCookieCheck` 选项设置为 `true` 来跳过 state cookie 校验。
 
 <Callout type="warn">
-  Please note that this is a security risk and should only be enabled if you know what you are doing.
+  请注意，这存在安全风险，仅当你明确了解其影响时才启用。
 </Callout>
 
-### Production Debug
+### 生产环境调试
 
-Head to your production site, and use your browser's DevTools → Application → Cookies to confirm:
+进入你的生产网站，使用浏览器的开发者工具 → 应用程序 → Cookie，确认：
 
-* The state cookie is being set before redirect.
-* It still exists when the OAuth provider redirects back.
+* 在跳转前状态 cookie 是否被设置。
+* OAuth 提供商重定向回来时，该 cookie 是否仍然存在。

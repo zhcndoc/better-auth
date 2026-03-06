@@ -1,13 +1,13 @@
 ---
-title: Hono Integration
-description: Integrate Better Auth with Hono.
+title: Hono 集成
+description: 将 Better Auth 集成到 Hono 中。
 ---
 
-Before you start, make sure you have a Better Auth instance configured. If you haven't done that yet, check out the [installation](/docs/installation).
+在开始之前，请确保你已经配置了 Better Auth 实例。如果还没有，请查看[安装指南](/docs/installation)。
 
-### Mount the handler
+### 挂载处理器
 
-We need to mount the handler to Hono endpoint.
+我们需要将处理器挂载到 Hono 的端点。
 
 ```ts
 import { Hono } from "hono";
@@ -23,9 +23,9 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 serve(app);
 ```
 
-### Cors
+### 跨域资源共享 (Cors)
 
-To configure cors, you need to use the `cors` plugin from `hono/cors`.
+要配置 CORS，你需要使用 `hono/cors` 提供的 `cors` 插件。
 
 ```ts
 import { Hono } from "hono";
@@ -36,9 +36,9 @@ import { cors } from "hono/cors";
 const app = new Hono();
 
 app.use(
-	"/api/auth/*", // or replace with "*" to enable cors for all routes
+	"/api/auth/*", // 或替换为 "*" 以启用所有路由的 cors
 	cors({
-		origin: "http://localhost:3001", // replace with your origin
+		origin: "http://localhost:3001", // 替换为你的源地址
 		allowHeaders: ["Content-Type", "Authorization"],
 		allowMethods: ["POST", "GET", "OPTIONS"],
 		exposeHeaders: ["Content-Length"],
@@ -54,11 +54,11 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 serve(app);
 ```
 
-> **Important:** CORS middleware must be registered before your routes. This ensures that cross-origin requests are properly handled before they reach your authentication endpoints.
+> **重要提示：** CORS 中间件必须在路由之前注册。这确保跨域请求在到达认证端点前能够被正确处理。
 
-### Middleware
+### 中间件
 
-You can add a middleware to save the `session` and `user` in a `context` and also add validations for every route.
+你可以添加一个中间件，用于将 `session` 和 `user` 保存在 `context` 中，并且为每个路由添加验证。
 
 ```ts
 import { Hono } from "hono";
@@ -69,7 +69,7 @@ import { cors } from "hono/cors";
 const app = new Hono<{
 	Variables: {
 		user: typeof auth.$Infer.Session.user | null;
-		session: typeof auth.$Infer.Session.session | null
+		session: typeof auth.$Infer.Session.session | null;
 	}
 }>();
 
@@ -92,29 +92,28 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 	return auth.handler(c.req.raw);
 });
 
-
 serve(app);
 ```
 
-This will allow you to access the `user` and `session` object in all of your routes.
+这样你就可以在所有路由中访问 `user` 和 `session` 对象了。
 
 ```ts
 app.get("/session", (c) => {
-	const session = c.get("session")
-	const user = c.get("user")
+	const session = c.get("session");
+	const user = c.get("user");
 	
-	if(!user) return c.body(null, 401);
+	if (!user) return c.body(null, 401);
 
   	return c.json({
 	  session,
-	  user
+	  user,
 	});
 });
 ```
 
-### Cross-Domain Cookies
+### 跨域 Cookie
 
-By default, all Better Auth cookies are set with `SameSite=Lax`. If you need to use cookies across different domains, you’ll need to set `SameSite=None` and `Secure=true`. However, we recommend using subdomains whenever possible, as this allows you to keep `SameSite=Lax`. To enable cross-subdomain cookies, simply turn on `crossSubDomainCookies` in your auth config.
+默认情况下，所有 Better Auth 的 Cookie 都设置为 `SameSite=Lax`。如果你需要跨不同域使用 Cookie，则需要将 `SameSite` 设置为 `None` 且 `Secure=true`。不过我们建议尽可能使用子域名，这样就可以保持 `SameSite=Lax`。要启用跨子域 Cookie，只需在你的认证配置中开启 `crossSubDomainCookies`。
 
 ```ts title="auth.ts"
 export const auth = createAuth({
@@ -126,7 +125,7 @@ export const auth = createAuth({
 })
 ```
 
-If you still need to set `SameSite=None` and `Secure=true`, you can adjust these attributes globally through `cookieOptions` in the `createAuth` configuration.
+如果你仍然需要设置 `SameSite=None` 和 `Secure=true`，可以通过 `createAuth` 配置里的 `cookieOptions` 全局调整这些属性。
 
 ```ts title="auth.ts"
 export const auth = createAuth({
@@ -134,13 +133,13 @@ export const auth = createAuth({
     defaultCookieAttributes: {
       sameSite: "none",
       secure: true,
-      partitioned: true // New browser standards will mandate this for foreign cookies
+      partitioned: true // 新浏览器标准会强制要求此项用于跨域 Cookie
     }
   }
 })
 ```
 
-You can also customize cookie attributes individually by setting them within `cookies` in your auth config.
+你也可以在 `cookies` 中单独为各个 Cookie 自定义属性。
 
 ```ts title="auth.ts"
 export const auth = createAuth({
@@ -150,7 +149,7 @@ export const auth = createAuth({
         attributes: {
           sameSite: "none",
           secure: true,
-          partitioned: true // New browser standards will mandate this for foreign cookies
+          partitioned: true // 新浏览器标准会强制要求此项用于跨域 Cookie
         }
       }
     }
@@ -158,29 +157,29 @@ export const auth = createAuth({
 })
 ```
 
-### Client-Side Configuration
+### 客户端配置
 
-When using the Hono client (`@hono/client`) to make requests to your Better Auth-protected endpoints, you need to configure it to send credentials (cookies) with cross-origin requests.
+当使用 Hono 客户端（`@hono/client`）请求受 Better Auth 保护的端点时，需要配置其发送带有凭证（Cookies）的跨域请求。
 
 ```ts title="api.ts"
 import { hc } from "hono/client";
-import type { AppType } from "./server"; // Your Hono app type
+import type { AppType } from "./server"; // 你的 Hono 应用类型
 
 const client = hc<AppType>("http://localhost:8787/", {
   init: {
-    credentials: "include", // Required for sending cookies cross-origin
+    credentials: "include", // 发送跨域 Cookie 必需
   },
 });
 
-// Now your client requests will include credentials
+// 现在你的客户端请求将包含凭证
 const response = await client.someProtectedEndpoint.$get();
 ```
 
-This configuration is necessary when:
-- Your client and server are on different domains/ports during development
-- You're making cross-origin requests in production
-- You need to send authentication cookies with your requests
+此配置适用于以下情况：
+- 开发时客户端和服务器处于不同域或端口
+- 生产中执行跨域请求
+- 需要随请求发送认证 Cookie
 
-The `credentials: "include"` option tells the fetch client to send cookies even for cross-origin requests. This works in conjunction with the CORS configuration on your server that has `credentials: true`.
+`credentials: "include"` 选项告诉 fetch 客户端即使是跨域请求也要发送 Cookie。这需要服务器端的 CORS 配置允许凭证，即设置了 `credentials: true`。
 
-> **Note:** Make sure your CORS configuration on the server matches your client's domain, and that `credentials: true` is set in both the server's CORS config and the client's fetch config.
+> **注意：** 确保服务器端的 CORS 配置中的 `origin` 值匹配客户端域名，并且在服务器和客户端的配置中都设定了 `credentials: true`。

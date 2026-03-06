@@ -1,22 +1,20 @@
 ---
-title: Better Auth Infrastructure
-description: Enterprise-grade dashboard, security, and managed services for Better Auth.
+title: 更佳身份验证基础设施
+description: 面向企业的仪表板、安全性和托管服务，支持更佳身份验证。
 ---
 
-Better Auth Infrastructure is a paid service that extends your authentication system with a management dashboard,
-abuse protection, transactional messaging, and enterprise features - all without managing additional infrastructure.
+更佳身份验证基础设施是一项付费服务，它通过管理仪表板、滥用防护、事务消息和企业功能扩展您的身份验证系统——且无需管理额外基础设施。
 
-
-## Key Features
+## 主要功能
 
 <Cards>
-  <Card title="Dashboard" description="Manage users, organizations, sessions, and view analytics from a single interface." />
-  <Card title="Security" description="Protect against credential stuffing, bots, disposable emails, and impossible travel." />
-  <Card title="Email & SMS" description="Send verification emails, password resets, and OTP codes with pre-built templates." />
-  <Card title="Enterprise" description="SSO/SAML, directory sync (SCIM), log drains, and role-based dashboard access." />
+  <Card title="仪表板" description="从一个界面管理用户、组织、会话，并查看分析数据。" />
+  <Card title="安全性" description="防护凭证填充攻击、机器人、一次性邮箱及不可能的旅行行为。" />
+  <Card title="邮件与短信" description="使用预构建模板发送验证邮件、密码重置和一次性密码（OTP）代码。" />
+  <Card title="企业功能" description="单点登录/ SAML、目录同步（SCIM）、日志转储及基于角色的仪表板访问。" />
 </Cards>
 
-You're one plugin away from getting started:
+您只需安装一个插件即可开始使用：
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -28,13 +26,13 @@ export const auth = betterAuth({
 });
 ```
 
-Check out our [Getting Started](/docs/infrastructure/getting-started) guide for more details.
+查看我们的[快速入门](/docs/infrastructure/getting-started)指南，获取更多详情。
 
-## Next Steps
+## 后续步骤
 
 <Cards>
-  <Card href="/docs/infrastructure/getting-started" title="Getting Started" description="Install and configure the infrastructure package." />
-  <Card href="/docs/infrastructure/plugins/dashboard" title="Dashboard" description="Set up analytics, activity tracking, and admin APIs." />
-  <Card href="/docs/infrastructure/plugins/audit-logs" title="Audit Logs" description="Track and query authentication events." />
-  <Card href="/docs/infrastructure/plugins/sentinel" title="Sentinel" description="Enable abuse protection and security checks." />
+  <Card href="/docs/infrastructure/getting-started" title="快速入门" description="安装并配置基础设施包。" />
+  <Card href="/docs/infrastructure/plugins/dashboard" title="仪表板" description="设置分析、活动跟踪和管理 API。" />
+  <Card href="/docs/infrastructure/plugins/audit-logs" title="审计日志" description="跟踪和查询身份验证事件。" />
+  <Card href="/docs/infrastructure/plugins/sentinel" title="哨兵" description="启用滥用防护和安全检查。" />
 </Cards>

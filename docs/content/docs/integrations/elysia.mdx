@@ -1,15 +1,15 @@
 ---
-title: Elysia Integration
-description: Integrate Better Auth with Elysia.
+title: Elysia 集成
+description: 将 Better Auth 集成到 Elysia 中。
 ---
 
-This integration guide is assuming you are using Elysia with bun server.
+本集成指南假设你正在使用带有 bun 服务器的 Elysia。
 
-Before you start, make sure you have a Better Auth instance configured. If you haven't done that yet, check out the [installation](/docs/installation).
+在开始之前，确保你已经配置了 Better Auth 实例。如果还没有，请查看 [安装指南](/docs/installation)。
 
-### Mount the handler
+### 挂载处理器
 
-We need to mount the handler to Elysia endpoint.
+我们需要将处理器挂载到 Elysia 的端点。
 
 ```ts
 import { Elysia } from "elysia";
@@ -18,13 +18,13 @@ import { auth } from "./auth";
 const app = new Elysia().mount(auth.handler).listen(3000);
 
 console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
+  `🦊 Elysia 正在运行于 ${app.server?.hostname}:${app.server?.port}`,
 );
 ```
 
-### CORS
+### 跨域资源共享 (CORS)
 
-To configure cors, you can use the `cors` plugin from `@elysiajs/cors`.
+要配置 CORS，可以使用 `@elysiajs/cors` 插件中的 `cors`。
 
 ```ts
 import { Elysia } from "elysia";
@@ -45,19 +45,19 @@ const app = new Elysia()
   .listen(3000);
 
 console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
+  `🦊 Elysia 正在运行于 ${app.server?.hostname}:${app.server?.port}`,
 );
 ```
 
-### Macro
+### 宏（Macro）
 
-You can use [macro](https://elysiajs.com/patterns/macro.html#macro) with [resolve](https://elysiajs.com/essential/handler.html#resolve) to provide session and user information before pass to view.
+你可以使用 [macro](https://elysiajs.com/patterns/macro.html#macro) 和 [resolve](https://elysiajs.com/essential/handler.html#resolve) 来在传递到视图之前提供 session 和用户信息。
 
 ```ts
 import { Elysia } from "elysia";
 import { auth } from "./auth";
 
-// user middleware (compute user and session and pass to routes)
+// 用户中间件（计算用户和 session 并传递给路由）
 const betterAuth = new Elysia({ name: "better-auth" })
   .mount(auth.handler)
   .macro({
@@ -85,8 +85,8 @@ const app = new Elysia()
   .listen(3000);
 
 console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
+  `🦊 Elysia 正在运行于 ${app.server?.hostname}:${app.server?.port}`,
 );
 ```
 
-This will allow you to access the `user` and `session` object in all of your routes.
+这样你就可以在所有路由中访问 `user` 和 `session` 对象。

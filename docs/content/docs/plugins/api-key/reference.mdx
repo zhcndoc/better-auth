@@ -1,172 +1,172 @@
 ---
-title: Reference
-description: API Key plugin options, permissions, and schema reference.
+title: 参考
+description: API 密钥插件选项、权限及模式参考。
 ---
 
-## API Key plugin options
+## API 密钥插件选项
 
 `configId` <span className="opacity-70">`string`</span>
 
-A unique identifier for this configuration. Required when using multiple configurations. Default is `"default"`.
+该配置的唯一标识符。在使用多个配置时必填。默认值为 `"default"`。
 
 `references` <span className="opacity-70">`"user" | "organization"`</span>
 
-What the API key references. This determines ownership over the API key. Default is `"user"`.
-- `"user"`: API keys are owned by users (requires `userId` on creation)
-- `"organization"`: API keys are owned by organizations (requires `organizationId` on creation)
+API 密钥所关联的主体。此设置决定了 API 密钥的拥有权。默认值为 `"user"`。
+- `"user"`：API 密钥归用户所有（创建时需提供 `userId`）
+- `"organization"`：API 密钥归组织所有（创建时需提供 `organizationId`）
 
 `apiKeyHeaders` <span className="opacity-70">`string | string[];`</span>
 
-The header name to check for API key. Default is `x-api-key`.
+用于检测 API 密钥的请求头名称。默认值为 `x-api-key`。
 
 `customAPIKeyGetter` <span className="opacity-70">`(ctx: GenericEndpointContext) => string | null`</span>
 
-A custom function to get the API key from the context.
+自定义函数，从上下文中获取 API 密钥。
 
 `customAPIKeyValidator` <span className="opacity-70">`(options: { ctx: GenericEndpointContext; key: string; }) => boolean | Promise<boolean>`</span>
 
-A custom function to validate the API key.
+自定义函数，用于验证 API 密钥。
 
 `customKeyGenerator` <span className="opacity-70">`(options: { length: number; prefix: string | undefined; }) => string | Promise<string>`</span>
 
-A custom function to generate the API key.
+自定义函数，用于生成 API 密钥。
 
 `startingCharactersConfig` <span className="opacity-70">`{ shouldStore?: boolean; charactersLength?: number; }`</span>
 
-Customize the starting characters configuration.
+自定义起始字符配置。
 
 <Accordions>
-  <Accordion title="startingCharactersConfig Options">
+  <Accordion title="startingCharactersConfig 选项">
     `shouldStore` <span className="opacity-70">`boolean`</span>
 
-    Whether to store the starting characters in the database.
-    If false, we will set `start` to `null`.
-    Default is `true`.
+    是否将起始字符存储到数据库中。
+    若为 false，则设置 `start` 为 `null`。
+    默认值为 `true`。
 
     `charactersLength` <span className="opacity-70">`number`</span>
 
-    The length of the starting characters to store in the database.
-    This includes the prefix length.
-    Default is `6`.
+    存储到数据库的起始字符长度。
+    包括前缀长度。
+    默认值为 `6`。
 
   </Accordion>
 </Accordions>
 
 `defaultKeyLength` <span className="opacity-70">`number`</span>
 
-The length of the API key. Longer is better. Default is 64. (Doesn't include the prefix length)
+API 密钥的长度，越长越好。默认值为 64。（不包括前缀长度）
 
 `defaultPrefix` <span className="opacity-70">`string`</span>
 
-The prefix of the API key.
+API 密钥的前缀。
 
-Note: We recommend you append an underscore to the prefix to make the prefix more identifiable. (eg `hello_`)
+注意：建议给前缀添加下划线以便更好识别，如 `hello_`。
 
 `maximumPrefixLength` <span className="opacity-70">`number`</span>
 
-The maximum length of the prefix.
+前缀的最大长度。
 
 `minimumPrefixLength` <span className="opacity-70">`number`</span>
 
-The minimum length of the prefix.
+前缀的最小长度。
 
 `requireName` <span className="opacity-70">`boolean`</span>
 
-Whether to require a name for the API key. Default is `false`.
+是否要求必须填写 API 密钥名称。默认值为 `false`。
 
 `maximumNameLength` <span className="opacity-70">`number`</span>
 
-The maximum length of the name.
+名称的最大长度。
 
 `minimumNameLength` <span className="opacity-70">`number`</span>
 
-The minimum length of the name.
+名称的最小长度。
 
 `enableMetadata` <span className="opacity-70">`boolean`</span>
 
-Whether to enable metadata for an API key.
+是否启用 API 密钥的元数据。
 
 `keyExpiration` <span className="opacity-70">`{ defaultExpiresIn?: number | null; disableCustomExpiresTime?: boolean; minExpiresIn?: number; maxExpiresIn?: number; }`</span>
 
-Customize the key expiration.
+自定义密钥过期时间。
 
 <Accordions>
-  <Accordion title="keyExpiration options">
+  <Accordion title="keyExpiration 选项">
     `defaultExpiresIn` <span className="opacity-70">`number | null`</span>
 
-    The default expires time in milliseconds.
-    If `null`, then there will be no expiration time.
-    Default is `null`.
+    默认的过期时间（毫秒）。
+    若为 `null`，则无过期时间。
+    默认值为 `null`。
 
     `disableCustomExpiresTime` <span className="opacity-70">`boolean`</span>
 
-    Whether to disable the expires time passed from the client.
-    If `true`, the expires time will be based on the default values.
-    Default is `false`.
+    是否禁止客户端传入的过期时间。
+    若设置为 `true`，则过期时间以默认值为准。
+    默认值为 `false`。
 
     `minExpiresIn` <span className="opacity-70">`number`</span>
 
-    The minimum expiresIn value allowed to be set from the client. in days.
-    Default is `1`.
+    允许客户端设置的最小过期时间（天数）。
+    默认值为 `1`。
 
     `maxExpiresIn` <span className="opacity-70">`number`</span>
 
-    The maximum expiresIn value allowed to be set from the client. in days.
-    Default is `365`.
+    允许客户端设置的最大过期时间（天数）。
+    默认值为 `365`。
 
   </Accordion>
 </Accordions>
 
 `rateLimit` <span className="opacity-70">`{ enabled?: boolean; timeWindow?: number; maxRequests?: number; }`</span>
 
-Customize the rate-limiting.
+自定义速率限制。
 
 <Accordions>
-  <Accordion title="rateLimit options">
+  <Accordion title="rateLimit 选项">
     `enabled` <span className="opacity-70">`boolean`</span>
 
-    Whether to enable rate limiting. (Default true)
+    是否启用速率限制。（默认开启）
 
     `timeWindow` <span className="opacity-70">`number`</span>
 
-    The duration in milliseconds where each request is counted.
-    Once the `maxRequests` is reached, the request will be rejected until the `timeWindow` has passed, at which point the `timeWindow` will be reset.
+    统计请求次数的时间窗口（毫秒）。
+    达到 `maxRequests` 后，直到 `timeWindow` 过期之前拒绝请求，随后重置计数。
 
     `maxRequests` <span className="opacity-70">`number`</span>
 
-    Maximum amount of requests allowed within a window.
-    Once the `maxRequests` is reached, the request will be rejected until the `timeWindow` has passed, at which point the `timeWindow` will be reset.
+    在时间窗口内允许的最大请求数。
+    达到后请求将被拒绝，直到时间窗口重置。
 
   </Accordion>
 </Accordions>
 
 `schema` <span className="opacity-70">`InferOptionSchema<ReturnType<typeof apiKeySchema>>`</span>
 
-Custom schema for the API key plugin.
+API 密钥插件的自定义模式。
 
 `enableSessionForAPIKeys` <span className="opacity-70">`boolean`</span>
 
-An API Key can represent a valid session, so we can mock a session for the user if we find a valid API key in the request headers. Default is `false`.
+API 密钥可以代表一个有效会话，因此如果在请求头中找到有效的 API 密钥，可以模拟用户会话。默认值为 `false`。
 
 `storage` <span className="opacity-70">`"database" | "secondary-storage"`</span>
 
-Storage backend for API keys. Default is `"database"`.
+API 密钥的存储后端。默认值为 `"database"`。
 
-- `"database"`: Store API keys in the database adapter (default)
-- `"secondary-storage"`: Store API keys in the configured secondary storage (e.g., Redis)
+- `"database"`：存储于数据库适配器（默认）
+- `"secondary-storage"`：存储于配置的二级存储（例如 Redis）
 
 `fallbackToDatabase` <span className="opacity-70">`boolean`</span>
 
-When `storage` is `"secondary-storage"`, enable fallback to database if key is not found in secondary storage.
-Default is `false`.
+当 `storage` 设为 `"secondary-storage"` 时，若未在二级存储中找到密钥，是否回退至数据库查找。
+默认值为 `false`。
 
 <Callout>
-  When `storage` is set to `"secondary-storage"`, you must configure `secondaryStorage` in your Better Auth options. API keys will be stored using key-value patterns:
-  - `api-key:${hashedKey}` - Primary lookup by hashed key
-  - `api-key:by-id:${id}` - Lookup by ID
-  - `api-key:by-ref:${referenceId}` - Reference's API key list (user or organization)
+  当 `storage` 设置为 `"secondary-storage"` 时，必须在 Better Auth 配置中指定 `secondaryStorage`。API 密钥将使用如下键值模式存储：
+  - `api-key:${hashedKey}` - 通过哈希密钥的主查找键
+  - `api-key:by-id:${id}` - 通过 ID 查找
+  - `api-key:by-ref:${referenceId}` - 关联的 API 密钥列表（用户或组织）
   
-  If an API key has an expiration date (`expiresAt`), a TTL will be automatically set in secondary storage to ensure automatic cleanup.
+  若 API 密钥设置了过期时间（`expiresAt`），二级存储会自动设置 TTL 以实现自动清理。
 </Callout>
 
 ```ts title="auth.ts"
@@ -196,9 +196,9 @@ export const auth = betterAuth({
 
 `customStorage` <span className="opacity-70">`{ get: (key: string) => Promise<unknown> | unknown; set: (key: string, value: string, ttl?: number) => Promise<void | null | unknown> | void; delete: (key: string) => Promise<void | null | string> | void; }`</span>
 
-Custom storage methods for API keys. If provided, these methods will be used instead of `ctx.context.secondaryStorage`. Custom methods take precedence over global secondary storage.
+API 密钥的自定义存储方法。如果提供，该方法会优先于 `ctx.context.secondaryStorage` 使用。
 
-Useful when you want to use a different storage backend specifically for API keys, or when you need custom logic for storage operations.
+适用于想为 API 密钥使用不同于全局二级存储的存储后端，或者需要自定义存储逻辑的场景。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -220,12 +220,12 @@ export const auth = betterAuth({
 
 `deferUpdates` <span className="opacity-70">`boolean`</span>
 
-Defer non-critical updates (rate limiting counters, timestamps, remaining count) to run after the response is sent using the global `backgroundTasks` handler. This can significantly improve response times on serverless platforms. Default is `false`.
+将非关键的更新（如速率限制计数器、时间戳、剩余请求数）推迟到响应发送后，通过全局的 `backgroundTasks` 处理器异步执行。此设置在无服务器架构中显著提升响应速度。默认值为 `false`。
 
-Requires `backgroundTasks.handler` to be configured in the main auth options.
+需要在主认证配置中设置 `backgroundTasks.handler`。
 
 <Callout type="warn">
-  Enabling this introduces eventual consistency where the response returns optimistic data before the database is updated. Only enable if your application can tolerate this trade-off for improved latency.
+  启用该选项会引入最终一致性，即响应先返回乐观数据，数据库更新稍后完成。只在应用能容忍该延迟情况下启用，以提升性能。
 </Callout>
 
 <Tabs items={["Vercel", "Cloudflare Workers"]}>
@@ -266,44 +266,44 @@ Requires `backgroundTasks.handler` to be configured in the main auth options.
       ],
     });
 
-    // In your request handler, wrap with execCtxStorage.run(ctx, ...)
+    // 在请求处理器中，使用 execCtxStorage.run(ctx, ...) 包裹
     ```
   </Tab>
 </Tabs>
 
 `permissions` <span className="opacity-70">`{ defaultPermissions?: Statements | ((referenceId: string, ctx: GenericEndpointContext) => Statements | Promise<Statements>) }`</span>
 
-Permissions for the API key.
+API 密钥的权限设置。
 
-Read more about permissions [below](#permissions).
+关于权限的详细说明请参见下文 [权限](#permissions)。
 
 <Accordions>
-  <Accordion title="permissions Options">
+  <Accordion title="permissions 选项">
     `defaultPermissions` <span className="opacity-70">`Statements | ((referenceId: string, ctx: GenericEndpointContext) => Statements | Promise<Statements>)`</span>
 
-    The default permissions for the API key. The `referenceId` is either the user ID or organization ID depending on the `references` setting.
+    API 密钥默认权限。`referenceId` 根据 `references` 设置，代表用户ID或组织ID。
 
   </Accordion>
 </Accordions>
 
 `disableKeyHashing` <span className="opacity-70">`boolean`</span>
 
-Disable hashing of the API key.
+是否禁用 API 密钥的哈希存储。
 
 <Callout type="warn">
-Security Warning: It's strongly recommended to not disable hashing.
-Storing API keys in plaintext makes them vulnerable to database breaches, potentially exposing all your users' API keys.
+安全警告：强烈建议不要禁用哈希存储。
+明文存储 API 密钥可能在数据库泄露时导致所有用户的密钥暴露。
 </Callout>
 
 ---
 
-## Permissions
+## 权限
 
-API keys can have permissions associated with them, allowing you to control access at a granular level. Permissions are structured as a record of resource types to arrays of allowed actions.
+API 密钥可以绑定权限，用以实现细粒度的访问控制。权限结构为资源类型与允许操作数组的映射。
 
-### Setting Default Permissions
+### 设置默认权限
 
-You can configure default permissions that will be applied to all newly created API keys:
+可以配置默认权限，应用于所有新创建的 API 密钥：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -323,7 +323,7 @@ export const auth = betterAuth({
 });
 ```
 
-You can also provide a function that returns permissions dynamically:
+也可以提供一个函数动态返回权限：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -334,8 +334,8 @@ export const auth = betterAuth({
     apiKey({
       permissions: {
         defaultPermissions: async (referenceId, ctx) => {
-          // referenceId is either userId or orgId depending on config
-          // Fetch user/org role or other data to determine permissions
+          // referenceId 是 userId 或 orgId，取决于配置
+          // 根据用户/组织角色或其他数据决定权限
           return {
             files: ["read"],
             users: ["read"],
@@ -347,9 +347,9 @@ export const auth = betterAuth({
 });
 ```
 
-### Creating API Keys with Permissions
+### 创建带有权限的 API 密钥
 
-When creating an API key, you can specify custom permissions:
+创建 API 密钥时可以指定自定义权限：
 
 ```ts title="create-api-key.ts"
 import { auth } from "@/lib/auth"
@@ -366,9 +366,9 @@ const apiKey = await auth.api.createApiKey({
 });
 ```
 
-### Verifying API Keys with Required Permissions
+### 验证带权限的 API 密钥
 
-When verifying an API key, you can check if it has the required permissions:
+验证 API 密钥时，可以检测是否具备所需权限：
 
 ```ts title="verify-api-key.ts"
 import { auth } from "@/lib/auth"
@@ -383,15 +383,15 @@ const result = await auth.api.verifyApiKey({
 });
 
 if (result.valid) {
-  // API key is valid and has the required permissions
+  // API 密钥有效且拥有所需权限
 } else {
-  // API key is invalid or doesn't have the required permissions
+  // API 密钥无效或权限不足
 }
 ```
 
-### Updating API Key Permissions
+### 更新 API 密钥权限
 
-You can update the permissions of an existing API key:
+可以修改已有 API 密钥的权限：
 
 ```ts title="update-api-key.ts"
 import { auth } from "@/lib/auth"
@@ -408,16 +408,16 @@ const apiKey = await auth.api.updateApiKey({
 });
 ```
 
-### Permissions Structure
+### 权限结构
 
-Permissions follow a resource-based structure:
+权限采用基于资源的结构：
 
 ```ts
 type Permissions = {
   [resourceType: string]: string[];
 };
 
-// Example:
+// 示例：
 const permissions = {
   files: ["read", "write", "delete"],
   users: ["read"],
@@ -425,167 +425,167 @@ const permissions = {
 };
 ```
 
-When verifying an API key, all required permissions must be present in the API key's permissions for validation to succeed.
+验证时，API 密钥必须包含所有请求的所需权限，才能校验通过。
 
-## Schema
+## 模式
 
-Table: `apikey`
+表：`apikey`
 
 <DatabaseTable
   fields={[
     {
       name: "id",
       type: "string",
-      description: "The ID of the API key.",
+      description: "API 密钥的 ID。",
       isUnique: true,
       isPrimaryKey: true,
     },
     {
       name: "configId",
       type: "string",
-      description: "The configuration ID this key belongs to. Default is 'default'.",
+      description: "此密钥所属的配置 ID。默认值为 'default'。",
     },
     {
       name: "name",
       type: "string",
-      description: "The name of the API key.",
+      description: "API 密钥名称。",
       isOptional: true,
     },
     {
       name: "start",
       type: "string",
       description:
-        "The starting characters of the API key. Useful for showing the first few characters of the API key in the UI for the users to easily identify.",
+        "API 密钥的起始字符，方便在界面展示前几位用于识别。",
       isOptional: true,
     },
     {
       name: "prefix",
       type: "string",
-      description: "The API Key prefix. Stored as plain text.",
+      description: "API 密钥前缀，存为明文。",
       isOptional: true,
     },
     {
       name: "key",
       type: "string",
-      description: "The hashed API key itself.",
+      description: "API 密钥哈希值。",
     },
     {
       name: "referenceId",
       type: "string",
-      description: "The ID of the owner (user ID or organization ID based on the config's `references` setting).",
+      description: "拥有者 ID（依据配置的 `references` 设置，是用户或组织 ID）。",
       isIndexed: true,
     },
     {
       name: "refillInterval",
       type: "number",
-      description: "The interval to refill the key in milliseconds.",
+      description: "密钥剩余额度的补充间隔，单位毫秒。",
       isOptional: true,
     },
     {
       name: "refillAmount",
       type: "number",
-      description: "The amount to refill the remaining count of the key.",
+      description: "补充到剩余额度的数量。",
       isOptional: true,
     },
     {
       name: "lastRefillAt",
       type: "Date",
-      description: "The date and time when the key was last refilled.",
+      description: "上次补充额度的时间。",
       isOptional: true,
     },
     {
       name: "enabled",
       type: "boolean",
-      description: "Whether the API key is enabled.",
+      description: "API 密钥是否启用。",
     },
     {
       name: "rateLimitEnabled",
       type: "boolean",
-      description: "Whether the API key has rate limiting enabled.",
+      description: "是否启用速率限制。",
     },
     {
       name: "rateLimitTimeWindow",
       type: "number",
-      description: "The time window in milliseconds for the rate limit.",
+      description: "速率限制的时间窗口，单位毫秒。",
       isOptional: true,
     },
     {
       name: "rateLimitMax",
       type: "number",
       description:
-        "The maximum number of requests allowed within the `rateLimitTimeWindow`.",
+        "时间窗口内允许的最大请求数。",
       isOptional: true,
     },
     {
       name: "requestCount",
       type: "number",
       description:
-        "The number of requests made within the rate limit time window.",
+        "当前时间窗口内已发起的请求数。",
     },
     {
       name: "remaining",
       type: "number",
-      description: "The number of requests remaining.",
+      description: "剩余的请求次数。",
       isOptional: true,
     },
     {
       name: "lastRequest",
       type: "Date",
-      description: "The date and time of the last request made to the key.",
+      description: "最后一次请求时间。",
       isOptional: true,
     },
     {
       name: "expiresAt",
       type: "Date",
-      description: "The date and time when the key will expire.",
+      description: "密钥过期时间。",
       isOptional: true,
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "The date and time the API key was created.",
+      description: "API 密钥创建时间。",
     },
     {
       name: "updatedAt",
       type: "Date",
-      description: "The date and time the API key was updated.",
+      description: "API 密钥更新时间。",
     },
     {
       name: "permissions",
       type: "string",
-      description: "The permissions of the key.",
+      description: "密钥权限。",
       isOptional: true,
     },
     {
       name: "metadata",
       type: "Object",
       isOptional: true,
-      description: "Any additional metadata you want to store with the key.",
+      description: "任意附加元数据。",
     },
   ]}
 />
 
-### Migration from Previous Versions
+### 从旧版本迁移
 
-If you're upgrading from a previous version, you'll need to migrate the `userId` field to the new reference system:
+从旧版本升级时，需要将 `userId` 字段迁移至新的 `referenceId` 系统：
 
 ```sql
--- Add new columns
+-- 添加新列
 ALTER TABLE apikey ADD COLUMN config_id VARCHAR(255) NOT NULL DEFAULT 'default';
 ALTER TABLE apikey ADD COLUMN reference_id VARCHAR(255);
 
--- Migrate existing data (copy userId to referenceId)
+-- 迁移现有数据（把 userId 拷贝到 referenceId）
 UPDATE apikey SET reference_id = user_id WHERE reference_id IS NULL;
 
--- Make reference_id required and add indexes
+-- 将 reference_id 设为非空并创建索引
 ALTER TABLE apikey ALTER COLUMN reference_id SET NOT NULL;
 CREATE INDEX idx_apikey_reference_id ON apikey(reference_id);
 CREATE INDEX idx_apikey_config_id ON apikey(config_id);
 
--- Optionally drop the old column after verifying migration
+-- 迁移确认无误后，可选择删除旧列
 -- ALTER TABLE apikey DROP COLUMN user_id;
 ```
 
 <Callout type="warn">
-  **Breaking Change**: The `userId` field has been replaced with `referenceId`. API responses now return `referenceId` instead of `userId`. The owner type (user vs organization) is determined by the configuration's `references` setting, not stored on each key.
+  **重大变更**：`userId` 字段已被替换为 `referenceId`。API 响应中返回 `referenceId` 而非 `userId`。拥有者类型（用户或组织）由配置的 `references` 决定，不会存储在每个密钥上。
 </Callout>

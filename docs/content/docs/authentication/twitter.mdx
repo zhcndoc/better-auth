@@ -1,23 +1,23 @@
 ---
 title: Twitter (X)
-description: Twitter provider setup and usage.
+description: Twitter 提供商的设置和使用说明。
 ---
 
 <Steps>
     <Step> 
-        ### Get your Twitter Credentials
-        Get your Twitter credentials from the [Twitter Developer Portal](https://developer.twitter.com/en/portal/dashboard).
+        ### 获取你的 Twitter 凭证
+        从 [Twitter 开发者门户](https://developer.twitter.com/en/portal/dashboard) 获取你的 Twitter 凭证。
 
-        Make sure to set the redirect URL to `http://localhost:3000/api/auth/callback/twitter` for local development. For production, you should set it to the URL of your application. If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/twitter`，以用于本地开发。生产环境应设置为你应用的 URL。如果你更改了认证路由的基础路径，也应该相应更新重定向 URL。
         
         <Callout type="info">
-            Twitter API v2 now supports email address retrieval. Make sure to request the `user.email` scope when configuring your Twitter app to enable this feature.
+            Twitter API v2 现在支持获取电子邮箱地址。配置你的 Twitter 应用时，请确保请求 `user.email` 范围以启用此功能。
         </Callout>
     </Step>
 
   <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供商
+        配置提供商时，你需要导入该提供商并将其传递给认证实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts"  
         import { betterAuth } from "better-auth" 
@@ -33,9 +33,9 @@ description: Twitter provider setup and usage.
         ```
     </Step>
        <Step>
-        ### Sign In with Twitter 
-        To sign in with Twitter, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-        - `provider`: The provider to use. It should be set to `twitter`.
+        ### 使用 Twitter 登录
+        要使用 Twitter 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
+        - `provider`：要使用的提供商，应设置为 `twitter`。
 
         ```ts title="auth-client.ts"  
         import { createAuthClient } from "better-auth/client"

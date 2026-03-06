@@ -1,44 +1,44 @@
 ---
-title: Device Authorization
-description: OAuth 2.0 Device Authorization Grant for limited-input devices
+title: 设备授权
+description: 针对输入受限设备的 OAuth 2.0 设备授权授予
 ---
 
-`RFC 8628` `CLI` `Smart TV` `IoT`
+`RFC 8628` `CLI` `智能电视` `物联网`
 
-The Device Authorization plugin implements the OAuth 2.0 Device Authorization Grant ([RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628)), enabling authentication for devices with limited input capabilities such as smart TVs, CLI applications, IoT devices, and gaming consoles.
+设备授权插件实现了 OAuth 2.0 设备授权授予 ([RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628))，支持智能电视、CLI 应用、物联网设备和游戏主机等输入能力有限的设备进行身份验证。
 
-## Try It Out
+## 立即试用
 
-You can test the device authorization flow right now using the Better Auth CLI:
+您可以使用 Better Auth CLI 立即测试设备授权流程：
 
 ```package-install
 npx auth login
 ```
 
-This will demonstrate the complete device authorization flow by:
-1. Requesting a device code from the Better Auth demo server
-2. Displaying a user code for you to enter
-3. Opening your browser to the verification page
-4. Polling for authorization completion
+该命令将演示完整的设备授权流程：
+1. 从 Better Auth 演示服务器请求设备代码
+2. 显示供您输入的用户代码
+3. 打开浏览器至验证页面
+4. 轮询检查授权完成情况
 
 <Callout type="info">
-  The CLI login command is a demo feature that connects to the Better Auth demo server to showcase the device authorization flow in action.
+  CLI 登录命令是一个演示功能，连接到 Better Auth 演示服务器，用以展示设备授权流程的实际运行。
 </Callout>
 
-## Installation
+## 安装
 
 <Steps>
     <Step>
-        ### Add the plugin to your auth config
+        ### 将插件添加到您的认证配置中
         
-        Add the device authorization plugin to your server configuration.
+        在服务器配置中添加设备授权插件。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth";
         import { deviceAuthorization } from "better-auth/plugins"; // [!code highlight]
 
         export const auth = betterAuth({
-          // ... other config
+          // ... 其他配置
           plugins: [
             deviceAuthorization({ // [!code highlight]
               verificationUri: "/device", // [!code highlight]
@@ -49,9 +49,9 @@ This will demonstrate the complete device authorization flow by:
     </Step>
     
     <Step>
-        ### Migrate the database
+        ### 迁移数据库
         
-        Run the migration or generate the schema to add the necessary tables to the database.
+        运行迁移或生成模式以向数据库添加所需表。
         
         <Tabs items={["migrate", "generate"]}>
             <Tab value="migrate">
@@ -65,13 +65,13 @@ This will demonstrate the complete device authorization flow by:
             ```
             </Tab>
         </Tabs>
-        See the [Schema](#schema) section to add the fields manually.
+        如需手动添加字段，请参见[模式](#schema)部分。
     </Step>
 
     <Step>
-        ### Add the client plugin
+        ### 添加客户端插件
         
-        Add the device authorization plugin to your client.
+        在客户端中添加设备授权插件。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client";
@@ -86,20 +86,20 @@ This will demonstrate the complete device authorization flow by:
     </Step>
 </Steps>
 
-## How It Works
+## 工作原理
 
-The device flow follows these steps:
+设备授权流程包括以下步骤：
 
-1. **Device requests codes**: The device requests a device code and user code from the authorization server
-2. **User authorizes**: The user visits a verification URL and enters the user code
-3. **Device polls for token**: The device polls the server until the user completes authorization
-4. **Access granted**: Once authorized, the device receives an access token
+1. **设备请求代码**：设备从授权服务器请求设备码和用户码
+2. **用户授权**：用户访问验证 URL 并输入用户码
+3. **设备轮询获取令牌**：设备持续轮询服务器，等待用户完成授权
+4. **访问授权**：授权完成后，设备接收访问令牌
 
-## Basic Usage
+## 基础用法
 
-### Requesting Device Authorization
+### 请求设备授权
 
-To initiate device authorization, call `device.code` with the client ID:
+调用 `device.code` 并传入客户端 ID 来发起设备授权：
 
 <APIMethod
   path="/device/code"
@@ -108,18 +108,18 @@ To initiate device authorization, call `device.code` with the client ID:
 ```ts
 type deviceCode = {
     /**
-     * The OAuth client identifier
+     * OAuth 客户端标识符
      */
     client_id: string;
     /**
-     * Space-separated list of requested scopes (optional)
+     * 用空格分隔的请求作用域列表（可选）
      */
     scope?: string;
 }
 ```
 </APIMethod>
 
-Example usage:
+示例用法：
 ```ts
 import { authClient } from "@/lib/auth-client"
 
@@ -129,15 +129,15 @@ const { data } = await authClient.device.code({
 });
 
 if (data) {
-  console.log(`User code: ${data.user_code}`);
-  console.log(`Verification URL: ${data.verification_uri}`);
-  console.log(`Complete verification URL: ${data.verification_uri_complete}`);
+  console.log(`用户代码: ${data.user_code}`);
+  console.log(`验证 URL: ${data.verification_uri}`);
+  console.log(`完整验证 URL: ${data.verification_uri_complete}`);
 }
 ```
 
-### Polling for Token
+### 轮询获取令牌
 
-After displaying the user code, poll for the access token:
+显示用户代码后，轮询服务器获取访问令牌：
 
 <APIMethod
   path="/device/token"
@@ -146,24 +146,24 @@ After displaying the user code, poll for the access token:
 ```ts
 type deviceToken = {
     /**
-     * Must be "urn:ietf:params:oauth:grant-type:device_code"
+     * 必须是 "urn:ietf:params:oauth:grant-type:device_code"
      */
     grant_type: string;
     /**
-     * The device code from the initial request
+     * 初始请求返回的设备代码
      */
     device_code: string;
     /**
-     * The OAuth client identifier
+     * OAuth 客户端标识符
      */
     client_id: string;
 }
 ```
 </APIMethod>
 
-Example polling implementation:
+示例轮询实现：
 ```ts
-let pollingInterval = 5; // Start with 5 seconds
+let pollingInterval = 5; // 初始轮询间隔为5秒
 const pollForToken = async () => {
   const { data, error } = await authClient.device.token({
     grant_type: "urn:ietf:params:oauth:grant-type:device_code",
@@ -177,23 +177,23 @@ const pollForToken = async () => {
   });
 
   if (data?.access_token) {
-    console.log("Authorization successful!");
+    console.log("授权成功！");
   } else if (error) {
     switch (error.error) {
       case "authorization_pending":
-        // Continue polling
+        // 继续轮询
         break;
       case "slow_down":
         pollingInterval += 5;
         break;
       case "access_denied":
-        console.error("Access was denied by the user");
+        console.error("用户拒绝了访问请求");
         return;
       case "expired_token":
-        console.error("The device code has expired. Please try again.");
+        console.error("设备代码已过期，请重试。");
         return;
       default:
-        console.error(`Error: ${error.error_description}`);
+        console.error(`错误：${error.error_description}`);
         return;
     }
     setTimeout(pollForToken, pollingInterval * 1000);
@@ -203,17 +203,17 @@ const pollForToken = async () => {
 pollForToken();
 ```
 
-### User Authorization Flow
+### 用户授权流程
 
-The user authorization flow requires two steps:
-1. **Code Verification**: Check if the entered user code is valid
-2. **Authorization**: User must be authenticated to approve/deny the device
+用户授权流程包括两个步骤：
+1. **代码验证**：验证用户输入的代码是否有效
+2. **授权操作**：用户必须登录后才能批准或拒绝设备授权请求
 
 <Callout type="warn">
-  Users must be authenticated before they can approve or deny device authorization requests. If not authenticated, redirect them to the login page with a return URL.
+  用户必须先登录，才能批准或拒绝设备授权请求。如果未认证，则应重定向至登录页面并带上返回 URL。
 </Callout>
 
-Create a page where users can enter their code:
+创建让用户输入代码的页面：
 
 ```tsx title="app/device/page.tsx"
 export default function DeviceAuthorizationPage() {
@@ -224,20 +224,20 @@ export default function DeviceAuthorizationPage() {
     e.preventDefault();
     
     try {
-      // Format the code: remove dashes and convert to uppercase
+      // 格式化代码：去除短横线并转换为大写
       const formattedCode = userCode.trim().replace(/-/g, "").toUpperCase();
 
-      // Check if the code is valid using GET /device endpoint
+      // 调用 GET /device 接口验证代码有效性
       const response = await authClient.device({
         query: { user_code: formattedCode },
       });
       
       if (response.data) {
-        // Redirect to approval page
+        // 跳转到批准页面
         window.location.href = `/device/approve?user_code=${formattedCode}`;
       }
     } catch (err) {
-      setError("Invalid or expired code");
+      setError("无效或已过期的代码");
     }
   };
   
@@ -247,21 +247,21 @@ export default function DeviceAuthorizationPage() {
         type="text"
         value={userCode}
         onChange={(e) => setUserCode(e.target.value)}
-        placeholder="Enter device code (e.g., ABCD-1234)"
+        placeholder="输入设备代码（例如 ABCD-1234）"
         maxLength={12}
       />
-      <button type="submit">Continue</button>
+      <button type="submit">继续</button>
       {error && <p>{error}</p>}
     </form>
   );
 }
 ```
 
-### Approving or Denying Device
+### 批准或拒绝设备
 
-Users must be authenticated to approve or deny device authorization requests:
+用户必须登录后才能批准或拒绝授权请求：
 
-#### Approve Device
+#### 批准设备
 
 <APIMethod
   path="/device/approve"
@@ -271,14 +271,14 @@ Users must be authenticated to approve or deny device authorization requests:
 ```ts
 type deviceApprove = {
     /**
-     * The user code to approve
+     * 要批准的用户代码
      */
     userCode: string;
 }
 ```
 </APIMethod>
 
-#### Deny Device
+#### 拒绝设备
 
 <APIMethod
   path="/device/deny"
@@ -288,18 +288,18 @@ type deviceApprove = {
 ```ts
 type deviceDeny = {
     /**
-     * The user code to deny
+     * 要拒绝的用户代码
      */
     userCode: string;
 }
 ```
 </APIMethod>
 
-#### Example Approval Page
+#### 批准页面示例
 
 ```tsx title="app/device/approve/page.tsx"
 export default function DeviceApprovalPage() {
-  const { user } = useAuth(); // Must be authenticated
+  const { user } = useAuth(); // 必须已登录
   const searchParams = useSearchParams();
   const userCode = searchParams.get("userCode");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -310,11 +310,11 @@ export default function DeviceApprovalPage() {
       await authClient.device.approve({
         userCode: userCode,
       });
-      // Show success message
-      alert("Device approved successfully!");
+      // 显示成功消息
+      alert("设备授权成功！");
       window.location.href = "/";
     } catch (error) {
-      alert("Failed to approve device");
+      alert("批准设备失败");
     }
     setIsProcessing(false);
   };
@@ -325,73 +325,73 @@ export default function DeviceApprovalPage() {
       await authClient.device.deny({
         userCode: userCode,
       });
-      alert("Device denied");
+      alert("已拒绝设备");
       window.location.href = "/";
     } catch (error) {
-      alert("Failed to deny device");
+      alert("拒绝设备失败");
     }
     setIsProcessing(false);
   };
 
   if (!user) {
-    // Redirect to login if not authenticated
+    // 未登录时重定向至登录页面
     window.location.href = `/login?redirect=/device/approve?user_code=${userCode}`;
     return null;
   }
   
   return (
     <div>
-      <h2>Device Authorization Request</h2>
-      <p>A device is requesting access to your account.</p>
-      <p>Code: {userCode}</p>
+      <h2>设备授权请求</h2>
+      <p>有设备请求访问您的账户。</p>
+      <p>代码: {userCode}</p>
       
       <button onClick={handleApprove} disabled={isProcessing}>
-        Approve
+        批准
       </button>
       <button onClick={handleDeny} disabled={isProcessing}>
-        Deny
+        拒绝
       </button>
     </div>
   );
 }
 ```
 
-## Advanced Configuration
+## 高级配置
 
-### Client Validation
+### 客户端验证
 
-You can validate client IDs to ensure only authorized applications can use the device flow:
+您可以验证客户端 ID，确保只有授权的应用可以使用设备流：
 
 ```ts
 deviceAuthorization({
   validateClient: async (clientId) => {
-    // Check if client is authorized
+    // 检查客户端是否有权限
     const client = await db.oauth_clients.findOne({ id: clientId });
     return client && client.allowDeviceFlow;
   },
   
   onDeviceAuthRequest: async (clientId, scope) => {
-    // Log device authorization requests
+    // 记录设备授权请求
     await logDeviceAuthRequest(clientId, scope);
   },
 })
 ```
 
-### Custom Code Generation
+### 自定义代码生成
 
-Customize how device and user codes are generated:
+自定义设备代码和用户代码生成方式：
 
 ```ts
 deviceAuthorization({
   generateDeviceCode: async () => {
-    // Custom device code generation
+    // 自定义设备代码生成
     return crypto.randomBytes(32).toString("hex");
   },
   
   generateUserCode: async () => {
-    // Custom user code generation
-    // Default uses: ABCDEFGHJKLMNPQRSTUVWXYZ23456789
-    // (excludes 0, O, 1, I to avoid confusion)
+    // 自定义用户代码生成
+    // 默认字符集：ABCDEFGHJKLMNPQRSTUVWXYZ23456789
+    // （排除了 0、O、1、I 以避免混淆）
     const charset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let code = "";
     for (let i = 0; i < 8; i++) {
@@ -402,24 +402,24 @@ deviceAuthorization({
 })
 ```
 
-## Error Handling
+## 错误处理
 
-The device flow defines specific error codes:
+设备流程定义了具体的错误代码：
 
-| Error Code | Description |
-|------------|-------------|
-| `authorization_pending` | User hasn't approved yet (continue polling) |
-| `slow_down` | Polling too frequently (increase interval) |
-| `expired_token` | Device code has expired |
-| `access_denied` | User denied the authorization |
-| `invalid_grant` | Invalid device code or client ID |
+| 错误代码                | 描述                           |
+|------------------------|------------------------------|
+| `authorization_pending` | 用户尚未批准（继续轮询）          |
+| `slow_down`             | 轮询频率过高（增加间隔）           |
+| `expired_token`         | 设备代码已过期                   |
+| `access_denied`         | 用户拒绝授权                    |
+| `invalid_grant`         | 设备代码或客户端 ID 无效          |
 
-## Example: CLI Application
+## 示例：CLI 应用
 
-Here's a complete example for a CLI application based on the actual demo:
+下面是基于官方演示的 CLI 应用完整示例：
 
 <Callout type="info">
-  To use the access token for API requests, ensure you have added the [Bearer plugin](/docs/plugins/bearer) to your auth instance.
+  若要使用访问令牌调用 API，请确保您的认证实例已添加了 [Bearer 插件](/docs/plugins/bearer)。
 </Callout>
 
 ```ts title="auth-client.ts"
@@ -433,18 +433,18 @@ const authClient = createAuthClient({
 });
 
 async function authenticateCLI() {
-  console.log("🔐 Better Auth Device Authorization Demo");
-  console.log("⏳ Requesting device authorization...");
+  console.log("🔐 Better Auth 设备授权演示");
+  console.log("⏳ 请求设备授权...");
   
   try {
-    // Request device code
+    // 请求设备代码
     const { data, error } = await authClient.device.code({
       client_id: "demo-cli",
       scope: "openid profile email",
     });
     
     if (error || !data) {
-      console.error("❌ Error:", error?.error_description);
+      console.error("❌ 错误:", error?.error_description);
       process.exit(1);
     }
     
@@ -456,21 +456,21 @@ async function authenticateCLI() {
       interval = 5,
     } = data;
     
-    console.log("\n📱 Device Authorization in Progress");
-    console.log(`Please visit: ${verification_uri}`);
-    console.log(`Enter code: ${user_code}\n`);
+    console.log("\n📱 设备授权进行中");
+    console.log(`请访问: ${verification_uri}`);
+    console.log(`输入代码: ${user_code}\n`);
     
-    // Open browser to verification page
+    // 打开浏览器至验证页面
     const urlToOpen = verification_uri_complete || verification_uri;
-    console.log("🌐 Opening browser...");
+    console.log("🌐 正在打开浏览器...");
     await open(urlToOpen);
     
-    console.log(`⏳ Waiting for authorization... (polling every ${interval}s)`);
+    console.log(`⏳ 等待授权...（每 ${interval} 秒轮询一次）`);
     
-    // Poll for token
+    // 开始轮询获取令牌
     await pollForToken(device_code, interval);
   } catch (err) {
-    console.error("❌ Error:", err.message);
+    console.error("❌ 错误:", err.message);
     process.exit(1);
   }
 }
@@ -488,10 +488,10 @@ async function pollForToken(deviceCode: string, interval: number) {
         });
         
         if (data?.access_token) {
-          console.log("\nAuthorization Successful!");
-          console.log("Access token received!");
+          console.log("\n授权成功！");
+          console.log("已收到访问令牌！");
           
-          // Get user session
+          // 使用访问令牌获取用户会话
           const { data: session } = await authClient.getSession({
             fetchOptions: {
               headers: {
@@ -500,167 +500,167 @@ async function pollForToken(deviceCode: string, interval: number) {
             },
           });
           
-          console.log(`Hello, ${session?.user?.name || "User"}!`);
+          console.log(`您好，${session?.user?.name || "用户"}！`);
           resolve();
           process.exit(0);
         } else if (error) {
           switch (error.error) {
             case "authorization_pending":
-              // Continue polling silently
+              // 静默继续轮询
               break;
             case "slow_down":
               pollingInterval += 5;
-              console.log(`⚠️  Slowing down polling to ${pollingInterval}s`);
+              console.log(`⚠️  减慢轮询频率至 ${pollingInterval} 秒`);
               break;
             case "access_denied":
-              console.error("❌ Access was denied by the user");
+              console.error("❌ 用户拒绝了访问请求");
               process.exit(1);
               break;
             case "expired_token":
-              console.error("❌ The device code has expired. Please try again.");
+              console.error("❌ 设备代码已过期，请重试。");
               process.exit(1);
               break;
             default:
-              console.error("❌ Error:", error.error_description);
+              console.error("❌ 错误:", error.error_description);
               process.exit(1);
           }
         }
       } catch (err) {
-        console.error("❌ Network error:", err.message);
+        console.error("❌ 网络错误:", err.message);
         process.exit(1);
       }
       
-      // Schedule next poll
+      // 安排下一次轮询
       setTimeout(poll, pollingInterval * 1000);
     };
     
-    // Start polling
+    // 启动轮询
     setTimeout(poll, pollingInterval * 1000);
   });
 }
 
-// Run the authentication flow
+// 运行认证流程
 authenticateCLI().catch((err) => {
-  console.error("❌ Fatal error:", err);
+  console.error("❌ 致命错误:", err);
   process.exit(1);
 });
 ```
 
-## Security Considerations
+## 安全注意事项
 
-1. **Rate Limiting**: The plugin enforces polling intervals to prevent abuse
-2. **Code Expiration**: Device and user codes expire after the configured time (default: 30 minutes)
-3. **Client Validation**: Always validate client IDs in production to prevent unauthorized access
-4. **HTTPS Only**: Always use HTTPS in production for device authorization
-5. **User Code Format**: User codes use a limited character set (excluding similar-looking characters like 0/O, 1/I) to reduce typing errors
-6. **Authentication Required**: Users must be authenticated before they can approve or deny device requests
+1. **速率限制**：插件强制轮询间隔以防止滥用
+2. **代码过期**：设备码和用户码在配置的时间后过期（默认：30 分钟）
+3. **客户端验证**：生产环境中务必验证客户端 ID 以防止未授权访问
+4. **仅支持 HTTPS**：生产环境必须使用 HTTPS 进行设备授权
+5. **用户码格式**：用户码使用有限字符集（排除易混淆字符如 0/O、1/I）以减少输入错误
+6. **需要身份验证**：用户必须登录后才能批准或拒绝设备请求
 
-## Options
+## 选项
 
-### Server
+### 服务器端
 
-**verificationUri**: The URL of the verification page where users can enter their device code. Match this to the route of your verification page. Returned as `verification_uri` in the response. Can be an absolute URL (e.g., `https://example.com/device`) or relative path (e.g., `/device`). Default: `/device`.
+**verificationUri**：用户输入设备代码的验证页面 URL。应与您的验证页面路由匹配。在响应中返回为 `verification_uri`。可以是完整 URL（例如 `https://example.com/device`）或相对路径（例如 `/device`）。默认值：`/device`。
 
-**expiresIn**: The expiration time for device codes. Default: `"30m"` (30 minutes).
+**expiresIn**：设备代码的过期时间。默认值：`"30m"`（30 分钟）。
 
-**interval**: The minimum polling interval. Default: `"5s"` (5 seconds).
+**interval**：最小轮询间隔。默认值：`"5s"`（5 秒）。
 
-**userCodeLength**: The length of the user code. Default: `8`.
+**userCodeLength**：用户码长度。默认值：`8`。
 
-**deviceCodeLength**: The length of the device code. Default: `40`.
+**deviceCodeLength**：设备码长度。默认值：`40`。
 
-**generateDeviceCode**: Custom function to generate device codes. Returns a string or `Promise<string>`.
+**generateDeviceCode**：自定义设备码生成函数。返回字符串或 `Promise<string>`。
 
-**generateUserCode**: Custom function to generate user codes. Returns a string or `Promise<string>`.
+**generateUserCode**：自定义用户码生成函数。返回字符串或 `Promise<string>`。
 
-**validateClient**: Function to validate client IDs. Takes a clientId and returns boolean or `Promise<boolean>`.
+**validateClient**：客户端 ID 验证函数，接收 clientId，返回布尔值或 `Promise<boolean>`。
 
-**onDeviceAuthRequest**: Hook called when device authorization is requested. Takes clientId and optional scope.
+**onDeviceAuthRequest**：设备授权请求时调用的钩子，接收 clientId 和可选 scope。
 
-### Client
+### 客户端
 
-No client-specific configuration options. The plugin adds the following methods:
+无客户端特定配置选项。插件添加以下方法：
 
-- **device()**: Verify user code validity
-- **device.code()**: Request device and user codes
-- **device.token()**: Poll for access token  
-- **device.approve()**: Approve device (requires authentication)
-- **device.deny()**: Deny device (requires authentication)
+- **device()**：验证用户代码有效性
+- **device.code()**：请求设备码和用户码
+- **device.token()**：轮询获取访问令牌  
+- **device.approve()**：批准设备（需身份验证）
+- **device.deny()**：拒绝设备（需身份验证）
 
-## Schema
+## 模式
 
-The plugin requires a new table to store device authorization data.
+插件需要新增一个表用以存储设备授权数据。
 
-Table Name: `deviceCode`
+表名：`deviceCode`
 
 <DatabaseTable
     fields={[
         { 
             name: "id", 
             type: "string", 
-            description: "Unique identifier for the device authorization request",
+            description: "设备授权请求的唯一标识",
             isPrimaryKey: true
         },
         {
             name: "deviceCode",
             type: "string",
-            description: "The device verification code",
+            description: "设备验证代码",
         },
         {
             name: "userCode",
             type: "string",
-            description: "The user-friendly code for verification",
+            description: "用户友好的验证代码",
         },
         { 
             name: "userId", 
             type: "string", 
-            description: "The ID of the user who approved/denied",
+            description: "批准或拒绝的用户 ID",
             isOptional: true,
             isForeignKey: true
         },
         {
             name: "clientId",
             type: "string",
-            description: "The OAuth client identifier",
+            description: "OAuth 客户端标识符",
             isOptional: true
         },
         {
             name: "scope",
             type: "string",
-            description: "Requested OAuth scopes",
+            description: "请求的 OAuth 作用域",
             isOptional: true
         },
         {
             name: "status",
             type: "string",
-            description: "Current status: pending, approved, or denied",
+            description: "当前状态：pending（等待中）、approved（已批准）或 denied（已拒绝）",
         },
         {
             name: "expiresAt",
             type: "Date",
-            description: "When the device code expires",
+            description: "设备代码过期时间",
         },
         {
             name: "lastPolledAt",
             type: "Date",
-            description: "Last time the device polled for status",
+            description: "设备最后一次轮询时间",
             isOptional: true
         },
         {
             name: "pollingInterval",
             type: "number",
-            description: "Minimum seconds between polls",
+            description: "轮询最小间隔秒数",
             isOptional: true
         },
         {
             name: "createdAt",
             type: "Date",
-            description: "When the request was created",
+            description: "请求创建时间",
         },
         {
             name: "updatedAt",
             type: "Date",
-            description: "When the request was last updated",
+            description: "请求上次更新时间",
         }
     ]}
 />

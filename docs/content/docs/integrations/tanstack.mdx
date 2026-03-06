@@ -1,29 +1,29 @@
 ---
-title: TanStack Start Integration
-description: Integrate Better Auth with TanStack Start.
+title: TanStack Start 集成
+description: 将 Better Auth 集成到 TanStack Start。
 ---
 
-This integration guide is assuming you are using TanStack Start.
+本集成指南假设您正在使用 TanStack Start。
 
-Before you start, make sure you have a Better Auth instance configured. If you haven't done that yet, check out the [installation](/docs/installation).
+开始之前，请确保您已配置好 Better Auth 实例。如果还没有配置，请查看 [安装指南](/docs/installation)。
 
-## Quick Start
+## 快速开始
 
-You can create a new TanStack Start project with Better Auth integrated using the following command. This CLI sets up a project with an auth instance configured with the plugin and mounted handlers.
+您可以使用以下命令创建一个集成了 Better Auth 的全新 TanStack Start 项目。该 CLI 会设置一个配置了插件和挂载处理程序的身份认证实例的项目。
 
 ```package-install
 npm create @tanstack/start
 
-◇  What add-ons would you like for your project?
+◇  你希望为项目添加哪些附加组件？
 │  Better Auth
 ```
 
-## Usage
+## 用法
 
-### Mount the handler
+### 挂载处理程序
 
-We need to mount the handler to a TanStack API endpoint/Server Route.
-Create a new file: `/src/routes/api/auth/$.ts`
+我们需要将处理程序挂载到 TanStack API 端点/服务器路由。  
+创建新文件：`/src/routes/api/auth/$.ts`
 
 ```ts title="src/routes/api/auth/$.ts"
 import { auth } from '@/lib/auth'
@@ -43,36 +43,36 @@ export const Route = createFileRoute('/api/auth/$')({
 })
 ```
 
-### Usage tips
+### 使用技巧
 
-- We recommend using the client SDK or `authClient` to handle authentication, rather than server actions with `auth.api`.
-- When you call functions that need to set cookies (like `signInEmail` or `signUpEmail`), you'll need to handle cookie setting for TanStack Start. Better Auth provides a `tanstackStartCookies` plugin to automatically handle this for you.
+- 我们建议使用客户端 SDK 或 `authClient` 来处理身份认证，而不是通过 `auth.api` 使用服务器操作。
+- 当您调用需要设置 Cookie 的函数（例如 `signInEmail` 或 `signUpEmail`）时，需处理 TanStack Start 的 Cookie 设置。Better Auth 提供了 `tanstackStartCookies` 插件，可自动帮您处理。
 
-For React (TanStack Start with React):
+React（TanStack Start + React）示例：
 
 ```ts title="src/lib/auth.ts"
 import { betterAuth } from "better-auth";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 
 export const auth = betterAuth({
-    //...your config
-    plugins: [tanstackStartCookies()] // make sure this is the last plugin in the array
+    //...你的配置
+    plugins: [tanstackStartCookies()] // 确保这是数组中最后一个插件
 })
 ```
 
-For Solid.js (TanStack Start with Solid):
+Solid.js（TanStack Start + Solid）示例：
 
 ```ts title="src/lib/auth.ts"
 import { betterAuth } from "better-auth";
 import { tanstackStartCookies } from "better-auth/tanstack-start/solid";
 
 export const auth = betterAuth({
-    //...your config
-    plugins: [tanstackStartCookies()] // make sure this is the last plugin in the array
+    //...你的配置
+    plugins: [tanstackStartCookies()] // 确保这是数组中最后一个插件
 })
 ```
 
-Now, when you call functions that set cookies, they will be automatically set using TanStack Start's cookie handling system.
+这样，当您调用设置 Cookie 的函数时，Cookie 会自动通过 TanStack Start 的 Cookie 处理系统进行设置。
 
 ```ts
 import { auth } from "@/lib/auth"
@@ -87,11 +87,11 @@ const signIn = async () => {
 }
 ```
 
-### Protecting Resources
+### 保护资源
 
-To protect resources that require authentication, use `beforeLoad` with a server function. This ensures authentication is checked on every navigation, including client-side navigation via `<Link>` components.
+要保护需要认证才能访问的资源，使用带有服务器函数的 `beforeLoad`。这确保每次导航时都会进行身份认证检查，包括通过 `<Link>` 进行的客户端导航。
 
-First, create server-side helpers to check the session:
+首先，创建服务器端的会话检查辅助函数：
 
 ```ts title="src/lib/auth.server.ts"
 import { createServerFn } from "@tanstack/react-start";
@@ -117,9 +117,9 @@ export const ensureSession = createServerFn({ method: "GET" }).handler(async () 
 });
 ```
 
-#### Protecting Routes
+#### 保护单个路由
 
-Use `beforeLoad` in your route definitions:
+在路由定义中使用 `beforeLoad`：
 
 ```tsx title="src/routes/dashboard.tsx"
 import { createFileRoute, redirect } from '@tanstack/react-router'
@@ -141,13 +141,13 @@ export const Route = createFileRoute('/dashboard')({
 function Dashboard() {
   const { user } = Route.useRouteContext();
   
-  return <div>Welcome, {user.name}!</div>
+  return <div>欢迎，{user.name}！</div>
 }
 ```
 
-#### Protecting Multiple Routes (Layout)
+#### 保护多个路由（布局）
 
-For protecting multiple routes, use a pathless layout route:
+要保护多个路由，使用无路径的布局路由：
 
 ```tsx title="src/routes/_protected.tsx"
 import { createFileRoute, redirect, Outlet } from '@tanstack/react-router'
@@ -170,7 +170,7 @@ export const Route = createFileRoute('/_protected')({
 })
 ```
 
-Then nest protected routes under `_protected`:
+然后将受保护的路由嵌套到 `_protected` 下：
 
 <Files>
   <Folder name="src" defaultOpen>
@@ -185,9 +185,9 @@ Then nest protected routes under `_protected`:
   </Folder>
 </Files>
 
-#### Protecting Server Functions
+#### 保护服务器函数
 
-Use `ensureSession` helper to protect server functions:
+使用 `ensureSession` 辅助函数保护服务器函数：
 
 ```ts title="src/lib/posts.server.ts"
 import { createServerFn } from "@tanstack/react-start";

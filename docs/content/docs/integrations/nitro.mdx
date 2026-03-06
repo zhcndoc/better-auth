@@ -1,49 +1,49 @@
 ---
-title: Nitro Integration
-description: Integrate Better Auth with Nitro.
+title: Nitro 集成
+description: 将 Better Auth 集成到 Nitro。
 ---
 
-Better Auth can be integrated with your [Nitro Application](https://nitro.build/) (an open source framework to build web servers).
+Better Auth 可以集成到你的 [Nitro 应用程序](https://nitro.build/)（一个用于构建 Web 服务器的开源框架）中。
 
-This guide aims to help you integrate Better Auth with your Nitro application in a few simple steps.
+本指南旨在帮助你通过几个简单步骤，将 Better Auth 集成到你的 Nitro 应用中。
 
-## Create a new Nitro Application
+## 创建新的 Nitro 应用
 
-Start by scaffolding a new Nitro application using the following command:
+首先使用以下命令来搭建一个新的 Nitro 应用：
 
 ```bash title="Terminal"
 npx giget@latest nitro nitro-app --install
 ```
 
-This will create the `nitro-app` directory and install all the dependencies. You can now open the `nitro-app` directory in your code editor.
+此命令将创建 `nitro-app` 目录并安装所有依赖。你现在可以在代码编辑器中打开 `nitro-app` 目录。
 
-### Prisma Adapter Setup
+### Prisma 适配器设置
 
 <Callout>
-  This guide assumes that you have a basic understanding of Prisma. If you are new to Prisma, you can check out the [Prisma documentation](https://www.prisma.io/docs/getting-started).
+  本指南假设你对 Prisma 有基本的了解。如果你刚接触 Prisma，可以查看 [Prisma 文档](https://www.prisma.io/docs/getting-started)。
 
-  The `sqlite` database used in this guide will not work in a production environment. You should replace it with a production-ready database like `PostgreSQL`.
+  本指南中使用的 `sqlite` 数据库不适用于生产环境。你应当将其替换为适合生产的数据库，如 `PostgreSQL`。
 </Callout>
 
-For this guide, we will be using the Prisma adapter. You can install prisma client by running the following command:
+本指南中，我们将使用 Prisma 适配器。你可以通过以下命令安装 Prisma 客户端：
 
 ```package-install
 @prisma/client
 ```
 
-`prisma` can be installed as a dev dependency using the following command:
+`prisma` 可以作为开发依赖安装，命令如下：
 
 ```package-install
 -D prisma
 ```
 
-Generate a `schema.prisma` file in the `prisma` directory by running the following command:
+通过运行以下命令生成 `prisma` 目录中的 `schema.prisma` 文件：
 
 ```bash title="Terminal"
 npx prisma init
 ```
 
-You can now replace the contents of the `schema.prisma` file with the following:
+你现在可以用以下内容替换 `schema.prisma` 文件：
 
 ```prisma title="prisma/schema.prisma"
 generator client {
@@ -55,30 +55,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Will be deleted. Just need it to generate the prisma client
+// 将被删除，仅用于生成 prisma 客户端
 model Test {
   id   Int    @id @default(autoincrement())
   name String
 }
 ```
 
-Ensure that you update the `DATABASE_URL` in your `.env` file to point to the location of your database.
+确保在 `.env` 文件中更新 `DATABASE_URL`，指向你的数据库位置。
 
 ```txt title=".env"
 DATABASE_URL="file:./dev.db"
 ```
 
-Run the following command to generate the Prisma client & sync the database:
+运行以下命令生成 Prisma 客户端并同步数据库：
 
 ```bash title="Terminal"
 npx prisma db push
 ```
 
-### Install & Configure Better Auth
+### 安装及配置 Better Auth
 
-Follow steps 1 & 2 from the [installation guide](/docs/installation) to install Better Auth in your Nitro application & set up the environment variables.
+按照 [安装指南](/docs/installation) 中的第 1 和第 2 步，在你的 Nitro 应用中安装 Better Auth 并设置环境变量。
 
-Once that is done, create your Better Auth instance within the `server/utils/auth.ts` file.
+完成后，在 `server/utils/auth.ts` 文件中创建你的 Better Auth 实例。
 
 ```ts title="server/utils/auth.ts"
 import { betterAuth } from "better-auth";
@@ -92,25 +92,25 @@ export const auth = betterAuth({
 });
 ```
 
-### Update Prisma Schema
+### 更新 Prisma Schema
 
-Use the Better Auth CLI to update your Prisma schema with the required models by running the following command:
+使用 Better Auth CLI 通过以下命令更新你的 Prisma schema，添加所需模型：
 
 ```bash title="Terminal"
 npx auth generate --config server/utils/auth.ts
 ```
 
 <Callout>
-  The `--config` flag is used to specify the path to the file where you have created your Better Auth instance.
+  `--config` 选项用于指定你创建 Better Auth 实例的文件路径。
 </Callout>
 
-Head over to the `prisma/schema.prisma` file & save the file to trigger the format on save.
+然后前往 `prisma/schema.prisma` 文件并保存，以触发自动格式化。
 
-After saving the file, you can run the `npx prisma db push` command to update the database schema.
+保存后，你可以运行 `npx prisma db push` 命令更新数据库 schema。
 
-## Mount The Handler
+## 挂载处理器
 
-You can now mount the Better Auth handler in your Nitro application. You can do this by adding the following code to your `server/routes/api/auth/[...all].ts` file:
+你现在可以在 Nitro 应用中挂载 Better Auth 处理器。方法是在 `server/routes/api/auth/[...all].ts` 文件中添加以下代码：
 
 ```ts title="server/routes/api/auth/[...all].ts"
 export default defineEventHandler((event) => {
@@ -118,20 +118,20 @@ export default defineEventHandler((event) => {
 });
 ```
 <Callout>
-  This is a [catch-all](https://nitro.build/guide/routing#catch-all-route) route that will handle all requests to `/api/auth/*`.
+  这是一个 [catch-all](https://nitro.build/guide/routing#catch-all-route) 路由，将处理所有请求路径为 `/api/auth/*`。
 </Callout>
 
 ### CORS
 
-You can configure CORS for your Nitro app by creating a plugin.
+你可以通过创建插件为 Nitro 应用配置 CORS。
 
-Start by installing the cors package:
+先安装 cors 包：
 
 ```package-install
 cors
 ```
 
-You can now create a new file `server/plugins/cors.ts` and add the following code:
+然后创建新文件 `server/plugins/cors.ts`，添加以下代码：
 
 ```ts title="server/plugins/cors.ts"
 import cors from "cors";
@@ -146,21 +146,21 @@ export default defineNitroPlugin((plugin) => {
 });
 ```
 <Callout>
-  This will enable CORS for all routes. You can customize the `origin` property to allow requests from specific domains. Ensure that the config is in sync with your frontend application.
+  这将为所有路由启用 CORS。你可以自定义 `origin` 属性以允许特定域的请求。确保该配置与你的前端应用相匹配。
 </Callout>
 
-### Auth Guard/Middleware
+### 认证守卫/中间件
 
-You can add an auth guard to your Nitro application to protect routes that require authentication. You can do this by creating a new file `server/utils/require-auth.ts` and adding the following code:
+你可以在 Nitro 应用中添加认证守卫以保护需要认证的路由。方法是创建新文件 `server/utils/require-auth.ts`，并添加以下代码：
 
 ```ts title="server/utils/require-auth.ts"
 import { EventHandler, H3Event } from "h3";
 import { fromNodeHeaders } from "better-auth/node";
 
 /**
- * Middleware used to require authentication for a route.
+ * 用于要求路由认证的中间件。
  *
- * Can be extended to check for specific roles or permissions.
+ * 可扩展以检查特定角色或权限。
  */
 export const requireAuth: EventHandler = async (event: H3Event) => {
   const headers = event.headers;
@@ -171,27 +171,27 @@ export const requireAuth: EventHandler = async (event: H3Event) => {
   if (!session)
     throw createError({
       statusCode: 401,
-      statusMessage: "Unauthorized",
+      statusMessage: "未授权",
     });
-  // You can save the session to the event context for later use
+  // 你可以将 session 保存到 event 上下文以供后续使用
   event.context.auth = session;
 };
 ```
 
-You can now use this event handler/middleware in your routes to protect them:
+你现在可以在路由中使用此事件处理器/中间件来保护路由：
 
 ```ts title="server/routes/api/secret.get.ts"
-// Object syntax of the route handler
+// 路由处理器的对象语法
 export default defineEventHandler({
-  // The user has to be logged in to access this route
+  // 用户必须登录才能访问此路由
   onRequest: [requireAuth],
   handler: async (event) => {
-    setResponseStatus(event, 201, "Secret data");
-    return { message: "Secret data" };
+    setResponseStatus(event, 201, "机密数据");
+    return { message: "机密数据" };
   },
 });
 ```
 
-### Example
+### 示例
 
-You can find an example of a Nitro application integrated with Better Auth & Prisma [here](https://github.com/BayBreezy/nitrojs-better-auth-prisma).
+你可以在此处找到一个集成了 Better Auth 和 Prisma 的 Nitro 应用示例 [这里](https://github.com/BayBreezy/nitrojs-better-auth-prisma)。

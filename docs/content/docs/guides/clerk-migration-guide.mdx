@@ -1,29 +1,29 @@
 ---
-title: Migrating from Clerk to Better Auth
-description: A step-by-step guide to transitioning from Clerk to Better Auth.
+title: 从 Clerk 迁移到 Better Auth
+description: 一个逐步指导，帮助您从 Clerk 平滑迁移到 Better Auth。
 ---
 
-In this guide, we'll walk through the steps to migrate a project from Clerk to Better Auth — including email/password with proper hashing, social/external accounts, phone number, two-factor data, and more.
+在本指南中，我们将演示如何将项目从 Clerk 迁移到 Better Auth——包括带有正确哈希处理的邮箱/密码登录、社交及外部账户、手机号、两步验证数据等等。
 
 <Callout type="warn">
-This migration will invalidate all active sessions. This guide doesn't currently show you how to migrate Organization but it should be possible with additional steps and the [Organization](/docs/plugins/organization) Plugin.
+此迁移将使所有活跃会话失效。当前指南尚未涵盖如何迁移组织（Organization），但通过额外步骤以及使用 [Organization](/docs/plugins/organization) 插件，应该是可行的。
 </Callout>
 
-## Before You Begin
+## 开始之前
 
-Before starting the migration process, set up Better Auth in your project. Follow the [installation guide](/docs/installation) to get started. And go to 
+在开始迁移流程前，请先在项目中设置 Better Auth。请参考[安装指南](/docs/installation)开始配置。同时请执行以下步骤：
 
 <Steps>
 <Step>
-### Connect to your database
+### 连接到数据库
 
-You'll need to connect to your database to migrate the users and accounts. You can use any database you want, but for this example, we'll use PostgreSQL.
+迁移用户和账户数据时需要连接数据库。您可以使用任何数据库，但本示例中我们使用 PostgreSQL。
 
 ```package-install
 npm install pg
 ```
 
-And then you can use the following code to connect to your database.
+随后可使用以下代码连接数据库。
 
 ```ts title="auth.ts"
 import { Pool } from "pg";
@@ -36,22 +36,22 @@ export const auth = betterAuth({
 ```
 </Step>
 <Step>
-### Enable Email and Password (Optional)
+### 启用邮箱和密码（可选）
 
-Enable the email and password in your auth config and implement your own logic for sending verification emails, reset password emails, etc.
+在您的认证配置中启用邮箱和密码，并实现自己的逻辑以发送验证邮件、重置密码邮件等。
 
 <Callout type="info">
-**Important for Clerk Migrations**: Clerk uses bcrypt to hash passwords, while Better Auth uses `scrypt` by default. To ensure migrated users can sign in with their existing passwords, you'll need to configure Better Auth to use bcrypt for password verification.
+**Clerk 迁移的重要提示**：Clerk 使用 bcrypt 对密码进行哈希，而 Better Auth 默认使用 `scrypt`。为确保迁移的用户能使用原有密码登录，您需要配置 Better Auth 使用 bcrypt 来校验密码。
 </Callout>
 
-First, install bcrypt:
+首先安装 bcrypt：
 
 ```package-install
 pnpm add bcrypt
 pnpm add -D @types/bcrypt
 ```
 
-Then configure Better Auth to use bcrypt:
+然后配置 Better Auth 使用 bcrypt：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -60,24 +60,24 @@ import bcrypt from "bcrypt";
 export const auth = betterAuth({
     emailAndPassword: { 
         enabled: true,
-        password: { // [!code highlight]
-            hash: async (password) => { // [!code highlight]
-                return await bcrypt.hash(password, 10); // [!code highlight]
-            }, // [!code highlight]
-            verify: async ({ hash, password }) => { // [!code highlight]
-                return await bcrypt.compare(password, hash); // [!code highlight]
-            }, // [!code highlight]
-        }, // [!code highlight]
-    }, // [!code highlight]
+        password: { 
+            hash: async (password) => {
+                return await bcrypt.hash(password, 10);
+            },
+            verify: async ({ hash, password }) => {
+                return await bcrypt.compare(password, hash);
+            },
+        },
+    },
 })
 ```
 
-See [Email and Password](/docs/authentication/email-password) for more configuration options.
+更多配置选项请参阅 [邮箱和密码](/docs/authentication/email-password)。
 </Step>
 <Step>
-### Setup Social Providers (Optional)
+### 设置社交登录（可选）
 
-Add social providers you have enabled in your Clerk project in your auth config.
+在认证配置中添加您在 Clerk 项目中启用的社交登录提供者。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -89,27 +89,27 @@ export const auth = betterAuth({
     emailAndPassword: { 
         enabled: true,
     },
-    socialProviders: { // [!code highlight]
-        github: { // [!code highlight]
-            clientId: process.env.GITHUB_CLIENT_ID, // [!code highlight]
-            clientSecret: process.env.GITHUB_CLIENT_SECRET, // [!code highlight]
-        } // [!code highlight]
-    } // [!code highlight]
+    socialProviders: {
+        github: {
+            clientId: process.env.GITHUB_CLIENT_ID,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET,
+        }
+    }
 })
 ```
 </Step>
 <Step>
-### Add Plugins (Optional)
+### 添加插件（可选）
 
-You can add the following plugins to your auth config based on your needs.
+根据需要，您可以为认证配置添加以下插件。
 
-[Admin](/docs/plugins/admin) Plugin will allow you to manage users, user impersonations and app level roles and permissions.
+[Admin](/docs/plugins/admin) 插件允许您管理用户、用户模拟以及应用级角色和权限。
 
-[Two Factor](/docs/plugins/2fa) Plugin will allow you to add two-factor authentication to your application.
+[Two Factor](/docs/plugins/2fa) 插件允许您为应用添加两步验证功能。
 
-[Phone Number](/docs/plugins/phone-number) Plugin will allow you to add phone number authentication to your application.
+[Phone Number](/docs/plugins/phone-number) 插件允许您添加手机号验证功能。
 
-[Username](/docs/plugins/username) Plugin will allow you to add username authentication to your application.
+[Username](/docs/plugins/username) 插件允许您支持用户名登录。
 
 ```ts title="auth.ts"
 import { Pool } from "pg";
@@ -138,38 +138,38 @@ export const auth = betterAuth({
             clientSecret: process.env.GITHUB_CLIENT_SECRET!,
         }
     },
-    plugins: [admin(), twoFactor(), phoneNumber(), username()], // [!code highlight]
+    plugins: [admin(), twoFactor(), phoneNumber(), username()],
 })
 ```
 </Step>
   <Step>
-  ### Generate Schema
+  ### 生成 Schema
 
-  If you're using a custom database adapter, generate the schema:
+  如果您使用自定义的数据库适配器，请生成 schema：
 
   ```sh
   npx auth generate
   ```
 
-  or if you're using the default adapter, you can use the following command:
+  若使用默认适配器，则可执行：
 
   ```sh
   npx auth migrate
   ```
   </Step>
   <Step>
-  ### Export Clerk Users
-  Go to the Clerk dashboard and export the users. Check how to do it [here](https://clerk.com/docs/deployments/exporting-users#export-your-users-data-from-the-clerk-dashboard). It will download a CSV file with the users data. You need to save it as `exported_users.csv` and put it in the root of your project.
+  ### 导出 Clerk 用户
+  前往 Clerk 控制台，导出用户数据。导出方法参考 [此处](https://clerk.com/docs/deployments/exporting-users#export-your-users-data-from-the-clerk-dashboard)。导出后会下载一个用户数据 CSV 文件。将其保存为 `exported_users.csv` 并放置于项目根目录。
   </Step>
   <Step>
-  ### Create the migration script
+  ### 创建迁移脚本
 
-  Create a new file called `migrate-clerk.ts` in the `scripts` folder and add the following code:
+  在 `scripts` 文件夹中新建 `migrate-clerk.ts` 文件并添加以下代码：
 
   ```ts title="scripts/migrate-clerk.ts"
 import { generateRandomString, symmetricEncrypt } from "better-auth/crypto";
 
-import { auth } from "@/lib/auth"; // import your auth instance
+import { auth } from "@/lib/auth"; // 导入您的 auth 实例
 
 function getCSVData(csv: string) {
     const lines = csv.split('\n').filter(line => line.trim());
@@ -199,7 +199,7 @@ function getCSVData(csv: string) {
     }>;
 }
 
-const exportedUserCSV = await Bun.file("exported_users.csv").text(); // this is the file you downloaded from Clerk
+const exportedUserCSV = await Bun.file("exported_users.csv").text(); // 即您从 Clerk 下载的文件
 
 async function getClerkUsers(totalUsers: number) {
     const clerkUsers: {
@@ -238,7 +238,7 @@ async function getClerkUsers(totalUsers: number) {
             }
         });
         if (!response.ok) {
-            throw new Error(`Failed to fetch users: ${response.statusText}`);
+            throw new Error(`获取用户失败：${response.statusText}`);
         }
         const clerkUsersData = await response.json();
         // biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -263,22 +263,22 @@ export async function generateBackupCodes(
     return encCodes
 }
 
-// Helper function to safely convert timestamp to Date
+// 辅助函数：安全将时间戳转换为 Date
 function safeDateConversion(timestamp?: number): Date {
     if (!timestamp) return new Date();
 
     const date = new Date(timestamp);
 
-    // Check if the date is valid
+    // 检查日期有效性
     if (isNaN(date.getTime())) {
-        console.warn(`Invalid timestamp: ${timestamp}, falling back to current date`);
+        console.warn(`无效时间戳：${timestamp}，使用当前时间替代`);
         return new Date();
     }
 
-    // Check for unreasonable dates (before 2000 or after 2100)
+    // 检查日期合理性（2000年之前或2100年之后都视为异常）
     const year = date.getFullYear();
     if (year < 2000 || year > 2100) {
-        console.warn(`Suspicious date year: ${year}, falling back to current date`);
+        console.warn(`可疑年份：${year}，使用当前时间替代`);
         return new Date();
     }
 
@@ -297,7 +297,7 @@ async function migrateFromClerk() {
         const { id, first_name, last_name, username, primary_email_address, primary_phone_number, verified_email_addresses, unverified_email_addresses, verified_phone_numbers, unverified_phone_numbers, totp_secret, password_digest, password_hasher } = user;
         const clerkUser = clerkUsers.find(clerkUser => clerkUser?.id === id);
 
-        // create user
+        // 创建用户
         const createdUser = await ctx.adapter.create<{
             id: string;
         }>({
@@ -310,11 +310,11 @@ async function migrateFromClerk() {
                 image: clerkUser?.image_url,
                 createdAt: safeDateConversion(clerkUser?.created_at),
                 updatedAt: safeDateConversion(clerkUser?.updated_at),
-                // # Two Factor (if you enabled two factor plugin)
+                // # 两步验证（如果启用了该插件）
                 ...(isTwoFactorEnabled ? {
                     twoFactorEnabled: clerkUser?.two_factor_enabled
                 } : {}),
-                // # Admin (if you enabled admin plugin)
+                // # 管理插件（如果启用了）
                 ...(isAdminEnabled ? {
                     banned: clerkUser?.banned,
                     banExpires: clerkUser?.lockout_expires_in_seconds
@@ -322,11 +322,11 @@ async function migrateFromClerk() {
                        : undefined,
                     role: "user"
                 } : {}),
-                // # Username (if you enabled username plugin)
+                // # 用户名插件（如果启用了）
                 ...(isUsernameEnabled ? {
                     username: username,
                 } : {}),
-                // # Phone Number (if you enabled phone number plugin)  
+                // # 手机号插件（如果启用了）  
                 ...(isPhoneNumberEnabled ? {
                     phoneNumber: primary_phone_number,
                     phoneNumberVerified: verified_phone_numbers.length > 0,
@@ -344,7 +344,7 @@ async function migrateFromClerk() {
                 }]
             })
         })
-        // create external account
+        // 创建外部账户
         const externalAccounts = clerkUser?.external_accounts;
         if (externalAccounts) {
             for (const externalAccount of externalAccounts) {
@@ -381,7 +381,7 @@ async function migrateFromClerk() {
             }
         }
 
-        //two factor
+        // 两步验证数据
         if (isTwoFactorEnabled) {
             await ctx.adapter.create({
                 model: "twoFactor",
@@ -397,44 +397,45 @@ async function migrateFromClerk() {
 
 migrateFromClerk()
     .then(() => {
-        console.log('Migration completed');
+        console.log('迁移完成');
         process.exit(0);
     })
     .catch((error) => {
-        console.error('Migration failed:', error);
+        console.error('迁移失败:', error);
         process.exit(1);
     });
-  ```
-  Make sure to replace the `process.env.CLERK_SECRET_KEY` with your own Clerk secret key. Feel free to customize the script to your needs.
+```
+
+请确保将 `process.env.CLERK_SECRET_KEY` 替换为您自己的 Clerk 秘钥。您也可以根据需要定制此脚本。
  </Step>
   
 <Step>
-  ### Run the migration
+  ### 运行迁移
 
-  Run the migration:
+  运行迁移脚本：
 
   ```sh
-  bun run script/migrate-clerk.ts # you can use any thing you like to run the script
+  bun run script/migrate-clerk.ts # 可使用任何您喜欢的方式运行脚本
   ```
 
   <Callout type="warning">
-  Make sure to:
-  1. Test the migration in a development environment first
-  2. Monitor the migration process for any errors
-  3. Verify the migrated data in Better Auth before proceeding
-  4. Keep Clerk installed and configured until the migration is complete
+  请确保：
+  1. 首先在开发环境测试迁移
+  2. 监控迁移过程中是否发生错误
+  3. 在继续前验证 Better Auth 中的数据是否正确迁移
+  4. 迁移完成前保持 Clerk 安装并配置好
   </Callout>
 
   </Step>
   <Step>
-  ### Verify the migration
+  ### 验证迁移结果
 
-  After running the migration, verify that all users have been properly migrated by checking the database.
+  运行迁移后，请检查数据库，确认所有用户数据是否已经正确迁移。
   </Step>
   <Step>
-  ### Update your components
+  ### 更新组件
 
-  Now that the data is migrated, you can start updating your components to use Better Auth. Here's an example for the sign-in component:
+  数据迁移结束后，您可以开始更新组件以使用 Better Auth。下面是一个登录组件示例：
 
   ```tsx title="components/auth/sign-in.tsx"
   import { authClient } from "better-auth/client";
@@ -450,21 +451,21 @@ migrateFromClerk()
         console.error(error);
         return;
       }
-      // Handle successful sign in
+      // 处理登录成功逻辑
     };
 
     return (
       <form onSubmit={handleSignIn}>
-        <button type="submit">Sign in</button>
+        <button type="submit">登录</button>
       </form>
     );
   };
   ```
   </Step>
 <Step>
-  ### Update the middleware
+  ### 更新中间件
 
-  Replace your Clerk middleware with Better Auth's middleware:
+  用 Better Auth 的中间件替换 Clerk 的中间件：
 
   ```ts title="middleware.ts"
 
@@ -488,9 +489,9 @@ migrateFromClerk()
   ```
   </Step>
   <Step>
-  ### Remove Clerk Dependencies
+  ### 移除 Clerk 依赖
 
-  Once you've verified that everything is working correctly with Better Auth, you can remove Clerk:
+  确认使用 Better Auth 运行正常后，即可移除 Clerk：
 
   ```bash title="Remove Clerk"
   pnpm remove @clerk/nextjs @clerk/themes @clerk/types
@@ -498,12 +499,12 @@ migrateFromClerk()
     </Step>
 </Steps>
 
-## Additional Resources
+## 额外资源
 
-[Goodbye Clerk, Hello Better Auth – Full Migration Guide!](https://www.youtube.com/watch?v=Za_QihbDSuk)
+[告别 Clerk，迎接 Better Auth – 全面迁移指南！](https://www.youtube.com/watch?v=Za_QihbDSuk)
 
-## Wrapping Up
+## 总结
 
-Congratulations! You've successfully migrated from Clerk to Better Auth.
+恭喜！您已成功从 Clerk 迁移到 Better Auth。
 
-Better Auth offers greater flexibility and more features—be sure to explore the [documentation](/docs) to unlock its full potential.
+Better Auth 提供了更大灵活性和更多功能——务必浏览[文档](/docs)以充分发挥其潜力。

@@ -1,20 +1,20 @@
 ---
 title: "Better Auth 1.3"
-description: "SSO with SAML, Multi Team Support, Additional Fields for Organization, Performance and more."
+description: "支持 SAML 的单点登录（SSO）、多团队支持、组织额外字段、性能提升等。"
 date: 2025-07-19
 author:
   name: "Bereket Engida"
   avatar: "/avatars/beka.jpg"
   twitter: "bekacru"
 image: "https://docs.better-auth.com/release-og/1-3.png"
-tags: ["1.3", "authentication", "oidc", "mcp", "sso", "organization"]
+tags: ["1.3", "身份验证", "oidc", "mcp", "sso", "organization"]
 ---
 
-## Better Auth 1.3 Release
+## Better Auth 1.3 发布
 
-We're excited to announce the release of Better Auth 1.3. This release includes a lot of new features and improvements.
+我们很高兴宣布发布 Better Auth 1.3 版本。本次发布包含了许多新功能和改进。
 
-To upgrade, run:
+升级请运行：
 
 ```package-install
 npm install better-auth@1.3
@@ -22,13 +22,13 @@ npm install better-auth@1.3
 
 ---
 
-## 🚀 Highlights
+## 🚀 亮点
 
-### **SSO Plugin**
+### **单点登录插件（SSO Plugin）**
 
-The SSO plugin has been moved to its own package and now supports both **OIDC** and **SAML 2.0**.
+SSO 插件已拆分为独立包，现在支持 **OIDC** 和 **SAML 2.0**。
 
-👉 [Read the SSO docs](/docs/plugins/sso)
+👉 [阅读 SSO 文档](/docs/plugins/sso)
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -57,19 +57,19 @@ export const auth = betterAuth({
 
 ---
 
-### **OIDC & MCP Plugins – Now Stable**
+### **OIDC 和 MCP 插件 — 现已稳定**
 
-Both OIDC and MCP plugins are production‑ready.
+OIDC 和 MCP 插件均已达到生产就绪状态。
 
-✅ Features:
+✅ 功能：
 
-* Refresh token support in discovery & token endpoints
-* JWKs and PKCE for public clients
-* Trusted clients
-* Encrypted & hashed client secrets
+* 在发现和令牌端点支持刷新令牌
+* 公共客户端支持 JWKs 和 PKCE
+* 可信客户端
+* 加密且哈希的客户端密钥
 
-👉 [Read OIDC docs](/docs/plugins/oidc-provider)
-👉 [Read MCP docs](/docs/plugins/mcp)
+👉 [阅读 OIDC 文档](/docs/plugins/oidc-provider)
+👉 [阅读 MCP 文档](/docs/plugins/mcp)
 
 ```ts title="auth.ts"
 import { mcp } from "better-auth/plugins";
@@ -85,12 +85,11 @@ export const auth = betterAuth({
 
 ---
 
-### **Stripe Plugin is now production ready**
+### **Stripe 插件现已生产就绪**
 
-The Stripe plugin is now stable and usage based pricing is coming very soon.
+Stripe 插件现已稳定，基于使用量的计费很快上线。
 
-👉 [Read Stripe docs](/docs/plugins/stripe)
-
+👉 [阅读 Stripe 文档](/docs/plugins/stripe)
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -105,11 +104,11 @@ export const auth = betterAuth({
 });
 ```
 
-### **SIWE Plugin**
+### **SIWE 插件**
 
-Native support for **Sign‑In with Ethereum**.
+原生支持 **以太坊登录（Sign‑In with Ethereum）**。
 
-👉 [Read SIWE docs](/docs/plugins/siwe)
+👉 [阅读 SIWE 文档](/docs/plugins/siwe)
 
 ```ts title="auth.ts"
 import { siwe } from "better-auth/plugins";
@@ -123,9 +122,9 @@ export const auth = betterAuth({
 
 ---
 
-### **New Social Providers**
+### **新增社交登录提供者**
 
-We’ve added providers for **Notion, Slack, Linear, and Faceit**.
+新增了 **Notion、Slack、Linear 和 Faceit** 提供者。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -142,12 +141,12 @@ export const auth = betterAuth({
 
 ---
 
-### **SvelteKit Cookie Helper Plugin**
+### **SvelteKit Cookie 辅助插件**
 
-Utilities for handling cookies in SvelteKit server actions.
+提供用于处理 SvelteKit 服务端操作中 Cookie 的工具。
 
 <Callout type="warn">
-  Breaking change: `building` and `getRequestEvent` must now be passed in as props.
+  重大更改：`building` 和 `getRequestEvent` 现在必须作为参数传入。
 </Callout>
 
 ```ts title="auth.ts"
@@ -162,24 +161,23 @@ export const auth = betterAuth({
 
 ---
 
-### **Email Verification on Sign‑In**
+### **登录时的邮箱验证**
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
   emailVerification: {
-    sendOnSignIn: true, // sends a verification email on sign‑in if the user isn’t verified
+    sendOnSignIn: true, // 如果用户未验证，在登录时发送验证邮件
   },
 });
 ```
 
 ---
 
-### **Multi‑Team Support**
+### **多团队支持**
 
-The organization plugin now supports members belonging to multiple teams.
+组织插件现在支持成员属于多个团队。
 
-**Breaking change:**
-`teamId` has been removed from the `member` table. A new `teamMembers` table is required.
+**重大更改：** `member` 表中移除了 `teamId` 字段，新增了 `teamMembers` 表。
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -197,16 +195,16 @@ import { organizationClient } from "better-auth/client/plugins";
 import { auth } from "./auth";
 
 export const authClient = createAuthClient({
-  // pass your auth instance to infer additional fields
+  // 传入 auth 实例以推断额外字段
   plugins: [organizationClient({ $inferAuth: {} as typeof auth })], // [!code highlight]
 });
 ```
 
 ---
 
-### **Additional Organization Fields**
+### **组织额外字段**
 
-Add custom fields to `organization`, `member`, and `invitation` models.
+可为 `organization`、`member` 和 `invitation` 模型添加自定义字段。
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -222,17 +220,17 @@ export const auth = betterAuth({
 });
 ```
 
-Other new options:
+其他新增选项：
 
-* `maximumMembersPerTeam` – set team member limits
-* `listUserInvitations` – list all invitations for a user
+* `maximumMembersPerTeam` — 设置团队成员上限
+* `listUserInvitations` — 列出用户的所有邀请
 
 ---
 
-### **Generic OAuth Improvements**
+### **通用 OAuth 改进**
 
-* Added support for extra token URL params
-* OAuth token encryption options
+* 新增支持额外令牌 URL 参数
+* OAuth 令牌加密选项
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -246,101 +244,101 @@ export const auth = betterAuth({
 
 ---
 
-### **API Keys**
+### **API 密钥**
 
-* `requireName` option for key creation
-* `verifyKey` now supports async functions
-
----
-
-### **Username**
-
-* Availability checks
-* Custom normalization
+* 新增 `requireName` 选项，用于创建密钥时必须填写名称
+* `verifyKey` 现在支持异步函数
 
 ---
 
-### ✨ More Features
+### **用户名**
 
-* Migrated to **Zod 4** for better type safety and performance
-* CLI supports custom adapter `createSchema`
-* `inferAuth` utility to infer types from the client
-* Improved docs with `auth` and `authClient` examples
-* `rememberMe` support in `signUp`
-* `afterEmailVerification` hook
-* `freshAge` and custom `errorURL` respected properly
-* OAuth2 tokens now include `refresh_token_expires_in`
+* 可检查用户名可用性
+* 支持自定义规范化处理
 
 ---
 
-### 🐛 Bug Fixes & Improvements
+### ✨ 更多功能
 
-#### Plugins
-
-* Expo: Fixed type path import
-* SSO: Fixed SAML redirection & type checks
-* Dropbox: Token access type support
-* Stripe:
-
-  * Prevent duplicate customers
-  * Allow upgrading incomplete subscriptions
-* Admin:
-
-  * Fixed missing `ctx` in hooks
-  * Proper error when removing invalid user IDs
-
-#### OAuth & Providers
-
-* Fixed duplicate OAuth registration
-* Improved Google/Microsoft scope handling
-* Fixed malformed error URLs in generic OAuth
-* Facebook: Better detection for limited token JWT
-* Twitter: Improved email verification logic
-
-#### Core Authentication
-
-* Exclude current user from username uniqueness check
-* Support `callbackURL` in `signInUsername`
-* Allow account linking without email
-* Fixed missing `null` type in `/get-session` response
-* Global `onSuccess` hook now works
-* JWT: Alternate algorithms supported in JWKS
-* `origin-check`: Wildcard trusted origins supported
-
-#### CLI, DB, and Adapters
-
-* CLI: Improved Drizzle schema formatting
-* MongoAdapter: Works with `create-adapter`
-* Schema generation respects `useNumberId`
-* Postgres: Better varchar normalization and type comparison
-* Drizzle CLI: Uses `serial` as PK if `useNumberId` is enabled
-
-#### Email & OTP
-
-* OTPs now encrypted
-* Fixed `onEmailVerification` not firing
-* Proper error when sign‑up is disabled
-* Phone number: Reset clears verification values
-
-#### Two-Factor Auth
-
-* Default OTP period fix
-* URI generation doesn’t require enabling 2FA
-* Fixed OTP URI separator mismatch
-
-#### Miscellaneous
-
-* Delete organization if member not found
-* Correct error codes for API key rate limits
-* Additional fields now show in OpenAPI
-* Fixed FK constraint generation for MySQL
-* Various improvements to account linking
-* OIDC `offline_access` no longer requires `prompt=consent`
-* Fixed malformed base64 encoding for token validation
+* 迁移到 **Zod 4**，提升类型安全和性能
+* CLI 支持自定义适配器的 `createSchema`
+* `inferAuth` 工具支持从客户端推断类型
+* 改进文档，添加 `auth` 和 `authClient` 示例
+* `signUp` 支持 `rememberMe`
+* 新增 `afterEmailVerification` 钩子
+* 正确支持 `freshAge` 和自定义 `errorURL`
+* OAuth2 令牌现包含 `refresh_token_expires_in`
 
 ---
 
-A lot of refinements to make everything smoother, faster, and more reliable.
-👉 [Check the full changelog](https://github.com/better-auth/better-auth/releases/tag/v1.3.0)
+### 🐛 修复与改进
+
+#### 插件
+
+* Expo：修复类型路径导入
+* SSO：修复 SAML 重定向及类型检查
+* Dropbox：支持令牌访问类型
+* Stripe：
+
+  * 阻止重复客户
+  * 允许升级未完成订阅
+* 管理后台：
+
+  * 修复钩子中缺失的 `ctx`
+  * 删除无效用户 ID 时返回正确错误
+
+#### OAuth 与提供者
+
+* 修复重复注册 OAuth 问题
+* 改进 Google/Microsoft 的权限处理
+* 修复通用 OAuth 中的错误 URL 格式
+* Facebook：改进受限令牌 JWT 的检测
+* Twitter：改进邮箱验证逻辑
+
+#### 核心认证
+
+* 排除当前用户进行用户名唯一性检查
+* `signInUsername` 支持 `callbackURL`
+* 允许无邮箱账号关联
+* 修复 `/get-session` 响应中缺失的 `null` 类型
+* 全局 `onSuccess` 钩子正常工作
+* JWT：支持 JWKS 中的备选算法
+* `origin-check`支持通配符可信源
+
+#### CLI、数据库与适配器
+
+* CLI：改进 Drizzle 架构格式化
+* MongoAdapter：支持 `create-adapter`
+* 模式生成尊重 `useNumberId`
+* Postgres：改进 varchar 规范化及类型比较
+* Drizzle CLI：启用 `useNumberId` 时使用 `serial` 作为主键
+
+#### 邮件与 OTP
+
+* OTP 现已加密
+* 修复 `onEmailVerification` 不触发问题
+* 关闭注册时报正确错误
+* 手机号重置清理验证值
+
+#### 双因素认证
+
+* 修复默认 OTP 周期
+* URI 生成无须启用 2FA
+* 修复 OTP URI 分隔符不匹配
+
+#### 杂项
+
+* 未找到成员时删除组织
+* API 密钥限流返回正确错误码
+* OpenAPI 展示额外字段
+* 修复 MySQL 外键约束生成
+* 多项账号关联改进
+* OIDC `offline_access` 不再强制 `prompt=consent`
+* 修复令牌校验时的错误 base64 编码
+
+---
+
+大量改进使体验更流畅、更快速、更可靠。
+👉 [查看完整变更日志](https://github.com/better-auth/better-auth/releases/tag/v1.3.0)
 
 ---

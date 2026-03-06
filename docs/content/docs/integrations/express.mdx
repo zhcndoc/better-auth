@@ -1,22 +1,22 @@
 ---
-title: Express Integration
-description: Integrate Better Auth with Express.
+title: Express 集成
+description: 将 Better Auth 与 Express 集成。
 ---
 
-This guide will show you how to integrate Better Auth with [express.js](https://expressjs.com/).
+本指南将向你展示如何将 Better Auth 集成到 [express.js](https://expressjs.com/) 中。
 
-Before you start, make sure you have a Better Auth instance configured. If you haven't done that yet, check out the [installation](/docs/installation).
+开始之前，确保你已经配置了 Better Auth 实例。如果还没有，请查看[安装](/docs/installation)。
 
 <Callout>
-Note that CommonJS (cjs) isn't supported. Use ECMAScript Modules (ESM) by setting `"type": "module"` in your `package.json` or configuring your `tsconfig.json` to use ES modules.
+请注意，不支持 CommonJS (cjs)。请通过在 `package.json` 中设置 `"type": "module"` 或在 `tsconfig.json` 中配置使用 ES 模块来使用 ECMAScript 模块 (ESM)。
 </Callout>
 
-### Mount the handler
+### 挂载处理器
 
-To enable Better Auth to handle requests, we need to mount the handler to an API route. Create a catch-all route to manage all requests to `/api/auth/*` in case of ExpressJS v4 or `/api/auth/*splat` in case of ExpressJS v5 (or any other path specified in your Better Auth options).
+为了让 Better Auth 处理请求，我们需要将处理器挂载到一个 API 路由上。创建一个 catch-all 路由来管理所有对 `/api/auth/*` 的请求（ExpressJS v4）或 `/api/auth/*splat` 的请求（ExpressJS v5），或者使用你在 Better Auth 选项中指定的任意路径。
 
 <Callout type="warn">
-Don’t use `express.json()` before the Better Auth handler. Use it only for other routes, or the client API will get stuck on "pending".
+不要在 Better Auth 处理器之前使用 `express.json()`。仅在其他路由上使用它，否则客户端 API 会一直处于“pending”状态。
 </Callout>
 
 ```ts title="server.ts"
@@ -27,53 +27,52 @@ import { auth } from "./auth";
 const app = express();
 const port = 3005;
 
-app.all("/api/auth/*", toNodeHandler(auth)); // For ExpressJS v4
-// app.all("/api/auth/*splat", toNodeHandler(auth)); For ExpressJS v5 
+app.all("/api/auth/*", toNodeHandler(auth)); // 适用于 ExpressJS v4
+// app.all("/api/auth/*splat", toNodeHandler(auth)); // 适用于 ExpressJS v5 
 
-// Mount express json middleware after Better Auth handler
-// or only apply it to routes that don't interact with Better Auth
+// 在 Better Auth 处理器后挂载 express json 中间件
+// 或仅将其应用于不与 Better Auth 交互的路由
 app.use(express.json());
 
 app.listen(port, () => {
-	console.log(`Example app listening on port ${port}`);
+	console.log(`示例应用正在监听端口 ${port}`);
 });
 ```
 
-After completing the setup, start your server. Better Auth will be ready to use. You can send a `GET` request to the `/ok` endpoint (`/api/auth/ok`) to verify that the server is running.
+完成设置后，启动服务器。Better Auth 即可使用。你可以向 `/ok` 端点（`/api/auth/ok`）发送一个 `GET` 请求，以验证服务器是否正在运行。
 
+### 跨域资源共享 (Cors) 配置
 
-### Cors Configuration
-
-To add CORS (Cross-Origin Resource Sharing) support to your Express server when integrating Better Auth, you can use the `cors` middleware. Below is an updated example showing how to configure CORS for your server:
+在将 Better Auth 集成到 Express 服务器时，为了添加 CORS（跨域资源共享）支持，你可以使用 `cors` 中间件。以下是一个更新的示例，展示如何为你的服务器配置 CORS：
 
 ```ts
 import express from "express";
-import cors from "cors"; // Import the CORS middleware
+import cors from "cors"; // 导入 CORS 中间件
 import { toNodeHandler, fromNodeHeaders } from "better-auth/node";
 import { auth } from "./auth";
 
 const app = express();
 const port = 3005;
 
-// Configure CORS middleware
+// 配置 CORS 中间件
 app.use(
   cors({
-    origin: "http://your-frontend-domain.com", // Replace with your frontend's origin
-    methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
-    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+    origin: "http://your-frontend-domain.com", // 替换为你的前端域名
+    methods: ["GET", "POST", "PUT", "DELETE"], // 指定允许的 HTTP 方法
+    credentials: true, // 允许携带凭据（cookies，授权头等）
   })
 );
 ```
 
-### Getting the User Session
+### 获取用户会话
 
-To retrieve the user's session, you can use the `getSession` method provided by the `auth` object. This method requires the request headers to be passed in a specific format. To simplify this process, Better Auth provides a `fromNodeHeaders` helper function that converts Node.js request headers to the format expected by Better Auth (a `Headers` object).
+要获取用户的会话信息，你可以使用 `auth` 对象提供的 `getSession` 方法。该方法需要以特定格式传入请求头。为了简化这一过程，Better Auth 提供了一个 `fromNodeHeaders` 辅助函数，将 Node.js 请求头转换为 Better Auth 期望的格式（`Headers` 对象）。
 
-Here's an example of how to use `getSession` in an Express route:
+下面是如何在 Express 路由中使用 `getSession` 的示例：
 
 ```ts title="server.ts"
 import { fromNodeHeaders } from "better-auth/node";
-import { auth } from "./auth"; // Your Better Auth instance
+import { auth } from "./auth"; // 你的 Better Auth 实例
 
 app.get("/api/me", async (req, res) => {
  	const session = await auth.api.getSession({

@@ -1,6 +1,6 @@
 ---
 title: "Better Auth 1.5"
-description: "Auth CLI, MCP Auth, OAuth 2.1 Provider, Electron integration, i18n, adapter extraction, dynamic base URL, Cloudflare D1 support, CLI init wizard, seat-based billing, SAML Single Logout, test utilities, secret key rotation, and more!"
+description: "Auth CLI、MCP Auth、OAuth 2.1 Provider、Electron 集成、多语言支持、适配器拆分、动态基础 URL、Cloudflare D1 支持、CLI 初始化向导、基于席位计费、SAML 单点注销、测试工具、密钥轮换等等！"
 date: 2026-02-28
 author:
   name: "Alex Yang"
@@ -10,21 +10,21 @@ image: "https://docs.better-auth.com/release-og/v1.5-release.png"
 tags: ["1.5", "CLI", "MCP", "oauth-provider", "electron", "i18n", "adapters", "cloudflare", "d1", "stripe", "SSO", "SCIM", "test-utils"]
 ---
 
-## Better Auth 1.5 Release
+## Better Auth 1.5 版本发布
 
-We’re excited to announce the release of Better Auth 1.5! 🎉
+我们很高兴地宣布发布 Better Auth 1.5！🎉
 
-This is our biggest release yet, with over 600 commits, 70 new features, 200 bug fixes, and 7 entirely new packages. From MCP authentication to Electron desktop support, this release brings Better Auth to new platforms and use cases.
+这是迄今为止最大的一次发布，拥有超过 600 次提交、70 个新功能、200 多个错误修复，以及 7 个全新包。从 MCP 认证到 Electron 桌面支持，此版本将 Better Auth 拓展到更多平台和使用场景。
 
-We’re also announcing our new Infrastructure product. It lets you use a full user management and analytics dashboard, security and protection tooling, audit logs, a self-service SSO UI, and more, all with your own Better Auth instance.
+我们还推出了全新的 Infrastructure 产品。它让你可以使用完整的用户管理和分析仪表盘、安全防护工具、审计日志、自助式 SSO 界面等等，且都运行在你自己的 Better Auth 实例上。
 
-Starting with this release, the self-service SSO dashboard — which lets your enterprise customers onboard their own SAML providers without support tickets — is powered by Better Auth Infrastructure. If you’re using the SSO plugin in production, we recommend upgrading to the Pro or Business tier to get access to the dashboard and streamline your enterprise onboarding.
+从本次发布开始，自助式 SSO 仪表盘 —— 允许企业客户自主接入自己的 SAML 身份提供者而无需支持工单 —— 将由 Better Auth Infrastructure 支持。如果你在生产环境使用 SSO 插件，建议升级至 Pro 或 Business 版本，以获取仪表盘访问权限并简化企业客户入驻流程。
 
-And soon, you’ll be able to host your Better Auth instance on our infrastructure as well, so you can own your auth at scale without worrying about infrastructure needs.
+不久之后，你还可以将你的 Better Auth 实例托管到我们的基础设施上，按需拥有大规模的认证能力，而无需担心基础设施需求。
 
-Sign up now: [https://dash.better-auth.com/sign-in](https://dash.better-auth.com/sign-in) 🚀
+立即注册：[https://dash.better-auth.com/sign-in](https://dash.better-auth.com/sign-in) 🚀
 
-To upgrade, run:
+升级命令如下：
 
 ```bash
 npx auth upgrade
@@ -32,38 +32,38 @@ npx auth upgrade
 
 ---
 
-## 🚀 Highlights
+## 🚀 亮点功能
 
-### New Better Auth CLI
+### 全新 Better Auth CLI
 
-We’re introducing a new standalone CLI: `npx auth`. This replaces the previous `@better-auth/cli` package, which will be deprecated in a future release.
+我们推出了全新的独立 CLI：`npx auth`。它替代了之前的 `@better-auth/cli` 包，后者将在未来版本中弃用。
 
 ```bash
 npx auth init
 ```
 
-With a single interactive command, `npx auth init` scaffolds a complete Better Auth setup — configuration file, database adapter, and framework integration.
+通过一个交互式命令，`npx auth init` 可以快速生成完整的 Better Auth 配置 —— 包括配置文件、数据库适配器、和框架集成。
 
-All existing commands like `migrate` and `generate` are available through the new CLI as well:
+现有的所有命令如 `migrate` 和 `generate` 也都通过新 CLI 提供：
 
 ```bash
-npx auth migrate   # Run database migrations
-npx auth generate  # Generate auth schema
-npx auth upgrade   # Upgrade Better Auth to the latest version
+npx auth migrate   # 运行数据库迁移
+npx auth generate  # 生成认证 Schema
+npx auth upgrade   # 升级 Better Auth 到最新版本
 ```
 
-The `generate` command now also supports a `--adapter` flag, letting you generate schema output tailored to your specific database adapter without needing a full Better Auth config file:
+`generate` 命令现在支持 `--adapter` 标志，可以针对特定数据库适配器生成对应的 Schema 输出，无需完整 Better Auth 配置文件：
 
 ```bash
 npx auth generate --adapter prisma
 npx auth generate --adapter drizzle
 ```
 
-### Remote MCP Auth Client
+### 远程 MCP Auth 客户端
 
-The MCP plugin now ships a framework-agnostic remote auth client. If your MCP server is separate from your Better Auth instance, you can verify tokens and protect resources without duplicating auth logic.
+MCP 插件现提供一个与框架无关的远程认证客户端。如果你的 MCP 服务器与 Better Auth 实例分离，可以用它验证令牌和保护资源，而不必重复认证逻辑。
 
-[👉 Read more about MCP authentication](https://www.better-auth.com/docs/plugins/mcp)
+[👉 了解更多 MCP 认证](https://www.better-auth.com/docs/plugins/mcp)
 
 ```tsx
 import { createMcpAuthClient } from "better-auth/plugins/mcp/client";
@@ -72,17 +72,17 @@ const mcpAuth = createMcpAuthClient({
     authURL: "<https://my-app.com/api/auth>",
 });
 
-// Use as a handler wrapper
+// 作为请求处理器包装器使用
 const handler = mcpAuth.handler(async (req, session) => {
-    // session contains userId, scopes, accessToken, clientId, etc.
+    // session 包含 userId, scopes, accessToken, clientId 等信息
     return new Response("OK");
 });
 
-// Or verify tokens directly
+// 或直接验证令牌
 const session = await mcpAuth.verifyToken(token);
 ```
 
-It also comes with built-in framework adapters for Hono and Express-like servers:
+它还内置了适用于 Hono 和类 Express 服务器的适配器：
 
 ```tsx
 import { mcpAuthHono } from "better-auth/plugins/mcp/client/adapters";
@@ -92,11 +92,11 @@ const middleware = mcpAuthHono(mcpAuth);
 
 ---
 
-### OAuth 2.1 Provider
+### OAuth 2.1 提供者
 
-The new `@better-auth/oauth-provider` plugin turns your Better Auth instance into a full OAuth 2.1 authorization server with OIDC compatibility. Issue access tokens, manage client registrations, and let third-party apps authenticate against your API — including MCP agents.
+新的 `@better-auth/oauth-provider` 插件可以将你的 Better Auth 实例变成完全兼容 OIDC 的 OAuth 2.1 授权服务器。它支持发放访问令牌、客户端注册及第三方应用认证，包括 MCP 代理。
 
-[👉 Read more about the OAuth Provider](https://www.better-auth.com/docs/plugins/oauth-provider)
+[👉 了解更多 OAuth Provider](https://www.better-auth.com/docs/plugins/oauth-provider)
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -114,27 +114,27 @@ export const auth = betterAuth({
 });
 ```
 
-Key features:
+主要功能：
 
-- **OAuth 2.1 with OIDC**: Supports `authorization_code`, `refresh_token`, and `client_credentials` grants with `openid` scope support.
-- **MCP-ready**: Works out of the box as an authorization server for MCP tools and agents.
-- **Dynamic Client Registration**: Allow clients to register dynamically, with support for both public and confidential clients.
-- **JWT & JWKS verification**: Sign access tokens as JWTs and verify them remotely via the `/jwks` endpoint.
-- **Consent & authorization flows**: Built-in consent, account selection, and post-login redirect screens.
-- **Token introspection & revocation**: RFC 7662 and RFC 7009 compliant endpoints.
-- **Per-endpoint rate limiting**: Configurable rate limits for each OAuth endpoint.
+- **OAuth 2.1 + OIDC 支持**：支持 `authorization_code`、`refresh_token`、`client_credentials` 授权模式，支持 `openid` 范围。
+- **MCP-ready**：开箱即用，作为 MCP 工具和代理的授权服务器。
+- **动态客户端注册**：允许客户端动态注册，支持公有和机密客户端。
+- **JWT & JWKS 验证**：以 JWT 签发访问令牌，并通过 `/jwks` 端点远程验证。
+- **用户同意与授权流程**：内置同意、账户选择和登录后重定向页面。
+- **令牌核查与撤销**：遵守 RFC 7662 和 RFC 7009 标准的接口。
+- **端点级限流**：可为每个 OAuth 端点配置请求速率限制。
 
 <Callout type="info">
-The OAuth 2.1 Provider replaces the previous OIDC Provider plugin, which will be deprecated in a future release. The MCP plugin will also transition to use the OAuth 2.1 Provider as its foundation. See the [migration guide](https://www.better-auth.com/docs/plugins/oauth-provider#from-oidc-provider-plugin) for upgrading from the OIDC Provider plugin.
+OAuth 2.1 Provider 替代了之前的 OIDC Provider 插件，后者将在未来版本弃用。MCP 插件也将迁移至基于 OAuth 2.1 Provider。查看[迁移指南](https://www.better-auth.com/docs/plugins/oauth-provider#from-oidc-provider-plugin)，了解如何从 OIDC Provider 升级。
 </Callout>
 
 ---
 
-### Electron Integration
+### Electron 集成
 
-Full desktop authentication support for Electron apps. The plugin handles the complete OAuth flow — opening the system browser, exchanging authorization codes via custom protocol, and managing cookies securely.
+为 Electron 应用提供完整的桌面认证支持。插件支持完整的 OAuth 流程 —— 启动系统浏览器，通过自定义协议交换授权码，并安全管理 Cookie。
 
-[👉 Read more about Electron integration](https://www.better-auth.com/docs/integrations/electron)
+[👉 了解更多 Electron 集成](https://www.better-auth.com/docs/integrations/electron)
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -157,17 +157,17 @@ const client = createAuthClient({
     ],
 });
 
-// Opens system browser, handles callback, returns session
+// 打开系统浏览器，处理回调，返回会话
 await client.requestAuth();
 ```
 
 ---
 
-### Internationalization (i18n)
+### 国际化（i18n）
 
-The new i18n plugin provides type-safe error message translations with automatic locale detection from headers, cookies, or sessions.
+新的 i18n 插件支持类型安全的错误消息翻译，自动从请求头、Cookie 或 Session 中检测语言环境。
 
-[👉 Read more about i18n](https://www.better-auth.com/docs/plugins/i18n)
+[👉 了解更多 i18n](https://www.better-auth.com/docs/plugins/i18n)
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -188,13 +188,13 @@ export const auth = betterAuth({
 });
 ```
 
-Error codes are fully typed — your IDE will autocomplete all available error codes from every registered plugin.
+错误代码完全类型化 —— 你的 IDE 会自动补全所有已注册插件支持的错误码。
 
 ---
 
-### Typed Error Codes
+### 类型化错误码
 
-Every error response now includes a machine-readable `code` field. All first-party plugins define their own typed error codes using `defineErrorCodes`, and the `APIError` class supports them natively.
+每个错误响应现在均包含机器可读的 `code` 字段。所有官方插件都使用 `defineErrorCodes` 定义类型化错误码，`APIError` 类原生支持这些错误码。
 
 ```tsx
 import { defineErrorCodes } from "@better-auth/core";
@@ -204,11 +204,11 @@ export const MY_ERROR_CODES = defineErrorCodes({
     INVALID_TOKEN: "The provided token is invalid",
 });
 
-// In route handlers:
+// 路由处理器中使用：
 throw APIError.from("BAD_REQUEST", MY_ERROR_CODES.USER_NOT_FOUND);
 ```
 
-Error responses now look like:
+错误响应示例：
 
 ```json
 {
@@ -217,29 +217,29 @@ Error responses now look like:
 }
 ```
 
-This is the foundation that the i18n plugin builds on — every error code from every plugin is discoverable at compile time, so translation dictionaries are fully type-checked.
+这是 i18n 插件的基础 —— 每个错误码在编译时可发现，因此翻译字典可以进行类型检查。
 
 ---
 
-### SSO — Production Ready
+### SSO —— 生产就绪
 
-The SSO plugin has received extensive hardening to be production-ready, with 23+ commits improving security and compliance.
+SSO 插件经过大量完善，具备生产环境所需的安全和合规性，迭代超过 23 次提交。
 
-### Self-Service SSO Dashboard
+### 自助式 SSO 仪表盘
 
-As part of our new Infrastructure product, the SSO plugin is now accompanied by a self-service dashboard for onboarding enterprise customers. Organization admins can generate a shareable link that walks enterprise customers through configuring their SAML identity provider — no back-and-forth support tickets required.
+作为新 Infrastructure 产品的一部分，SSO 插件配备了面向企业客户自助接入的仪表盘。组织管理员能够生成一个可分享的链接，引导企业客户配置自己的 SAML 身份提供者，省去了反复的支持工单。
 
-The dashboard is available at:
+仪表盘地址为：
 
 ```
 https://dash.better-auth.com/[project]/organization/[orgId]/enterprise
 ```
 
-From there, you can generate onboarding links, monitor SSO connection status, and manage provider configurations for each organization.
+通过该地址，你可生成入驻链接、监控 SSO 连接状态、管理组织的身份提供者配置。
 
-### SAML Single Logout (SLO)
+### SAML 单点注销（SLO）
 
-Full support for both SP-initiated and IdP-initiated SAML Single Logout:
+全面支持 SP 发起和 IdP 发起的 SAML 单点注销：
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -258,30 +258,30 @@ export const auth = betterAuth({
 });
 ```
 
-### Additional SSO Improvements
+### 其他 SSO 改进
 
-- **Signed SAML AuthnRequests**: Configurable signature and digest algorithms.
-- **Multi-domain providers**: Bind SSO providers to multiple domains.
-- **InResponseTo validation**: Prevent replay attacks on SAML assertions.
-- **Algorithm restrictions**: Block deprecated signature/digest algorithms.
-- **Clock skew tolerance**: Configurable tolerance for SAML timestamp validation.
-- **OIDC ID token `aud` claim validation**: Verify audience in OpenID Connect flows.
-- **Provider CRUD endpoints**: List, get, update, and delete SSO providers via API.
-- **Shared OIDC redirect URI**: Single redirect URI for all OIDC providers.
+- **签名的 SAML AuthnRequests**：支持可配置的签名和摘要算法。
+- **多域名提供者**：支持多域名绑定 SSO 提供者。
+- **InResponseTo 验证**：防止 SAML 断言重放攻击。
+- **算法限制**：禁止已废弃的签名和摘要算法。
+- **时钟偏差容忍度**：支持配置 SAML 时间戳验证的容忍值。
+- **OIDC ID Token `aud` 声明验证**：验证 OpenID Connect 流程中的受众字段。
+- **提供者 CRUD API**：通过接口列举、获取、更新及删除 SSO 提供者。
+- **共享 OIDC 重定向 URI**：所有 OIDC 提供者可使用统一重定向地址。
 
 ---
 
-### API Key Plugin
+### API 密钥插件
 
-The API Key plugin has received some major improvements.
+API 密钥插件经历重大改进。
 
-We've extracted the plugin into it's own package, install it via:
+插件被拆分成独立包，安装方式为：
 
 ```package-install
 npm install @better-auth/api-key
 ```
 
-And update your imports!
+请更新你的引入语句：
 
 ```diff title="auth.ts"
 - import { apiKey } from "better-auth/plugins";
@@ -293,10 +293,10 @@ And update your imports!
 + import { apiKeyClient } from "@better-auth/api-key/client";
 ```
 
-#### Organization owned API Keys
+#### 组织拥有的 API 密钥
 
-Long awaited support for organization-owned API keys has been added.
-You can now create API keys that are owned by organizations instead of users.
+期待已久的组织拥有 API 密钥支持现已加入！
+你现在可以创建归属于组织而非个人用户的 API 密钥。
 
 ```ts
 import { apiKey } from "@better-auth/api-key";
@@ -306,7 +306,7 @@ export const auth = betterAuth({
 });
 ```
 
-And creating a organization-owned API key:
+创建组织拥有的 API 密钥示例：
 
 ```ts
 import { auth } from "@/lib/auth";
@@ -316,9 +316,9 @@ const apiKey = await auth.api.createApiKey({
 });
 ```
 
-#### Multiple configurations for API Keys
+#### 多配置支持的 API 密钥
 
-You can now support multiple api-key use-cases within your app!
+你可以在应用内支持多种 API 密钥使用场景！
 
 ```ts
 export const auth = betterAuth({
@@ -338,7 +338,7 @@ export const auth = betterAuth({
 });
 ```
 
-To create an API Key for a given configuration, call:
+创建指定配置的 API 密钥时，调用：
 
 ```ts
 const key = auth.api.createApiKey({
@@ -349,12 +349,11 @@ const key = auth.api.createApiKey({
 });
 ```
 
-
 ---
 
-### Unified Before & After Hooks
+### 统一的 Before & After 钩子
 
-Plugin hooks and global hooks now share the same `AuthMiddleware` type, making the hooks system consistent and composable across the entire auth pipeline.
+插件钩子和全局钩子的中间件现在共享相同的 `AuthMiddleware` 类型，实现整个认证流程中钩子系统的一致性和组合性。
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -363,18 +362,18 @@ import { createAuthMiddleware } from "better-auth/api";
 export const auth = betterAuth({
     hooks: {
         before: createAuthMiddleware(async (ctx) => {
-            // Runs before every endpoint
-            console.log("Request to:", ctx.path);
+            // 在每个端点前执行
+            console.log("请求路径:", ctx.path);
         }),
         after: createAuthMiddleware(async (ctx) => {
-            // Runs after every endpoint, with access to the response
-            console.log("Response:", ctx.context.returned);
+            // 在每个端点后执行，访问响应内容
+            console.log("响应内容:", ctx.context.returned);
         }),
     },
 });
 ```
 
-Plugins use the same middleware type with matchers for targeted interception:
+插件支持使用相同类型的中间件，并结合匹配器实现定向拦截：
 
 ```tsx
 hooks: {
@@ -387,11 +386,11 @@ hooks: {
 
 ---
 
-### Dynamic Base URL
+### 动态基础 URL
 
-Better Auth can now resolve the base URL dynamically from incoming requests, making it work seamlessly with Vercel preview deployments, multi-domain setups, and reverse proxies.
+Better Auth 现可从传入请求动态解析基础 URL，让它无缝适配 Vercel 预览部署、多域名配置以及反向代理。
 
-[👉 Read more about dynamic base URL](https://www.better-auth.com/docs/concepts/dynamic-base-url)
+[👉 了解动态基础 URL](https://www.better-auth.com/docs/concepts/dynamic-base-url)
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -400,8 +399,8 @@ export const auth = betterAuth({
     baseURL: {
         allowedHosts: [
             "myapp.com",
-            "*.vercel.app",       // Any Vercel preview
-            "preview-*.myapp.com", // Pattern match
+            "*.vercel.app",       // 任意 Vercel 预览域
+            "preview-*.myapp.com", // 模式匹配
         ],
         fallback: "<https://myapp.com>",
         protocol: "auto",
@@ -411,25 +410,25 @@ export const auth = betterAuth({
 
 ---
 
-### Verification on Secondary Storage
+### 次级存储的验证存储
 
-Verification tokens can now be stored in secondary storage (e.g., Redis) instead of — or in addition to — the database. Identifiers can be hashed for extra security.
+验证令牌现在可以存储在次级存储中（例如 Redis），替代或补充数据库存储。识别符可进行哈希以增强安全性。
 
 ```tsx
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
     secondaryStorage: {
-        // ... your Redis config
+        // ...你的 Redis 配置
     },
     verification: {
-        storeIdentifier: "hashed",     // Hash verification identifiers // [!code highlight]
-        storeInDatabase: false,        // Only use secondary storage // [!code highlight]
+        storeIdentifier: "hashed",     // 哈希验证标识符 // [!code highlight]
+        storeInDatabase: false,        // 仅使用次级存储 // [!code highlight]
     },
 });
 ```
 
-You can also configure per-identifier overrides:
+也支持为不同标识符配置不同策略：
 
 ```tsx
 verification: {
@@ -445,15 +444,15 @@ verification: {
 
 ---
 
-### Rate Limiter Improvements
+### 限流器改进
 
-The rate limiter has been improved with separate request/response handling, hardened defaults, and IPv6 support.
+限流器现在区分请求与响应阶段处理，强化默认配置，支持 IPv6。
 
-- **Separate request and response phases**: Rejected requests are no longer counted against the rate limit.
-- **Hardened default rules**: Sign-in/sign-up limited to 3 requests per 10 seconds; password reset/OTP limited to 3 requests per 60 seconds.
-- **IPv6 subnet support**: Rate limiting by IPv6 prefix with configurable subnet size.
-- **Plugin-level rate limit rules**: Plugins can define their own rate limit rules.
-- **Expired entry cleanup**: Automatic cleanup for the memory storage backend.
+- **请求与响应分离**：拒绝的请求不计入限流统计。
+- **强化默认规则**：登录注册限 10 秒 3 次；密码重置/一次性密码限 60 秒 3 次。
+- **IPv6 子网支持**：按 IPv6 前缀限流，可配置子网大小。
+- **插件级限流规则**：插件可定义自身的限流政策。
+- **自动过期数据清理**：内存存储可自动清理过期条目。
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -461,7 +460,7 @@ import { betterAuth } from "better-auth";
 export const auth = betterAuth({
     advanced: {
         ipAddress: {
-            ipv6Subnet: 64, // Rate limit by /64 subnet
+            ipv6Subnet: 64, // 按 /64 子网限流
         },
     },
 });
@@ -469,34 +468,34 @@ export const auth = betterAuth({
 
 ---
 
-### Non-Destructive Secret Key Rotation
+### 非破坏性的密钥轮换
 
-Better Auth now supports rotating `BETTER_AUTH_SECRET` without invalidating existing sessions, tokens, or encrypted data. When you need to rotate your secret — whether for scheduled rotation or incident response — you can introduce a new key while keeping old keys available for decryption.
+Better Auth 现支持在不使现有会话、令牌或加密数据失效的情况下，轮换 `BETTER_AUTH_SECRET`。无论是计划轮换还是应急响应，都可添加新密钥同时保留旧密钥解密能力。
 
 ```tsx
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
     secrets: [
-        { version: 2, value: "new-secret-key-at-least-32-chars" },   // current (first = active)
-        { version: 1, value: "old-secret-key-still-used-to-decrypt" }, // previous
+        { version: 2, value: "new-secret-key-at-least-32-chars" },   // 当前（数组第一项为活动密钥）
+        { version: 1, value: "old-secret-key-still-used-to-decrypt" }, // 旧密钥
     ],
 });
 ```
 
-Or via environment variable:
+或通过环境变量配置：
 
 ```bash
 BETTER_AUTH_SECRETS="2:new-secret-key,1:old-secret-key"
 ```
 
-New data is always encrypted with the latest key (first in the array), while decryption automatically tries all configured keys. This lets you roll secrets gradually without downtime or data loss.
+新数据总是采用最新密钥加密（数组首项），解密时自动尝试所有密钥。实现无中断的密钥平滑切换。
 
 ---
 
-### Seat-Based Billing (Stripe)
+### 基于席位的计费（Stripe）
 
-The Stripe plugin now supports per-seat billing for organizations. Member changes automatically sync seat quantity with Stripe.
+Stripe 插件新增组织席位计费支持。成员变更会自动同步席位数至 Stripe。
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -525,15 +524,15 @@ export const auth = betterAuth({
 });
 ```
 
-The plugin also adds support for usage-based billing via `lineItems`, subscription schedules with `scheduleAtPeriodEnd`, and `billingInterval` tracking.
+插件还支持基于用量的计费（`lineItems`）、订阅排程（`scheduleAtPeriodEnd`）及计费周期跟踪。
 
 ---
 
-### Test Utilities Plugin
+### 测试工具插件
 
-A new `testUtils` plugin provides factories, database helpers, and auth utilities for integration and E2E testing.
+全新 `testUtils` 插件提供工厂函数、数据库助手及认证工具，支持集成测试和端到端测试。
 
-[👉 Read more about test utilities](https://www.better-auth.com/docs/plugins/test-utils)
+[👉 了解测试工具](https://www.better-auth.com/docs/plugins/test-utils)
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -548,48 +547,48 @@ export const auth = betterAuth({
 const ctx = await auth.$context;
 const test = ctx.test;
 
-// Create and save a test user
+// 创建并保存测试用户
 const user = test.createUser({ email: "test@example.com" });
 const savedUser = await test.saveUser(user);
 
-// Login and get auth headers
+// 登录并获取认证请求头
 const { headers, session, token } = await test.login({ userId: user.id });
 
-// Capture OTPs for verification tests
+// 捕获一次性密码用于验证测试
 const otp = test.getOTP("test@example.com");
 ```
 
 ---
 
-### Update Session Endpoint
+### 更新会话接口
 
-A new `/update-session` endpoint allows updating custom additional session fields on the fly.
+新增 `/update-session` 端点，可动态更新自定义会话字段，无需重新认证。
 
 ```tsx
-// Client-side
+// 客户端调用
 await authClient.updateSession({
     theme: "dark",
     language: "en",
 });
 ```
 
-This is useful when you have additional session fields that need to change without re-authentication.
+适合需要动态修改会话附加字段的场景。
 
 ---
 
-### Adapter Extraction
+### 适配器拆分
 
-Database adapters have been extracted into their own packages. This is a major architectural change that reduces bundle size and allows adapters to be versioned independently.
+数据库适配器已拆分成独立包。这是一次重大的架构调整，减少了主包体积并支持适配器独立版本管理。
 
-| Package | Description |
+| 包名 | 描述 |
 | --- | --- |
-| `@better-auth/drizzle-adapter` | Drizzle ORM adapter |
-| `@better-auth/prisma-adapter` | Prisma adapter |
-| `@better-auth/kysely-adapter` | Kysely adapter |
-| `@better-auth/mongo-adapter` | MongoDB adapter |
-| `@better-auth/memory-adapter` | In-memory adapter |
+| `@better-auth/drizzle-adapter` | Drizzle ORM 适配器 |
+| `@better-auth/prisma-adapter` | Prisma 适配器 |
+| `@better-auth/kysely-adapter` | Kysely 适配器 |
+| `@better-auth/mongo-adapter` | MongoDB 适配器 |
+| `@better-auth/memory-adapter` | 内存适配器 |
 
-The main `better-auth` package re-exports all adapters, so existing imports continue to work. But you can now install only the adapter you need for smaller bundles:
+主包 `better-auth` 仍会重新导出所有适配器，现有导入无需修改。但你可选择只安装所需适配器，以减小打包体积：
 
 ```tsx
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
@@ -602,9 +601,9 @@ export const auth = betterAuth({
 
 ---
 
-### Cloudflare D1 Support
+### Cloudflare D1 支持
 
-Better Auth now natively supports [Cloudflare D1](https://developers.cloudflare.com/d1/) as a first-class database option. Pass your D1 binding directly — no custom adapter setup required.
+Better Auth 现原生支持 [Cloudflare D1](https://developers.cloudflare.com/d1/) 作为首选数据库方案。直接传入 D1 绑定，无需自定义适配器配置。
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -612,111 +611,111 @@ import { betterAuth } from "better-auth";
 export default {
     async fetch(request, env) {
         const auth = betterAuth({
-            database: env.DB, // D1 binding, auto-detected // [!code highlight]
+            database: env.DB, // D1 绑定，自动检测 // [!code highlight]
         });
         return auth.handler(request);
     },
 } satisfies ExportedHandler<{ DB: D1Database }>;
 ```
 
-The built-in D1 dialect handles query execution, batch operations, and introspection through D1's native API. Note that D1 does not support interactive transactions — Better Auth uses D1's `batch()` API for atomicity instead.
+内置 D1 方言支持通过 D1 原生接口执行查询、批量操作和模式推断。由于 D1 不支持交互式事务，Better Auth 使用 `batch()` API 实现原子操作。
 
 ---
 
-## ✨ More Features
+## ✨ 更多新功能
 
-### Authentication & Sessions
+### 认证与会话
 
-- **`verifyPassword` API**: New server-side endpoint to verify the current user's password.
-- **`setShouldSkipSessionRefresh`**: Programmatically skip session refresh for specific requests.
-- **`deferSessionRefresh`**: Support for read-replica database setups.
-- **Awaitable social provider config**: Provider configuration can now be async.
-- **Limit enumeration on sign-up**: When email verification is required, sign-up no longer reveals existing accounts.
-- **`customSyntheticUser` option**: Support plugin fields in enumeration-protected responses ([#8097](https://github.com/better-auth/better-auth/pull/8097)).
-- **Form data support for email sign-in/sign-up**: In addition to JSON bodies.
-- **Automatic base URL detection from `VERCEL_URL` and `NEXTAUTH_URL`**: The client now falls back to `VERCEL_URL` and `NEXTAUTH_URL` environment variables when no explicit `baseURL` is configured, making server-side rendering on Vercel work out of the box.
+- **`verifyPassword` API**：新增服务器端验证当前用户密码端点。
+- **`setShouldSkipSessionRefresh`**：可编程跳过特定请求的会话刷新。
+- **`deferSessionRefresh`**：支持读副本数据库架构。
+- **支持异步社交提供者配置**。
+- **限制注册时的用户枚举**：电子邮件验证启用时，注册不再泄露已存在账号信息。
+- **`customSyntheticUser` 选项**：支持插件字段包含在枚举保护响应中（[#8097](https://github.com/better-auth/better-auth/pull/8097)）。
+- **支持表单数据形式的邮箱登录/注册请求**，不仅限 JSON。
+- **自动从 `VERCEL_URL` 和 `NEXTAUTH_URL` 环境变量检测基础 URL**，优化 Vercel SSR 体验。
 
-### OAuth & Providers
+### OAuth 与提供者
 
-- **Railway OAuth provider**: New social provider.
-- **Trusted providers callback**: Dynamic trusted provider resolution.
-- **Case-insensitive email matching**: For social account linking.
-- **Legacy OAuth clients without PKCE**: Backward compatibility support.
+- 新增 Railway OAuth 社交提供者。
+- 支持动态可信提供者回调。
+- 邮箱匹配忽略大小写，用于社交账号关联。
+- 兼容旧版 OAuth 客户端（无 PKCE 支持）。
 
-### Stripe Plugin
+### Stripe 插件
 
-- **`seatPriceId`** and **`lineItems`** enable flexible subscription checkouts, supporting modern pricing models like per-seat and usage-based billing.
-- **`scheduleAtPeriodEnd`**: Defer plan changes to end of billing period.
-- **Subscription schedule tracking**: Monitor upcoming subscription changes.
-- **Organization customer support**: Organization as a Stripe customer.
-- **Flexible cancellation and termination**: More control over subscription lifecycle.
+- `seatPriceId` 和 `lineItems` 支持灵活订阅结算，支持按席位和用量计费。
+- `scheduleAtPeriodEnd` 支持将计划变更延迟至计费周期结束执行。
+- 订阅排程跟踪功能。
+- 支持以组织为 Stripe 客户。
+- 更灵活的取消和终止流程。
 
 ### SCIM
 
-- **SCIM ownership model**: Link SCIM provider connections to users.
-- **SCIM connection management**: List, get, and delete SCIM provider connections.
-- **Microsoft Entra ID compatibility**: Full support for Entra provisioning.
+- SCIM 拥有权模型：连接绑定用户。
+- SCIM 连接管理：列出、获取和删除 SCIM 连接。
+- 完整支持 Microsoft Entra ID 供应。
 
-### OAuth Provider Plugin
+### OAuth Provider 插件
 
-- **HTTPS enforcement for redirect URIs**: HTTP only allowed for localhost.
-- **RFC 9207 `iss` parameter**: Authorization response issuer identifier.
-- **Per-client PKCE configuration**: Opt-out of PKCE for admin-created clients.
-- **Scope narrowing at consent**: Users can reduce requested scopes.
-- **`prompt=none` support**: Silent authentication for OIDC.
-- **Configurable rate limiting**: Per-endpoint rate limit configuration.
+- 强制 HTTPS 重定向 URI（本地环境除外）。
+- 支持 RFC 9207 的 `iss` 参数（授权响应发行者标识）。
+- 支持基于客户端的 PKCE 配置（管理员创建的客户端可禁用 PKCE）。
+- 同意环节支持范围缩小。
+- 支持 OIDC `prompt=none` 静默认证。
+- 端点限流配置。
 
-### Plugin Improvements
+### 插件改进
 
-- **`magic-link`: `allowedAttempts` option**: Limit verification attempts.
-- **`email-otp`: Change email flow with OTP**: Users can change their email address via OTP verification, with optional current-email confirmation for added security.
-- **`email-otp`: Name, image, and additional fields in sign-in**: Richer OTP sign-in.
-- **`phone-number`: Additional fields in `signUpOnVerification`**: Pass extra data.
-- **`two-factor`: `twoFactorCookieMaxAge` and server-side trust device expiration**.
-- **`one-tap`: Button mode for Google sign-in**.
-- **`anonymous`: Delete anonymous user endpoint**.
-- **`admin`: Optional password on user creation**.
-- **`api-keys`: Pagination for list endpoint, organization reference via metadata**.
-- **`organization`: Function support for `membershipLimit`**, reject expired invites.
+- `magic-link`: 添加 `allowedAttempts` 限制验证次数。
+- `email-otp`: 通过 OTP 支持邮箱变更流程，附加验证当前邮箱更安全。
+- `email-otp`: OTP 登录时支持姓名、头像及额外字段。
+- `phone-number`: `signUpOnVerification` 允许传递附加字段。
+- `two-factor`: 增加 `twoFactorCookieMaxAge`，以及服务器端信任设备过期支持。
+- `one-tap`: Google 登录支持按钮模式。
+- `anonymous`: 新增删除匿名用户的端点。
+- `admin`: 创建用户时密码可选。
+- `api-keys`: 列表接口分页，组织引用支持通过元数据。
+- `organization`: `membershipLimit` 支持函数形式，实现动态限制，过期邀请拒绝。
 
-### Core & Infrastructure
+### 核心与基础设施
 
-- **`BetterAuthPluginRegistry` type system**: Typed plugin discovery via `getPlugin()` and `hasPlugin()`.
-- **Version in `AuthContext`**: Access the Better Auth version at runtime.
-- **Redis secondary storage**: Extracted to `@better-auth/redis-storage`.
-- **Session ID handling for secondary storage**: Proper ID generation when database is not used.
-
----
-
-## 🔒 Security Improvements
-
-- **Prevent OTP reuse via race condition**: Atomically invalidate OTPs on use.
-- **Prevent user enumeration**: In email-otp when sign-up is disabled, and on sign-up with required email verification.
-- **Prevent email enumeration on `/change-email`**: Always returns `{ status: true }` and simulates token generation for timing safety ([#8097](https://github.com/better-auth/better-auth/pull/8097)).
-- **Stricter default rate limits**: For password reset and phone number verification endpoints.
-- **Separate CSRF and origin checks**: More granular request validation.
-- **Prevent trial abuse**: Check all user subscriptions before granting a free trial.
-- **SAML ACS error redirect hardening**: Prevent open redirect in error flows.
-- **IPv6 address normalization and subnet support**: For rate limiting and IP-based rules.
-- **XML parser hardening**: Configurable size limits for SAML responses and metadata.
+- 类型系统增强：支持通过 `getPlugin()` 和 `hasPlugin()` 进行类型安全插件发现（`BetterAuthPluginRegistry`）。
+- 在 `AuthContext` 可访问 Better Auth 版本号。
+- Redis 次级存储抽取至 `@better-auth/redis-storage`。
+- 次级存储场景下改善会话 ID 处理。
 
 ---
 
-## ⚠️ Breaking Changes
+## 🔒 安全改进
 
-We recommend going through each breaking change to ensure a smooth upgrade.
+- 防止 OTP 因竞态条件复用，使用原子操作失效。
+- 防止用户枚举：禁止邮件 OTP 在禁止注册时泄露用户信息，注册时需要邮件验证的保护。
+- `/change-email` 去枚举防护：总是返回 `{ status: true }`，模拟令牌生成以防时序攻击（[#8097](https://github.com/better-auth/better-auth/pull/8097)）。
+- 更严格的默认限流：密码重置和手机号验证端点。
+- 分离 CSRF 与来源检测，提供更细粒度验证。
+- 防止试用滥用：验证用户所有订阅后方可允许免费试用。
+- SAML ACS 错误重定向加固，避免开放重定向漏洞。
+- IPv6 地址规范化及子网支持，用于限流和基于 IP 的规则。
+- XML 解析强化，可设置 SAML 响应和元数据大小限制。
 
-### Deprecated API Removal
+---
 
-The `/forget-password/email-otp` endpoint has been removed. Use the standard password reset flow instead.
+## ⚠️ 破坏性变更
 
-### Adapter Imports
+建议逐条查看，确保顺利升级。
 
-The `better-auth/adapters/test` export has been removed. Use `testAdapter` and `createTestSuite` from `@better-auth/test-utils/adapter` instead. See the [Create a Database Adapter](/docs/guides/create-a-db-adapter#test-your-adapter) guide for details.
+### 弃用接口移除
 
-### API Key Plugin Moved to `@better-auth/api-key`
+`/forget-password/email-otp` 端点已移除，请改用标准密码重置流程。
 
-The api-key plugin has been extracted into its own package. Install it separately:
+### 适配器导入调整
+
+`better-auth/adapters/test` 导出移除。请使用 `@better-auth/test-utils/adapter` 中的 `testAdapter` 和 `createTestSuite`。详情见[创建数据库适配器指南](/docs/guides/create-a-db-adapter#test-your-adapter)。
+
+### API Key 插件迁移到 `@better-auth/api-key`
+
+API Key 插件已拆分为独立包，需单独安装：
 
 ```bash
 npm install @better-auth/api-key
@@ -727,14 +726,14 @@ npm install @better-auth/api-key
 + import { apiKey } from "@better-auth/api-key";
 ```
 
-**Schema changes:**
+**Schema 变更：**
 
-- The `userId` field on the `ApiKey` table has been renamed to `referenceId`.
-- A new `configId` field has been added (defaults to `"default"`).
+- `ApiKey` 表中的 `userId` 字段重命名为 `referenceId`。
+- 新增 `configId` 字段，默认 `"default"`。
 
-**Plugin options changes:**
+**插件选项变更：**
 
-The `permissions.defaultPermissions` callback's first argument is now `referenceId` instead of `userId`:
+`permissions.defaultPermissions` 回调的第一个参数由 `userId` 改成 `referenceId`：
 
 ```diff
 export const auth = betterAuth({
@@ -754,46 +753,46 @@ export const auth = betterAuth({
 })
 ```
 
-**Client SDK changes:**
+**客户端 SDK 变更：**
 
 ```diff
 - const ownerId = apiKey.userId;
 + const ownerId = apiKey.referenceId;
-+ const ownerType = apiKey.references; // "user" or "organization"
++ const ownerType = apiKey.references; // "user" 或 "organization"
 + const configId = apiKey.configId;
 ```
 
-**Permission changes:**
-The `updateApiKey` endpoint now requires at least a `userId` parameter or headers to be passed on the server side.
-If you didn't provide this in previous version, you're now required to pass them.
+**权限变更：**
+
+`updateApiKey` 接口服务器端现在至少需要传入 `userId` 参数或等效请求头。之前版本若未传入，则需变更调用逻辑。
 
 ---
 
-## 🛠 Developer Changes
+## 🛠 开发者变更
 
-If you are building a plugin on top of Better Auth, there are a few things you should know.
+如果你在基于 Better Auth 构建插件，请注意以下内容。
 
-### `@deprecated` APIs Are Removed
+### 弃用 API 全部移除
 
-All previously deprecated APIs have been removed. This includes deprecated adapter types, client types, helper types, and plugin options. If you were relying on any `@deprecated` methods or options, you'll need to migrate to their replacements:
+所有之前标为弃用的 API 均被移除，包括弃用的适配器类型、客户端类型、辅助类型和插件选项。请将相关代码迁移至替代方案：
 
-| Removed | Replacement |
+| 移除项 | 替代方案 |
 | --- | --- |
 | `createAdapter` | `createAdapterFactory` |
 | `Adapter` | `DBAdapter` |
 | `TransactionAdapter` | `DBTransactionAdapter` |
-| `Store` (client) | `ClientStore` |
-| `AtomListener` (client) | `ClientAtomListener` |
+| 客户端 `Store` | `ClientStore` |
+| 客户端 `AtomListener` | `ClientAtomListener` |
 | `ClientOptions` | `BetterAuthClientOptions` |
-| `LiteralUnion`, `DeepPartial` (from `better-auth/types/helper`) | Import from `@better-auth/core` |
+| `LiteralUnion`、`DeepPartial`（来自 `better-auth/types/helper`） | 统一从 `@better-auth/core` 引入 |
 | `onEmailVerification` | `afterEmailVerification` |
 | `sendChangeEmailVerification` | `sendChangeEmailConfirmation` |
 | `advanced.database.useNumberId` | `advanced.database.generateId: "serial"` |
-| Organization `permission` field | `permissions` (plural) |
+| 组织模型中的 `permission` 字段 | 改为复数形式 `permissions` |
 
-### `@better-auth/core/utils` Barrel Export Removed
+### `@better-auth/core/utils` 桶式导出移除
 
-The `@better-auth/core/utils` barrel export has been split into individual subpath exports to improve tree-shaking:
+`@better-auth/core/utils` 桶式导出拆分成单独子路径，提升摇树优化效果：
 
 ```diff
 - import { generateId, safeJSONParse, defineErrorCodes } from "@better-auth/core/utils";
@@ -802,9 +801,9 @@ The `@better-auth/core/utils` barrel export has been split into individual subpa
 + import { defineErrorCodes } from "@better-auth/core/utils/error-codes";
 ```
 
-### `$ERROR_CODES` Type Changed to `RawError` Objects
+### `$ERROR_CODES` 类型变更为 `RawError` 对象
 
-The `$ERROR_CODES` field on plugins now expects `Record<string, RawError>` instead of `Record<string, string>`. Use `defineErrorCodes()` which now returns `RawError` objects with `{ code, message }` instead of plain strings:
+插件中的 `$ERROR_CODES` 字段不再是 `Record<string, string>`，而是 `Record<string, RawError>`。请使用 `defineErrorCodes()`，它返回含 `{ code, message }` 的结构：
 
 ```diff
 - $ERROR_CODES: {
@@ -813,10 +812,10 @@ The `$ERROR_CODES` field on plugins now expects `Record<string, RawError>` inste
 + $ERROR_CODES: defineErrorCodes({
 +     MY_ERROR: "My error message",
 + }),
-+ // Returns: { MY_ERROR: { code: "MY_ERROR", message: "My error message" } }
++ // 返回：{ MY_ERROR: { code: "MY_ERROR", message: "My error message" } }
 ```
 
-Use the new `APIError.from()` static method to throw errors with error codes:
+抛出带错误代码的异常请使用新的 `APIError.from()` 静态方法：
 
 ```tsx
 import { APIError } from "@better-auth/core/error";
@@ -824,18 +823,18 @@ import { APIError } from "@better-auth/core/error";
 throw APIError.from("BAD_REQUEST", MY_ERROR_CODES.MY_ERROR);
 ```
 
-### `PluginContext` Is Now Generic
+### `PluginContext` 现在为泛型
 
-`PluginContext` is now parameterized with `Options`:
+`PluginContext` 加入了泛型参数 `Options`：
 
 ```tsx
 type PluginContext<Options extends BetterAuthOptions> = {
-    getPlugin: <ID extends string>(pluginId: ID) => /* inferred from registry */ | null;
-    hasPlugin: <ID extends string>(pluginId: ID) => boolean; // narrows to `true` when plugin is registered
+    getPlugin: <ID extends string>(pluginId: ID) => /* 从注册表推断的结果 */ | null;
+    hasPlugin: <ID extends string>(pluginId: ID) => boolean; // 如果返回 true，类型收窄为已注册插件
 };
 ```
 
-Plugins can register themselves via module augmentation for type-safe `getPlugin()` and `hasPlugin()`:
+插件可通过模块声明合并注册自身，实现 `getPlugin()` 和 `hasPlugin()` 的类型安全：
 
 ```tsx
 declare module "@better-auth/core" {
@@ -845,9 +844,9 @@ declare module "@better-auth/core" {
 }
 ```
 
-### `InferUser` / `InferSession` Types Removed
+### 移除 `InferUser` / `InferSession` 类型
 
-The `InferUser<O>` and `InferSession<O>` types have been removed. Use the generic `User` and `Session` types instead:
+`InferUser<O>` 和 `InferSession<O>` 类型被移除，请改用通用的 `User` 和 `Session` 类型：
 
 ```diff
 - import type { InferUser, InferSession } from "better-auth/types";
@@ -856,56 +855,56 @@ The `InferUser<O>` and `InferSession<O>` types have been removed. Use the generi
 + type MyUser = User<typeof auth.$options["user"], typeof auth.$options["plugins"]>;
 ```
 
-### After Hooks Now Run Post-Transaction
+### After 钩子事务后执行
 
-Database "after" hooks (`create.after`, `update.after`, `delete.after`) now execute **after** the transaction commits, not during it. This prevents issues where hooks interacting with external systems (sending emails, calling APIs) could fail and roll back the entire transaction.
+数据库的 “after” 钩子（如 `create.after`、`update.after`、`delete.after`）现在在事务提交后执行，而非事务内。防止钩子中调用外部系统（发邮件、调用 API）失败导致事务被回滚。
 
-If your plugin relies on after hooks running inside the transaction for additional atomic database writes, you'll need to use the adapter directly within the main operation instead.
+如需在事务中同步原子写入，请在主操作中直接使用适配器。
 
-### `getMigrations` Moved to `better-auth/db/migration` Subpath
+### `getMigrations` 移至 `better-auth/db/migration` 子路径
 
-We found that the `getMigrations` function includes many third-party dependencies, which caused some bundlers to unexpectedly include extra dependencies and increase output size. It's now available from a dedicated subpath:
+`getMigrations` 函数的依赖较多，部分打包工具会因此引入额外依赖，导致包体积异常膨胀。现迁移到独立子路径：
 
 ```diff
 - import { getMigrations } from "better-auth";
 + import { getMigrations } from "better-auth/db/migration";
 ```
 
-### `id` Field Removed from Session in Secondary Storage
+### 次级存储 Session 移除 `id` 字段
 
-The `id` field is used to determine relationships between structures in database models. We've removed it from secondary storage since it's not necessary there, simplifying the storage logic. If your plugin reads sessions from secondary storage and relies on the `id` field, you'll need to update your code accordingly.
+`id` 字段用于数据库模型关系，次级存储中非必需，故已移除，简化存储逻辑。如插件依赖该字段，需要做相应调整。
 
-### Plugin `init()` Context Is Now Mutable
+### 插件 `init()` 上下文对象现为可变
 
-The context object passed to a plugin's `init()` callback is now the same reference used throughout the auth lifecycle. `init()` can also return arbitrary keys via `Record<string, unknown>`, enabling plugins to inject custom context values that other plugins can access.
-
----
-
-## 🐛 Bug Fixes & Improvements
-
-This release includes over 220 bug fixes addressing issues across all areas:
-
-- **Drizzle Adapter**: Fixed date transformation crashes and input handling.
-- **Cookie Handling**: Centralized parsing, fixed Expo leading semicolons, secure detection fallbacks.
-- **Database Hooks**: Delayed execution until after transaction commits to prevent inconsistencies.
-- **Transaction Deadlock Prevention**: Improved locking strategies across adapters.
-- **Prisma Adapter**: Fixed null condition handling and unique where field detection.
-- **OAuth**: Fixed `refresh_token_expires_in` handling, callback routing, and token encryption.
-- **Organization**: Fixed role deletion prevention, active member refetch, and dynamic access control inference.
-- **Expo**: Fixed immutable headers on Cloudflare Workers, cookie injection wildcards, and skipped cookie/expo-origin headers for ID token requests.
-- **Kysely Adapter**: Fixed edge case with aliased joined table names.
-- **Last Login Method**: Fixed handling of multiple Set-Cookie headers.
-- **Session Listing**: Fixed endpoints returning empty arrays when more than 100 inactive sessions exist.
-- **Organization**: Fixed path matching for active member signals.
-- **OAuth**: Fixed preserving refresh tokens when provider omits them on refresh.
-- **Secondary Storage**: Synced `updateSession` changes and removed duplicate writes.
-- And many more!
+插件 `init()` 回调传入的上下文，是整个认证生命周期中复用的同一对象。`init()` 也可以返回任意键值对，支持插件注入自定义上下文值供其他插件访问。
 
 ---
 
-A lot of refinements to make everything smoother, faster, and more reliable.
-👉 [Check the full changelog](https://github.com/better-auth/better-auth/releases/tag/v1.5.0)
+## 🐛 修复与改进
 
-## ❤️ Contributors
+本次发布包含超过 220 项错误修复，覆盖全部核心功能：
 
-Thanks to all the contributors for making this release possible!
+- Drizzle 适配器：修正日期转换崩溃，输入处理。
+- Cookie 管理：统一解析逻辑，修复 Expo 相关前导分号，改进安全检测降级。
+- 数据库钩子：延迟执行至事务提交，避免不一致。
+- 事务死锁防护：各适配器锁策略优化。
+- Prisma 适配器：修复空值条件和唯一字段识别。
+- OAuth：修复 `refresh_token_expires_in` 处理，回调路由，令牌加密。
+- 组织模块：修复角色删除防护，活跃成员刷新，动态权限推断。
+- Expo：修复 Cloudflare Worker 中不可变请求头，Cookie 注入通配符，跳过 ID Token 请求的 Cookie/Origin 头。
+- Kysely 适配器：修复别名连接表名的边缘问题。
+- 最近登录方式：修复多 Set-Cookie 头处理。
+- 会话列表：修复超过 100 个非活跃会话时返回空数组。
+- 组织模块：修复活跃成员信号路径匹配。
+- OAuth：修复刷新时丢失刷新令牌问题。
+- 次级存储：同步 `updateSession` 变更，移除重复写入。
+- 其它众多细节改进！
+
+---
+
+大量细节打磨，带来更流畅、更快、更可靠的体验。
+👉 [查看完整更新日志](https://github.com/better-auth/better-auth/releases/tag/v1.5.0)
+
+## ❤️ 感谢贡献者
+
+感谢所有为此版本付出努力的贡献者！

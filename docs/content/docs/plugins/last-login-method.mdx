@@ -1,22 +1,22 @@
 ---
-title: Last Login Method
-description: Track and display the last authentication method used by users
+title: 上次登录方式
+description: 跟踪并显示用户最后使用的身份验证方式
 ---
 
-The last login method plugin tracks the most recent authentication method used by users (email, OAuth providers, etc.). This enables you to display helpful indicators on login pages, such as "Last signed in with Google" or prioritize certain login methods based on user preferences.
+上次登录方式插件用于跟踪用户最近一次使用的身份验证方式（邮箱、OAuth 提供商等）。这使您能够在登录页面上显示有用的指示标志，例如“上次使用 Google 登录”，或根据用户偏好优先显示某些登录方式。
 
-## Installation
+## 安装
 
 <Steps>
     <Step>
-        ### Add the plugin to your auth config
+        ### 在你的 auth 配置中添加插件
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
         import { lastLoginMethod } from "better-auth/plugins" // [!code highlight]
 
         export const auth = betterAuth({
-            // ... other config options
+            // ... 其他配置选项
             plugins: [
                 lastLoginMethod() // [!code highlight]
             ]
@@ -24,7 +24,7 @@ The last login method plugin tracks the most recent authentication method used b
         ```
     </Step>
     <Step>
-        ### Add the client plugin to your auth client
+        ### 在你的 auth 客户端中添加客户端插件
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
@@ -39,31 +39,31 @@ The last login method plugin tracks the most recent authentication method used b
     </Step>
 </Steps>
 
-## Usage
+## 使用方法
 
-Once installed, the plugin automatically tracks the last authentication method used by users. You can then retrieve and display this information in your application.
+安装后，插件会自动跟踪用户最后一次使用的身份验证方式。你可以在应用程序中检索并显示该信息。
 
-### Getting the Last Used Method
+### 获取最后使用的方式
 
-The client plugin provides several methods to work with the last login method:
+客户端插件提供了多个方法来操作最后登录的方式：
 
 ```ts title="app.tsx"
 import { authClient } from "@/lib/auth-client"
 
-// Get the last used login method
+// 获取最后使用的登录方式
 const lastMethod = authClient.getLastUsedLoginMethod()
-console.log(lastMethod) // "google", "email", "github", etc.
+console.log(lastMethod) // "google", "email", "github" 等等
 
-// Check if a specific method was last used
+// 检查某种方式是否为最后使用
 const wasGoogle = authClient.isLastUsedLoginMethod("google")
 
-// Clear the stored method
+// 清除存储的登录方式
 authClient.clearLastUsedLoginMethod()
 ```
 
-### UI Integration Example
+### UI 集成示例
 
-Here's how to use the plugin to enhance your login page:
+下面展示如何使用该插件增强登录页面：
 
 ```tsx title="sign-in.tsx"
 import { authClient } from "@/lib/auth-client"
@@ -75,32 +75,32 @@ export function SignInPage() {
     
     return (
         <div className="space-y-4">
-            <h1>Sign In</h1>
+            <h1>登录</h1>
             
-            {/* Email sign in */}
+            {/* 邮箱登录 */}
             <div className="relative">
                 <Button 
                     onClick={() => authClient.signIn.email({...})}
                     variant={lastMethod === "email" ? "default" : "outline"}
                     className="w-full"
                 >
-                    Sign in with Email
+                    使用邮箱登录
                     {lastMethod === "email" && (
-                        <Badge className="ml-2">Last used</Badge>
+                        <Badge className="ml-2">上次使用</Badge>
                     )}
                 </Button>
             </div>
             
-            {/* OAuth providers */}
+            {/* OAuth 提供商 */}
             <div className="relative">
                 <Button 
                     onClick={() => authClient.signIn.social({ provider: "google" })}
                     variant={lastMethod === "google" ? "default" : "outline"}
                     className="w-full"
                 >
-                    Continue with Google
+                    使用 Google 登录
                     {lastMethod === "google" && (
-                        <Badge className="ml-2">Last used</Badge>
+                        <Badge className="ml-2">上次使用</Badge>
                     )}
                 </Button>
             </div>
@@ -111,9 +111,9 @@ export function SignInPage() {
                     variant={lastMethod === "github" ? "default" : "outline"}
                     className="w-full"
                 >
-                    Continue with GitHub
+                    使用 GitHub 登录
                     {lastMethod === "github" && (
-                        <Badge className="ml-2">Last used</Badge>
+                        <Badge className="ml-2">上次使用</Badge>
                     )}
                 </Button>
             </div>
@@ -122,15 +122,15 @@ export function SignInPage() {
 }
 ```
 
-## Database Persistence
+## 数据库持久化
 
-By default, the last login method is stored only in cookies. For more persistent tracking and analytics, you can enable database storage.
+默认情况下，最后登录方式仅存储在 cookie 中。若需更持久的跟踪和分析，可以启用数据库存储。
 
 <Steps>
     <Step>
-        ### Enable database storage
+        ### 启用数据库存储
 
-        Set `storeInDatabase` to `true` in your plugin configuration:
+        在插件配置中将 `storeInDatabase` 设置为 `true`：
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -146,9 +146,9 @@ By default, the last login method is stored only in cookies. For more persistent
         ```
     </Step>
     <Step>
-        ### Run database migration
+        ### 执行数据库迁移
 
-        The plugin will automatically add a `lastLoginMethod` field to your user table. Run the migration to apply the changes:
+        插件会自动向用户表添加 `lastLoginMethod` 字段。运行迁移以应用变更：
 
    <Tabs items={["migrate", "generate"]}>
       <Tab value="migrate">
@@ -164,39 +164,39 @@ By default, the last login method is stored only in cookies. For more persistent
     </Tabs>
     </Step>
     <Step>
-        ### Access database field
+        ### 访问数据库字段
 
-        When database storage is enabled, the `lastLoginMethod` field becomes available in user objects:
+        启用数据库存储后，`lastLoginMethod` 字段将出现在用户对象中：
 
         ```ts title="user-profile.tsx"
         import { auth } from "@/lib/auth"
 
-        // Server-side access
+        // 服务器端访问
         const session = await auth.api.getSession({ headers })
-        console.log(session?.user.lastLoginMethod) // "google", "email", etc.
+        console.log(session?.user.lastLoginMethod) // "google", "email" 等等
 
-        // Client-side access via session
+        // 客户端通过 session 访问
         const { data: session } = authClient.useSession()
         console.log(session?.user.lastLoginMethod)
         ```
     </Step>
 </Steps>
 
-### Database Schema
+### 数据库模式
 
-When `storeInDatabase` is enabled, the plugin adds the following field to the `user` table:
+启用 `storeInDatabase` 后，插件会在 `user` 表中添加如下字段：
 
-Table: `user`
+表：`user`
 
 <DatabaseTable
     fields={[
-        { name: "lastLoginMethod", type: "string", description: "The last authentication method used by the user", isOptional: true },
+        { name: "lastLoginMethod", type: "string", description: "用户最后使用的身份验证方式", isOptional: true },
     ]}
 />
 
-### Custom Schema Configuration
+### 自定义模式配置
 
-You can customize the database field name:
+你可以自定义数据库字段名：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -208,7 +208,7 @@ export const auth = betterAuth({
             storeInDatabase: true,
             schema: {
                 user: {
-                    lastLoginMethod: "last_auth_method" // Custom field name
+                    lastLoginMethod: "last_auth_method" // 自定义字段名
                 }
             }
         })
@@ -216,11 +216,11 @@ export const auth = betterAuth({
 })
 ```
 
-## Configuration Options
+## 配置选项
 
-The last login method plugin accepts the following options:
+上次登录方式插件接受以下选项：
 
-### Server Options
+### 服务端选项
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -229,24 +229,24 @@ import { lastLoginMethod } from "better-auth/plugins"
 export const auth = betterAuth({
     plugins: [
         lastLoginMethod({
-            // Cookie configuration
-            cookieName: "better-auth.last_used_login_method", // Default: "better-auth.last_used_login_method"
-            maxAge: 60 * 60 * 24 * 30, // Default: 30 days in seconds
+            // Cookie 配置
+            cookieName: "better-auth.last_used_login_method", // 默认: "better-auth.last_used_login_method"
+            maxAge: 60 * 60 * 24 * 30, // 默认: 30 天，单位秒
             
-            // Database persistence
-            storeInDatabase: false, // Default: false
+            // 数据库存储
+            storeInDatabase: false, // 默认: false
             
-            // Custom method resolution
+            // 自定义方式解析
             customResolveMethod: (ctx) => {
-                // Custom logic to determine the login method
+                // 自定义逻辑决定登录方式
                 if (ctx.path === "/oauth/callback/custom-provider") {
                     return "custom-provider"
                 }
-                // Return null to use default resolution
+                // 返回 null 使用默认解析
                 return null
             },
             
-            // Schema customization (when storeInDatabase is true)
+            // 模式定制 (启用 storeInDatabase 时)
             schema: {
                 user: {
                     lastLoginMethod: "custom_field_name"
@@ -257,30 +257,30 @@ export const auth = betterAuth({
 })
 ```
 
-**cookieName**: `string`
-- The name of the cookie used to store the last login method
-- Default: `"better-auth.last_used_login_method"`
-- **Note**: This cookie is `httpOnly: false` to allow client-side JavaScript access for UI features
+**cookieName**: `string`  
+- 用于存储最后登录方式的 cookie 名称  
+- 默认: `"better-auth.last_used_login_method"`  
+- **注意**：该 cookie 设置为 `httpOnly: false`，允许客户端 JavaScript 访问，用于 UI 功能
 
 **maxAge**: `number`  
-- Cookie expiration time in seconds
-- Default: `2592000` (30 days)
+- cookie 过期时间，单位为秒  
+- 默认: `2592000`（30 天）
 
-**storeInDatabase**: `boolean`
-- Whether to store the last login method in the database
-- Default: `false`
-- When enabled, adds a `lastLoginMethod` field to the user table
+**storeInDatabase**: `boolean`  
+- 是否将最后登录方式存储到数据库中  
+- 默认: `false`  
+- 启用后会在用户表中添加 `lastLoginMethod` 字段
 
-**customResolveMethod**: `(ctx: GenericEndpointContext) => string | null`
-- Custom function to determine the login method from the request context
-- Return `null` to use the default resolution logic
-- Useful for custom OAuth providers or authentication flows
+**customResolveMethod**: `(ctx: GenericEndpointContext) => string | null`  
+- 自定义函数根据请求上下文判断登录方式  
+- 返回 `null` 则使用默认解析逻辑  
+- 适用于自定义 OAuth 提供商或身份验证流程
 
-**schema**: `object`
-- Customize database field names when `storeInDatabase` is enabled
-- Allows mapping the `lastLoginMethod` field to a custom column name
+**schema**: `object`  
+- 在启用 `storeInDatabase` 时自定义数据库字段名映射  
+- 允许将 `lastLoginMethod` 字段映射到自定义列名
 
-### Client Options
+### 客户端选项
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -289,46 +289,46 @@ import { lastLoginMethodClient } from "better-auth/client/plugins"
 export const authClient = createAuthClient({
     plugins: [
         lastLoginMethodClient({
-            cookieName: "better-auth.last_used_login_method" // Default: "better-auth.last_used_login_method"
+            cookieName: "better-auth.last_used_login_method" // 默认: "better-auth.last_used_login_method"
         })
     ]
 })
 ```
 
-**cookieName**: `string`
-- The name of the cookie to read the last login method from
-- Must match the server-side `cookieName` configuration
-- Default: `"better-auth.last_used_login_method"`
+**cookieName**: `string`  
+- 用于读取最后登录方式的 cookie 名称  
+- 必须和服务端的 `cookieName` 配置一致  
+- 默认: `"better-auth.last_used_login_method"`
 
-### Default Method Resolution
+### 默认方式解析
 
-By default, the plugin tracks these authentication methods:
+插件默认跟踪以下身份验证方式：
 
-- **Email authentication**: `"email"`
-- **OAuth providers**: Provider ID (e.g., `"google"`, `"github"`, `"discord"`)
-- **OAuth2 callbacks**: Provider ID from URL path
-- **Sign up methods**: Tracked the same as sign in methods
+- **邮箱身份验证**： `"email"`  
+- **OAuth 提供商**：提供商 ID（例如 `"google"`, `"github"`, `"discord"`）  
+- **OAuth2 回调**：从 URL 路径提取提供商 ID  
+- **注册方式**：和登录方式相同的方式跟踪
 
-The plugin automatically detects the method from these endpoints:
-- `/callback/:id` - OAuth callback with provider ID
-- `/oauth2/callback/:id` - OAuth2 callback with provider ID  
-- `/sign-in/email` - Email sign in
-- `/sign-up/email` - Email sign up
+插件自动检测以下端点的方式：  
+- `/callback/:id` - OAuth 回调，带有提供商 ID  
+- `/oauth2/callback/:id` - OAuth2 回调，带有提供商 ID  
+- `/sign-in/email` - 邮箱登录  
+- `/sign-up/email` - 邮箱注册
 
-## Cross-Domain Support
+## 跨域支持
 
-The plugin automatically inherits cookie settings from Better Auth's centralized cookie system. This solves the problem where the last login method wouldn't persist across:
+插件自动继承 Better Auth 集中 cookie 系统的 cookie 设置，解决了最后登录方式无法跨越以下情况持久化的问题：
 
-- **Cross-subdomain setups**: `auth.example.com` → `app.example.com`
-- **Cross-origin setups**: `api.company.com` → `app.different.com`
+- **跨子域部署**：`auth.example.com` → `app.example.com`  
+- **跨源部署**：`api.company.com` → `app.different.com`
 
-When you enable `crossSubDomainCookies` or `crossOriginCookies` in your Better Auth config, the plugin will automatically use the same domain, secure, and sameSite settings as your session cookies, ensuring consistent behavior across your application.
+当你在 Better Auth 配置中启用 `crossSubDomainCookies` 或 `crossOriginCookies`，插件会自动使用与会话 cookie 相同的域、secure 和 sameSite 设置，确保应用中的一致行为。
 
-## Advanced Examples
+## 高级示例
 
-### Custom Provider Tracking
+### 自定义提供商跟踪
 
-If you have custom OAuth providers or authentication methods, you can use the `customResolveMethod` option:
+如果你有自定义的 OAuth 提供商或身份验证方式，可以使用 `customResolveMethod` 选项：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -338,22 +338,22 @@ export const auth = betterAuth({
     plugins: [
         lastLoginMethod({
             customResolveMethod: (ctx) => {
-                // Track custom SAML provider
+                // 跟踪自定义 SAML 提供商
                 if (ctx.path === "/saml/callback") {
                     return "saml"
                 }
                 
-                // Track magic link authentication
+                // 跟踪 magic link 验证
                 if (ctx.path === "/magic-link/verify") {
                     return "magic-link"
                 }
                 
-                // Track phone authentication
+                // 跟踪手机身份验证
                 if (ctx.path === "/sign-in/phone") {
                     return "phone"
                 }
                 
-                // Return null to use default logic
+                // 返回 null 使用默认逻辑
                 return null
             }
         })
@@ -361,9 +361,9 @@ export const auth = betterAuth({
 })
 ```
 
-### Usage with Expo
+### 与 Expo 一起使用
 
-When using Better Auth with Expo, make sure to import the client plugin from `@better-auth/expo/plugins` rather than from `better-auth/plugins/client`. This ensures the last login method is stored correctly using the configured storage.
+使用 Better Auth 配合 Expo 时，请确保从 `@better-auth/expo/plugins` 而非 `better-auth/plugins/client` 导入客户端插件。这确保最后登录方式能正确存储到配置的存储中。
 
 ```ts
 import { createAuthClient } from "better-auth/react"
@@ -387,5 +387,5 @@ export const authClient = createAuthClient({
 ```
 
 <Callout type="info">
-    In Expo only apps, where browser support isn’t needed, you can omit the server plugin and rely solely on the client plugin.
+    对于仅使用 Expo 的应用，不需要浏览器支持时，可以只使用客户端插件，省略服务端插件。
 </Callout>

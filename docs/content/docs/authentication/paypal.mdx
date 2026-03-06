@@ -1,45 +1,45 @@
 ---
 title: PayPal
-description: Paypal provider setup and usage.
+description: PayPal 提供商的设置和使用。
 ---
 
 <Steps>
     <Step>
-        ### Get your PayPal Credentials
-        To integrate with PayPal, you need to obtain API credentials by creating an application in the [PayPal Developer Portal](https://developer.paypal.com/dashboard).
+        ### 获取你的 PayPal 凭证
+        要集成 PayPal，您需要通过在 [PayPal 开发者门户](https://developer.paypal.com/dashboard) 创建应用程序来获取 API 凭证。
 
-         Follow these steps:
-            1. Create an account on the PayPal Developer Portal
-            2. Create a new application, [official docs]( https://developer.paypal.com/developer/applications/)
-            3. Configure Log in with PayPal under "Other features"
-            4. Set up your Return URL (redirect URL)
-            5. Configure user information permissions
-            6. Note your Client ID and Client Secret
+         请按以下步骤操作：
+            1. 在 PayPal 开发者门户创建一个账号
+            2. 创建一个新的应用程序，[官方文档](https://developer.paypal.com/developer/applications/)
+            3. 在“其他功能”中配置“使用 PayPal 登录”
+            4. 设置您的返回 URL（重定向 URL）
+            5. 配置用户信息权限
+            6. 记录您的客户端 ID 和客户端密钥
 
         <Callout type="info">
-            - PayPal has two environments: Sandbox (for testing) and Live (for production)
-            - For testing, create sandbox test accounts in the Developer Dashboard under "Sandbox" → "Accounts"
-            - You cannot use your real PayPal account to test in sandbox mode - you must use the generated test accounts
-            - The Return URL in your PayPal app settings must exactly match your redirect URI
-            - The PayPal API does not work with localhost. You need to use a public domain for the redirect URL and HTTPS for local testing. You can use [NGROK](https://ngrok.com/) or another similar tool for this.
+            - PayPal 有两个环境：沙箱（用于测试）和正式环境（生产）
+            - 测试时，请在开发者仪表盘的“沙箱” → “账户”中创建沙箱测试账户
+            - 不能使用真实 PayPal 账号在沙箱模式进行测试，必须使用生成的测试账户
+            - PayPal 应用设置里的返回 URL 必须与您的重定向 URI 完全匹配
+            - PayPal API 不支持 localhost。您需要为重定向 URL 使用公共域名，并且本地测试需使用 HTTPS。您可以使用 [NGROK](https://ngrok.com/) 或其他类似工具实现此目的。
         </Callout>
-         Make sure to configure "Log in with PayPal" in your app settings:
-            1. Go to your app in the Developer Dashboard
-            2. Under "Other features", check "Log in with PayPal"
-            3. Click "Advanced Settings"
-            4. Enter your Return URL
-            5. Select the user information you want to access (email, name, etc.)
-            6. Enter Privacy Policy and User Agreement URLs
+         请确保在应用设置中配置“使用 PayPal 登录”：
+            1. 在开发者仪表盘进入您的应用
+            2. 在“其他功能”中勾选“使用 PayPal 登录”
+            3. 点击“高级设置”
+            4. 输入您的返回 URL
+            5. 选择您想访问的用户信息（邮箱、姓名等）
+            6. 输入隐私政策和用户协议的 URL
 
         <Callout type="info">
-            - PayPal doesn't use traditional OAuth2 scopes in the authorization URL. Instead, you configure permissions directly in the Developer Dashboard
-            - For live apps, PayPal must review and approve your application before it can go live, which typically takes a few weeks
+            - PayPal 在授权 URL 中不使用传统的 OAuth2 作用域，而是在开发者仪表盘直接配置权限
+            - 对于正式应用，PayPal 必须审核并批准您的应用，通常需要几周时间
         </Callout>
     </Step>
 
   <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供商
+        要配置提供商，您需要导入该提供商，并将其传递给 auth 实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -49,16 +49,16 @@ description: Paypal provider setup and usage.
                 paypal: { // [!code highlight]
                     clientId: process.env.PAYPAL_CLIENT_ID as string, // [!code highlight]
                     clientSecret: process.env.PAYPAL_CLIENT_SECRET as string, // [!code highlight]
-                    environment: "sandbox", // or "live" for production //, // [!code highlight]
+                    environment: "sandbox", // 或者生产环境为 "live" // [!code highlight]
                 }, // [!code highlight]
             },
         })
         ```
-        #### Options
-        The PayPal provider accepts the following options:
+        #### 选项
+        PayPal 提供商接受以下选项：
     
-        - `environment`: `'sandbox' | 'live'` - PayPal environment to use (default: `'sandbox'`)
-        - `requestShippingAddress`: `boolean` - Whether to request shipping address information (default: `false`)
+        - `environment`: `'sandbox' | 'live'` - 使用的 PayPal 环境（默认: `'sandbox'`）
+        - `requestShippingAddress`: `boolean` - 是否请求配送地址信息（默认: `false`）
     
         ```ts title="auth.ts"
         export const auth = betterAuth({
@@ -66,17 +66,17 @@ description: Paypal provider setup and usage.
                 paypal: {
                     clientId: process.env.PAYPAL_CLIENT_ID as string,
                     clientSecret: process.env.PAYPAL_CLIENT_SECRET as string,
-                    environment: "live", // Use "live" for production
-                    requestShippingAddress: true, // Request address info
+                    environment: "live", // 正式环境使用 "live"
+                    requestShippingAddress: true, // 请求地址信息
                 },
             },
         })
         ```
     </Step>
        <Step>
-        ### Sign In with PayPal
-        To sign in with PayPal, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-        - `provider`: The provider to use. It should be set to `paypal`.
+        ### 使用 PayPal 登录
+        登录时，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
+        - `provider`：要使用的提供商，应设置为 `paypal`。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
@@ -88,20 +88,20 @@ description: Paypal provider setup and usage.
             })
         }
         ```
-        ### Additional Options:
-        - `environment`: PayPal environment to use.
-            - Default: `"sandbox"`
-            - Options: `"sandbox"` | `"live"`
-        - `requestShippingAddress`: Whether to request shipping address information.
-            - Default: `false`
-        - `scope`: Additional scopes to request (combined with default permissions).
-            - Default: Configured in PayPal Developer Dashboard
-            - Note: PayPal doesn't use traditional OAuth2 scopes - permissions are set in the Dashboard
-            For more details refer to the [Scopes Reference](https://developer.paypal.com/docs/log-in-with-paypal/integrate/reference/#scope-attributes)
-        - `mapProfileToUser`: Custom function to map PayPal profile data to user object.
-        - `getUserInfo`: Custom function to retrieve user information.
-        For more details refer to the [User Reference](https://developer.paypal.com/docs/api/identity/v1/#userinfo_get)
-        - `verifyIdToken`: Custom ID token verification function.   
+        ### 其他选项：
+        - `environment`：使用的 PayPal 环境。
+            - 默认值: `"sandbox"`
+            - 可选项: `"sandbox"` | `"live"`
+        - `requestShippingAddress`：是否请求配送地址信息。
+            - 默认值: `false`
+        - `scope`：要请求的额外权限（与默认权限合并）。
+            - 默认值：在 PayPal 开发者仪表盘中配置
+            - 注意：PayPal 不使用传统的 OAuth2 作用域 — 权限在仪表盘设置
+            详情请参阅 [权限参考](https://developer.paypal.com/docs/log-in-with-paypal/integrate/reference/#scope-attributes)
+        - `mapProfileToUser`：自定义函数，用于将 PayPal 资料数据映射到用户对象。
+        - `getUserInfo`：自定义函数，用于获取用户信息。
+        详情请参阅 [用户参考](https://developer.paypal.com/docs/api/identity/v1/#userinfo_get)
+        - `verifyIdToken`：自定义 ID 令牌验证函数。   
     </Step>
 
 </Steps>

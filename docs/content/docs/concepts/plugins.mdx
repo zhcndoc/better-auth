@@ -1,42 +1,42 @@
 ---
-title: Plugins
-description: Learn how to use plugins with Better Auth.
+title: 插件
+description: 了解如何在 Better Auth 中使用插件。
 ---
 
-Plugins are a key part of Better Auth, they let you extend the base functionalities. You can use them to add new authentication methods, features, or customize behaviors.
+插件是 Better Auth 的关键部分，它们允许您扩展基础功能。您可以使用插件添加新的身份验证方法、功能，或者自定义行为。
 
-Better Auth comes with many built-in plugins ready to use. Check the plugins section for details. You can also create your own plugins.
+Better Auth 自带许多内置插件，随时可用。请查看插件章节了解详情。您也可以创建自己的插件。
 
-## Using a Plugin
+## 使用插件
 
-Plugins can be a server-side plugin, a client-side plugin, or both.
+插件可以是服务器端插件、客户端插件，或者两者兼有。
 
-To add a plugin on the server, include it in the `plugins` array in your auth configuration. The plugin will initialize with the provided options.
+要在服务器端添加插件，将其包含在认证配置的 `plugins` 数组中。插件将使用提供的选项进行初始化。
 
 ```ts title="server.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
     plugins: [
-        // Add your plugins here
+        // 在此添加您的插件
     ]
 });
 ```
 
-Client plugins are added when creating the client. Most plugins require both server and client plugins to work correctly.
-The Better Auth auth client on the frontend uses the `createAuthClient` function provided by `better-auth/client`.
+客户端插件在创建客户端时添加。大多数插件需要服务器端和客户端插件共同配合才能正常工作。
+前端的 Better Auth 认证客户端使用 `better-auth/client` 提供的 `createAuthClient` 函数。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client";
 
 const authClient = createAuthClient({
     plugins: [
-        // Add your client plugins here
+        // 在此添加您的客户端插件
     ]
 });
 ```
 
-We recommend keeping the auth-client and your normal auth instance in separate files.
+我们建议将 auth-client 和您的普通认证实例保存在不同的文件中。
 <Files>
   <Folder name="auth" defaultOpen>
     <File name="server.ts" />
@@ -44,30 +44,30 @@ We recommend keeping the auth-client and your normal auth instance in separate f
   </Folder>
 </Files>
 
-## Creating a Plugin
+## 创建插件
 
-To get started, you'll need a server plugin.
-Server plugins are the backbone of all plugins, and client plugins are there to provide an interface with frontend APIs to easily work with your server plugins.
+首先，您需要一个服务器插件。
+服务器插件是所有插件的核心，客户端插件提供与前端 API 的接口，便于与服务器插件协作。
 
 <Callout type="info">
-    If your server plugins have endpoints that need to be called from the client, you'll also need to create a client plugin.
+    如果您的服务器插件有需要从客户端调用的端点，还需要创建客户端插件。
 </Callout>
 
-### What can a plugin do?
+### 插件能做什么？
 
-* Create custom `endpoint`s to perform any action you want.
-* Extend database tables with custom `schemas`.
-* Use a `middleware` to target a group of routes using its route matcher, and run only when those routes are called through a request.
-* Use `hooks` to target a specific route or request. And if you want to run the hook even if the endpoint is called directly.
-* Use `onRequest` or `onResponse` if you want to do something that affects all requests or responses.
-* Create a custom `rate-limit` rule.
+* 创建自定义的`endpoint`执行任意操作。
+* 使用自定义的 `schemas` 扩展数据库表。
+* 使用 `middleware` 针对一组路由，利用路由匹配器，仅在通过请求调用这些路由时运行。
+* 使用 `hooks` 针对特定路由或请求。如果您希望即使直接调用端点也能执行钩子。
+* 如果想做影响所有请求或响应的事情，可以使用 `onRequest` 或 `onResponse`。
+* 创建自定义的 `rate-limit` 规则。
 
-## Create a Server plugin
+## 创建服务器插件
 
-To create a server plugin, you need to pass an object that satisfies the `BetterAuthPlugin` interface.
+创建服务器插件时，需要传入满足 `BetterAuthPlugin` 接口的对象。
 
-The only required property is `id`, which is a unique identifier for the plugin.
-Both server and client plugins can use the same `id`.
+唯一必填属性是 `id`，它是插件唯一标识符。
+服务器端与客户端插件可以使用相同的 `id`。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -79,16 +79,16 @@ export const myPlugin = () => {
 }
 ```
 <Callout>
-    You don't have to make the plugin a function, but it's recommended to do so. This way, you can pass options to the plugin and it's consistent with the built-in plugins.
+    您不需要将插件写成函数，但推荐这么做。这样可以向插件传递选项，与内置插件保持一致。
 </Callout>
 
-### Endpoints
+### 端点
 
-To add endpoints to the server, you can pass `endpoints` which requires an object with the key being any `string` and the value being an `AuthEndpoint`.
+要向服务器添加端点，可以传入 `endpoints`，它是一个对象，键是任意字符串，值为 `AuthEndpoint`。
 
-To create an Auth Endpoint you'll need to import `createAuthEndpoint` from `better-auth`.
+创建 Auth 端点需要从 `better-auth` 导入 `createAuthEndpoint`。
 
-Better Auth uses wraps around another library called <Link href="https://github.com/bekacru/better-call"> Better Call </Link> to create endpoints. Better call is a simple ts web framework made by the same team behind Better Auth.
+Better Auth 封装了另一个名为 <Link href="https://github.com/bekacru/better-call">Better Call</Link> 的库来创建端点。Better Call 是由 Better Auth 团队开发的简单 TS Web 框架。
 
 ```ts title="plugin.ts"
 import { createAuthEndpoint } from "better-auth/api";
@@ -110,40 +110,39 @@ const myPlugin = () => {
 }
 ```
 
-Create Auth endpoints wraps around `createEndpoint` from Better Call. Inside the `ctx` object, it'll provide another object called `context` that give you access better-auth specific contexts including `options`, `db`, `baseURL` and more.
+创建 Auth 端点实际上封装了 Better Call 的 `createEndpoint`。在 `ctx` 对象内部，还会提供一个名为 `context` 的对象，供您访问 Better Auth 特定的上下文，包括 `options`、`db`、`baseURL` 等。
 
-**Context Object**
+**Context 对象**
 
-- `appName`: The name of the application. Defaults to "Better Auth".
-- `options`: The options passed to the Better Auth instance.
-- `tables`:  Core tables definition. It is an object which has the table name as the key and the schema definition as the value.
-- `baseURL`: the baseURL of the auth server. This includes the path. For example, if the server is running on `http://localhost:3000`, the baseURL will be `http://localhost:3000/api/auth` by default unless changed by the user.
-- `session`: The session configuration. Includes `updateAge` and `expiresIn` values.
-- `secret`: The secret key used for various purposes. This is defined by the user.
-- `authCookie`: The default cookie configuration for core auth cookies.
-- `logger`: The logger instance used by Better Auth.
-- `db`: The Kysely instance used by Better Auth to interact with the database.
-- `adapter`: This is the same as db but it give you `orm` like functions to interact with the database. (we recommend using this over `db` unless you need raw sql queries or for performance reasons)
-- `internalAdapter`: These are internal db calls that are used by Better Auth. For example, you can use these calls to create a session instead of using `adapter` directly. `internalAdapter.createSession(userId)`
-- `createAuthCookie`: This is a helper function that lets you get a cookie `name` and `options` for either to `set` or `get` cookies. It implements things like `__Secure-` prefix for cookies based on whether the connection is secure (HTTPS) or the application is running in production mode.
-- `trustedOrigins`: This is the list of trusted origins that you specified via `options.trustedOrigins`.
-- `isTrustedOrigin`: This is a helper function that allows you to quickly check whether a given url or path is trusted based on the trusted origins configuration.
+- `appName`：应用名称。默认为 "Better Auth"。
+- `options`：传入 Better Auth 实例的选项。
+- `tables`：核心表定义。是一个以表名为键、以模式定义为值的对象。
+- `baseURL`：认证服务器基本地址，包含路径。例如，如果服务器运行在 `http://localhost:3000`，则默认 `baseURL` 为 `http://localhost:3000/api/auth`，除非用户更改。
+- `session`：会话配置。包括 `updateAge` 和 `expiresIn`。
+- `secret`：用于各种目的的密钥，由用户定义。
+- `authCookie`：核心认证 Cookie 的默认配置。
+- `logger`：Better Auth 使用的日志实例。
+- `db`：Better Auth 使用的 Kysely 实例，用于数据库交互。
+- `adapter`：与 `db` 相似，但提供 ORM 风格的函数操作数据库。（推荐使用此，除非需要原始 SQL 查询或性能需求）
+- `internalAdapter`：Better Auth 内部数据库调用。例如，您可通过它创建会话，而不是直接使用 `adapter`，如 `internalAdapter.createSession(userId)`。
+- `createAuthCookie`：辅助函数，根据是否安全连接（HTTPS）或生产环境，实现了如 `__Secure-` 前缀，为设置或获取 Cookie 返回名称及配置。
+- `trustedOrigins`：您通过 `options.trustedOrigins` 配置的受信任来源列表。
+- `isTrustedOrigin`：辅助函数，用于快速判断指定 URL 或路径是否基于受信任来源配置被信任。
 
-For other properties, you can check the <Link href="https://github.com/bekacru/better-call">Better Call</Link> documentation and the <Link href="https://github.com/better-auth/better-auth/blob/canary/packages/better-auth/src/context/create-context.ts">source code </Link>.
+其他属性，您可以参考 <Link href="https://github.com/bekacru/better-call">Better Call</Link> 文档和 <Link href="https://github.com/better-auth/better-auth/blob/canary/packages/better-auth/src/context/create-context.ts">源码</Link>。
 
+**端点规则**
 
-**Rules for Endpoints**
+- 确保端点路径采用 kebab-case（连字符小写）风格
+- 端点方法只允许使用 `POST` 或 `GET`
+- 修改数据的接口应使用 `POST`
+- 获取数据的接口应使用 `GET`
+- 必须使用 `createAuthEndpoint` 创建 API 端点
+- 端点路径应保证唯一，避免与其他插件冲突。如果使用常见路径，请在路径前加上插件名作为前缀。例如 `/my-plugin/hello-world` 而非 `/hello-world`。
 
-- Makes sure you use kebab-case for the endpoint path
-- Make sure to only use `POST` or `GET` methods for the endpoints.
-- Any function that modifies a data should be a `POST` method.
-- Any function that fetches data should be a `GET` method.
-- Make sure to use the `createAuthEndpoint` function to create API endpoints.
-- Make sure your paths are unique to avoid conflicts with other plugins. If you're using a common path, add the plugin name as a prefix to the path. (`/my-plugin/hello-world` instead of `/hello-world`.)
+### Schema（数据库模式）
 
-### Schema
-
-You can define a database schema for your plugin by passing a `schema` object. The schema object should have the table name as the key and the schema definition as the value.
+您可以通过传入 `schema` 对象定义插件的数据库模式。`schema` 对象以表名为键，模式定义为值。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -158,33 +157,30 @@ const myPlugin = () => {
                         type: "string"
                     }
                 },
-                modelName: "myTable" // optional if you want to use a different name than the key
+                modelName: "myTable" // 如需与键名不同，可指定，否则可省略
             }
         }
     } satisfies BetterAuthPlugin
 }
 ```
 
-**Fields**
+**字段**
 
-By default better-auth will create an `id` field for each table. You can add additional fields to the table by adding them to the `fields` object.
+默认 Better Auth 会为每张表创建一个 `id` 字段。您可以通过向 `fields` 对象添加字段，自定义额外列。
 
-The key is the column name and the value is the column definition. The column definition can have the following properties:
+字段名作为键，字段定义为值。定义属性包括：
 
-`type`: The type of the field. It can be `string`, `number`, `boolean`, `date`.
+- `type`：字段类型，可选 `string`、`number`、`boolean`、`date`
+- `required`：是否为必填字段，（默认 `true`）
+- `unique`：字段是否唯一，（默认 `false`）
+- `references`：字段是否为关联另一张表的外键（可选），对象格式包含：
+  - `model`：所关联表名
+  - `field`：所关联字段名
+  - `onDelete`：关联记录删除时操作（默认 `cascade`）
 
-`required`:  if the field should be required on a new record. (default: `true`)
+**其他 Schema 属性**
 
-`unique`: if the field should be unique. (default: `false`)
-
-`references`: if the field is a reference to another table. (optional) It takes an object with the following properties:
-    - `model`: The table name to reference.
-    - `field`: The field name to reference.
-    - `onDelete`: The action to take when the referenced record is deleted. (default: `cascade`)
-
-**Other Schema Properties**
-
-`disableMigration`: if the table should not be migrated. (default: `false`)
+- `disableMigration`：是否禁用同步更新（迁移），默认 `false`
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -206,7 +202,7 @@ const myPlugin = (opts: PluginOptions) => {
 }
 ```
 
-if you add additional fields to a `user` or `session` table, the types will be inferred automatically on `getSession` and `signUpEmail` calls.
+如果您在 `user` 或 `session` 表添加额外字段，`getSession` 和 `signUpEmail` 调用时类型会自动推断。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -227,15 +223,15 @@ const myPlugin = () => {
 }
 ```
 
-This will add an `age` field to the `user` table and all `user` returning endpoints will include the `age` field and it'll be inferred properly by typescript.
+这样会为 `user` 表添加 `age` 字段，所有返回 `user` 的接口也会包含此字段，且 TypeScript 会正确推断。
 
 <Callout type="warn">
-Don't store sensitive information in the `user` or `session` table. Create a new table if you need to store sensitive information.
+请勿在 `user` 或 `session` 表存储敏感信息。如需存储敏感信息，请创建新表。
 </Callout>
 
-### Hooks
+### Hooks（钩子）
 
-Hooks are used to run code before or after an action is performed, either from a client or directly on the server. You can add hooks to the server by passing a `hooks` object, which should contain `before` and `after` properties.
+钩子用于在操作执行前后运行代码，无论是从客户端还是直接在服务器上执行。您可以通过传入 `hooks` 对象添加钩子，该对象须包含 `before` 和 `after` 属性。
 
 ```ts title="plugin.ts"
 import { createAuthMiddleware } from "better-auth/plugins";
@@ -249,9 +245,9 @@ const myPlugin = () => {
                         return context.headers.get("x-my-header") === "my-value"
                     },
                     handler: createAuthMiddleware(async (ctx) => {
-                        // do something before the request
+                        // 请求前做一些操作
                         return  {
-                            context: ctx // if you want to modify the context
+                            context: ctx // 如需修改上下文
                         }
                     })
                 }],
@@ -262,7 +258,7 @@ const myPlugin = () => {
                 handler: createAuthMiddleware(async (ctx) => {
                     return ctx.json({
                         message: "Hello World"
-                    }) // if you want to modify the response
+                    }) // 如需修改响应
                 })
             }]
         }
@@ -270,13 +266,13 @@ const myPlugin = () => {
 }
 ```
 
-### Middleware
+### 中间件
 
-You can add middleware to the server by passing a `middlewares` array. This array should contain middleware objects, each with a `path` and a `middleware` property. Unlike hooks, middleware only runs on `api` requests from a client. If the endpoint is invoked directly, the middleware will not run.
+您可以通过传入 `middlewares` 数组给服务器添加中间件。数组中每项为中间件对象，包含 `path` 和 `middleware` 属性。与钩子不同，中间件仅在客户端发起的 API 请求时执行，若直接调用端点，中间件不会运行。
 
-The `path` can be either a string or a path matcher, using the same path-matching system as `better-call`.
+`path` 可以为字符串或路径匹配器，使用与 `better-call` 相同的路径匹配系统。
 
-If you throw an `APIError` from the middleware or return a `Response` object, the request will be stopped, and the response will be sent to the client.
+中间件内若抛出 `APIError` 或返回 `Response` 对象，请求将停止，响应发送给客户端。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -289,7 +285,7 @@ const myPlugin = () => {
             {
                 path: "/my-plugin/hello-world",
                 middleware: createAuthMiddleware(async(ctx) => {
-                    // do something
+                    // 执行操作
                 })
             }
         ]
@@ -297,20 +293,19 @@ const myPlugin = () => {
 }
 ```
 
+### 请求前与响应后钩子
 
-### On Request & On Response
+除了中间件外，您还可以钩入请求发起前和响应返回后。主要用于影响所有请求或响应。
 
-Additional to middlewares, you can also hook into right before a request is made and right after a response is returned. This is mostly useful if you want to do something that affects all requests or responses.
+#### 请求前
 
-#### On Request
+`onRequest` 函数在请求发起前执行，接受两个参数：`request` 和 `context`。
 
-The `onRequest` function is called right before the request is made. It takes two parameters: the `request` and the `context` object.
+用法示例：
 
-Here’s how it works:
-
-- **Continue as Normal**: If you don't return anything, the request will proceed as usual.
-- **Interrupt the Request**: To stop the request and send a response, return an object with a `response` property that contains a `Response` object.
-- **Modify the Request**: You can also return a modified `request` object to change the request before it's sent.
+- **继续正常流程**：不返回任何值，请求照常进行。
+- **中断请求**：返回含有 `response` 属性的对象，`response` 为 `Response` 实例，则请求被中断，且发送对应响应。
+- **修改请求**：返回修改后的 `request` 对象以更改请求。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -319,20 +314,20 @@ const myPlugin = () => {
     return  {
         id: "my-plugin",
         onRequest: async (request, context) => {
-            // do something
+            // 执行操作
         },
     } satisfies BetterAuthPlugin
 }
 ```
 
-#### On Response
+#### 响应后
 
-The `onResponse` function is executed immediately after a response is returned. It takes two parameters: the `response` and the `context` object.
+`onResponse` 函数在响应返回后立即执行，接受两个参数：`response` 和 `context`。
 
-Here’s how to use it:
+用法示例：
 
-- **Modify the Response**: You can return a modified response object to change the response before it is sent to the client.
-- **Continue Normally**: If you don't return anything, the response will be sent as is.
+- **修改响应**：返回修改后的响应对象以更改发送给客户端的内容。
+- **继续正常**：不返回任何内容，响应保持不变。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -341,15 +336,15 @@ const myPlugin = () => {
     return {
         id: "my-plugin",
         onResponse: async (response, context) => {
-            // do something
+            // 执行操作
         },
     } satisfies BetterAuthPlugin
 }
 ```
 
-### Rate Limit
+### 限速规则
 
-You can define custom rate limit rules for your plugin by passing a `rateLimit` array. The rate limit array should contain an array of rate limit objects.
+您可以通过传入 `rateLimit` 数组定义自定义限速规则。数组项为限速对象。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -370,10 +365,9 @@ const myPlugin = () => {
 }
 ```
 
-### Trusted origins
+### 受信任来源
 
-If you're building custom plugins or endpoints, you can use the `isTrustedOrigin()` method available on the auth context to validate URLs against your trusted origins configuration.
-This ensures your custom endpoints respect the same security settings as Better Auth's built-in endpoints.
+如果您正在构建自定义插件或端点，可以使用认证上下文中的 `isTrustedOrigin()` 方法根据受信任来源配置验证 URL。这样确保自定义端点遵循与 Better Auth 内置端点相同的安全设置。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -393,7 +387,7 @@ const myPlugin = () => {
                     url: z.string()
                 }),
             }, async (ctx) => {
-                // The allowRelativePaths option can be used to either allow or disallow relative paths
+                // allowRelativePaths 选项用于允许或禁止相对路径
                 if (!ctx.context.isTrustedOrigin(ctx.query.url, { allowRelativePaths: false })) {
                     throw new APIError("FORBIDDEN", {
                         message: "origin is not trusted."
@@ -409,15 +403,15 @@ const myPlugin = () => {
 }
 ```
 
-See the [trusted origins and security](/docs/reference/security#trusted-origins) docs for more info.
+更多信息请参见[受信任来源和安全](/docs/reference/security#trusted-origins)文档。
 
-### Server-plugin helper functions
+### 服务器插件辅助函数
 
-Some additional helper functions for creating server plugins.
+下面是一些创建服务器插件的辅助函数。
 
 #### `getSessionFromCtx`
 
-Allows you to get the client's session data by passing the auth middleware's `context`.
+通过传入认证中间件的 `context`，可获取客户端会话数据。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -433,7 +427,7 @@ const myPlugin = {
                 },
                 handler: createAuthMiddleware(async (ctx) => {
                     const session = await getSessionFromCtx(ctx);
-                    // do something with the client's session.
+                    // 操作客户端的会话数据
 
                     return  {
                         context: ctx
@@ -446,7 +440,7 @@ const myPlugin = {
 
 #### `sessionMiddleware`
 
-A middleware that checks if the client has a valid session. If the client has a valid session, it'll add the session data to the context object.
+此中间件用于检查客户端是否具有有效会话，若有效，则会将会话数据添加到上下文对象中。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -470,10 +464,9 @@ const myPlugin = () => {
 }
 ```
 
+## 创建客户端插件
 
-## Creating a client plugin
-
-If your endpoints need to be called from the client, you'll also need to create a client plugin. Better Auth clients can infer the endpoints from the server plugins. You can also add additional client-side logic.
+如果您的端点需要从客户端调用，也需创建客户端插件。Better Auth 客户端能根据服务器插件推断端点，也可添加额外的客户端逻辑。
 
 ```ts title="client-plugin.ts"
 import type { BetterAuthClientPlugin } from "better-auth/client";
@@ -485,11 +478,11 @@ export const myPluginClient = () => {
 }
 ```
 
-### Endpoint Interface
+### 端点接口
 
-Endpoints are inferred from the server plugin by adding a `$InferServerPlugin` key to the client plugin.
+客户端插件添加 `$InferServerPlugin` 字段，用于推断服务器端插件的端点。
 
-The client infers the `path` as an object and converts kebab-case to camelCase. For example, `/my-plugin/hello-world` becomes `myPlugin.helloWorld`.
+客户端将路径作为对象，并将 kebab-case 转换为 camelCase。例如，`/my-plugin/hello-world` 转为 `myPlugin.helloWorld`。
 
 ```ts title="client-plugin.ts"
 import type { BetterAuthClientPlugin } from "better-auth/client";
@@ -503,11 +496,11 @@ const myPluginClient = () => {
 }
 ```
 
-### Get actions
+### 获取 actions
 
-If you need to add additional methods or whatnot to the client, you can use the `getActions` function. This function is called with the `fetch` function from the client.
+如需为客户端添加额外方法，可使用 `getActions` 函数，它接收客户端的 `fetch` 函数。
 
-Better Auth uses <Link href="https://better-fetch.vercel.app"> Better fetch </Link> to make requests. Better Fetch is a simple fetch wrapper made by the same author of Better Auth.
+Better Auth 使用 <Link href="https://better-fetch.vercel.app">Better Fetch</Link> 进行请求，它是作者开发的简单 fetch 包装器。
 
 ```ts title="client-plugin.ts"
 import type { BetterAuthClientPlugin } from "better-auth/client";
@@ -537,16 +530,16 @@ const myPluginClient = {
 ```
 
 <Callout>
-As a general guideline, ensure that each function accepts only one argument, with an optional second argument for fetchOptions to allow users to pass additional options to the fetch call. The function should return an object containing data and error keys.
+作为一般指导，确保每个函数只接受一个参数，第二个参数为可选的 fetchOptions，以让用户传递额外的 fetch 选项。函数应返回包含 `data` 和 `error` 键的对象。
 
-If your use case involves actions beyond API calls, feel free to deviate from this rule.
+如您的用例不局限于 API 调用，可灵活调整此规则。
 </Callout>
 
-### Get Atoms
+### 获取 Atom
 
-This is only useful if you want to provide `hooks` like `useSession`.
+此功能仅当您想提供如 `useSession` 这类钩子时有用。
 
-Get atoms is called with the `fetch` function from better fetch, and it should return an object with the atoms. The atoms should be created using <Link href="https://github.com/nanostores/nanostores">nanostores</Link>. The atoms will be resolved by each framework's `useStore` hook provided by nanostores.
+`getAtoms` 函数接收 Better Fetch 的 `fetch`，返回包含各个 Atom 的对象。Atom 应使用 <Link href="https://github.com/nanostores/nanostores">nanostores</Link> 创建。Atom 会被各框架基于 nanostores 的 `useStore` 钩子自动解析。
 
 ```ts title="client-plugin.ts"
 import { atom } from "nanostores";
@@ -564,11 +557,11 @@ const myPluginClient = {
 } satisfies BetterAuthClientPlugin
 ```
 
-See built-in plugins for examples of how to use atoms properly.
+请参阅内置插件了解如何正确使用 atoms。
 
-### Path methods
+### 路径方法
 
-By default, inferred paths use the `GET` method if they don't require a body and `POST` if they do. You can override this by passing a `pathMethods` object. The key should be the path, and the value should be the method ("POST" | "GET").
+默认情况下，推断的路径如果不需要请求体则使用 `GET`，否则使用 `POST`。您可以通过传入 `pathMethods` 对象覆盖，键为路径，值为方法（`"POST"` | `"GET"`）。
 
 ```ts title="client-plugin.ts"
 import type { BetterAuthClientPlugin } from "better-auth/client";
@@ -583,12 +576,12 @@ const myPluginClient = {
 } satisfies BetterAuthClientPlugin
 ```
 
-### Fetch plugins
+### Fetch 插件
 
-If you need to use better fetch plugins, you can pass them to the `fetchPlugins` array. You can read more about better fetch plugins in the <Link href="https://better-fetch.vercel.app/docs/plugins">better fetch documentation</Link>.
+如需使用 Better Fetch 插件，可以传入 `fetchPlugins` 数组。更多信息请参阅 <Link href="https://better-fetch.vercel.app/docs/plugins">Better Fetch 文档</Link>。
 
-### Atom Listeners
+### Atom 监听器
 
-This is only useful if you want to provide `hooks` like `useSession` and you want to listen to atoms and re-evaluate them when they change.
+此功能只有在您想提供如 `useSession` 的钩子，并且希望监听 atoms 并在改变时重新计算时才有用。
 
-You can see how this is used in the built-in plugins.
+内置插件中有示例展示了此用法。

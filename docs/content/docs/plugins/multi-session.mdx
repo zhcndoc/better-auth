@@ -1,15 +1,15 @@
 ---
-title: Multi Session
-description: Learn how to use multi-session plugin in Better Auth.
+title: 多会话
+description: 学习如何在 Better Auth 中使用多会话插件。
 ---
 
-The multi-session plugin allows users to maintain multiple active sessions across different accounts in the same browser. This plugin is useful for applications that require users to switch between multiple accounts without logging out.
+多会话插件允许用户在同一浏览器中跨不同账户保持多个活动会话。该插件适用于需要用户在多个账户之间切换而不登出的应用。
 
-## Installation
+## 安装
 
 <Steps>
 <Step>
-### Add the plugin to your **auth** config
+### 将插件添加到你的 **auth** 配置中
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
 import { multiSession } from "better-auth/plugins"  // [!code highlight]
@@ -22,9 +22,9 @@ export const auth = betterAuth({
 ```
 </Step>
 <Step>
-        ### Add the client Plugin
+        ### 添加客户端插件
 
-        Add the client plugin and Specify where the user should be redirected if they need to verify 2nd factor
+        添加客户端插件，并指定用户需要验证二次身份验证时应重定向的页面
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
@@ -40,14 +40,13 @@ export const auth = betterAuth({
 </Steps>    
 
 
-## Usage
+## 使用
 
-Whenever a user logs in, the plugin will add additional cookie to the browser. This cookie will be used to maintain multiple sessions across different accounts. 
+每当用户登录时，插件会向浏览器添加额外的 cookie。该 cookie 用于维护跨不同账户的多个会话。
 
+### 列出所有设备会话
 
-### List all device sessions
-
-To list all active sessions for the current user, you can call the `listDeviceSessions` method.
+要列出当前用户的所有活跃会话，可以调用 `listDeviceSessions` 方法。
 
 <APIMethod
   path="/multi-session/list-device-sessions"
@@ -60,9 +59,9 @@ type listDeviceSessions = {
 ```
 </APIMethod>
 
-### Set active session
+### 设置活动会话
 
-To set the active session, you can call the `setActive` method.
+要设置活动会话，可以调用 `setActive` 方法。
 
 <APIMethod
   path="/multi-session/set-active"
@@ -72,16 +71,16 @@ To set the active session, you can call the `setActive` method.
 ```ts
 type setActiveSession = {
     /**
-     * The session token to set as active. 
+     * 要设置为活动的会话令牌。 
      */
     sessionToken: string = "some-session-token"
 }
 ```
 </APIMethod>
 
-### Revoke a session
+### 撤销会话
 
-To revoke a session, you can call the `revoke` method.
+要撤销会话，可以调用 `revoke` 方法。
 
 <APIMethod
   path="/multi-session/revoke"
@@ -91,20 +90,20 @@ To revoke a session, you can call the `revoke` method.
 ```ts
 type revokeDeviceSession = {
     /**
-     * The session token to revoke. 
+     * 要撤销的会话令牌。 
      */
     sessionToken: string = "some-session-token"
 }
 ```
 </APIMethod>
 
-### Signout and Revoke all sessions
+### 登出并撤销所有会话
 
-When a user logs out, the plugin will revoke all active sessions for the user. You can do this by calling the existing `signOut` method, which handles revoking all sessions automatically.
+当用户登出时，插件会撤销该用户所有活跃会话。你可以调用现有的 `signOut` 方法，它会自动处理撤销所有会话。
 
-### Max Sessions
+### 最大会话数
 
-You can specify the maximum number of sessions a user can have by passing the `maximumSessions` option to the plugin. By default, the plugin allows 5 sessions per device.
+你可以通过传递 `maximumSessions` 选项给插件来指定用户最多允许的会话数。默认情况下，插件允许每个设备5个会话。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"

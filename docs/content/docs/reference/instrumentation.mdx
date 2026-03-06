@@ -1,87 +1,86 @@
 ---
-title: Instrumentation (Experimental)
-description: Distributed tracing for Better Auth
+title: 仪器化（实验性）
+description: Better Auth 的分布式追踪
 ---
 
 <Callout type="warning">
-  OpenTelemetry instrumentation is experimental and may change in future releases. The API and span structure are subject to change.
+  OpenTelemetry 仪器化处于实验阶段，未来版本可能发生变化。API 和 span 结构可能会更改。
 </Callout>
 
-Better Auth is instrumented through [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. Spans are emitted for endpoints, hooks, database operations and the plugin lifecycle.
-The goal of this instrumentation is to provide better insights into the behavior of your Better Auth instance, helping you debug issues and optimize performance.
+Better Auth 通过 [OpenTelemetry](https://opentelemetry.io/) 进行分布式追踪的仪器化。为端点、钩子、数据库操作和插件生命周期生成 spans。  
+该仪器化的目标是提供关于您的 Better Auth 实例行为的更好洞察，帮助您调试问题并优化性能。
 
-## Setup
+## 设置
 
-Better Auth uses the OpenTelemetry API to create spans. For traces to be collected and exported, at minimum, you must configure a **TracerProvider** and a **SpanExporter** in your application.
+Better Auth 使用 OpenTelemetry API 来创建 spans。为了收集和导出追踪，您的应用至少需要配置一个 **TracerProvider** 和一个 **SpanExporter**。
 
-For setup instructions, see the official OpenTelemetry documentation:
+有关设置说明，请参阅官方 OpenTelemetry 文档：
 
-- **[Node.js getting started](https://opentelemetry.io/docs/languages/js/getting-started/nodejs/)** – Core setup for Node.js apps
+- **[Node.js 入门](https://opentelemetry.io/docs/languages/js/getting-started/nodejs/)** – Node.js 应用的核心设置
 
-## Supported Spans
+## 支持的 Spans
 
-The following spans are supported by Better Auth:
+Better Auth 支持以下 spans：
 
-### Endpoint Spans
+### 端点 Spans
 
-| Span Name             | Description                                     | When Emitted                                 |
-| --------------------- | ----------------------------------------------- | -------------------------------------------- |
-| `{METHOD} {path}`     | Parent span for an auth endpoint                | Every auth API call (e.g. `GET /get-session`)|
-| `handler {path}`      | Span around the endpoint handler execution      | Inside each endpoint, wrapping the handler   |
+| Span 名称              | 描述                      | 触发时机                               |
+| --------------------- | ------------------------- | -------------------------------------- |
+| `{METHOD} {path}`     | 认证端点的父级 span        | 每次认证 API 调用（例如 `GET /get-session`）|
+| `handler {path}`      | 端点处理函数执行的 span    | 在每个端点内，包裹处理函数               |
 
-**Attributes:**
-- `http.route` - The normalized HTTP path of the endpoint
-- `better_auth.operation_id` - The operation identifier (e.g `getSession`)
+**属性：**
+- `http.route` - 端点的规范化 HTTP 路径
+- `better_auth.operation_id` - 操作标识符（例如 `getSession`）
 
-The following global hooks are supported:
+支持以下全局钩子：
 
-| Span Name                   | Description                          | When Emitted                            |
-| --------------------------- | ------------------------------------ | --------------------------------------- |
-| `hook before {path} {source}` | Before-hook for an auth endpoint     | When a `before` hook runs for the route |
-| `hook after {path} {source}`  | After-hook for an auth endpoint      | When an `after` hook runs for the route |
+| Span 名称                      | 描述                       | 触发时机                               |
+| ----------------------------- | -------------------------- | -------------------------------------- |
+| `hook before {path} {source}` | 认证端点的前置钩子          | 针对该路由执行 `before` 钩子时           |
+| `hook after {path} {source}`  | 认证端点的后置钩子          | 针对该路由执行 `after` 钩子时            |
 
-- **Attributes:**
-    - `better_auth.hook.type` - The hook type (e.g. `before` or `after`)
-    - `better_auth.context` - Execution context: `"user"` for global hooks, `"plugin:{pluginId}"` for plugin-registered hooks
-    - `http.route` - The **route template** (low cardinality)
-    - `better_auth.operation_id` - The operation identifier (e.g `getSession`)
+- **属性：**
+    - `better_auth.hook.type` - 钩子类型（例如 `before` 或 `after`）
+    - `better_auth.context` - 执行上下文: `"user"` 表示全局钩子，`"plugin:{pluginId}"` 表示插件注册的钩子
+    - `http.route` - **路由模板**（低基数）
+    - `better_auth.operation_id` - 操作标识符（例如 `getSession`）
 
-Middlewares are also supported:
+中间件也被支持：
 
-| Span Name                     | Description                     | When Emitted                     |
-| ----------------------------- | ------------------------------- | -------------------------------- |
-| `onRequest {path} {pluginId}`  | Plugin `onRequest` hook          | Before request handling          |
-| `onResponse {path} {pluginId}` | Plugin `onResponse` hook         | After response is produced       |
-| `middleware {path} {pluginId}` | Plugin middleware execution     | When middleware runs for a route |
+| Span 名称                     | 描述                      | 触发时机                      |
+| ----------------------------- | ------------------------- | ----------------------------- |
+| `onRequest {path} {pluginId}`  | 插件的 `onRequest` 钩子     | 请求处理前                    |
+| `onResponse {path} {pluginId}` | 插件的 `onResponse` 钩子    | 响应生成后                    |
+| `middleware {path} {pluginId}` | 插件中间件执行             | 中间件针对路由执行时          |
 
-**Attributes:**
-- `better_auth.hook.type` - The hook type: `"onRequest"`, `"onResponse"`, or `"middleware"`
-- `better_auth.context` - Execution context: `"plugin:{pluginId}"` (e.g. `plugin:bearer`, `plugin:test-plugin`)
-- `http.route` - The **route template** (low cardinality), matched from the request path; falls back to `/**` when no route matches
-- `http.response.status_code` - The HTTP response status code (onResponse only)
+**属性：**
+- `better_auth.hook.type` - 钩子类型: `"onRequest"`、`"onResponse"` 或 `"middleware"`
+- `better_auth.context` - 执行上下文: `"plugin:{pluginId}"`（例如 `plugin:bearer`、`plugin:test-plugin`）
+- `http.route` - **路由模板**（低基数），根据请求路径匹配；若无匹配则使用 `/**`
+- `http.response.status_code` - HTTP 响应状态码（仅限 onResponse）
 
-### Database Spans
+### 数据库 Spans
 
-| Span Name              | Description                         | When Emitted                                  |
-| ---------------------- | ----------------------------------- | --------------------------------------------- |
-| `db {operation} {model}` | Span for a database operation       | All adapter operations (create, findOne, etc.)|
+| Span 名称              | 描述                      | 触发时机                                   |
+| ---------------------- | ------------------------- | ------------------------------------------ |
+| `db {operation} {model}` | 数据库操作的 span          | 所有适配器操作（如 create、findOne 等）    |
 
-- **Operations:** `create`, `findOne`, `findMany`, `update`, `updateMany`, `delete`, `deleteMany`, `count`
-- **Models:** Core models include `user`, `account`, `session`, `verification`, plus plugin-defined models (e.g. `organization`, `rateLimit`).
-- **Attributes:**
-    - `db.operation` - The database operation name (e.g. `create`)
-    - `db.collection.name` - The database collection/model name (e.g. `user`)
+- **操作类型：** `create`、`findOne`、`findMany`、`update`、`updateMany`、`delete`、`deleteMany`、`count`
+- **模型:** 核心模型包括 `user`、`account`、`session`、`verification`，以及插件定义的模型（例如 `organization`、`rateLimit`）。
+- **属性：**
+    - `db.operation` - 数据库操作名称（例如 `create`）
+    - `db.collection.name` - 数据库集合/模型名称（例如 `user`）
 
-Additionally, when defined, the following spans are also emitted for database hooks:
+此外，当定义时，数据库钩子也会生成以下 spans：
 
-| Span Name                 | Description                           | When Emitted                     |
-| ------------------------- | ------------------------------------- | -------------------------------- |
-| `db {operation}.before {model}` | Before-hook for a create/update/delete | When a `databaseHooks` before hook runs |
-| `db {operation}.after {model}`  | After-hook for a create/update/delete  | When a `databaseHooks` after hook runs   |
+| Span 名称                  | 描述                          | 触发时机                     |
+| -------------------------- | ----------------------------- | ---------------------------- |
+| `db {operation}.before {model}` | create/update/delete 的前置钩子 | 执行 `databaseHooks` 的 before 钩子时 |
+| `db {operation}.after {model}`  | create/update/delete 的后置钩子 | 执行 `databaseHooks` 的 after 钩子时  |
 
-- **Operations:** `create`, `update`, `updateMany`, `delete`, `deleteMany`
-- **Attributes:**
-  - `better_auth.hook.type` - The hook type (e.g. `create.before`, `create.after`, `update.before`)
-  - `better_auth.context` - Execution context: `"user"` or `"plugin:{pluginId}"`
-  - `db.collection.name` - The database collection/model name (e.g. `user`)
-
+- **操作类型：** `create`、`update`、`updateMany`、`delete`、`deleteMany`
+- **属性：**
+  - `better_auth.hook.type` - 钩子类型（例如 `create.before`、`create.after`、`update.before`）
+  - `better_auth.context` - 执行上下文: `"user"` 或 `"plugin:{pluginId}"`
+  - `db.collection.name` - 数据库集合/模型名称（例如 `user`）

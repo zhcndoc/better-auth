@@ -1,39 +1,36 @@
 ---
-title: unable_to_link_account
-description: The account could not be linked.
+title: 无法关联账户
+description: 无法关联该账户。
 ---
 
-## What is it?
+## 什么情况？
 
-This error occurs only during an OAuth flow when attempting to link the provider account to the
-currently authenticated user. Better Auth blocks the operation if either:
+此错误仅在 OAuth 流程中尝试将提供商账户关联到当前已认证用户时发生。如果发生以下情况，Better Auth 会阻止该操作：
 
-1) The database operation to create/update the linked account fails.
-2) The provider is not considered trusted for linking based on your auth configuration
-   (`account.accountLinking.trustedProviders`).
+1) 创建/更新关联账户的数据库操作失败。
+2) 根据您的认证配置（`account.accountLinking.trustedProviders`），该提供商不被视为可信赖的关联来源。
 
-## Common Causes
+## 常见原因
 
-* The provider is not listed in `account.accountLinking.trustedProviders`.
-* Configuration differs across environments (dev/staging/prod), so the provider appears untrusted in one environment.
-* Database write failed due to unique constraint, foreign key violation, or transaction/connection issues.
-* A race condition linking the same provider concurrently caused a conflict.
-* Pending migrations or a mismatched schema between services caused the write to fail.
+* 该提供商未列入 `account.accountLinking.trustedProviders`。
+* 不同环境（开发/测试/生产）配置不一致，导致某个环境中该提供商被视为不可信。
+* 数据库写入失败，原因可能是唯一约束、外键冲突或事务/连接问题。
+* 并发链接同一提供商时发生竞态条件，造成冲突。
+* 待执行的迁移或服务间模式不匹配导致写入失败。
 
-## How to resolve
+## 如何解决
 
-### Allow linking for the intended provider
+### 允许关联指定提供商
 
-* Add the provider id (e.g., `github`, `google`) to `account.accountLinking.trustedProviders` in your auth config.
-* Verify you are using the correct provider id/slug that your integration expects.
+* 将提供商 ID（例如 `github`、`google`）添加到认证配置中的 `account.accountLinking.trustedProviders`。
+* 确认您使用的提供商 ID/别名是集成所期待的。
 
-### Fix database reliability and constraints
+### 修复数据库可靠性和约束
 
-* Run pending migrations and ensure the schema matches the current Better Auth version.
-* Investigate DB errors (deadlocks, timeouts, connection pool limits) and retry if appropriate.
+* 执行待处理的迁移，确保数据库模式与当前 Better Auth 版本匹配。
+* 调查数据库错误（死锁、超时、连接池限制）并在适当时重试。
 
-### Verify environment configuration
+### 验证环境配置
 
-* Ensure the same auth config is deployed to all environments and that environment variables are loaded as expected.
-* Double-check that the runtime sees the intended `trustedProviders` list.
-
+* 确保所有环境部署有相同的认证配置，且环境变量正确加载。
+* 再次确认运行时看到的是预期的 `trustedProviders` 列表。

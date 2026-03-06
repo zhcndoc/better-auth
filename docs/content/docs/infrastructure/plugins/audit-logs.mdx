@@ -1,13 +1,13 @@
 ---
-title: Audit Logs
-description: Track and query authentication events across your application with automatic audit logging.
+title: 审计日志
+description: 通过自动审计日志记录，跟踪并查询您应用中的身份验证事件。
 ---
 
-Better Auth Infrastructure automatically collects audit logs for authentication events in your application. Once you've added the `dash()` plugin, events are tracked without any additional configuration.
+Better Auth 基础设施会自动收集您应用中的身份验证事件审计日志。一旦您添加了 `dash()` 插件，事件即会在无需额外配置的情况下被追踪。
 
-## How Audit Logs Are Collected
+## 审计日志的收集方式
 
-The `dash()` plugin hooks into your Better Auth instance and automatically records events as they happen. No manual instrumentation is needed — sign-ups, sign-ins, password changes, and more are all captured.
+`dash()` 插件会挂载到您的 Better Auth 实例中，自动记录发生的事件。无需手动插桩——注册、登录、密码更改等操作均会被捕获。
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -20,91 +20,91 @@ export const auth = betterAuth({
 });
 ```
 
-That's it. Once `dash()` is active, audit logs are collected automatically.
+就这样。`dash()` 激活后，审计日志会自动被收集。
 
-## Tracked Events
+## 跟踪事件
 
-<Tabs items={["User", "Session", "Account", "Verification", "Organization", "Security"]}>
-  <Tab value="User">
-    | Event | Trigger |
+<Tabs items={["用户", "会话", "账号", "验证", "组织", "安全"]}>
+  <Tab value="用户">
+    | 事件 | 触发条件 |
     |-------|---------|
-    | `user_signed_up` | New user registration |
-    | `user_profile_updated` | User updates their profile |
-    | `user_profile_image_updated` | User changes their avatar |
-    | `user_email_verified` | Email verification completed |
-    | `user_banned` | User is banned |
-    | `user_unbanned` | User is unbanned |
-    | `user_deleted` | User account deleted |
+    | `user_signed_up` | 新用户注册 |
+    | `user_profile_updated` | 用户更新个人资料 |
+    | `user_profile_image_updated` | 用户更换头像 |
+    | `user_email_verified` | 完成邮箱验证 |
+    | `user_banned` | 用户被封禁 |
+    | `user_unbanned` | 用户解封 |
+    | `user_deleted` | 删除用户账号 |
   </Tab>
-  <Tab value="Session">
-    | Event | Trigger |
+  <Tab value="会话">
+    | 事件 | 触发条件 |
     |-------|---------|
-    | `user_signed_in` | Successful sign-in |
-    | `user_signed_out` | User signs out |
-    | `session_created` | New session created |
-    | `session_revoked` | Single session revoked |
-    | `sessions_revoked_all` | All sessions revoked |
-    | `user_impersonated` | Admin starts impersonating user |
-    | `user_impersonation_stopped` | Admin stops impersonating |
+    | `user_signed_in` | 登录成功 |
+    | `user_signed_out` | 用户登出 |
+    | `session_created` | 新建会话 |
+    | `session_revoked` | 单个会话被撤销 |
+    | `sessions_revoked_all` | 所有会话被撤销 |
+    | `user_impersonated` | 管理员开始模拟用户 |
+    | `user_impersonation_stopped` | 管理员停止模拟 |
   </Tab>
-  <Tab value="Account">
-    | Event | Trigger |
+  <Tab value="账号">
+    | 事件 | 触发条件 |
     |-------|---------|
-    | `account_linked` | Social account linked |
-    | `account_unlinked` | Social account unlinked |
-    | `password_changed` | Password updated |
+    | `account_linked` | 关联社交账号 |
+    | `account_unlinked` | 取消关联社交账号 |
+    | `password_changed` | 密码更新 |
   </Tab>
-  <Tab value="Verification">
-    | Event | Trigger |
+  <Tab value="验证">
+    | 事件 | 触发条件 |
     |-------|---------|
-    | `password_reset_requested` | Password reset initiated |
-    | `password_reset_completed` | Password reset finished |
-    | `email_verification_sent` | Verification email sent |
+    | `password_reset_requested` | 请求重置密码 |
+    | `password_reset_completed` | 密码重置完成 |
+    | `email_verification_sent` | 发送验证邮件 |
   </Tab>
-  <Tab value="Organization">
-    Tracked when using the [organization plugin](/docs/plugins/organization).
+  <Tab value="组织">
+    在使用[组织插件](/docs/plugins/organization)时跟踪。
 
-    | Event | Trigger |
+    | 事件 | 触发条件 |
     |-------|---------|
-    | `organization_created` | New organization created |
-    | `organization_updated` | Organization settings changed |
-    | `member_added` | Member added to organization |
-    | `member_removed` | Member removed from organization |
-    | `member_role_updated` | Member role changed |
-    | `member_invited` | Invitation sent |
-    | `invite_accepted` | Invitation accepted |
-    | `invite_rejected` | Invitation rejected |
-    | `invite_cancelled` | Invitation cancelled |
-    | `team_created` | Team created |
-    | `team_updated` | Team updated |
-    | `team_deleted` | Team deleted |
-    | `team_member_added` | Member added to team |
-    | `team_member_removed` | Member removed from team |
+    | `organization_created` | 新建组织 |
+    | `organization_updated` | 组织设置更新 |
+    | `member_added` | 成员被添加进组织 |
+    | `member_removed` | 成员被移出组织 |
+    | `member_role_updated` | 成员角色变更 |
+    | `member_invited` | 发送邀请 |
+    | `invite_accepted` | 邀请被接受 |
+    | `invite_rejected` | 邀请被拒绝 |
+    | `invite_cancelled` | 邀请被取消 |
+    | `team_created` | 团队创建 |
+    | `team_updated` | 团队更新 |
+    | `team_deleted` | 团队删除 |
+    | `team_member_added` | 成员被加入团队 |
+    | `team_member_removed` | 成员被移出团队 |
   </Tab>
-  <Tab value="Security">
-    Tracked when using the [Sentinel](/docs/infrastructure/plugins/sentinel) plugin.
+  <Tab value="安全">
+    在使用[Sentinel](/docs/infrastructure/plugins/sentinel)插件时跟踪。
 
-    | Event | Trigger |
+    | 事件 | 触发条件 |
     |-------|---------|
-    | `security_blocked` | Request was blocked |
-    | `security_allowed` | Request was allowed after challenge |
-    | `security_credential_stuffing` | Credential stuffing detected |
-    | `security_impossible_travel` | Impossible travel detected |
-    | `security_geo_blocked` | Geo-blocking triggered |
-    | `security_bot_blocked` | Bot detected and blocked |
-    | `security_suspicious_ip` | Suspicious IP detected |
-    | `security_velocity_exceeded` | Rate limit exceeded |
-    | `security_free_trial_abuse` | Free trial abuse detected |
-    | `security_compromised_password` | Compromised password detected |
-    | `security_stale_account` | Stale account reactivation |
+    | `security_blocked` | 请求被拦截 |
+    | `security_allowed` | 挑战后请求获准 |
+    | `security_credential_stuffing` | 检测到凭证填充攻击 |
+    | `security_impossible_travel` | 检测到不可能的地理位置旅行 |
+    | `security_geo_blocked` | 触发地理位置阻断 |
+    | `security_bot_blocked` | 检测到机器人并阻断 |
+    | `security_suspicious_ip` | 检测到可疑 IP |
+    | `security_velocity_exceeded` | 超过速率限制 |
+    | `security_free_trial_abuse` | 检测到免费试用滥用 |
+    | `security_compromised_password` | 检测到受损密码 |
+    | `security_stale_account` | 过期账户重新激活 |
   </Tab>
 </Tabs>
 
-## Fetching Audit Logs
+## 获取审计日志
 
-### Client Setup
+### 客户端设置
 
-Add `dashClient()` to your auth client:
+在您的 auth 客户端中添加 `dashClient()`：
 
 ```ts
 import { createAuthClient } from "better-auth/client";
@@ -115,7 +115,7 @@ export const authClient = createAuthClient({
 });
 ```
 
-### Basic Query
+### 基础查询
 
 ```ts
 const session = await authClient.getSession();
@@ -126,41 +126,41 @@ const logs = await authClient.dash.getAuditLogs({
   offset: 0,
 });
 
-logs.data?.events;  // Array of audit log events
-logs.data?.total;   // Total count
-logs.data?.limit;   // Page size
-logs.data?.offset;  // Current offset
+logs.data?.events;  // 审计日志事件数组
+logs.data?.total;   // 总数量
+logs.data?.limit;   // 每页大小
+logs.data?.offset;  // 当前偏移量
 ```
 
-### Query Parameters
+### 查询参数
 
-| Parameter | Type | Description |
+| 参数 | 类型 | 说明 |
 |-----------|------|-------------|
-| `limit` | `number` | Results per page (max 100, default 50) |
-| `offset` | `number` | Pagination offset (default 0) |
-| `organizationId` | `string` | Filter by organization |
-| `identifier` | `string` | Filter by identifier |
-| `eventType` | `string` | Filter by event type |
-| `userId` | `string` | Filter by user ID |
-| `user` | `object` | User object with ID |
-| `session` | `object` | Session object with user |
+| `limit` | `number` | 每页结果数量（最大 100，默认 50） |
+| `offset` | `number` | 分页偏移量（默认 0） |
+| `organizationId` | `string` | 按组织过滤 |
+| `identifier` | `string` | 按标识符过滤 |
+| `eventType` | `string` | 按事件类型过滤 |
+| `userId` | `string` | 按用户 ID 过滤 |
+| `user` | `object` | 包含 ID 的用户对象 |
+| `session` | `object` | 包含用户的会话对象 |
 
-### Filtering
+### 过滤示例
 
 ```ts
-// Filter by event type
+// 按事件类型过滤
 const signIns = await authClient.dash.getAuditLogs({
   session,
   eventType: "user_signed_in",
 });
 
-// Filter by organization
+// 按组织过滤
 const orgLogs = await authClient.dash.getAuditLogs({
   session,
   organizationId: "org_123",
 });
 
-// Combine filters
+// 组合过滤
 const orgSignIns = await authClient.dash.getAuditLogs({
   session,
   organizationId: "org_123",
@@ -168,7 +168,7 @@ const orgSignIns = await authClient.dash.getAuditLogs({
 });
 ```
 
-### Pagination
+### 分页示例
 
 ```ts
 async function getAllAuditLogs(session: unknown) {

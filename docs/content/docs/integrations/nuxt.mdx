@@ -1,41 +1,41 @@
 ---
-title: Nuxt Integration
-description: Integrate Better Auth with Nuxt.
+title: Nuxt 集成
+description: 将 Better Auth 集成到 Nuxt 中。
 ---
 
-Before you start, make sure you have a Better Auth instance configured. If you haven't done that yet, check out the [installation](/docs/installation).
+在开始之前，请确保你已经配置了 Better Auth 实例。如果还没有，查看 [安装指南](/docs/installation)。
 
-### Create API Route
+### 创建 API 路由
 
-We need to mount the handler to an API route. Create a file inside `/server/api/auth` called `[...all].ts` and add the following code:
+我们需要将处理器挂载到 API 路由上。在 `/server/api/auth` 目录下创建一个名为 `[...all].ts` 的文件，并添加以下代码：
 
 ```ts title="server/api/auth/[...all].ts"
-import { auth } from "~/lib/auth"; // import your auth config
+import { auth } from "~/lib/auth"; // 导入你的 auth 配置
 
 export default defineEventHandler((event) => {
 	return auth.handler(toWebRequest(event));
 });
 ```
 <Callout type="info">
- You can change the path on your better-auth configuration but it's recommended to keep it as `/api/auth/[...all]`
+ 你可以在你的 better-auth 配置中更改路径，但建议保持为 `/api/auth/[...all]`
 </Callout>
 
-## Create a client
+## 创建客户端
 
-Create a client instance. You can name the file anything you want. Here we are creating `client.ts` file inside the `lib/` directory.
+创建一个客户端实例。你可以将文件命名为任意名称。这里我们在 `lib/` 目录下创建 `client.ts` 文件。
 
 ```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/vue" // make sure to import from better-auth/vue
+import { createAuthClient } from "better-auth/vue" // 确保从 better-auth/vue 导入
 
 export const authClient = createAuthClient({
-    //you can pass client configuration here
+    // 可以在这里传入客户端配置
 })
 ```
 
-Once you have created the client, you can use it to sign up, sign in, and perform other actions.
-Some of the actions are reactive.
+创建客户端后，你可以使用它来注册、登录和执行其他操作。
+部分操作是响应式的。
 
-### Example usage
+### 使用示例
 
 ```vue title="index.vue"
 <script setup lang="ts">
@@ -48,42 +48,41 @@ const session = authClient.useSession()
         <button v-if="!session?.data" @click="() => authClient.signIn.social({
             provider: 'github'
         })">
-            Continue with GitHub
+            使用 GitHub 继续
         </button>
         <div>
             <pre>{{ session.data }}</pre>
             <button v-if="session.data" @click="authClient.signOut()">
-                Sign out
+                登出
             </button>
         </div>
     </div>
 </template>
 ```
 
-### Server Usage
+### 服务器端使用
 
-The `api` object exported from the auth instance contains all the actions that you can perform on the server. Every endpoint made inside Better Auth is a invocable as a function. Including plugins endpoints.
+导出自 auth 实例的 `api` 对象包含了你可以在服务器端执行的所有操作。Better Auth 中创建的每个端点都可以作为函数调用，包括插件端点。
 
-**Example: Getting Session on a server API route**
+**示例：在服务器 API 路由中获取会话**
 
 ```tsx title="server/api/example.ts"
 import { auth } from "~/lib/auth";
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
     const session = await auth.api.getSession({
       headers: event.headers
     });
 
    if(session) {
-     // access the session.session && session.user
+     // 访问 session.session 和 session.user
    }
 });
 ```
 
+### SSR 使用
 
-### SSR Usage
-
-If you are using Nuxt with SSR, you can use the `useSession` function in the `setup` function of your page component and pass `useFetch` to make it work with SSR.
+如果你使用 Nuxt 的 SSR，可以在页面组件的 `setup` 函数中使用 `useSession`，并传入 `useFetch` 以支持 SSR。
 
 ```vue title="index.vue"
 <script setup lang="ts">
@@ -99,10 +98,9 @@ const { data: session } = await authClient.useSession(useFetch);
 </template>
 ```
 
+### 中间件
 
-### Middleware
-
-To add middleware to your Nuxt project, you can use the `useSession` method from the client.
+要给你的 Nuxt 项目添加中间件，可以使用客户端的 `useSession` 方法。
 
 ```ts title="middleware/auth.global.ts"
 import { authClient } from "~/lib/auth-client";
@@ -116,10 +114,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 });
 ```
 
-### Resources & Examples
+### 资源与示例
 
-- [Nuxt and Nuxt Hub example](https://github.com/atinux/nuxthub-better-auth) on GitHub.
-- [NuxtZzle is Nuxt,Drizzle ORM example](https://github.com/leamsigc/nuxt-better-auth-drizzle) on GitHub [preview](https://nuxt-better-auth.giessen.dev/)
-- [Nuxt example](https://stackblitz.com/github/better-auth/examples/tree/main/nuxt-example) on StackBlitz.
-- [NuxSaaS (Github)](https://github.com/NuxSaaS/NuxSaaS) is a full-stack SaaS Starter Kit that leverages Better Auth for secure and efficient user authentication. [Demo](https://nuxsaas.com/)
-- [NuxtOne (Github)](https://github.com/nuxtone/nuxt-one) is a Nuxt-based starter template for building AIaaS (AI-as-a-Service) applications.
+- [Nuxt 和 Nuxt Hub 示例](https://github.com/atinux/nuxthub-better-auth) （GitHub）
+- [NuxtZzle 是 Nuxt 和 Drizzle ORM 的示例](https://github.com/leamsigc/nuxt-better-auth-drizzle) （GitHub）[预览](https://nuxt-better-auth.giessen.dev/)
+- [Nuxt 示例](https://stackblitz.com/github/better-auth/examples/tree/main/nuxt-example) （StackBlitz）
+- [NuxSaaS (GitHub)](https://github.com/NuxSaaS/NuxSaaS) 是一个全栈 SaaS 启动模板，使用 Better Auth 实现安全高效的用户认证。[演示](https://nuxsaas.com/)
+- [NuxtOne (GitHub)](https://github.com/nuxtone/nuxt-one) 是基于 Nuxt 的 AI 即服务（AIaaS）应用启动模板。

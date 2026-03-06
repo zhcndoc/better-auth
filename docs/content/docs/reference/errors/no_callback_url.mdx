@@ -1,22 +1,20 @@
 ---
-title: no_callback_url
-description: The callback URL was not found in the request.
+title: 无回调 URL
+description: 请求中未找到回调 URL。
 ---
 
-## What is it?
+## 这是什么？
 
-This error occurs during the OAuth flow when the request reaches your `/api/auth/callback` endpoint
-but the `state` data does not contain a callback URL.
-Better Auth stores metadata in `state` when the flow starts, including where to redirect after a
-successful sign-in/link. If that URL is missing at callback time, we cannot safely continue.
+当请求到达你的 `/api/auth/callback` 端点时，如果 `state` 数据中不包含回调 URL，就会发生此错误。
+Better Auth 在流程开始时会将元数据存储在 `state` 中，包括成功登录/关联后要重定向的位置。如果回调时缺少该 URL，我们就无法安全地继续。
 
-## Common Causes
+## 常见原因
 
-* The OAuth flow was not started via Better Auth APIs, so the `state` payload never included a callback URL.
-* A reverse proxy, CDN, or middleware altered the flow, causing the app to read a different or empty `state`.
+* OAuth 流程不是通过 Better Auth API 启动的，因此 `state` 载荷中从未包含回调 URL。
+* 反向代理、CDN 或中间件更改了流程，导致应用读取了不同或为空的 `state`。
 
-## How to resolve
+## 解决方法
 
-### Start the flow through Better Auth
+### 通过 Better Auth 启动流程
 
-* Always initiate OAuth using Better Auth's built-in methods so `state` is generated with the needed fields.
+* 始终使用 Better Auth 内置的方法启动 OAuth，这样 `state` 会生成所需字段。

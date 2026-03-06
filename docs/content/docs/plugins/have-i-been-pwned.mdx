@@ -1,13 +1,13 @@
 ---
-title: Have I Been Pwned
-description: A plugin to check if a password has been compromised
+title: 我是否已经被泄露
+description: 一个用于检查密码是否已被泄露的插件
 ---
 
-The Have I Been Pwned plugin helps protect user accounts by preventing the use of passwords that have been exposed in known data breaches. It uses the [Have I Been Pwned](https://haveibeenpwned.com/) API to check if a password has been compromised.
+Have I Been Pwned 插件通过阻止使用已在已知数据泄露中曝光的密码来帮助保护用户账户。它使用 [Have I Been Pwned](https://haveibeenpwned.com/) API 来检查密码是否已被泄露。
 
-## Installation
+## 安装
 
-### Add the plugin to your **auth** config
+### 将该插件添加到你的 **auth** 配置中
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
 import { haveIBeenPwned } from "better-auth/plugins" // [!code highlight]
@@ -19,28 +19,28 @@ export const auth = betterAuth({
 })
 ```
 
-## Usage
+## 使用
 
-When a user attempts to create an account or update their password with a compromised password, they'll receive the following default error:
+当用户尝试使用被泄露的密码创建账户或更新密码时，他们将收到以下默认错误信息：
 
 ```json
 {
   "code": "PASSWORD_COMPROMISED",
-  "message": "Password is compromised"
+  "message": "密码已泄露"
 }
 ```
 
-## Config
+## 配置
 
-You can customize the error message:
+你可以自定义错误消息：
 
 ```ts
 haveIBeenPwned({
-    customPasswordCompromisedMessage: "Please choose a more secure password."
+    customPasswordCompromisedMessage: "请选择一个更安全的密码。"
 })
 ```
-## Security Notes
+## 安全注意事项
 
-- Only the first 5 characters of the password hash are sent to the API
-- The full password is never transmitted
-- Provides an additional layer of account security
+- 仅发送密码哈希的前 5 个字符到 API
+- 永远不会传输完整密码
+- 提供额外一层账户安全保护

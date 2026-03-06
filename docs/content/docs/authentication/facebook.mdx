@@ -1,26 +1,26 @@
 ---
 title: Facebook
-description: Facebook provider setup and usage.
+description: Facebook 提供者的设置和使用。
 ---
 
 <Steps>
     <Step> 
-        ### Get your Facebook credentials
-        To use Facebook sign in, you need a client ID and client Secret. You can get them from the [Facebook Developer Portal](https://developers.facebook.com/).
-        Select your app, navigate to **App Settings > Basic**, locate the following:  
-        - **App ID**: This is your `clientId`
-        - **App Secret**: This is your `clientSecret`.
+        ### 获取你的 Facebook 凭证
+        要使用 Facebook 登录，你需要一个客户端 ID 和客户端密钥。你可以在 [Facebook 开发者门户](https://developers.facebook.com/) 获得它们。  
+        选择你的应用，导航到 **应用设置 > 基本信息**，找到以下内容：  
+        - **应用 ID**：这就是你的 `clientId`  
+        - **应用密钥**：这就是你的 `clientSecret`。
 
         <Callout type="warn">
-        Avoid exposing the `clientSecret` in client-side code (e.g., frontend apps) because it’s sensitive information.
+        避免在客户端代码（例如前端应用）中暴露 `clientSecret`，因为它是敏感信息。
         </Callout>
 
-        Make sure to set the redirect URL to `http://localhost:3000/api/auth/callback/facebook` for local development. For production, you should set it to the URL of your application. If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/facebook` 以便本地开发。对于生产环境，应将其设置为你的应用程序的 URL。如果你更改了认证路由的基础路径，需相应更新重定向 URL。
     </Step>
 
-  <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+    <Step>
+        ### 配置提供者
+        要配置提供者，你需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts"  
         import { betterAuth } from "better-auth"
@@ -36,14 +36,13 @@ description: Facebook provider setup and usage.
         ```
 
         <Callout>
-        BetterAuth also supports Facebook Login for Business, all you need
-        to do is provide the `configId` as listed in **Facebook Login For Business > Configurations** alongside your `clientId` and `clientSecret`. Note that the app must be a Business app and, since BetterAuth expects to have an email address and account id, the configuration must be of the "User access token" type. "System-user access token" is not supported.
+        BetterAuth 也支持 Facebook Login for Business，只需提供 **Facebook Login For Business > 配置** 中列出的 `configId`，以及你的 `clientId` 和 `clientSecret`。请注意，应用必须是企业应用，并且由于 BetterAuth 期望获取电子邮件地址和账号 id，配置必须为“用户访问令牌”类型。不支持“系统用户访问令牌”。
         </Callout>
     </Step>
-       <Step>
-        ### Sign In with Facebook
-        To sign in with Facebook, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-        - `provider`: The provider to use. It should be set to `facebook`.
+    <Step>
+        ### 使用 Facebook 登录
+        要使用 Facebook 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：  
+        - `provider`：要使用的提供者，应设置为 `facebook`。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/auth-client"
@@ -58,10 +57,10 @@ description: Facebook provider setup and usage.
     </Step>
 </Steps>
 
-## Additional Configuration
+## 额外配置
 
-### Scopes
-By default, Facebook provides basic user information. If you need additional permissions, you can specify scopes in your auth configuration:
+### 权限范围（Scopes）
+默认情况下，Facebook 提供基础的用户信息。如果你需要更多权限，可以在认证配置中指定 scopes：
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -69,31 +68,30 @@ export const auth = betterAuth({
         facebook: {
             clientId: process.env.FACEBOOK_CLIENT_ID as string,
             clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
-            scopes: ["email", "public_profile", "user_friends"], // Overwrites permissions
-            fields: ["user_friends"], // Extending list of fields
+            scopes: ["email", "public_profile", "user_friends"], // 覆盖默认权限
+            fields: ["user_friends"], // 扩展获取的字段列表
         },
     },
 })
 ```
 
-Additional options:
-- `scopes`: Access basic account information (overwrites).
-    - Default: `"email", "public_profile"`
-- `fields`: Extend list of fields to retrieve from the Facebook user profile (assignment).
-    - Default: `"id", "name", "email", "picture"`
+额外选项：  
+- `scopes`：访问基础账户信息（覆盖默认值）。  
+    - 默认值：`"email", "public_profile"`  
+- `fields`：扩展 Facebook 用户资料中要获取的字段列表（赋值）。  
+    - 默认值：`"id", "name", "email", "picture"`  
 
-### Sign In with Facebook With ID or Access Token
+### 使用 ID Token 或访问令牌登录 Facebook
 
-To sign in with Facebook using the ID Token, you can use the `signIn.social` function to pass the ID Token.
+要使用 ID Token 登录 Facebook，可以使用 `signIn.social` 函数传递 ID Token。
 
-This is useful when you have the ID Token from Facebook on the client-side and want to use it to sign in on the server.
+这在你已在客户端获得 Facebook ID Token 并想在服务器端使用它登录时非常有用。
 
 <Callout>
- If ID token is provided no redirection will happen, and the user will be signed in directly.
+ 若提供了 ID Token，将不会发生重定向，用户将直接登录。
 </Callout>
 
-For limited login, you need to pass `idToken.token`, for only `accessToken` you need to pass `idToken.accessToken` and `idToken.token` together because of (#1183)[https://github.com/better-auth/better-auth/issues/1183].
-
+针对有限登录，你需要传递 `idToken.token`；若仅使用 `accessToken`，由于 (#1183)[https://github.com/better-auth/better-auth/issues/1183]，你需同时传递 `idToken.accessToken` 和 `idToken.token`。
 
 ```ts title="auth-client.ts"
 const data = await authClient.signIn.social({
@@ -106,4 +104,4 @@ const data = await authClient.signIn.social({
 })
 ```
 
-For a complete list of available permissions, refer to the [Permissions Reference](https://developers.facebook.com/docs/permissions).
+有关可用权限的完整列表，请参阅[权限参考](https://developers.facebook.com/docs/permissions)。

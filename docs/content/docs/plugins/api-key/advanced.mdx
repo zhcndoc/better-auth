@@ -1,23 +1,23 @@
 ---
-title: Advanced Features
-description: Advanced API Key features including sessions, multiple configurations, organization keys, storage modes, and more.
+title: 高级功能
+description: 高级 API 密钥功能，包括会话、多配置、组织密钥、存储模式等。
 ---
 
-## Sessions from API keys
+## 来自 API 密钥的会话
 
-Any time an endpoint in Better Auth is called that has a valid API key in the headers, you can automatically create a mock session to represent the user by enabling `enableSessionForAPIKeys` option.
+每当调用 Better Auth 中带有有效 API 密钥的接口时，可以通过启用 `enableSessionForAPIKeys` 选项，自动创建一个模拟会话以代表用户。
 
 <Callout type="warn">
- This is generally not recommended, as it can lead to security issues if not used carefully. A leaked api key can be used to impersonate a user.
+ 通常不建议这样做，因为如果使用不当，可能导致安全问题。泄露的 API 密钥可用于冒充用户。
 </Callout>
 
 <Callout>
-  **User-Owned Keys Only**: Session mocking only works with user-owned API keys (where `references: "user"`). Organization-owned keys cannot mock user sessions.
+  **仅限用户拥有的密钥**：会话模拟仅适用于用户拥有的 API 密钥（即 `references: "user"`）。组织拥有的密钥无法模拟用户会话。
 </Callout>
 
 <Callout>
-  **Rate Limiting Note**: When `enableSessionForAPIKeys` is enabled, the API key is validated once per request, and rate limiting is applied accordingly.
-  If you manually verify an API key and then fetch a session separately, both operations will increment the rate limit counter. Using `enableSessionForAPIKeys` avoids this double increment.
+  **速率限制说明**：启用 `enableSessionForAPIKeys` 后，每次请求都会验证一次 API 密钥，并相应应用速率限制。
+  若手动验证 API 密钥后再单独获取会话，这两个操作都会增加速率限制计数。使用 `enableSessionForAPIKeys` 避免此类重复计数。
 </Callout>
 
 ```ts
@@ -33,8 +33,8 @@ export const auth = betterAuth({
 });
 ```
 
-<Tabs items={['Server']}>
-    <Tab value="Server">
+<Tabs items={['服务器']}>
+    <Tab value="服务器">
       ```ts
       import { auth } from "@/lib/auth"
       
@@ -48,7 +48,7 @@ export const auth = betterAuth({
 </Tabs>
 
 
-The default header key is `x-api-key`, but this can be changed by setting the `apiKeyHeaders` option in the plugin options.
+默认的请求头字段是 `x-api-key`，但可在插件选项中通过设置 `apiKeyHeaders` 自定义。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -57,13 +57,13 @@ import { apiKey } from "@better-auth/api-key"
 export const auth = betterAuth({
   plugins: [
     apiKey({
-      apiKeyHeaders: ["x-api-key", "xyz-api-key"], // or you can pass just a string, eg: "x-api-key"
+      apiKeyHeaders: ["x-api-key", "xyz-api-key"], // 或者直接传一个字符串，例如 "x-api-key"
     }),
   ],
 });
 ```
 
-Or optionally, you can pass a `customAPIKeyGetter` function to the plugin options, which will be called with the `HookEndpointContext`, and from there, you should return the API key, or `null` if the request is invalid.
+或可传入 `customAPIKeyGetter` 函数（接收 `HookEndpointContext`），由你返回请求中的 API 密钥，若请求无效则返回 `null`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -82,18 +82,18 @@ export const auth = betterAuth({
 });
 ```
 
-## Multiple Configurations
+## 多配置支持
 
-You can define multiple API key configurations with different settings. Each configuration is identified by a unique `configId` and can have its own prefix, rate limits, permissions, and other options.
+你可以定义多个不同设置的 API 密钥配置。每个配置通过唯一的 `configId` 标识，可以定制前缀、速率限制、权限等。
 
-This is useful when you need different types of API keys for different purposes, such as:
-- Public vs private API keys
-- Read-only vs read-write keys
-- Different rate limits for different tiers
+适合不同用途需要不同 API 密钥类型的场景，例如：
+- 公开密钥 vs 私密密钥
+- 只读密钥 vs 读写密钥
+- 不同等级的不同速率限制
 
-### Setup
+### 配置示例
 
-Pass an array of configuration objects to the `apiKey` plugin:
+传入配置对象数组给 `apiKey` 插件：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -108,7 +108,7 @@ export const auth = betterAuth({
         rateLimit: {
           enabled: true,
           maxRequests: 100,
-          timeWindow: 1000 * 60 * 60, // 1 hour
+          timeWindow: 1000 * 60 * 60, // 1 小时
         },
       },
       {
@@ -118,7 +118,7 @@ export const auth = betterAuth({
         rateLimit: {
           enabled: true,
           maxRequests: 1000,
-          timeWindow: 1000 * 60 * 60, // 1 hour
+          timeWindow: 1000 * 60 * 60, // 1 小时
         },
       },
     ]),
@@ -126,23 +126,23 @@ export const auth = betterAuth({
 });
 ```
 
-### Creating Keys with Specific Configurations
+### 创建指定配置的密钥
 
-When creating an API key, specify which configuration to use via the `configId` parameter:
+创建 API 密钥时，通过 `configId` 参数指定用哪个配置：
 
 ```ts title="create-api-key.ts"
 import { auth } from "@/lib/auth"
 
-// Create a public key
+// 创建公开密钥
 const publicKey = await auth.api.createApiKey({
   body: {
     configId: "public",
     userId: user.id,
   },
 });
-// Result: pk_...
+// 返回示例: pk_...
 
-// Create a secret key
+// 创建私密密钥
 const secretKey = await auth.api.createApiKey({
   body: {
     configId: "secret",
@@ -150,19 +150,18 @@ const secretKey = await auth.api.createApiKey({
     metadata: { plan: "premium" },
   },
 });
-// Result: sk_...
+// 返回示例: sk_...
 ```
 <Callout type="warn">
-  Note that when creating a key under a specific configId,
-  the `get`, `update`, `delete` and `verify` operations must also specify the `configId` parameter.
+  注意，针对指定 `configId` 创建的密钥，`get`、`update`、`delete` 和 `verify` 操作也必须指定相同的 `configId` 参数。
 </Callout>
 
-### Using configId for API Key Operations
+### 在 API 密钥操作中使用 configId
 
-All API key operations support the `configId` parameter to specify which configuration to use for the lookup. This is important when different configurations have different storage backends (e.g., database vs Redis):
+所有 API 密钥操作都支持 `configId` 参数，指定查询使用哪套配置，特别是配置使用不同存储后端（如数据库与 Redis）时很重要：
 
 ```ts title="api-key-operations.ts"
-// Get an API key using a specific config
+// 指定配置获取 API 密钥
 const key = await auth.api.getApiKey({
   query: { 
     id: keyId,
@@ -171,7 +170,7 @@ const key = await auth.api.getApiKey({
   headers,
 });
 
-// Update an API key using a specific config
+// 指定配置更新 API 密钥
 await auth.api.updateApiKey({
   body: {
     keyId: keyId,
@@ -180,7 +179,7 @@ await auth.api.updateApiKey({
   },
 });
 
-// Delete an API key using a specific config
+// 指定配置删除 API 密钥
 await auth.api.deleteApiKey({
   body: {
     keyId: keyId,
@@ -189,7 +188,7 @@ await auth.api.deleteApiKey({
   headers,
 });
 
-// Verify an API key using a specific config
+// 指定配置验证 API 密钥
 const result = await auth.api.verifyApiKey({
   body: {
     key: apiKeyValue,
@@ -198,25 +197,25 @@ const result = await auth.api.verifyApiKey({
 });
 ```
 
-### Filtering Keys by Configuration
+### 按配置筛选密钥
 
-When listing API keys, you can filter by `configId`:
+列出 API 密钥时，可通过 `configId` 过滤：
 
 ```ts title="list-api-keys.ts"
-// List only public keys
+// 仅列出公开密钥
 const publicKeys = await authClient.apiKey.list({
   query: { configId: "public" }
 });
 
-// List only secret keys
+// 仅列出私密密钥
 const secretKeys = await authClient.apiKey.list({
   query: { configId: "secret" }
 });
 ```
 
-### Global Options
+### 全局选项
 
-You can also pass global options (like `schema`) as a second argument:
+也可以传入第二个参数传递全局选项（比如 `schema`）：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -231,7 +230,7 @@ export const auth = betterAuth({
       ],
       {
         schema: {
-          // Custom schema options
+          // 自定义 schema 选项
         },
       }
     ),
@@ -239,13 +238,13 @@ export const auth = betterAuth({
 });
 ```
 
-## Organization-Owned API Keys
+## 组织拥有的 API 密钥
 
-By default, API keys are owned by users. However, you can configure API keys to be owned by organizations instead. This is useful for team-based applications where API keys should be shared across organization members.
+默认情况下，API 密钥由用户拥有。你也可以配置 API 密钥由组织拥有，适合团队应用场景，API 密钥在组织成员间共享。
 
-### Configuration
+### 配置示例
 
-Set `references: "organization"` in your configuration:
+在配置中设置 `references: "organization"`：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -257,21 +256,21 @@ export const auth = betterAuth({
       {
         configId: "user-keys",
         defaultPrefix: "user_",
-        references: "user", // Default - owned by users
+        references: "user", // 默认，用户拥有
       },
       {
         configId: "org-keys",
         defaultPrefix: "org_",
-        references: "organization", // Owned by organizations
+        references: "organization", // 组织拥有
       },
     ]),
   ],
 });
 ```
 
-### Creating Organization-Owned Keys
+### 创建组织拥有的密钥
 
-When creating an organization-owned API key, pass the `organizationId` instead of `userId`:
+创建组织拥有的 API 密钥时，需传入 `organizationId` 而非 `userId`：
 
 ```ts title="create-org-api-key.ts"
 import { auth } from "@/lib/auth"
@@ -279,38 +278,38 @@ import { auth } from "@/lib/auth"
 const orgKey = await auth.api.createApiKey({
   body: {
     configId: "org-keys",
-    organizationId: "org_123", // Required for org-owned keys
+    organizationId: "org_123", // 组织拥有密钥必填
   },
 });
 ```
 
 <Callout type="warn">
-  **Session Mocking Limitation**: The `enableSessionForAPIKeys` feature only works with user-owned API keys. Organization-owned keys cannot mock user sessions, as there's no single user associated with the key.
+  **会话模拟限制**：`enableSessionForAPIKeys` 仅适用于用户拥有的 API 密钥。组织拥有的密钥由于没有单一用户关联，无法模拟用户会话。
 </Callout>
 
-### Access Control & Permissions
+### 访问控制与权限
 
-Organization-owned API keys use the organization plugin's role-based access control system. To manage organization API keys, users must:
+组织拥有的 API 密钥使用组织插件的基于角色的访问控制系统。管理组织 API 密钥的用户必须：
 
-1. Be a member of the organization
-2. Have the appropriate `apiKey` permission for the action they're performing
+1. 是该组织成员
+2. 拥有执行操作所需的 `apiKey` 权限
 
-#### API Key Permissions
+#### API 密钥权限
 
-The API key plugin uses the following permissions:
+API 密钥插件使用以下权限：
 
-| Action | Permission | Description |
+| 操作 | 权限 | 描述 |
 |--------|------------|-------------|
-| Create | `apiKey: ["create"]` | Create new organization API keys |
-| Read/List | `apiKey: ["read"]` | View and list organization API keys |
-| Update | `apiKey: ["update"]` | Modify organization API keys |
-| Delete | `apiKey: ["delete"]` | Delete organization API keys |
+| 创建 | `apiKey: ["create"]` | 创建新组织 API 密钥 |
+| 读取/列出 | `apiKey: ["read"]` | 查看与列出组织 API 密钥 |
+| 更新 | `apiKey: ["update"]` | 修改组织 API 密钥 |
+| 删除 | `apiKey: ["delete"]` | 删除组织 API 密钥 |
 
-#### Configuring Organization Roles
+#### 配置组织角色权限
 
-By default, **organization owners have full access** to all API key operations. For other roles (like `admin` or `member`), you need to explicitly configure `apiKey` permissions in your organization plugin setup.
+默认情况下，**组织拥有者拥有所有 API 密钥操作的完全访问权限**。对于其他角色（如 `admin` 或 `member`），需在组织插件配置中显式赋予 `apiKey` 权限。
 
-Here's how to configure roles with API key permissions:
+示例配置角色及权限如下：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -318,25 +317,25 @@ import { organization } from "better-auth/plugins"
 import { apiKey } from "@better-auth/api-key"
 import { createAccessControl } from "better-auth/plugins/access"
 
-// Define your access control statements including apiKey
+// 定义包含 apiKey 权限的访问控制语句
 const statements = {
-  // ... other statements
-  // Add apiKey permissions
+  // ... 其他语句
+  // 添加 apiKey 权限
   apiKey: ["create", "read", "update", "delete"], // [!code highlight]
 } as const;
 
 const ac = createAccessControl(statements);
 
-// Define roles with specific apiKey permissions
+// 定义具有特定 apiKey 权限的角色
 const adminRole = ac.newRole({
-  // ... other statements
-  // Admins can manage API keys
+  // ... 其他权限
+  // 管理员可管理 API 密钥
   apiKey: ["create", "read", "update", "delete"], // [!code highlight]
 });
 
 const memberRole = ac.newRole({
-  // ... other statements
-  // Members can only view API keys
+  // ... 其他权限
+  // 成员仅可查看 API 密钥
   apiKey: ["read"], // [!code highlight]
 });
 
@@ -362,53 +361,53 @@ export const auth = betterAuth({
 ```
 
 <Callout type="info">
-  **Owner Access**: Organization owners (the `creatorRole`, default `"owner"`) automatically have full access to all API key operations, regardless of explicit permission configuration.
+  **拥有者访问权限**：组织拥有者（`creatorRole`，默认 `"owner"`）自动具备所有 API 密钥操作的完全访问权限，无需显式配置权限。
 </Callout>
 
-#### Permission Examples
+#### 权限示例
 
 ```ts
-// Admin can create, read, update, delete org API keys
+// 管理员可创建、读取、更新、删除组织 API 密钥
 const key = await auth.api.createApiKey({
   body: { configId: "org-keys", organizationId: "org_123" },
   headers: adminHeaders,
 });
 
-// Member with only "read" permission can list keys
+// 仅有 "read" 权限的成员可列出密钥
 const keys = await client.apiKey.list(
   { query: { organizationId: "org_123" } },
   { headers: memberHeaders },
 );
 
-// Member trying to create a key will get FORBIDDEN error
+// 仅有 "read" 权限的成员尝试创建密钥将报错
 const result = await client.apiKey.create(
   { configId: "org-keys", organizationId: "org_123" },
   { headers: memberHeaders },
 );
-// Error: INSUFFICIENT_API_KEY_PERMISSIONS
+// 错误: INSUFFICIENT_API_KEY_PERMISSIONS
 ```
 
-#### Error Codes
+#### 错误码说明
 
-When access is denied, the following error codes are returned:
+访问被拒时，返回以下错误码：
 
-- `USER_NOT_MEMBER_OF_ORGANIZATION`: The user is not a member of the organization
-- `INSUFFICIENT_API_KEY_PERMISSIONS`: The user doesn't have the required `apiKey` permission for the action
+- `USER_NOT_MEMBER_OF_ORGANIZATION`：用户不是该组织成员
+- `INSUFFICIENT_API_KEY_PERMISSIONS`：用户缺少执行操作所需 `apiKey` 权限
 
-### API Key Object Structure
+### API 密钥对象结构
 
-API keys include a `configId` to identify which configuration they belong to, and a `referenceId` for the owner:
+API 密钥包含 `configId` 表示所属配置，`referenceId` 表示拥有者 ID：
 
 ```ts
 type ApiKey = {
   id: string;
-  configId: string;    // The configuration this key belongs to
-  referenceId: string; // The owner ID (userId or organizationId based on config)
-  // ... other fields
+  configId: string;    // 所属配置
+  referenceId: string; // 拥有者 ID（基于配置为 userId 或 organizationId）
+  // ... 其他字段
 };
 ```
 
-The owner type (user vs organization) is determined by looking up the configuration:
+拥有者类型通过配置中 `references` 字段判断：
 
 ```ts
 const apiKey = await auth.api.getApiKey({
@@ -416,20 +415,20 @@ const apiKey = await auth.api.getApiKey({
   headers,
 });
 
-// The owner type is determined by the config's `references` setting
-// For org-keys config (references: "organization"):
-console.log(`Key owned by: ${apiKey.referenceId}`);
+// 依据配置中 `references` 判断拥有者类型
+// 对于 org-keys 配置（references: "organization"）：
+console.log(`密钥拥有者：${apiKey.referenceId}`);
 ```
 
-## Storage Modes
+## 存储模式
 
-The API Key plugin supports multiple storage modes for flexible API key management, allowing you to choose the best strategy for your use case.
+API Key 插件支持多种存储模式，满足不同场景灵活管理 API 密钥。
 
-### Storage Mode Options
+### 存储模式选项
 
-#### `"database"` (Default)
+#### `"database"`（默认）
 
-Store API keys only in the database adapter. This is the default mode and requires no additional configuration.
+仅将 API 密钥存储在数据库中。这是默认模式，无需额外配置。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -438,7 +437,7 @@ import { apiKey } from "@better-auth/api-key"
 export const auth = betterAuth({
   plugins: [
     apiKey({
-      storage: "database", // Default, can be omitted
+      storage: "database", // 默认，可省略
     }),
   ],
 });
@@ -446,8 +445,7 @@ export const auth = betterAuth({
 
 #### `"secondary-storage"`
 
-Store API keys only in secondary storage (e.g., Redis).
-No fallback to database. Best for high-performance scenarios where all keys are migrated to secondary storage.
+只存储于二级存储（如 Redis），不回退数据库。适合所有密钥都迁移到二级存储的高性能场景。
 
 ```ts title="auth.ts"
 import { createClient } from "redis";
@@ -474,19 +472,19 @@ export const auth = betterAuth({
 });
 ```
 
-#### Secondary Storage with Fallback
+#### 带回退的二级存储
 
-Check secondary storage first, then fallback to database if not found.
+先查询二级存储，若未命中则回退数据库查询。
 
-**Read behavior:**
-- Checks secondary storage first
-- If not found, queries the database
-- **Automatically populates secondary storage** when falling back to database (cache warming)
-- Ensures frequently accessed keys stay in cache over time
+**读取行为：**
+- 先查二级存储
+- 未命中则查数据库
+- **自动填充二级存储**（缓存预热）
+- 保持高频访问键长时间驻留缓存
 
-**Write behavior:**
-- Writes to **both** database and secondary storage
-- Ensures consistency between both storage layers
+**写入行为：**
+- 同时写入数据库和二级存储
+- 保持两端数据一致
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -513,9 +511,9 @@ export const auth = betterAuth({
 });
 ```
 
-### Custom Storage Methods
+### 自定义存储方法
 
-You can provide custom storage methods specifically for API keys, overriding the global `secondaryStorage` configuration:
+可为 API 密钥单独覆盖全局的 `secondaryStorage`，提供自定义存储逻辑：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -527,15 +525,15 @@ export const auth = betterAuth({
       storage: "secondary-storage",
       customStorage: {
         get: async (key) => {
-          // Custom get logic for API keys
+          // API 密钥的自定义获取逻辑
           return await customStorage.get(key);
         },
         set: async (key, value, ttl) => {
-          // Custom set logic for API keys
+          // API 密钥的自定义存储逻辑
           await customStorage.set(key, value, ttl);
         },
         delete: async (key) => {
-          // Custom delete logic for API keys
+          // API 密钥的自定义删除逻辑
           await customStorage.delete(key);
         },
       },
@@ -544,24 +542,24 @@ export const auth = betterAuth({
 });
 ```
 
-## Rate Limiting
+## 速率限制
 
-Every API key can have its own rate limit settings. The built-in rate-limiting applies whenever an API key is validated, which includes:
-- When verifying an API key via the `/api-key/verify` endpoint
-- When using API keys for session creation (if `enableSessionForAPIKeys` is enabled), rate limiting applies to all endpoints that use the API key
+每个 API 密钥都可单独配置速率限制。内置速率限制在每次验证 API 密钥时生效，包括：
+- 通过 `/api-key/verify` 端点验证 API 密钥时
+- 使用 API 密钥创建会话时（启用 `enableSessionForAPIKeys`），所有使用该密钥的接口均受限
 
-For other endpoints/methods that don't use API keys, you should utilize Better Auth's [built-in rate-limiting](/docs/concepts/rate-limit).
+对于不使用 API 密钥的其他接口/方法，应使用 Better Auth 的[内置速率限制](/docs/concepts/rate-limit)。
 
 <Callout type="warn">
-  **Double Rate-Limit Increment**: If you manually verify an API key using `verifyApiKey()` and then fetch a session using `getSession()` with the same API key header, both operations will increment the rate limit counter, resulting in two increments for a single request. To avoid this, either:
+  **重复计数问题**：若你先手动调用 `verifyApiKey()` 验证，再用同一密钥头调用 `getSession()`，这两个操作都会增加计数，导致单次请求计数增加两次。避免方法：
   
-  - Use `enableSessionForAPIKeys: true` and let Better Auth handle session creation automatically (recommended)
-  - Or verify the API key once and reuse the validated result instead of calling both methods separately
+  - 使用 `enableSessionForAPIKeys: true` 让 Better Auth 自动处理会话创建（推荐）
+  - 或只验证一次 API 密钥，重复使用验证结果，避免分别调用两个方法
 </Callout>
 
-You can refer to the rate-limit default configurations below in the [API Key plugin options](/docs/plugins/api-key/reference#api-key-plugin-options).
+你可参考 [API Key 插件选项](/docs/plugins/api-key/reference#api-key-plugin-options) 中的默认速率限制配置。
 
-An example default value:
+示例默认配置：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -572,18 +570,18 @@ export const auth = betterAuth({
     apiKey({
       rateLimit: {
         enabled: true,
-        timeWindow: 1000 * 60 * 60 * 24, // 1 day
-        maxRequests: 10, // 10 requests per day
+        timeWindow: 1000 * 60 * 60 * 24, // 1 天
+        maxRequests: 10, // 每天最多 10 次请求
       },
     }),
   ],
 });
 ```
 
-For each API key, you can customize the rate-limit options on create.
+每个 API 密钥可在创建时定制速率限制选项。
 
 <Callout>
-  You can only customize the rate-limit options on the server auth instance.
+  速率限制选项仅能在服务器端 auth 实例中定制。
 </Callout>
 
 ```ts title="create-api-key.ts"
@@ -592,67 +590,65 @@ import { auth } from "@/lib/auth"
 const apiKey = await auth.api.createApiKey({
   body: {
     rateLimitEnabled: true,
-    rateLimitTimeWindow: 1000 * 60 * 60 * 24, // 1 day
-    rateLimitMax: 10, // 10 requests per day
+    rateLimitTimeWindow: 1000 * 60 * 60 * 24, // 1 天
+    rateLimitMax: 10, // 每天最多 10 次请求
   },
-  headers: await headers() // headers containing the user's session token
+  headers: await headers() // 包含用户会话令牌的请求头
 });
 ```
 
-### How does it work?
+### 工作原理
 
-The rate limiting system uses a sliding window approach:
+速率限制采用滑动窗口方式：
 
-1. **First Request**: When an API key is used for the first time (no previous `lastRequest`), the request is allowed and `requestCount` is set to 1.
+1. **首次请求**：API 密钥首次使用（无 `lastRequest`）时，允许请求，并设置 `requestCount` 为 1。
 
-2. **Within Window**: For subsequent requests within the `timeWindow`, the `requestCount` is incremented. If `requestCount` reaches `rateLimitMax`, the request is rejected with a `RATE_LIMITED` error code.
+2. **窗口内请求**：后续请求若在 `timeWindow` 内，增加 `requestCount`。达到 `rateLimitMax` 时，拒绝请求返回 `RATE_LIMITED` 错误。
 
-3. **Window Reset**: If the time since the last request exceeds the `timeWindow`, the window resets: `requestCount` is reset to 1 and `lastRequest` is updated to the current time.
+3. **窗口重置**：若距离上次请求时间超过 `timeWindow`，窗口重置：`requestCount` 重新置 1，更新 `lastRequest` 时间。
 
-4. **Rate Limit Exceeded**: When a request is rejected due to rate limiting, the error response includes a `tryAgainIn` value (in milliseconds) indicating how long to wait before the window resets.
+4. **超限提示**：超限时响应包含 `tryAgainIn` 字段（毫秒），提示下次重置还需等待时间。
 
-**Disabling Rate Limiting**:
-- **Globally**: Set `rateLimit.enabled: false` in plugin options
-- **Per Key**: Set `rateLimitEnabled: false` when creating or updating an API key
-- **Null Values**: If `rateLimitTimeWindow` or `rateLimitMax` is `null`, rate limiting is effectively disabled for that key
+**关闭速率限制：**
+- 全局关闭：插件选项中 `rateLimit.enabled: false`
+- 针对单密钥：设置 `rateLimitEnabled: false`
+- `rateLimitTimeWindow` 或 `rateLimitMax` 为 `null` 时，速率限制自动禁用
 
-When rate limiting is disabled (globally or per-key), requests are still allowed but `lastRequest` is updated for tracking purposes.
+关闭时仍允许请求，但会更新 `lastRequest` 以便统计。
 
-## Remaining, refill, and expiration
+## 额度剩余、补充和过期
 
-The remaining count is the number of requests left before the API key is disabled.
-The refill interval is the interval in milliseconds where the `remaining` count is refilled when the interval has passed since the last refill (or since creation if no refill has occurred yet).
-The expiration time is the expiration date of the API key.
+额度剩余表示 API 密钥剩余可用请求数。
+补充间隔表示多少毫秒后，额度剩余数会被补充（前提是满足条件）。
+过期时间表示 API 密钥的过期时间。
 
-### How does it work?
+### 工作原理
 
-#### Remaining:
+#### 额度剩余
 
-Whenever an API key is used, the `remaining` count is updated.
-If the `remaining` count is `null`, then there is no cap to key usage.
-Otherwise, the `remaining` count is decremented by 1.
-If the `remaining` count is 0, then the API key is disabled & removed.
+每次使用 API 密钥时，都会更新 `remaining` 剩余额度。
+如果 `remaining` 为 `null`，则无限制使用。
+否则，`remaining` 递减 1。
+若为 0，则 API 密钥被禁用并移除。
 
-#### refillInterval & refillAmount:
+#### 补充间隔 & 补充值
 
-Whenever an API key is created, the `refillInterval` and `refillAmount` are set to `null` by default.
-This means that the API key will not be refilled automatically.
-However, if both `refillInterval` & `refillAmount` are set, then whenever the API key is used:
-- The system checks if the time since the last refill (or since creation if no refill has occurred) exceeds the `refillInterval`
-- If the interval has passed, the `remaining` count is reset to `refillAmount` (not incremented)
-- The `lastRefillAt` timestamp is updated to the current time
+API 密钥默认创建时，`refillInterval` 和 `refillAmount` 均为 `null`，表示不自动补充额度。
+若两者均设置，则每次使用 API 密钥时：
+- 系统检查自上次补充（或未补充，内部于创建时间）起，时间是否超过 `refillInterval`
+- 超过时，`remaining` 直接重置为 `refillAmount`（非累加）
+- 同时更新 `lastRefillAt` 时间戳为当前时间
 
-#### Expiration:
+#### 过期时间
 
-Whenever an API key is created, the `expiresAt` is set to `null`.
-This means that the API key will never expire.
-However, if the `expiresIn` is set, then the API key will expire after the `expiresIn` time.
+默认情况下，创建时 `expiresAt` 为 `null`，表示永不过期。
+如果设置了 `expiresIn`，则密钥将在指定时间后过期。
 
-## Custom Key generation & verification
+## 自定义密钥生成与验证
 
-You can customize the key generation and verification process straight from the plugin options.
+你可直接在插件选项中自定义密钥生成与验证逻辑。
 
-Here's an example:
+示例：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -681,7 +677,7 @@ export const auth = betterAuth({
 ```
 
 <Callout>
-If you're **not** using the `length` property provided by `customKeyGenerator`, you **must** set the `defaultKeyLength` property to how long generated keys will be.
+如果你没有使用 `customKeyGenerator` 提供的 `length` 属性，则**必须**设置 `defaultKeyLength`，指明生成密钥的长度。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -693,7 +689,7 @@ export const auth = betterAuth({
       customKeyGenerator: () => {
         return crypto.randomUUID();
       },
-      defaultKeyLength: 36, // Or whatever the length is
+      defaultKeyLength: 36, // 或你生成密钥的实际长度
     }),
   ],
 });
@@ -701,15 +697,15 @@ export const auth = betterAuth({
 
 </Callout>
 
-If an API key is validated from your `customAPIKeyValidator`, we still must match that against the database's key.
-However, by providing this custom function, you can improve the performance of the API key verification process,
-as all failed keys can be invalidated without having to query your database.
+如果通过 `customAPIKeyValidator` 验证 API 密钥，我们仍需和数据库中的密钥比对。
+但通过提供该自定义方法，你可以提升验证性能，
+且所有无效密钥无需访问数据库即可被快速判断。
 
-## Metadata
+## 元数据
 
-We allow you to store metadata alongside your API keys. This is useful for storing information about the key, such as a subscription plan for example.
+允许你为 API 密钥存储元数据，比如订阅计划等信息。
 
-To store metadata, make sure you haven't disabled the metadata feature in the plugin options.
+确保插件选项中未禁用元数据：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -724,7 +720,7 @@ export const auth = betterAuth({
 });
 ```
 
-Then, you can store metadata in the `metadata` field of the API key object.
+然后就可以在 API 密钥对象的 `metadata` 字段存储信息。
 
 ```ts title="create-api-key.ts"
 import { auth } from "@/lib/auth"
@@ -738,7 +734,7 @@ const apiKey = await auth.api.createApiKey({
 });
 ```
 
-You can then retrieve the metadata from the API key object.
+随后可从 API 密钥对象中读取元数据。
 
 ```ts title="get-api-key.ts"
 import { auth } from "@/lib/auth"

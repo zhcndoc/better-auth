@@ -1,28 +1,28 @@
 ---
-title: Railway
-description: Railway provider setup and usage.
+title: Railway（铁路）
+description: Railway 提供者的设置和使用。
 ---
 
 <Steps>
     <Step> 
-        ### Get your Railway credentials
-        To use Railway sign in, you need a client ID and client secret. You can get them from the [Railway Developer Settings](https://railway.com/workspace/developer).
+        ### 获取您的 Railway 凭据
+        要使用 Railway 登录，您需要一个客户端 ID 和客户端密钥。您可以从 [Railway 开发者设置](https://railway.com/workspace/developer) 获取它们。
 
-        1. Go to your Railway account's Developer Settings
-        2. Click "Create OAuth App"
-        3. Set the Application Type to "Web Application"
-        4. Set the redirect URL to `http://localhost:3000/api/auth/callback/railway` for local development. For production, you should set it to the URL of your application.
+        1. 进入您的 Railway 账户的开发者设置页面
+        2. 点击“创建 OAuth 应用”
+        3. 将应用类型设置为“Web 应用”
+        4. 将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/railway`，用于本地开发。生产环境中，您应将其设置为您应用的 URL。
 
-        Make sure to save your client ID and client secret securely. If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        请确保安全地保存您的客户端 ID 和客户端密钥。如果您更改了认证路由的基本路径，需要相应更新重定向 URL。
 
         <Callout type="info">
-            Railway uses PKCE (Proof Key for Code Exchange) for enhanced security. This is automatically handled by Better Auth.
+            Railway 使用 PKCE（Proof Key for Code Exchange）来加强安全性。Better Auth 会自动处理这部分。
         </Callout>
     </Step>
 
     <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供者
+        要配置该提供者，您需要导入提供者并将其传递给身份验证实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -39,13 +39,13 @@ description: Railway provider setup and usage.
     </Step>
 </Steps>
 
-## Usage
+## 使用方法
 
-### Sign in with Railway
+### 使用 Railway 登录
 
-To sign in with Railway, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
+要使用 Railway 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
 
-- `provider`: The provider to use. It should be set to `railway`.
+- `provider`：要使用的提供者，应该设置为 `railway`。
 
 ```ts title="auth-client.ts"  
 import { createAuthClient } from "better-auth/client"
@@ -58,29 +58,29 @@ const signIn = async () => {
 }
 ```
 
-## Options
+## 选项
 
-For the full list of options supported by all social providers, check the [Provider Options](/docs/concepts/oauth#provider-options).
+有关所有社交提供者支持的完整选项列表，请参见 [提供者选项](/docs/concepts/oauth#provider-options)。
 
-### Available Scopes
+### 可用权限范围
 
-Railway OAuth supports the following scopes:
+Railway OAuth 支持以下权限范围：
 
-| Scope | Description |
-|-------|-------------|
-| `openid` | Required for all requests (included by default) |
-| `email` | Access user's email address (included by default) |
-| `profile` | Access user's name and picture (included by default) |
-| `offline_access` | Receive refresh tokens for long-lived access |
-| `workspace:viewer` | Viewer access to user-selected workspaces |
-| `workspace:member` | Member access to user-selected workspaces |
-| `workspace:admin` | Admin access to user-selected workspaces |
-| `project:viewer` | Viewer access to user-selected projects |
-| `project:member` | Member access to user-selected projects |
+| 权限范围 | 描述 |
+|----------|------|
+| `openid` | 所有请求都必须包含（默认包括） |
+| `email` | 访问用户的电子邮件地址（默认包括） |
+| `profile` | 访问用户的姓名和头像（默认包括） |
+| `offline_access` | 获取刷新令牌以便长期访问 |
+| `workspace:viewer` | 对用户选择的工作区具有查看权限 |
+| `workspace:member` | 对用户选择的工作区具有成员权限 |
+| `workspace:admin` | 对用户选择的工作区具有管理员权限 |
+| `project:viewer` | 对用户选择的项目具有查看权限 |
+| `project:member` | 对用户选择的项目具有成员权限 |
 
-When requesting workspace or project scopes, users will select which specific workspaces or projects to share during the consent screen.
+当请求工作区或项目权限时，用户将在授权同意界面选择具体要共享的工作区或项目。
 
-You can specify additional scopes when configuring the provider:
+您可以在配置提供者时指定额外的权限范围：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -97,7 +97,7 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warn">
-    When requesting `offline_access` scope, Railway requires `prompt=consent` to be set in the authorization URL:
+    请求 `offline_access` 权限时，Railway 要求在授权 URL 中设置 `prompt=consent`：
 
     ```ts
     railway: {
@@ -109,4 +109,4 @@ export const auth = betterAuth({
     ```
 </Callout>
 
-For more information about Railway's OAuth implementation, refer to the [official Railway documentation](https://docs.railway.com/reference/oauth/login-with-railway).
+有关 Railway OAuth 实现的更多信息，请参阅 [Railway 官方文档](https://docs.railway.com/reference/oauth/login-with-railway)。

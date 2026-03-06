@@ -1,19 +1,19 @@
 ---
 title: JWT
-description: Authenticate users with JWT tokens in services that can't use the session
+description: 在无法使用 session 的服务中使用 JWT 令牌进行用户认证
 ---
 
-The JWT plugin provides endpoints to retrieve a JWT token and a JWKS endpoint to verify the token.
+JWT 插件提供了用于获取 JWT 令牌的端点以及用于验证令牌的 JWKS 端点。
 
 <Callout type="info">
-  This plugin is not meant as a replacement for the session. It's meant to be used for services that require JWT tokens. If you're looking to use JWT tokens for authentication, check out the [Bearer Plugin](/docs/plugins/bearer).
+  该插件并非用来替代 session。它适用于需要使用 JWT 令牌的服务。如果你想使用 JWT 令牌进行身份验证，请查看 [Bearer 插件](/docs/plugins/bearer)。
 </Callout>
 
-## Installation
+## 安装
 
 <Steps>
 <Step>
-### Add the plugin to your **auth** config
+### 将插件添加到你的 **auth** 配置中
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
 import { jwt } from "better-auth/plugins" // [!code highlight]
@@ -27,9 +27,9 @@ export const auth = betterAuth({
 </Step>
 
 <Step>
-    ### Migrate the database
+    ### 迁移数据库
 
-    Run the migration or generate the schema to add the necessary fields and tables to the database.
+    运行迁移或生成模式，将必要的字段和表添加到数据库中。
 
     <Tabs items={["migrate", "generate"]}>
         <Tab value="migrate">
@@ -43,10 +43,10 @@ export const auth = betterAuth({
         ```
         </Tab>
     </Tabs>
-    See the [Schema](#schema) section to add the fields manually.
+    如需手动添加字段，请参见 [Schema](#schema) 部分。
 </Step>
 <Step>
-### Add the client plugin to your auth client
+### 将客户端插件添加到你的 auth 客户端
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -62,44 +62,44 @@ export const authClient = createAuthClient({
 </Steps>    
 
 
-## Usage
+## 用法
 
-Once you've installed the plugin, you can start using the JWT & JWKS plugin to get the token and the JWKS through their respective endpoints.
+安装插件后，你可以通过相应端点开始使用 JWT 和 JWKS 插件以获取令牌及 JWKS。
 
 ## JWT
 
-### Retrieve the token
+### 获取令牌
 
-There are multiple ways to retrieve JWT tokens:
+有多种方式可以获取 JWT 令牌：
 
-1. **Using the client plugin (recommended)**
+1. **使用客户端插件（推荐）**
 
 ```ts
 import { authClient } from "@/lib/auth-client"
 
 const { data, error } = await authClient.token()
 if (error) {
-  // handle error
+  // 处理错误
 }
 if (data) {
   const jwtToken = data.token
-  // Use this token for authenticated requests to external services
+  // 使用此令牌对外部服务进行身份验证请求
 }
 ```
 
-This is the recommended approach for client applications that need JWT tokens for external API authentication.
+这是客户端应用程序获取 JWT 令牌以进行外部 API 认证的推荐方法。
 
-2. **Using your session token**
+2. **使用你的 session 令牌**
 
-To get the token, call the `/token` endpoint. This will return the following:
-  
+调用 `/token` 端点可获取令牌，返回如下：
+
 ```json
   { 
     "token": "ey..."
   }
 ```
 
-Make sure to include the token in the `Authorization` header of your requests if the `bearer` plugin is added in your auth configuration.
+如果你的 auth 配置中添加了 `bearer` 插件，请确保在请求的 `Authorization` 头中包含该令牌。
 
 ```ts
 await fetch("/api/auth/token", {
@@ -109,9 +109,9 @@ await fetch("/api/auth/token", {
 })
 ```
 
-3. **From `set-auth-jwt` header**
+3. **从 `set-auth-jwt` 头获取**
 
-When you call `getSession` method, a JWT is returned in the `set-auth-jwt` header, which you can use to send to your services directly.
+当你调用 `getSession` 方法时，JWT 会包含在 `set-auth-jwt` 响应头中，你可以直接将其用于服务请求。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -125,13 +125,13 @@ await authClient.getSession({
 })
 ```
 
-### Verifying the token
-The token can be verified in your own service, without the need for an additional verify call or database check.
-For this JWKS is used. The public key can be fetched from the `/api/auth/jwks` endpoint.
+### 验证令牌
+令牌可以在你的服务中自行验证，无需额外的验证调用或数据库检查。
+为此会使用 JWKS。公钥可以通过 `/api/auth/jwks` 端点获取。
 
-Since this key is not subject to frequent changes, it can be cached indefinitely.
-The key ID (`kid`) that was used to sign a JWT is included in the header of the token.
-In case a JWT with a different `kid` is received, it is recommended to fetch the JWKS again.
+由于该密钥不经常变更，可以长期缓存。
+用于签名 JWT 的密钥 ID (`kid`) 包含在令牌头中。
+若接收到的 JWT 带有不同的 `kid`，建议重新获取 JWKS。
 
 ```json
   {
@@ -146,7 +146,7 @@ In case a JWT with a different `kid` is received, it is recommended to fetch the
   }
 ```
 
-#### Example using jose with remote JWKS
+#### 使用 jose 和远程 JWKS 的示例
 
 ```ts
 import { jwtVerify, createRemoteJWKSet } from 'jose'
@@ -157,22 +157,22 @@ async function validateToken(token: string) {
       new URL('http://localhost:3000/api/auth/jwks')
     )
     const { payload } = await jwtVerify(token, JWKS, {
-      issuer: 'http://localhost:3000', // Should match your JWT issuer, which is the BASE_URL
-      audience: 'http://localhost:3000', // Should match your JWT audience, which is the BASE_URL by default
+      issuer: 'http://localhost:3000', // 应匹配你的 JWT 签发者，即 BASE_URL
+      audience: 'http://localhost:3000', // 应匹配 JWT 受众，通常也是 BASE_URL
     })
     return payload
   } catch (error) {
-    console.error('Token validation failed:', error)
+    console.error('令牌验证失败:', error)
     throw error
   }
 }
 
-// Usage example
-const token = 'your.jwt.token' // this is the token you get from the /api/auth/token endpoint
+// 使用示例
+const token = 'your.jwt.token' // 这是你从 /api/auth/token 端点获取的令牌
 const payload = await validateToken(token)
 ```
 
-#### Example with local JWKS
+#### 使用本地 JWKS 的示例
 
 ```ts
 import { jwtVerify, createLocalJWKSet } from 'jose'
@@ -181,8 +181,7 @@ import { jwtVerify, createLocalJWKSet } from 'jose'
 async function validateToken(token: string) {
   try {
     /**
-     * This is the JWKS that you get from the /api/auth/
-     * jwks endpoint
+     * 这是你从 /api/auth/jwks 端点获取的 JWKS
      */
     const storedJWKS = {
       keys: [{
@@ -193,24 +192,24 @@ async function validateToken(token: string) {
       keys: storedJWKS.data?.keys!,
     })
     const { payload } = await jwtVerify(token, JWKS, {
-      issuer: 'http://localhost:3000', // Should match your JWT issuer, which is the BASE_URL
-      audience: 'http://localhost:3000', // Should match your JWT audience, which is the BASE_URL by default
+      issuer: 'http://localhost:3000', // 应匹配你的 JWT 签发者，即 BASE_URL
+      audience: 'http://localhost:3000', // 应匹配 JWT 受众，通常也是 BASE_URL
     })
     return payload
   } catch (error) {
-    console.error('Token validation failed:', error)
+    console.error('令牌验证失败:', error)
     throw error
   }
 }
 
-// Usage example
-const token = 'your.jwt.token' // this is the token you get from the /api/auth/token endpoint
+// 使用示例
+const token = 'your.jwt.token' // 这是你从 /api/auth/token 端点获取的令牌
 const payload = await validateToken(token)
 ```
 
-### OAuth Provider Mode
+### OAuth 提供者模式
 
-If you are making your system oAuth compliant (such as when utilizing the OIDC or MCP plugins), you **MUST** disable the `/token` endpoint (oAuth equivalent `/oauth2/token`) and disable setting the jwt header (oAuth equivalent `/oauth2/userinfo`).
+如果你要使系统符合 OAuth 标准（例如结合使用 OIDC 或 MCP 插件），你**必须**禁用 `/token` 端点（OAuth 等效的 `/oauth2/token`）和禁用设置 JWT 头（OAuth 等效 `/oauth2/userinfo`）。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -225,13 +224,13 @@ betterAuth({
 })
 ```
 
-### Remote JWKS Url
+### 远程 JWKS 地址
 
-Disables the `/jwks` endpoint and uses this endpoint in any discovery such as OIDC.
+禁用 `/jwks` 端点，并使用此地址用于任何发现（例如 OIDC）。
 
-Useful if your JWKS are not managed at `/jwks` or if your jwks are signed with a certificate and placed on your CDN.
+当 JWKS 不托管在 `/jwks`，或你的 JWKS 由证书签名并放在 CDN 上时，此功能非常有用。
 
-NOTE: you **MUST** specify which asymmetric algorithm is used for signing.
+注意：你**必须**指定用于签名的非对称算法。
 
 ```ts title="auth.ts"
 jwt({
@@ -244,16 +243,16 @@ jwt({
 })
 ```
 
-### Custom JWKS Path
+### 自定义 JWKS 路径
 
-By default, the JWKS endpoint is available at `/jwks`. You can customize this path using the `jwksPath` option.
+默认情况下，JWKS 端点位于 `/jwks`。你可以使用 `jwksPath` 选项自定义路径。
 
-This is useful when you need to:
-- Follow OAuth 2.0/OIDC conventions (e.g., `/.well-known/jwks.json`)
-- Match existing API conventions in your application
-- Avoid path conflicts with other endpoints
+有以下用途：
+- 遵循 OAuth 2.0/OIDC 规范（例如 `/.well-known/jwks.json`）
+- 匹配应用中的现有 API 规则
+- 避免与其他端点路径冲突
 
-**Server Configuration:**
+**服务器配置：**
 
 ```ts title="auth.ts"
 jwt({
@@ -263,9 +262,9 @@ jwt({
 })
 ```
 
-**Client Configuration:**
+**客户端配置：**
 
-When using a custom `jwksPath` on the server, you **MUST** configure the client with the same path:
+服务器使用自定义 `jwksPath` 时，客户端**必须**使用相同路径配置：
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -275,36 +274,36 @@ export const authClient = createAuthClient({
   plugins: [
     jwtClient({
       jwks: {
-        jwksPath: "/.well-known/jwks.json" // Must match server configuration
+        jwksPath: "/.well-known/jwks.json" // 必须与服务器配置匹配
       }
     })
   ]
 })
 ```
 
-Then you can use the `jwks()` method as usual:
+然后你可正常使用 `jwks()` 方法：
 
 ```ts
 const { data, error } = await authClient.jwks()
 if (data) {
-  // Use data.keys to verify JWT tokens
+  // 使用 data.keys 验证 JWT 令牌
 }
 ```
 
 <Callout type="warning">
-  The `jwksPath` configured on the client **MUST** match the server configuration. If they don't match, the client will not be able to fetch the JWKS.
+  客户端配置的 `jwksPath` **必须**与服务器配置匹配，否则客户端将无法获取 JWKS。
 </Callout>
 
-### Custom Signing
+### 自定义签名
 
-This is an advanced feature. Configuration outside of this plugin **MUST** be provided.
+这是高级功能。插件外部**必须**提供配置。
 
-Implementers:
-- `remoteUrl` must be defined if using the `sign` function. This shall store all active keys, not just the current one.
-- If using localized approach, ensure server uses the latest private key when rotated. Depending on deployment, the server may need to be restarted.
-- When using remote approach, verify the payload is unchanged after transit. Use integrity validation like CRC32 or SHA256 checks if available.
+实现要点：
+- 使用 `sign` 函数时，必须定义 `remoteUrl`，且该地址应存储所有有效密钥，而非仅当前密钥。
+- 若采用本地方式，确保服务器在密钥轮换后使用最新私钥。根据部署情况，可能需要重新启动服务器。
+- 使用远程方式时，需验证传输后载荷未被篡改。建议使用 CRC32 或 SHA256 等完整性校验。
 
-#### Localized Signing
+#### 本地签名示例
 
 ```ts title="auth.ts"
 jwt({
@@ -316,7 +315,7 @@ jwt({
   },
   jwt: {
     sign: async (jwtPayload: JWTPayload) => {
-      // this is pseudocode
+      // 伪代码示例
       return await new SignJWT(jwtPayload)
         .setProtectedHeader({
           alg: "EdDSA",
@@ -329,9 +328,9 @@ jwt({
 })
 ```
 
-#### Remote Signing
+#### 远程签名示例
 
-Useful if you are using a remote Key Management Service such as [Google KMS](https://cloud.google.com/kms/docs/encrypt-decrypt-rsa#kms-encrypt-asymmetric-nodejs), [Amazon KMS](https://docs.aws.amazon.com/kms/latest/APIReference/API_Sign.html), or [Azure Key Vault](https://learn.microsoft.com/en-us/rest/api/keyvault/keys/sign/sign?view=rest-keyvault-keys-7.4&tabs=HTTP).
+适用于使用远程密钥管理服务，如 [Google KMS](https://cloud.google.com/kms/docs/encrypt-decrypt-rsa#kms-encrypt-asymmetric-nodejs)、[Amazon KMS](https://docs.aws.amazon.com/kms/latest/APIReference/API_Sign.html) 或 [Azure Key Vault](https://learn.microsoft.com/en-us/rest/api/keyvault/keys/sign/sign?view=rest-keyvault-keys-7.4&tabs=HTTP)。
 
 ```ts title="auth.ts"
 jwt({
@@ -343,7 +342,7 @@ jwt({
   },
   jwt: {
     sign: async (jwtPayload: JWTPayload) => {
-      // this is pseudocode
+      // 伪代码示例
       const headers = JSON.stringify({ kid: '123', alg: 'ES256', typ: 'JWT' })
       const payload = JSON.stringify(jwtPayload)
       const encodedHeaders = Buffer.from(headers).toString('base64url')
@@ -353,9 +352,9 @@ jwt({
       hash.update(Buffer.from(data))
       const digest = hash.digest()
       const sig = await remoteSign(digest)
-      // integrityCheck(sig)
+      // 校验完整性 (integrityCheck(sig))
       const jwt = `${data}.${sig}`
-      // verifyJwt(jwt)
+      // 验证 JWT (verifyJwt(jwt))
       return jwt
     },
   },
@@ -365,53 +364,53 @@ jwt({
 
 ## Schema
 
-The JWT plugin adds the following tables to the database:
+JWT 插件会向数据库添加以下表：
 
 ### JWKS
 
-Table Name: `jwks`
+表名：`jwks`
 
 <DatabaseTable
   fields={[
     { 
       name: "id", 
       type: "string", 
-      description: "Unique identifier for each web key",
+      description: "每个 Web 密钥的唯一标识符",
       isPrimaryKey: true
     },
     { 
       name: "publicKey", 
       type: "string", 
-      description: "The public part of the web key" 
+      description: "Web 密钥的公钥部分" 
     },
     { 
       name: "privateKey", 
       type: "string", 
-      description: "The private part of the web key" 
+      description: "Web 密钥的私钥部分" 
     },
     { 
       name: "createdAt", 
       type: "Date", 
-      description: "Timestamp of when the web key was created" 
+      description: "Web 密钥的创建时间戳" 
     },
     { 
       name: "expiresAt", 
       type: "Date", 
-      description: "Timestamp of when the web key expires",
+      description: "Web 密钥的过期时间戳",
       isOptional: true
     },
   ]}
   />
 
 <Callout>
-  You can customize the table name and fields for the `jwks` table. See the [Database concept documentation](/docs/concepts/database#custom-table-names) for more information on how to customize plugin schema.
+  你可以自定义 `jwks` 表的表名和字段。详见 [数据库概念文档](/docs/concepts/database#custom-table-names) 获取如何自定义插件 Schema 的更多信息。
 </Callout>
 
-## Options
+## 选项
 
-### Algorithm of the Key Pair
+### 密钥对算法
 
-The algorithm used for the generation of the key pair. The default is **EdDSA** with the **Ed25519** curve. Below are the available options:
+用于生成密钥对的算法，默认是基于 **Ed25519** 曲线的 **EdDSA**。可用选项如下：
 
 ```ts title="auth.ts"
 jwt({
@@ -425,38 +424,38 @@ jwt({
 ```
 
 #### EdDSA
-- **Default Curve**: `Ed25519`
-- **Optional Property**: `crv`
-  - Available options: `Ed25519`, `Ed448`
-  - Default: `Ed25519`
+- **默认曲线**: `Ed25519`
+- **可选属性**: `crv`
+  - 可选值: `Ed25519`, `Ed448`
+  - 默认: `Ed25519`
 
 #### ES256
-- No additional properties
+- 无附加属性
 
 #### RSA256
-- **Optional Property**: `modulusLength`
-  - Expects a number
-  - Default: `2048`
+- **可选属性**: `modulusLength`
+  - 类型: 数字
+  - 默认: `2048`
 
 #### PS256
-- **Optional Property**: `modulusLength`
-  - Expects a number
-  - Default: `2048`
+- **可选属性**: `modulusLength`
+  - 类型: 数字
+  - 默认: `2048`
 
 #### ECDH-ES
-- **Optional Property**: `crv`
-  - Available options: `P-256`, `P-384`, `P-521`
-  - Default: `P-256`
+- **可选属性**: `crv`
+  - 可选值: `P-256`, `P-384`, `P-521`
+  - 默认: `P-256`
 
 #### ES512
-- No additional properties
+- 无附加属性
 
 
-### Disable private key encryption
+### 禁用私钥加密
 
-By default, the private key is encrypted using AES256 GCM. You can disable this by setting the `disablePrivateKeyEncryption` option to `true`.
+默认情况下，私钥使用 AES256 GCM 加密。你可以通过设置 `disablePrivateKeyEncryption` 选项为 `true` 禁用加密。
 
-For security reasons, it's recommended to keep the private key encrypted.
+出于安全考虑，建议保持私钥加密。
 
 ```ts title="auth.ts"
 jwt({
@@ -466,27 +465,27 @@ jwt({
 })
 ```
 
-### Key Rotation
+### 密钥轮换
 
-You can enable key rotation by setting the `rotationInterval` option. This will automatically rotate the key pair at the specified interval.
+你可以通过设置 `rotationInterval` 选项启用密钥轮换。该选项会在指定间隔内自动轮换密钥对。
 
-The default value is `undefined` (disabled).
+默认值为 `undefined`（禁用）。
 
 ```ts title="auth.ts"
 jwt({
   jwks: {
-    rotationInterval: 60 * 60 * 24 * 30, // 30 days
-    gracePeriod: 60 * 60 * 24 * 30 // 30 days
+    rotationInterval: 60 * 60 * 24 * 30, // 30 天
+    gracePeriod: 60 * 60 * 24 * 30 // 30 天
   }
 })
 ```
 
-- `rotationInterval`: The interval in seconds to rotate the key pair.
-- `gracePeriod`: The period in seconds to keep the old key pair valid after rotation. This is useful to allow clients to verify tokens signed by the old key pair. The default value is 30 days.
+- `rotationInterval`：密钥轮换的秒数间隔。
+- `gracePeriod`：轮换后旧密钥副本仍有效的秒数。用于允许客户端验证由旧密钥签发的令牌。默认是 30 天。
 
-### Modify JWT payload
+### 修改 JWT 载荷
 
-By default the entire user object is added to the JWT payload. You can modify the payload by providing a function to the `definePayload` option.
+默认将整个用户对象加入 JWT 载荷。你可以通过 `definePayload` 选项传入函数修改载荷。
 
 ```ts title="auth.ts"
 jwt({
@@ -502,8 +501,8 @@ jwt({
 })
 ```
 
-### Modify Issuer, Audience, Subject or Expiration time
-If none is given, the `BASE_URL` is used as the issuer and the audience is set to the `BASE_URL`. The expiration time is set to 15 minutes.
+### 修改 Issuer、Audience、Subject 或过期时间
+若不设置，则默认使用 `BASE_URL` 作为发行者，Audience 也设为 `BASE_URL`，过期时间为 15 分钟。
 
 ```ts title="auth.ts"
 jwt({
@@ -512,28 +511,28 @@ jwt({
     audience: "https://example.com",
     expirationTime: "1h",
     getSubject: (session) => {
-      // by default the subject is the user id
+      // 默认 subject 是用户 ID
       return session.user.email
     }
   }
 })
 ```
 
-### Custom Adapter
+### 自定义适配器
 
-By default, the JWT plugin stores and retrieves JWKS from your database. You can provide a custom adapter to override this behavior, allowing you to store JWKS in alternative locations such as Redis, external services, or in-memory storage.
+默认情况下，JWT 插件会从你的数据库中存储和获取 JWKS。你可以提供自定义适配器覆盖此行为，使 JWKS 可存储在 Redis、外部服务或内存等其他位置。
 
 ```ts title="auth.ts"
 jwt({
   adapter: {
     getJwks: async (ctx) => {
-      // Custom implementation to get all JWKS
-      // This overrides the default database query
+      // 自定义实现，获取所有 JWKS
+      // 覆盖默认的数据库查询
       return await yourCustomStorage.getAllKeys()
     },
     createJwk: async (ctx, webKey) => {
-      // Custom implementation to create a new key
-      // This overrides the default database insert
+      // 自定义实现，创建新密钥
+      // 覆盖默认数据库插入
       return await yourCustomStorage.createKey(webKey)
     }
   }

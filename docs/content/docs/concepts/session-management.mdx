@@ -1,59 +1,59 @@
 ---
-title: Session Management
-description: Better Auth session management.
+title: 会话管理
+description: 更好的身份验证会话管理。
 ---
 
-Better Auth manages session using a traditional cookie-based session management. The session is stored in a cookie and is sent to the server on every request. The server then verifies the session and returns the user data if the session is valid.
+Better Auth 使用传统的基于 Cookie 的会话管理。会话存储在 Cookie 中，并在每个请求时发送到服务器。服务器随后验证会话，若会话有效则返回用户数据。
 
-## Session table
+## 会话表
 
-The session table stores the session data. The session table has the following fields:
+会话表存储会话数据。会话表包含以下字段：
 
-- `id`: Unique identifier for the session.
-- `token`: The session token. Which is also used as the session cookie.
-- `userId`: The user ID of the user.
-- `expiresAt`: The expiration date of the session.
-- `ipAddress`: The IP address of the user.
-- `userAgent`: The user agent of the user. It stores the user agent header from the request.
+- `id`：会话的唯一标识符。
+- `token`：会话令牌，同时用作会话 Cookie。
+- `userId`：用户的用户 ID。
+- `expiresAt`：会话的过期时间。
+- `ipAddress`：用户的 IP 地址。
+- `userAgent`：用户代理。存储请求中的用户代理头信息。
 
-## Session Expiration
+## 会话过期
 
-The session expires after 7 days by default. But whenever the session is used and the `updateAge` is reached, the session expiration is updated to the current time plus the `expiresIn` value.
+默认情况下，会话在 7 天后过期。但每当会话被使用且达到 `updateAge` 时间时，会话过期时间会更新为当前时间加上 `expiresIn` 值。
 
-You can change both the `expiresIn` and `updateAge` values by passing the `session` object to the `auth` configuration.
+你可以通过在 `auth` 配置中传入 `session` 对象来修改 `expiresIn` 和 `updateAge` 的值。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
 
 export const auth = betterAuth({
-    //... other config options
+    //... 其他配置选项
     session: {
-        expiresIn: 60 * 60 * 24 * 7, // 7 days
-        updateAge: 60 * 60 * 24 // 1 day (every 1 day the session expiration is updated)
+        expiresIn: 60 * 60 * 24 * 7, // 7 天
+        updateAge: 60 * 60 * 24 // 1 天（每隔 1 天更新一次会话过期时间）
     }
 })
 ```
 
-### Disable Session Refresh
+### 禁用会话刷新
 
-You can disable session refresh so that the session is not updated regardless of the `updateAge` option.
+你可以禁用会话刷新，使得无论 `updateAge` 怎样，都会话都不会被更新。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
 
 export const auth = betterAuth({
-    //... other config options
+    //... 其他配置选项
     session: {
         disableSessionRefresh: true
     }
 })
 ```
 
-### Defer Session Refresh
+### 延迟会话刷新
 
-By default, `GET /get-session` performs database writes to refresh the session. This can cause issues with read-replica database setups where GET requests are routed to read-only replicas.
+默认情况下，`GET /get-session` 会执行数据库写操作以刷新会话。这在读副本数据库环境中可能产生问题，因为 GET 请求会路由到只读副本。
 
-When enabled, GET becomes read-only and returns `needsRefresh: true` when refresh is needed. The client automatically calls POST to perform the refresh.
+启用延迟刷新后，GET 请求变为只读，需刷新时返回 `needsRefresh: true`，客户端会自动调用 POST 进行刷新。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -65,42 +65,43 @@ export const auth = betterAuth({
 })
 ```
 
-## Session Freshness
+## 会话新鲜度
 
-Some endpoints in Better Auth require the session to be **fresh**. A session is considered fresh if its `createdAt` is within the `freshAge` limit. By default, the `freshAge` is set to **1 day** (60 * 60 * 24).  
+Better Auth 中的某些接口需要会话是**新鲜的**。如果会话的 `createdAt` 时间在 `freshAge` 限制内，则视为新鲜。默认 `freshAge` 设置为 **1 天**（60 * 60 * 24）。
 
-You can customize the `freshAge` value by passing a `session` object in the `auth` configuration:  
-
-```ts title="auth.ts"
-import { betterAuth } from "better-auth"
-
-export const auth = betterAuth({
-    //... other config options
-    session: {
-        freshAge: 60 * 5 // 5 minutes (the session is fresh if created within the last 5 minutes)
-    }
-})
-```
-
-To **disable the freshness check**, set `freshAge` to `0`:  
+你可以通过在 `auth` 配置中传入 `session` 对象自定义 `freshAge`：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
 
 export const auth = betterAuth({
-    //... other config options
+    //... 其他配置选项
     session: {
-        freshAge: 0 // Disable freshness check
+        freshAge: 60 * 5 // 5 分钟（会话在最近 5 分钟内创建即视为新鲜）
     }
 })
 ```
-## Session Management
 
-Better Auth provides a set of functions to manage sessions.
+要**禁用新鲜度检查**，将 `freshAge` 设置为 `0`：
 
-### Get Session
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
 
-The `getSession` function retrieves the current active session.
+export const auth = betterAuth({
+    //... 其他配置选项
+    session: {
+        freshAge: 0 // 禁用新鲜度检查
+    }
+})
+```
+
+## 会话管理
+
+Better Auth 提供了一套函数来管理会话。
+
+### 获取会话
+
+`getSession` 函数用于获取当前活动会话。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -108,11 +109,11 @@ import { authClient } from "@/lib/auth-client"
 const { data: session } = await authClient.getSession()
 ```
 
-To learn how to customize the session response check the [Customizing Session Response](#customizing-session-response) section.
+关于如何自定义会话响应，请参阅 [自定义会话响应](#customizing-session-response) 部分。
 
-### Use Session
+### 使用会话
 
-The `useSession` action provides a reactive way to access the current session.
+`useSession` 操作提供了一个响应式方式访问当前会话。
 
 ```ts title="auth-client.ts"
 import { authClient } from "@/lib/auth-client"
@@ -120,9 +121,9 @@ import { authClient } from "@/lib/auth-client"
 const { data: session } = authClient.useSession()
 ```
 
-### List Sessions
+### 列出会话
 
-The `listSessions` function returns a list of sessions that are active for the user.
+`listSessions` 函数返回用户的所有活跃会话列表。
 
 ```ts title="auth-client.ts"
 import { authClient } from "@/lib/auth-client"
@@ -130,11 +131,11 @@ import { authClient } from "@/lib/auth-client"
 const sessions = await authClient.listSessions()
 ```
 
-### Revoke Session
+### 撤销会话
 
-When a user signs out of a device, the session is automatically ended. However, you can also end a session manually from any device the user is signed into.
+用户在某台设备注销时，会话会自动结束。你也可以在任何登录设备上手动结束指定会话。
 
-To end a session, use the `revokeSession` function. Just pass the session token as a parameter.
+调用 `revokeSession` 函数，传入会话令牌即可结束该会话。
 
 ```ts title="auth-client.ts"
 import { authClient } from "@/lib/auth-client"
@@ -144,9 +145,9 @@ await authClient.revokeSession({
 })
 ```
 
-### Revoke Other Sessions
+### 撤销其他会话
 
-To revoke all other sessions except the current session, you can use the `revokeOtherSessions` function.
+要撤销除当前会话外的所有其他会话，可使用 `revokeOtherSessions` 函数。
 
 ```ts title="auth-client.ts"
 import { authClient } from "@/lib/auth-client"
@@ -154,9 +155,9 @@ import { authClient } from "@/lib/auth-client"
 await authClient.revokeOtherSessions()
 ```
 
-### Revoke All Sessions
+### 撤销所有会话
 
-To revoke all sessions, you can use the `revokeSessions` function.
+要撤销所有会话，可以使用 `revokeSessions` 函数。
 
 ```ts title="auth-client.ts"
 import { authClient } from "@/lib/auth-client"
@@ -164,9 +165,9 @@ import { authClient } from "@/lib/auth-client"
 await authClient.revokeSessions()
 ```
 
-### Update Session
+### 更新会话
 
-If you have [additional fields](/docs/concepts/database#extending-core-schema) configured on the session, you can update them using the `updateSession` function.
+如果你为会话配置了[额外字段](/docs/concepts/database#extending-core-schema)，可以使用 `updateSession` 函数来更新它们。
 
 ```ts title="auth-client.ts"
 import { authClient } from "@/lib/auth-client"
@@ -177,22 +178,22 @@ await authClient.updateSession({
 })
 ```
 
-Core session fields (`token`, `userId`, `expiresAt`, `createdAt`, `updatedAt`, `ipAddress`, `userAgent`) cannot be updated through this endpoint. Only custom additional fields are allowed.
+核心会话字段（`token`、`userId`、`expiresAt`、`createdAt`、`updatedAt`、`ipAddress`、`userAgent`）不能通过此接口更新，仅允许修改自定义附加字段。
 
-On the server:
+服务器端示例：
 
 ```ts title="server.ts"
 await auth.api.updateSession({
     body: {
         theme: "dark",
     },
-    headers: await headers() // headers containing the user's session token
+    headers: await headers() // 包含用户会话令牌的请求头
 });
 ```
 
-### Revoking Sessions on Password Change
+### 修改密码时撤销会话
 
-You can revoke all sessions when the user changes their password by passing `revokeOtherSessions` as true on `changePassword` function.
+可以在用户修改密码时撤销所有会话，只需在 `changePassword` 函数中传入 `revokeOtherSessions: true`。
 
 ```ts title="auth.ts"
 import { authClient } from "@/lib/auth-client"
@@ -204,15 +205,15 @@ await authClient.changePassword({
 })
 ```
 
-## Session Caching
+## 会话缓存
 
-### Cookie Cache
+### Cookie 缓存
 
-Calling your database every time `useSession` or `getSession` is invoked isn't ideal, especially if sessions don't change frequently. Cookie caching handles this by storing session data in a short-lived, signed cookie—similar to how JWT access tokens are used with refresh tokens.
+每次调用 `useSession` 或 `getSession` 时访问数据库不理想，尤其是会话不常变化时。Cookie 缓存通过将会话数据存储在短时效、已签名的 Cookie 中来解决这一问题——类似使用 JWT 访问令牌和刷新令牌的模式。
 
-When cookie caching is enabled, the server can check session validity from the cookie itself instead of hitting the database each time. The cookie is signed to prevent tampering, and a short `maxAge` ensures that the session data gets refreshed regularly. If a session is revoked or expires, the cookie will be invalidated automatically.
+启用 Cookie 缓存后，服务器可以直接从 Cookie 验证会话，而不必每次访问数据库。Cookie 是签名的以防篡改，且较短的 `maxAge` 使会话数据定期刷新。如会话被撤销或过期，Cookie 会自动失效。
 
-To turn on cookie caching, just set `session.cookieCache` in your auth config:
+要启用 Cookie 缓存，只需在身份验证配置中设置 `session.cookieCache`：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -221,42 +222,44 @@ export const auth = betterAuth({
     session: {
         cookieCache: {
             enabled: true,
-            maxAge: 5 * 60 // Cache duration in seconds (5 minutes)
+            maxAge: 5 * 60 // 缓存时长，单位秒（5 分钟）
         }
     }
 });
 ```
 
 <Callout type="info">
-**Notes**
+**注意**
 
-When `cookieCache` is enabled, revoked sessions may remain active on other devices until the cookie cache expires (`maxAge`). This is because:
+启用 `cookieCache` 时，已撤销的会话可能会在其他设备上继续保持有效，直到缓存失效（`maxAge` 时间到）。
 
-- Cookie cache stores session data in the client's browser
-- The server cannot directly delete cookies from other devices
-- Sessions are only revalidated when the cache expires or `disableCookieCache: true` is used
+原因：
 
-**If immediate session revocation is critical:**
-- Disable `cookieCache` entirely, or
-- Set a shorter `maxAge` (e.g. 60 seconds), or
-- Use `disableCookieCache: true` for sensitive operations
+- Cookie 缓存将会话数据存储于客户端浏览器
+- 服务器无法直接删除其他设备上的 Cookie
+- 会话仅在缓存过期或使用 `disableCookieCache: true` 时重新验证
+
+**若需立即撤销会话，请考虑：**
+- 完全禁用 `cookieCache`，或
+- 设置更短的 `maxAge`（如 60 秒），或
+- 在敏感操作时使用 `disableCookieCache: true`
 </Callout>
 
-#### Cookie Cache Strategies
+#### Cookie 缓存策略
 
-Better Auth supports three different encoding strategies for cookie cache:
+Better Auth 支持三种不同的 Cookie 缓存编码策略：
 
-- **`compact`** (default): Uses base64url encoding with HMAC-SHA256 signature. Most compact format with no JWT spec overhead. Best for performance and size.
-- **`jwt`**: Standard JWT with HMAC-SHA256 signature (HS256). Signed but not encrypted - readable by anyone but tamper-proof. Follows JWT spec for interoperability.
-- **`jwe`**: Uses JWE (JSON Web Encryption) with A256CBC-HS512 and HKDF key derivation. Fully encrypted tokens - neither readable nor tamperable. Most secure but largest size.
+- **`compact`**（默认）：使用 base64url 编码并配合 HMAC-SHA256 签名。最紧凑格式，无 JWT 规范开销。性能和大小均最优。
+- **`jwt`**：标准 JWT 格式，使用 HMAC-SHA256 签名（HS256）。已签名但不加密，任何人可读但无法篡改。遵循 JWT 规范，兼容性强。
+- **`jwe`**：使用 JWE（JSON Web Encryption），采用 A256CBC-HS512 和 HKDF 密钥派生。完全加密的令牌，既不可读也不可篡改。最高安全性，但体积最大。
 
-**Comparison:**
+**比较：**
 
-| Strategy | Size | Security | Readable | Interoperable | Use Case |
-|----------|------|----------|----------|---------------|----------|
-| `compact` | Smallest | Good (signed) | Yes | No | Performance-critical, internal use |
-| `jwt` | Medium | Good (signed) | Yes | Yes | Need JWT compatibility, external integrations |
-| `jwe` | Largest | Best (encrypted) | No | Yes | Sensitive data, maximum security |
+| 策略       | 大小       | 安全性     | 可读性     | 兼容性         | 使用场景                     |
+|------------|------------|------------|------------|----------------|------------------------------|
+| `compact`  | 最小       | 良好（签名） | 是         | 否             | 追求性能和小体积，内部使用     |
+| `jwt`      | 中等       | 良好（签名） | 是         | 是             | 需要 JWT 兼容性，外部集成     |
+| `jwe`      | 最大       | 最佳（加密） | 否         | 是             | 敏感数据，最高安全性要求     |
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -264,21 +267,21 @@ export const auth = betterAuth({
         cookieCache: {
             enabled: true,
             maxAge: 5 * 60,
-            strategy: "compact" // or "jwt" or "jwe"
+            strategy: "compact" // 也可选 "jwt" 或 "jwe"
         }
     }
 });
 ```
 
-**Note:** All strategies are cryptographically secure and prevent tampering. The main differences are size, readability, and JWT spec compliance.
+**注：** 所有策略密码学上都安全且防止篡改，主要区别体现在大小、可读性和 JWT 规范合规性。
 
-**When to use each:**
+**使用建议：**
 
-- **Use `compact`** when you need maximum performance and smallest cookie size. Best for most applications where cookies are only used internally by Better Auth.
-- **Use `jwt`** when you need JWT compatibility for external systems, or when you want standard JWT tokens that can be verified by third-party tools. The tokens are readable (base64-encoded JSON) but tamper-proof.
-- **Use `jwe`** when you need maximum security and want to hide session data from the client. The tokens are fully encrypted and cannot be read without the secret key. Use this for sensitive data or compliance requirements.
+- **选择 `compact`**：极致性能和最小 Cookie 大小，适合大多数仅供内部使用的场景。
+- **选择 `jwt`**：需要与外部系统互操作，或想获取可被第三方工具验证的标准 JWT 令牌。
+- **选择 `jwe`**：需要最大安全性，隐藏客户端会话数据，适合对敏感数据或合规要求高的场景。
 
-If you want to disable returning from the cookie cache when fetching the session, you can pass `disableCookieCache:true` this will force the server to fetch the session from the database and also refresh the cookie cache.
+如果想在获取会话时禁用从 Cookie 缓存返回，可以传入 `disableCookieCache:true`，这将强制服务器从数据库获取会话并刷新 Cookie 缓存。
 
 ```ts title="auth-client.ts"
 import { authClient } from "@/lib/auth-client"
@@ -288,83 +291,79 @@ const session = await authClient.getSession({ query: {
 }})
 ```
 
-or on the server
+或者在服务器端：
 
 ```ts title="server.ts"
 await auth.api.getSession({
     query: {
         disableCookieCache: true,
     }, 
-    headers: await headers() // headers containing the user's session token
+    headers: await headers() // 包含用户会话令牌的请求头
 });
 ```
 
-## Sessions in Secondary Storage
+## 次级存储中的会话
 
-By default, if you provide a [secondary storage](/docs/concepts/database#secondary-storage) in your auth configuration, the session will be stored in the secondary storage.
+默认情况下，如果你在身份验证配置中提供了[次级存储](/docs/concepts/database#secondary-storage)，会话将存储于次级存储中。
 
 ```ts
 import { betterAuth } from "better-auth";
 
 betterAuth({
-  // ... other options
+  // ... 其他选项
   secondaryStorage: {
-    // Your implementation here
+    // 在这里实现你的存储逻辑
   },
 });
 ```
 
-### Storing Sessions in the Database
+### 会话存储到数据库
 
-By default, Better Auth already stores sessions in the database, however if you provide a secondary storage,
-Better Auth will store sessions in the secondary storage instead of the database.
+默认情况下，Better Auth 已经将会话存储在数据库中。但如果提供了次级存储，Better Auth 会将会话存储到次级存储而非数据库。
 
-You can choose to store sessions in the database instead of secondary storage by passing
-`storeSessionInDatabase: true` in the session configuration.
+你也可以通过在会话配置中传入 `storeSessionInDatabase: true` 来选择将会话存储回数据库，而非次级存储。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    secondaryStorage: { /** your secondary storage implementation here */ },
+    secondaryStorage: { /** 你的次级存储实现 */ },
     session: { // [!code highlight]
         storeSessionInDatabase: true, // [!code highlight]
     } // [!code highlight]
 });
 ```
 
-### Preserving Sessions
+### 会话保留
 
-When a session is revoked, it will be removed from the secondary storage, however if you enable `preserveSessionInDatabase`,
-the session will be preserved in the database and not be deleted.
+当会话被撤销时，会从次级存储中删除会话记录，但如果启用了 `preserveSessionInDatabase`，会话将在数据库中保留且不删除。
 
-This is useful if you want to keep track of the sessions that have been revoked.
+这对于需要追踪已撤销会话的场景非常有用。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    secondaryStorage: { /** your secondary storage implementation here */ },
+    secondaryStorage: { /** 你的次级存储实现 */ },
     session: { // [!code highlight]
         preserveSessionInDatabase: true, // [!code highlight]
     } // [!code highlight]
 });
 ```
 
+## 无状态会话管理
 
-## Stateless Session Management
+Better Auth 支持无状态会话管理，无需任何数据库。这意味着会话数据仅存储在签名/加密 Cookie 中，服务器无需查询数据库验证会话，仅需要验证 Cookie 签名和检查过期时间。
 
-Better Auth supports stateless session management without any database. This means that the session data is stored in a signed/encrypted cookie and the server never queries a database to validate sessions - it simply verifies the cookie signature and checks expiration.
+### 基础无状态设置
 
-### Basic Stateless Setup
-
-If you don't pass a database configuration, Better Auth will automatically enable stateless mode.
+如果不传入数据库配置，Better Auth 会自动启用无状态模式。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
 
 export const auth = betterAuth({
-    // No database configuration
+    // 不配置数据库
     socialProviders: {
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID,
@@ -374,7 +373,7 @@ export const auth = betterAuth({
 });
 ```
 
-To manually enable stateless mode, you need to configure `cookieCache` and `account` with the following options:
+若要手动启用无状态模式，需要配置 `cookieCache` 和 `account`：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -383,29 +382,29 @@ export const auth = betterAuth({
     session: {
         cookieCache: {
             enabled: true,
-            maxAge: 7 * 24 * 60 * 60, // 7 days cache duration
-            strategy: "jwe", // can be "jwt" or "compact"
-            refreshCache: true, // Enable stateless refresh
+            maxAge: 7 * 24 * 60 * 60, // 7 天缓存时间
+            strategy: "jwe", // 可选 "jwt" 或 "compact"
+            refreshCache: true, // 启用无状态刷新
         },
     },
     account: {
         storeStateStrategy: "cookie",
-        storeAccountCookie: true, // Store account data after OAuth flow in a cookie (useful for database-less flows)
+        storeAccountCookie: true, // OAuth 流程后将账号数据存入 Cookie （适用于无数据库）
     }
 });
 ```
 
 <Callout type="info">
-If you don't provide a database, by default we provide the above configuration for you.
+如果未提供数据库，默认会提供上述配置。
 </Callout>
 
-### Understanding `refreshCache`
+### 理解 `refreshCache`
 
-The `refreshCache` option controls automatic cookie refresh **before expiry** without querying any database:
+`refreshCache` 选项控制自动在过期前刷新 Cookie，且无需查询数据库：
 
-- **`false`** (default): No automatic refresh. When the cookie cache expires (reaches `maxAge`), it will attempt to fetch from the database if available.
-- **`true`**: Enable automatic refresh with default settings. Refreshes when 80% of `maxAge` is reached (20% time remaining).
-- **`object`**: Custom refresh configuration with `updateAge` property.
+- **`false`**（默认）：无自动刷新。Cache 过期时尝试从数据库获取（如果有）。
+- **`true`**：开启自动刷新，默认在达到 `maxAge` 的 80% 时刷新（剩余 20% 时间）。
+- **`object`**：自定义刷新配置，支持 `updateAge` 属性。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -414,18 +413,18 @@ export const auth = betterAuth({
     session: {
         cookieCache: {
             enabled: true,
-            maxAge: 300, // 5 minutes
+            maxAge: 300, // 5 分钟
             refreshCache: {
-                updateAge: 60 // Refresh when 60 seconds remain before expiry
+                updateAge: 60 // 剩余 60 秒时刷新
             }
         }
     }
 });
 ```
 
-### Versioning Stateless Sessions
+### 无状态会话的版本控制
 
-One of the biggest drawbacks of stateless sessions is that you can't invalidate session easily. To solve this with better auth, if you would like to invalidate all sessions, you can change the version of the cookie cache and re-deploy your application.
+无状态会话的最大缺点之一是不能轻易失效所有会话。为了解决这个问题，你可以修改 Cookie 缓存的版本号并重新部署应用来使所有旧版本会话失效。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -433,26 +432,26 @@ import { betterAuth } from "better-auth";
 export const auth = betterAuth({
     session: {
         cookieCache: {
-            version: "2", // [!code highlight] Change the version to invalidate all sessions
+            version: "2", // [!code highlight] 修改版本号以失效所有旧会话
         }
     }
 });
 ```
 
 <Callout type="warning">
-This will invalidate all sessions that don't match the new version.
+这将导致所有版本不匹配的旧会话被作废。
 </Callout>
 
-### Stateless with Secondary Storage
+### 无状态 + 次级存储
 
-You can combine stateless sessions with secondary storage (Redis, etc.) for the best of both worlds:
+你可以将无状态会话和次级存储（如 Redis）结合使用，享受两全其美：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
 import { redis } from "./redis"
 
 export const auth = betterAuth({
-    // No primary database needed
+    // 不需要主数据库
     secondaryStorage: {
         get: async (key) => await redis.get(key),
         set: async (key, value, ttl) => await redis.set(key, value, "EX", ttl),
@@ -460,21 +459,22 @@ export const auth = betterAuth({
     },
     session: {
         cookieCache: {
-            maxAge: 5 * 60, // [!code highlight] 5 minutes (short-lived cookie)
-            refreshCache: false // [!code highlight] Disable stateless refresh
+            maxAge: 5 * 60, // [!code highlight] 5 分钟短时 Cookie
+            refreshCache: false // [!code highlight] 禁用无状态刷新
         }
     }
 });
 ```
 
-This setup:
-- Uses cookies for session validation (no DB queries)
-- Uses Redis for storing session data and refreshing the cookie cache before expiry
-- You can revoke sessions from the secondary storage and the cookie cache will be invalidated on refresh
+此配置：
 
-## Customizing Session Response
+- 使用 Cookie 进行会话验证（不使用数据库查询）
+- 使用 Redis 存储会话数据并在 Cookie 过期前刷新缓存
+- 可从次级存储撤销会话，刷新时 Cookie 缓存失效
 
-When you call `getSession` or `useSession`, the session data is returned as a `user` and `session` object. You can customize this response using the `customSession` plugin.
+## 自定义会话响应
+
+调用 `getSession` 或 `useSession` 时，会返回包含 `user` 和 `session` 的数据对象。你可以使用 `customSession` 插件自定义返回内容。
 
 ```ts title="auth.ts"
 import { customSession } from "better-auth/plugins";
@@ -496,13 +496,13 @@ export const auth = betterAuth({
 });
 ```
 
-This will add `roles` and `user.newField` to the session response.
+这将向会话响应中添加 `roles` 和用户的 `newField` 字段。
 
-**Infer on the Client**
+**客户侧推断类型**
 
 ```ts title="auth-client.ts"
 import { customSessionClient } from "better-auth/client/plugins";
-import type { auth } from "@/lib/auth"; // Import the auth instance as a type
+import type { auth } from "@/lib/auth"; // 以类型导入 auth 实例
 
 const authClient = createAuthClient({
     plugins: [customSessionClient<typeof auth>()],
@@ -510,23 +510,23 @@ const authClient = createAuthClient({
 
 const { data } = authClient.useSession();
 const { data: sessionData } = await authClient.getSession();
-// data.roles
-// data.user.newField
+// 访问 data.roles
+// 访问 data.user.newField
 ```
 
-### Caveats on Customizing Session Response
+### 自定义会话响应的注意事项
 
-1. The passed `session` object to the callback does not infer fields added by plugins.  
+1. 传入回调的 `session` 对象不会推断插件添加的字段。
 
-However, as a workaround, you can pull up your auth options and pass it to the plugin to infer the fields.
+不过你可以通过导入你的 `auth` 配置对象并传入插件以协助类型推断：
 
 ```ts
 import { betterAuth, BetterAuthOptions } from "better-auth";
 
 const options = {
-  //...config options
+  //...配置项
   plugins: [
-    //...plugins 
+    //...插件列表
   ]
 } satisfies BetterAuthOptions;
 
@@ -535,25 +535,26 @@ export const auth = betterAuth({
     plugins: [
         ...(options.plugins ?? []),
         customSession(async ({ user, session }, ctx) => {
-            // now both user and session will infer the fields added by plugins and your custom fields
+            // 现在 user 和 session 都能推断插件及自定义字段
             return {
                 user,
                 session
             }
-        }, options), // pass options here  // [!code highlight]
+        }, options), // 传入配置对象  // [!code highlight]
     ]
 })
 ```
 
-2. When your server and client code are in separate projects or repositories, and you cannot import the `auth` instance as a type reference, type inference for custom session fields will not work on the client side.
-3. Session caching, including secondary storage or cookie cache, does not include custom fields. Each time the session is fetched, your custom session function will be called.
+2. 若服务器和客户端代码在不同项目或仓库且无法导入 `auth` 作为类型引用，客户端侧不会推断自定义会话字段。
+3. 会话缓存（包括次级存储或 Cookie 缓存）不包含自定义字段。每次获取会话时，都会调用你的自定义会话函数。
 
-**Mutating the list-device-sessions endpoint**
-The `/multi-session/list-device-sessions` endpoint from the [multi-session](/docs/plugins/multi-session) plugin is used to list the devices that the user is signed into.
+**修改列表设备会话接口**
 
-You can mutate the response of this endpoint by passing the `shouldMutateListDeviceSessionsEndpoint` option to the `customSession` plugin.
+`/multi-session/list-device-sessions` 来自 [multi-session](/docs/plugins/multi-session) 插件，用于列出用户登录的设备。
 
-By default, we do not mutate the response of this endpoint.
+你可以通过在 `customSession` 插件中设置 `shouldMutateListDeviceSessionsEndpoint` 选项来修改该接口的响应。
+
+默认情况下，我们不修改该接口的响应。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";

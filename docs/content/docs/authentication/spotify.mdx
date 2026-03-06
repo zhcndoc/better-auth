@@ -1,27 +1,27 @@
 ---
 title: Spotify
-description: Spotify provider setup and usage.
+description: Spotify 提供者的设置和使用。
 ---
 
 <Steps>
     <Step> 
-        ### Get your Spotify Credentials
-        To use Spotify sign in, you need a client ID and client secret. You can get them from the [Spotify Developer Portal](https://developer.spotify.com/dashboard/applications).
+        ### 获取你的 Spotify 凭证
+        使用 Spotify 登录，你需要一个客户端 ID 和客户端密钥。你可以从 [Spotify 开发者门户](https://developer.spotify.com/dashboard/applications) 获取它们。
 
-        **Important:** Spotify no longer supports `localhost` as a redirect URI. You must use `127.0.0.1` for local development.
+        **重要：** Spotify 不再支持 `localhost` 作为重定向 URI。你必须使用 `127.0.0.1` 进行本地开发。
 
-        Make sure to set the redirect URL to `http://127.0.0.1:3000/api/auth/callback/spotify` in your Spotify Dashboard.
+        请确保在你的 Spotify 控制台中将重定向 URL 设置为 `http://127.0.0.1:3000/api/auth/callback/spotify`。
         
-        Consequently, ensure you access your local app via `http://127.0.0.1:3000` (not `localhost:3000`) so the browser URL matches the redirect URI exactly.
+        因此，确保你通过 `http://127.0.0.1:3000`（而不是 `localhost:3000`）访问本地应用，以确保浏览器 URL 完全匹配重定向 URI。
 
-        For production, you should set it to the URL of your application (must be HTTPS). If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        对于生产环境，应该将其设置为你的应用程序 URL（必须是 HTTPS）。如果你更改了认证路由的基础路径，也应该相应更新重定向 URL。
     </Step>
 
   <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供者
+        要配置提供者，你需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
 
-        You must also ensure your environment variables use the correct loopback IP to match the redirect URI. Update your `.env` file:
+        你还必须确保环境变量使用正确的回环IP以匹配重定向 URI。更新你的 `.env` 文件：
         
         ```bash title=".env"
         BETTER_AUTH_URL=http://127.0.0.1:3000
@@ -42,9 +42,9 @@ description: Spotify provider setup and usage.
         ```
     </Step>
        <Step>
-        ### Sign In with Spotify
-        To sign in with Spotify, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-        - `provider`: The provider to use. It should be set to `spotify`.
+        ### 使用 Spotify 登录
+        要使用 Spotify 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个带有以下属性的对象：
+        - `provider`：要使用的提供者，应该设置为 `spotify`。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"

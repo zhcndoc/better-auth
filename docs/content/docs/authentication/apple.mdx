@@ -1,70 +1,68 @@
 ---
 title: Apple
-description: Apple provider setup and usage.
+description: Apple 提供者的设置与使用。
 ---
 <Steps>
     <Step>
-        ### Get your OAuth credentials
-        To use Apple sign in, you need a client ID and client secret. You can get them from the [Apple Developer Portal](https://developer.apple.com/account/resources/authkeys/list).
+        ### 获取您的 OAuth 凭证
+        使用 Apple 登录，您需要一个客户端 ID 和客户端密钥。您可以从 [Apple 开发者门户](https://developer.apple.com/account/resources/authkeys/list) 获取它们。
 
-        You will need an active **Apple Developer account** to access the developer portal and generate these credentials.
+        您需要一个有效的 **Apple 开发者账号** 来访问开发者门户并生成这些凭证。
 
-        Follow these steps to set up your App ID, Service ID, and generate the key needed for your client secret:
+        按照以下步骤设置您的 App ID、Service ID，并生成客户端密钥所需的密钥：
 
-        1.  **Navigate to Certificates, Identifiers & Profiles:**
-            In the Apple Developer Portal, go to the "Certificates, Identifiers & Profiles" section.
+        1.  **进入证书、标识符与描述文件（Certificates, Identifiers & Profiles）：**
+            进入 Apple 开发者门户，访问“证书、标识符与描述文件”部分。
 
-        2.  **Create an App ID:**
-            *   Go to the `Identifiers` tab.
-            *   Click the `+` icon next to Identifiers.
-            *   Select `App IDs`, then click `Continue`.
-            *   Select `App` as the type, then click `Continue`.
-            *   **Description:** Enter a name for your app (e.g., "My Awesome App"). This name may be displayed to users when they sign in.
-            *   **Bundle ID:** Set a bundle ID. The recommended format is a reverse domain name (e.g., `com.yourcompany.yourapp`). Using a suffix like `.ai` (for app identifier) can help with organization but is not required (e.g., `com.yourcompany.yourapp.ai`).
-            *   Scroll down to **Capabilities**. Select the checkbox for `Sign In with Apple`.
-            *   Click `Continue`, then `Register`.
+        2.  **创建 App ID：**
+            *   进入 `Identifiers` 标签页。
+            *   点击“Identifiers”旁边的 `+` 图标。
+            *   选择 `App IDs`，然后点击 “Continue”。
+            *   选择 `App` 类型，然后点击 “Continue”。
+            *   **描述（Description）：** 输入您的应用名称（例如，“My Awesome App”）。该名称可能会在用户登录时展示给用户。
+            *   **Bundle ID：** 设置一个 Bundle ID。推荐格式为反向域名（例如，`com.yourcompany.yourapp`）。使用类似 `.ai` 的后缀（表示应用标识符）有助于分类，但非必需（例如，`com.yourcompany.yourapp.ai`）。
+            *   向下滚动到 **Capabilities** 部分。勾选 `Sign In with Apple`。
+            *   点击“Continue”，然后点击“Register”。
 
-        3.  **Create a Service ID:**
-            *   Go back to the `Identifiers` tab.
-            *   Click the `+` icon.
-            *   Select `Service IDs`, then click `Continue`.
-            *   **Description:** Enter a description for this service (e.g., your app name again).
-            *   **Identifier:** Set a unique identifier for the service. Use a reverse domain format, distinct from your App ID (e.g., `com.yourcompany.yourapp.si`, where `.si` indicates service identifier - this is for your organization and not required). **This Service ID will be your `clientId`.**
-            *   Click `Continue`, then `Register`.
+        3.  **创建 Service ID：**
+            *   返回 `Identifiers` 标签页。
+            *   点击 `+` 图标。
+            *   选择 `Service IDs`，然后点击 “Continue”。
+            *   **描述（Description）：** 输入此服务的描述（例如，再次输入您的应用名）。
+            *   **标识符（Identifier）：** 设置服务的唯一标识符。使用反向域名格式，且要与您的 App ID 区分开（例如 `com.yourcompany.yourapp.si`，其中 `.si` 表示服务标识符——仅为您组织的标识，非必需）。**该 Service ID 将作为您的 `clientId`。**
+            *   点击“Continue”，然后“Register”。
 
-        4.  **Configure the Service ID:**
-            *   Find the Service ID you just created in the `Identifiers` list and click on it.
-            *   Check the `Sign In with Apple` capability, then click `Configure`.
-            *   Under **Primary App ID**, select the App ID you created earlier (e.g., `com.yourcompany.yourapp.ai`).
-            *   Under **Domains and Subdomains**, list all the root domains you will use for Sign In with Apple (e.g., `example.com`, `anotherdomain.com`).
-            *   Under **Return URLs**, enter the callback URL. `https://yourdomain.com/api/auth/callback/apple`. Add all necessary return URLs.
-            *   Click `Next`, then `Done`.
-            *   Click `Continue`, then `Save`.
+        4.  **配置 Service ID：**
+            *   在 `Identifiers` 列表中找到刚创建的 Service ID，点击进入。
+            *   勾选 `Sign In with Apple` 功能，然后点击“Configure”。
+            *   在 **Primary App ID** 下，选择之前创建的 App ID（例如 `com.yourcompany.yourapp.ai`）。
+            *   在 **Domains and Subdomains** 下，列出您将用于 Apple 登录的所有根域名（例如，`example.com`，`anotherdomain.com`）。
+            *   在 **Return URLs** 中，输入回调 URL，如 `https://yourdomain.com/api/auth/callback/apple`。添加所有必要的返回 URL。
+            *   点击“Next”，然后点击“Done”。
+            *   点击“Continue”，然后“Save”。
 
-        5.  **Create a Client Secret Key:**
-            *   Go to the `Keys` tab.
-            *   Click the `+` icon to create a new key.
-            *   **Key Name:** Enter a name for the key (e.g., "Sign In with Apple Key").
-            *   Scroll down and select the checkbox for `Sign In with Apple`.
-            *   Click the `Configure` button next to `Sign In with Apple`.
-            *   Select the **Primary App ID** you created earlier.
-            *   Click `Save`, then `Continue`, then `Register`.
-            *   **Download the Key:** Immediately download the `.p8` key file. **This file is only available for download once.** Note the Key ID (available on the Keys page after creation) and your Team ID (available in your Apple Developer Account settings).
+        5.  **创建客户端密钥（Client Secret Key）：**
+            *   进入 `Keys` 标签页。
+            *   点击 `+` 图标创建新密钥。
+            *   **密钥名称（Key Name）：** 输入密钥名称（例如，“Sign In with Apple Key”）。
+            *   向下滚动，勾选 `Sign In with Apple`。
+            *   点击 `Sign In with Apple` 旁的 “Configure” 按钮。
+            *   选择之前创建的 **Primary App ID**。
+            *   点击“Save”，然后“Continue”，再点击“Register”。
+            *   **下载密钥：** 立即下载 `.p8` 密钥文件。**该文件仅能下载一次。** 记下密钥 ID（创建后在 Keys 页面可见）和您的团队 ID（Team ID，位于 Apple 开发者账户设置中）。
 
-        6.  **Generate the Client Secret (JWT):**
-            Apple requires a JSON Web Token (JWT) to be generated dynamically using the downloaded `.p8` key, the Key ID, and your Team ID. This JWT serves as your `clientSecret`.
+        6.  **生成客户端密钥（JWT）：**
+            Apple 要求用下载的 `.p8` 密钥、密钥 ID 和团队 ID 动态生成 JSON Web Token（JWT）。该 JWT 作为您的 `clientSecret`。
 
-            You can use the guide below from [Apple's documentation](https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret) to understand how to generate this client secret. You can also use our built in generator [below](#generate-apple-client-secret-jwt) to generate the client secret JWT required for 'Sign in with Apple'.
+            您可以参考 [Apple 官方文档](https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret) 了解如何生成此客户端密钥。您也可以使用我们内置的生成器 [下面](#generate-apple-client-secret-jwt) 生成 Apple 登录所需的客户端密钥 JWT。
 
-            **Note:** Apple allows a maximum expiration of 6 months (180 days) for the client secret JWT. You will need to regenerate the client secret before it expires to maintain uninterrupted authentication.
-
-
+            **注意：** Apple 允许客户端密钥 JWT 最长有效期为 6 个月（180 天）。您需要在过期前重新生成客户端密钥，以确保身份验证不中断。
     </Step>
     <Step>
-        ### Configure the provider
-        To configure the provider, you need to add it to the `socialProviders` option of the auth instance.
+        ### 配置提供者
+        要配置提供者，您需要将其添加到 auth 实例的 `socialProviders` 选项中。
 
-        You also need to add `https://appleid.apple.com` to the `trustedOrigins` array in your auth instance configuration to allow communication with Apple's authentication servers.
+        同时，您需要将 `https://appleid.apple.com` 添加到 auth 实例配置中的 `trustedOrigins` 数组，以允许与 Apple 身份验证服务器的通信。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -74,35 +72,35 @@ description: Apple provider setup and usage.
                 apple: { // [!code highlight]
                     clientId: process.env.APPLE_CLIENT_ID as string, // [!code highlight]
                     clientSecret: process.env.APPLE_CLIENT_SECRET as string, // [!code highlight]
-                    // Optional
+                    // 可选
                     appBundleIdentifier: process.env.APPLE_APP_BUNDLE_IDENTIFIER as string, // [!code highlight]
                 }, // [!code highlight]
             },
-            // Add appleid.apple.com to trustedOrigins for Sign In with Apple flows
+            // 在 trustedOrigins 中添加 appleid.apple.com 用于 Apple 登录流程
             trustedOrigins: ["https://appleid.apple.com"], // [!code highlight]
         })
         ```
 
-        On native iOS, it doesn't use the service ID but the app ID (bundle ID) as client ID, so if using the service ID as `clientId` in `signIn.social` with `idToken`, it throws an error: `JWTClaimValidationFailed: unexpected "aud" claim value`. So you need to provide the `appBundleIdentifier` when you want to sign in with Apple using the ID Token.
+        在原生 iOS 上，它不使用 Service ID，而是使用 App ID（Bundle ID）作为 client ID，因此，如果在 `signIn.social` 中使用 Service ID 作为 `clientId` 并传入 `idToken`，会抛出错误：`JWTClaimValidationFailed: unexpected "aud" claim value`。因此，当您想用 ID Token 进行 Apple 登录时，需要提供 `appBundleIdentifier`。
     </Step>
 </Steps>
 
 <Callout type="warn">
-**Localhost and Non-TLS Restrictions**
+**本地主机和非 TLS 限制**
 
-Apple Sign In does **not** support `localhost` or non-HTTPS URLs. During development:
-- You cannot use `http://localhost` as a return URL
-- You must use a domain with valid HTTPS/TLS certificate
+Apple 登录**不支持** `localhost` 或非 HTTPS URL。在开发期间：
+- 不能使用 `http://localhost` 作为回调 URL
+- 必须使用带有有效 HTTPS/TLS 证书的域名
 
-This limitation is enforced by Apple's security requirements and cannot be bypassed.
+这一限制是 Apple 的安全要求强制执行的，无法绕过。
 </Callout>
 
-## Usage
+## 使用方法
 
-### Sign In with Apple
+### Apple 登录
 
-To sign in with Apple, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-- `provider`: The provider to use. It should be set to `apple`.
+使用 Apple 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+- `provider`：要使用的提供者，应设置为 `apple`。
 
 ```ts title="auth-client.ts"  /
 import { createAuthClient } from "better-auth/client"
@@ -115,15 +113,14 @@ const signIn = async () => {
 }
 ```
 
+### 使用 ID Token 登录 Apple
 
-### Sign In with Apple With ID Token
+若想用 Apple 的 ID Token 登录，可以在 `signIn.social` 函数中传入 ID Token。
 
-To sign in with Apple using the ID Token, you can use the `signIn.social` function to pass the ID Token. 
-
-This is useful when you have the ID Token from Apple on the client-side and want to use it to sign in on the server.
+当您在客户端已有 Apple 的 ID Token，并希望用于服务器端登录时，这非常有用。
 
 <Callout>
- If ID token is provided no redirection will happen, and the user will be signed in directly.
+ 如果提供了 ID Token，流程不会跳转，用户会直接登录。
 </Callout>
 
 ```ts title="auth-client.ts"
@@ -131,12 +128,12 @@ await authClient.signIn.social({
     provider: "apple",
     idToken: {
         token: // Apple ID Token,
-        nonce: // Nonce (optional)
-        accessToken: // Access Token (optional)
+        nonce: // 随机数（可选）
+        accessToken: // 访问令牌（可选）
     }
 })
 ```
 
-## Generate Apple Client Secret (JWT)
+## 生成 Apple 客户端密钥（JWT）
 
 <GenerateAppleJwt />

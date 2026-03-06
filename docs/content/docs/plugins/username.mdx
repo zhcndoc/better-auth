@@ -1,15 +1,15 @@
 ---
-title: Username
-description: Username plugin
+title: 用户名
+description: 用户名插件
 ---
 
-The username plugin is a lightweight plugin that adds username support to the email and password authenticator. This allows users to sign in with their username instead of their email.
+用户名插件是一个轻量级插件，为电子邮件和密码认证器添加了用户名支持。这样用户可以使用用户名而不是电子邮件进行登录。
 
-## Installation
+## 安装
 
 <Steps>
     <Step>
-        ### Add Plugin to the server
+        ### 将插件添加到服务器
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -26,9 +26,9 @@ The username plugin is a lightweight plugin that adds username support to the em
         ```
     </Step>
     <Step>
-        ### Migrate the database
+        ### 运行数据库迁移
 
-        Run the migration or generate the schema to add the necessary fields and tables to the database.
+        运行迁移或生成架构，以向数据库添加所需的字段和表。
 
         <Tabs items={["migrate", "generate"]}>
             <Tab value="migrate">
@@ -42,10 +42,10 @@ The username plugin is a lightweight plugin that adds username support to the em
             ```
             </Tab>
         </Tabs>
-        See the [Schema](#schema) section to add the fields manually.
+        更多详情请参见 [Schema](#schema) 部分，手动添加字段。
     </Step>
     <Step>
-        ### Add the client plugin
+        ### 添加客户端插件
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
@@ -60,34 +60,34 @@ The username plugin is a lightweight plugin that adds username support to the em
     </Step>
 </Steps>
 
-## Usage
+## 使用方法
 
-### Sign up
+### 注册
 
-To sign up a user with username, you can use the existing `signUp.email` function provided by the client.
-The `signUp` function should take a new `username` property in the object.
+要使用用户名注册用户，可以使用客户端提供的现有 `signUp.email` 函数。  
+`signUp` 函数接受一个新增的 `username` 属性。
 
 <APIMethod path="/sign-up/email" method="POST">
 ```ts
 type signUpEmail = {
     /**
-     * The email of the user.
+     * 用户的电子邮件。
     */
     email: string = "email@domain.com"
     /**
-     * The name of the user.
+     * 用户的名字。
     */
     name: string = "Test User"
     /**
-     * The password of the user.
+     * 用户的密码。
     */
     password: string = "password1234"
     /**
-     * The username of the user.
+     * 用户的用户名。
     */
     username?: string = "test"
     /**
-     * An optional display username of the user.
+     * 用户的可选显示用户名。
     */
     displayUsername?: string = "Test User123"
 }
@@ -96,69 +96,69 @@ type signUpEmail = {
 
 
 <Callout type="info">
-    If only `username` is provided, the `displayUsername` will be set to the pre normalized version of the `username`. You can see the [Username Normalization](#username-normalization) and [Display Username Normalization](#display-username-normalization) sections for more details.
+    如果只提供了 `username`，则 `displayUsername` 会被设为该用户名的预标准化版本。更多详情请参见 [用户名标准化](#username-normalization) 和 [显示用户名标准化](#display-username-normalization) 部分。
 </Callout>
 
-### Sign in
+### 登录
 
-To sign in a user with username, you can use the `signIn.username` function provided by the client.
+要使用用户名登录用户，可以使用客户端提供的 `signIn.username` 函数。
 
 <APIMethod path="/sign-in/username" method="POST">
 ```ts
 type signInUsername = {
     /**
-     * The username of the user.
+     * 用户名。
     */
     username: string = "test"
     /**
-     * The password of the user.
+     * 密码。
     */
     password: string = "password1234"
 }
 ```
 </APIMethod>
 
-### Update username
+### 更新用户名
 
-To update the username of a user, you can use the `updateUser` function provided by the client.
+要更新用户的用户名，可以使用客户端提供的 `updateUser` 函数。
 
 <APIMethod path="/update-user" method="POST">
 ```ts
 type updateUser = {
     /**
-     * The username to update.
+     * 要更新的用户名。
     */
     username?: string = "new-username"
 }
 ```
 </APIMethod>
 
-### Check if username is available
+### 检查用户名是否可用
 
-To check if a username is available, you can use the `isUsernameAvailable` function provided by the client.
+要检查用户名是否可用，可以使用客户端提供的 `isUsernameAvailable` 函数。
 
 <APIMethod path="/is-username-available" method="POST" resultVariable="response">
 ```ts
 type isUsernameAvailable = {
     /**
-     * The username to check.
+     * 要检查的用户名。
     */
     username: string = "new-username"
 }
 
 if(response?.available) {
-    console.log("Username is available");
+    console.log("用户名可用");
 } else {
-    console.log("Username is not available");
+    console.log("用户名不可用");
 }
 ```
 </APIMethod>
 
-## Options
+## 选项
 
-### Min Username Length
+### 最小用户名长度
 
-The minimum length of the username. Default is `3`.
+用户名的最小长度。默认为 `3`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -176,9 +176,9 @@ const auth = betterAuth({
 })
 ```
 
-### Max Username Length
+### 最大用户名长度
 
-The maximum length of the username. Default is `30`.
+用户名的最大长度。默认为 `30`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -196,9 +196,9 @@ const auth = betterAuth({
 })
 ```
 
-### Username Validator
+### 用户名验证器
 
-A function that validates the username. The function should return false if the username is invalid. By default, the username should only contain alphanumeric characters, underscores, and dots.
+一个验证用户名的函数。如果用户名无效，该函数应返回 `false`。默认情况下，用户名只允许包含字母数字字符、下划线和点。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -221,9 +221,9 @@ const auth = betterAuth({
 })
 ```
 
-### Display Username Validator
+### 显示用户名验证器
 
-A function that validates the display username. The function should return false if the display username is invalid. By default, no validation is applied to display username.
+一个验证显示用户名的函数。如果显示用户名无效，该函数应返回 `false`。默认情况下，对显示用户名不进行验证。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -236,7 +236,7 @@ const auth = betterAuth({
     plugins: [
         username({
             displayUsernameValidator: (displayUsername) => {
-                // Allow only alphanumeric characters, underscores, and hyphens
+                // 只允许字母数字字符、下划线和连字符
                 return /^[a-zA-Z0-9_-]+$/.test(displayUsername)
             }
         })
@@ -244,11 +244,11 @@ const auth = betterAuth({
 })
 ```
 
-### Username Normalization
+### 用户名标准化
 
-A function that normalizes the username, or `false` if you want to disable normalization.
+一个用于标准化用户名的函数，或者设置为 `false` 以禁用标准化。
 
-By default, usernames are normalized to lowercase, so "TestUser" and "testuser", for example, are considered the same username. The `username` field will contain the normalized (lower case) username, while `displayUsername` will contain the original `username`.
+默认情况下，用户名被标准化为小写，比如 "TestUser" 和 "testuser" 被视为相同的用户名。`username` 字段包含标准化（小写）的用户名，而 `displayUsername` 保持原始的用户名。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -271,11 +271,11 @@ const auth = betterAuth({
 })
 ```
 
-### Display Username Normalization
+### 显示用户名标准化
 
-A function that normalizes the display username, or `false` to disable normalization.
+一个用于标准化显示用户名的函数，或设置为 `false` 禁用标准化。
 
-By default, display usernames are not normalized. When only `username` is provided during signup or update, the `displayUsername` will be set to match the original `username` value (before normalization). You can also explicitly set a `displayUsername` which will be preserved as-is. For custom normalization, provide a function that takes the display username as input and returns the normalized version.
+默认情况下，显示用户名不进行标准化。当仅提供 `username` 进行注册或更新时，`displayUsername` 会设为原始的 `username`（标准化之前）。你也可以显式地设置 `displayUsername`，该值会被原样保留。如需自定义标准化，请提供一个接受显示用户名为输入并返回标准化结果的函数。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -293,9 +293,9 @@ const auth = betterAuth({
 })
 ```
 
-### Validation Order
+### 验证顺序
 
-By default, username and display username are validated before normalization. You can change this behavior by setting `validationOrder` to `post-normalization`.
+默认情况下，用户名和显示用户名在标准化之前进行验证。你可以通过设置 `validationOrder` 为 `post-normalization` 来改变此行为。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -316,9 +316,9 @@ const auth = betterAuth({
 })
 ```
 
-### Disable Is Username Available
+### 禁用“用户名是否可用”接口
 
-By default, the plugin exposes an endpoint `/is-username-available` to check if a username is available. You can disable this endpoint by providing `disabledPaths` option to the better-auth configuration. This is useful if you want to protect usernames from being enumerated.
+默认情况下，插件提供了 `/is-username-available` 接口用于检查用户名是否可用。你可以通过在 better-auth 配置中提供 `disabledPaths` 选项禁用此接口。这对于防止用户名被枚举很有用。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -335,22 +335,22 @@ const auth = betterAuth({
 })
 ```
 
-## Schema
+## 架构
 
-The plugin requires 2 fields to be added to the user table:
+该插件需要在用户表中添加 2 个字段：
 
 <DatabaseTable
     fields={[
         {
             name: "username",
             type: "string",
-            description: "The username of the user",
+            description: "用户的用户名",
             isUnique: true
         },
         {
             name: "displayUsername",
             type: "string",
-            description: "Non normalized username of the user",
+            description: "非标准化的用户名",
             isUnique: true
         },
     ]}

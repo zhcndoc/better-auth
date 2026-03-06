@@ -1,24 +1,24 @@
 ---
-title: Generic OAuth
-description: Authenticate users with any OAuth provider
+title: 通用 OAuth
+description: 使用任何 OAuth 提供商进行用户身份验证
 ---
 
-The Generic OAuth plugin provides a flexible way to integrate authentication with any OAuth provider. It supports both OAuth 2.0 and OpenID Connect (OIDC) flows, allowing you to easily add social login or custom OAuth authentication to your application.
+通用 OAuth 插件提供了一种灵活的方式来集成任何 OAuth 提供商的身份验证。它支持 OAuth 2.0 和 OpenID Connect (OIDC) 流程，允许你轻松地为应用程序添加社交登录或自定义 OAuth 身份验证。
 
-## Installation
+## 安装
 
 <Steps>
   <Step>
-    ### Add the plugin to your auth config
+    ### 在你的身份验证配置中添加插件
 
-    To use the Generic OAuth plugin, add it to your auth config.
+    要使用通用 OAuth 插件，请将其添加到你的身份验证配置中。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
     import { genericOAuth } from "better-auth/plugins" // [!code highlight]
 
     export const auth = betterAuth({
-        // ... other config options
+        // ... 其他配置选项
         plugins: [
             genericOAuth({ // [!code highlight]
                 config: [ // [!code highlight]
@@ -27,9 +27,9 @@ The Generic OAuth plugin provides a flexible way to integrate authentication wit
                         clientId: "test-client-id", // [!code highlight]
                         clientSecret: "test-client-secret", // [!code highlight]
                         discoveryUrl: "https://auth.example.com/.well-known/openid-configuration", // [!code highlight]
-                        // ... other config options // [!code highlight]
+                        // ... 其他配置选项 // [!code highlight]
                     }, // [!code highlight]
-                    // Add more providers as needed // [!code highlight]
+                    // 根据需要添加更多提供商 // [!code highlight]
                 ] // [!code highlight]
             }) // [!code highlight]
         ]
@@ -38,9 +38,9 @@ The Generic OAuth plugin provides a flexible way to integrate authentication wit
   </Step>
 
   <Step>
-    ### Add the client plugin
+    ### 添加客户端插件
 
-    Include the Generic OAuth client plugin in your authentication client instance.
+    在你的身份验证客户端实例中包含通用 OAuth 客户端插件。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -55,52 +55,52 @@ The Generic OAuth plugin provides a flexible way to integrate authentication wit
   </Step>
 </Steps>
 
-## Usage
+## 使用方法
 
-The Generic OAuth plugin provides endpoints for initiating the OAuth flow and handling the callback. Here's how to use them:
+通用 OAuth 插件提供了用于启动 OAuth 流程和处理回调的端点。用法如下：
 
-### Initiate OAuth Sign-In
+### 启动 OAuth 登录
 
-To start the OAuth sign-in process:
+启动 OAuth 登录流程：
 
 <APIMethod path="/sign-in/oauth2" method="POST">
 ```ts
 type signInWithOAuth2 = {
     /**
-     * The provider ID for the OAuth provider. 
+     * OAuth 提供商的 ID。 
      */
     providerId: string = "provider-id"
     /**
-     * The URL to redirect to after sign in. 
+     * 登录后重定向的 URL。 
      */
     callbackURL?: string = "/dashboard"
     /**
-     * The URL to redirect to if an error occurs. 
+     * 发生错误时重定向的 URL。 
      */
     errorCallbackURL?: string = "/error-page"
     /**
-     * The URL to redirect to after login if the user is new. 
+     * 新用户登录后重定向的 URL。 
      */
     newUserCallbackURL?: string = "/welcome"
     /**
-     * Disable redirect. 
+     * 禁用重定向。 
      */
     disableRedirect?: boolean = false
     /**
-     * Scopes to be passed to the provider authorization request. 
+     * 授权请求中传递给提供商的作用域。 
      */
     scopes?: string[] = ["my-scope"]
     /**
-     * Explicitly request sign-up. Useful when disableImplicitSignUp is true for this provider. 
+     * 显式请求注册。当该提供商启用 disableImplicitSignUp 时有用。 
      */
     requestSignUp?: boolean = false
 }
 ```
 </APIMethod>
 
-### Linking OAuth Accounts
+### 关联 OAuth 账号
 
-To link an OAuth account to an existing user:
+将 OAuth 账号关联到现有用户：
 
 <APIMethod
   path="/oauth2/link"
@@ -110,26 +110,26 @@ To link an OAuth account to an existing user:
 ```ts
 type oAuth2LinkAccount = {
     /**
-     * The OAuth provider ID. 
+     * OAuth 提供商 ID。 
      */
     providerId: string = "my-provider-id"
     /**
-     * The URL to redirect to once the account linking was complete. 
+     * 账号关联完成后重定向的 URL。 
      */
     callbackURL: string = "/successful-link"
 }
 ```
 </APIMethod>
 
-### Handle OAuth Callback
+### 处理 OAuth 回调
 
-The plugin mounts a route to handle the OAuth callback `/oauth2/callback/:providerId`. This means by default `${baseURL}/api/auth/oauth2/callback/:providerId` will be used as the callback URL. Make sure your OAuth provider is configured to use this URL.
+插件挂载了一个用于处理 OAuth 回调的路由 `/oauth2/callback/:providerId`。默认情况下，回调 URL 是 `${baseURL}/api/auth/oauth2/callback/:providerId`。请确保你的 OAuth 提供商配置了此回调 URL。
 
-## Pre-configured Provider Helpers
+## 预配置的提供商助手
 
-Better Auth provides pre-configured helper functions for popular OAuth providers. These helpers handle the provider-specific configuration, including discovery URLs and user info endpoints.
+Better Auth 提供了针对流行 OAuth 提供商的预配置辅助函数。这些助手处理特定提供商的配置，包括发现 URL 和用户信息端点。
 
-### Supported Providers
+### 支持的提供商
 
 - **Auth0** - `auth0(options)`
 - **HubSpot** - `hubspot(options)`
@@ -140,14 +140,14 @@ Better Auth provides pre-configured helper functions for popular OAuth providers
 - **Slack** - `slack(options)`
 - **Patreon** - `patreon(options)`
 
-### Example: Using Pre-configured Providers
+### 例子：使用预配置提供商
 
 ```ts title="auth.ts"
 import { betterAuth } from 'better-auth';
 import {
-	// genericOAuth plugin
+	// 通用 OAuth 插件
 	genericOAuth,
-	// providers
+	// 提供商
 	auth0,
 	gumroad,
 	hubspot,
@@ -182,7 +182,7 @@ export const auth = betterAuth({
 					clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
 					issuer: process.env.KEYCLOAK_ISSUER,
 				}),
-				// LINE supports multiple channels (countries) - use different providerIds
+				// LINE 支持多个渠道（国家）- 使用不同的 providerId
 				line({
 					providerId: 'line-jp',
 					clientId: process.env.LINE_JP_CLIENT_ID,
@@ -217,32 +217,32 @@ export const auth = betterAuth({
 });
 ```
 
-Each provider helper accepts common OAuth options (extending `BaseOAuthProviderOptions`) plus provider-specific fields:
+每个提供商助手接受通用 OAuth 选项（扩展自 `BaseOAuthProviderOptions`）以及提供商特定字段：
 
-- **Auth0**: Requires `domain` (e.g., `dev-xxx.eu.auth0.com`)
-- **HubSpot**: No additional required fields. Optional `scopes` (defaults to `["oauth"]`)
-- **Keycloak**: Requires `issuer` (e.g., `https://my-domain/realms/MyRealm`)
-- **LINE**: Optional `providerId` (defaults to `"line"`). LINE requires separate channels for different countries (Japan, Thailand, Taiwan, etc.), so you can call `line()` multiple times with different `providerId`s and credentials to support multiple countries
-- **Microsoft Entra ID**: Requires `tenantId` (can be a GUID, `"common"`, `"organizations"`, or `"consumers"`)
-- **Okta**: Requires `issuer` (e.g., `https://dev-xxxxx.okta.com/oauth2/default`)
-- **Slack**: No additional required fields
-- **Patreon**: No additional required fields
+- **Auth0**：需要 `domain`（例如 `dev-xxx.eu.auth0.com`）
+- **HubSpot**：没有额外必需字段。可选 `scopes`（默认 `["oauth"]`）
+- **Keycloak**：需要 `issuer`（例如 `https://my-domain/realms/MyRealm`）
+- **LINE**：可选 `providerId`（默认为 `"line"`）。LINE 需要为不同国家（日本、泰国、台湾等）使用单独渠道，因此你可以多次调用 `line()`，使用不同的 `providerId` 和凭证来支持多个国家
+- **Microsoft Entra ID**：需要 `tenantId`（可以为 GUID、`"common"`、`"organizations"` 或 `"consumers"`）
+- **Okta**：需要 `issuer`（例如 `https://dev-xxxxx.okta.com/oauth2/default`）
+- **Slack**：没有额外必需字段
+- **Patreon**：没有额外必需字段
 
-All providers support the same optional fields:
-- `scopes?: string[]` - Array of OAuth scopes to request
-- `redirectURI?: string` - Custom redirect URI
-- `pkce?: boolean` - Enable PKCE (defaults to `false`)
-- `disableImplicitSignUp?: boolean` - Disable automatic sign-up for new users
-- `disableSignUp?: boolean` - Disable sign-up entirely
-- `overrideUserInfo?: boolean` - Override user info on sign in
+所有提供商支持相同的可选字段：
+- `scopes?: string[]` - 请求的 OAuth 作用域数组
+- `redirectURI?: string` - 自定义重定向 URI
+- `pkce?: boolean` - 启用 PKCE（默认为 `false`）
+- `disableImplicitSignUp?: boolean` - 禁用新用户自动注册
+- `disableSignUp?: boolean` - 完全禁用注册
+- `overrideUserInfo?: boolean` - 登录时覆盖用户信息
 
-## Configuration
+## 配置
 
-When adding the plugin to your auth config, you can configure multiple OAuth providers. You can either use the pre-configured provider helpers (shown above) or create custom configurations manually.
+将插件添加到身份验证配置时，可以配置多个 OAuth 提供商。可以使用上面介绍的预配置提供商助手，也可以手动创建自定义配置。
 
-### Manual Configuration
+### 手动配置
 
-Each provider configuration object supports the following options:
+每个提供商配置对象支持以下选项：
 
 ```ts
 interface GenericOAuthConfig {
@@ -265,74 +265,73 @@ interface GenericOAuthConfig {
 }
 ```
 
-### Other Provider Configurations
+### 其他提供商配置说明
 
-**providerId**: A unique string to identify the OAuth provider configuration.
+**providerId**：用于唯一标识 OAuth 提供商配置的字符串。
 
-**discoveryUrl**: (Optional) URL to fetch the provider's OAuth 2.0/OIDC configuration. If provided, endpoints like `authorizationUrl`, `tokenUrl`, and `userInfoUrl` can be auto-discovered.
+**discoveryUrl**：（可选）用于获取提供商 OAuth 2.0/OIDC 配置的 URL。如果提供，会自动发现 `authorizationUrl`、`tokenUrl` 和 `userInfoUrl` 等端点。
 
-**issuer**: (Optional) The expected issuer identifier for validation. If not provided but `discoveryUrl` is set, it will be fetched from the discovery document. When set, the callback validates that the `iss` parameter matches this value.
+**issuer**：（可选）用于验证的预期发行者标识符。如果未提供但设置了 `discoveryUrl`，则从发现文档中获取。设置后，回调将验证 `iss` 参数是否匹配此值。
 
-**requireIssuerValidation**: (Optional) When `true`, requires the `iss` parameter in callbacks if an issuer is configured. This provides stricter security but may break with older OAuth servers. Defaults to `false`.
+**requireIssuerValidation**：（可选）当为 true 时，如果配置了发行者，要求回调中必须有 `iss` 参数。这提供更严格的安全性，但可能与旧版 OAuth 服务器不兼容。默认值为 `false`。
 
-**authorizationUrl**: (Optional) The OAuth provider's authorization endpoint. Not required if using `discoveryUrl`.
+**authorizationUrl**：（可选）OAuth 提供商的授权端点。如果使用 `discoveryUrl`，则不必指定。
 
-**tokenUrl**: (Optional) The OAuth provider's token endpoint. Not required if using `discoveryUrl`.
+**tokenUrl**：（可选）OAuth 提供商的令牌端点。如果使用 `discoveryUrl`，则不必指定。
 
-**userInfoUrl**: (Optional) The endpoint to fetch user profile information. Not required if using `discoveryUrl`.
+**userInfoUrl**：（可选）获取用户资料信息的端点。如果使用 `discoveryUrl`，则不必指定。
 
-**clientId**: The OAuth client ID issued by your provider.
+**clientId**：由你的提供商颁发的 OAuth 客户端 ID。
 
-**clientSecret**: The OAuth client secret issued by your provider.
+**clientSecret**：由你的提供商颁发的 OAuth 客户端密钥。
 
-**scopes**: (Optional) An array of scopes to request from the provider (e.g., `["openid", "email", "profile"]`).
+**scopes**：（可选）请求的作用域数组（例如 `["openid", "email", "profile"]`）。
 
-**redirectURI**: (Optional) The redirect URI to use for the OAuth flow. If not set, a default is constructed based on your app's base URL.
+**redirectURI**：（可选）OAuth 流程使用的重定向 URI。如果未设置，则基于你的应用基础 URL 构造默认值。
 
-**responseType**: (Optional) The OAuth response type. Defaults to `"code"` for authorization code flow.
+**responseType**：（可选）OAuth 响应类型，授权码流程默认为 `"code"`。
 
-**responseMode**: (Optional) The response mode for the authorization code request, such as `"query"` or `"form_post"`.
+**responseMode**：（可选）授权码请求的响应模式，如 `"query"` 或 `"form_post"`。
 
-**prompt**: (Optional) Controls the authentication experience (e.g., force login, consent, etc.).
+**prompt**：（可选）控制认证体验（例如强制登录、同意等）。
 
-**pkce**: (Optional) If true, enables PKCE (Proof Key for Code Exchange) for enhanced security. Defaults to `false`.
+**pkce**：（可选）是否启用 PKCE（Proof Key for Code Exchange）以增强安全性。默认为 `false`。
 
+**accessType**：（可选）授权请求的访问类型。使用 `"offline"` 以请求刷新令牌。
 
-**accessType**: (Optional) The access type for the authorization request. Use `"offline"` to request a refresh token.
+**getToken**：（可选）自定义函数，用于用授权码交换令牌。如果提供，将替代默认的令牌交换逻辑。适用于使用 GET 请求或自定义参数的非标准令牌端点。
 
-**getToken**: (Optional) A custom function to exchange authorization code for tokens. If provided, this function will be used instead of the default token exchange logic. This is useful for providers with non-standard token endpoints that use GET requests or custom parameters.
+**getUserInfo**：（可选）自定义函数，使用 OAuth 令牌从提供商获取用户信息。如果未提供，则使用默认的获取方式。
 
-**getUserInfo**: (Optional) A custom function to fetch user info from the provider, given the OAuth tokens. If not provided, a default fetch is used.
+**mapProfileToUser**：（可选）函数，用于将提供商的用户资料映射到应用的用户对象。适用于自定义字段映射或转换。
 
-**mapProfileToUser**: (Optional) A function to map the provider's user profile to your app's user object. Useful for custom field mapping or transformations.
+**authorizationUrlParams**：（可选）添加到授权 URL 的额外查询参数，可覆盖默认参数。也可以提供一个返回参数的函数。
 
-**authorizationUrlParams**: (Optional) Additional query parameters to add to the authorization URL. These can override default parameters. You can also provide a function that returns the parameters.
+**tokenUrlParams**：（可选）添加到令牌 URL 的额外查询参数，可覆盖默认参数。也可以提供一个返回参数的函数。
 
-**tokenUrlParams**: (Optional) Additional query parameters to add to the token URL. These can override default parameters. You can also provide a function that returns the parameters.
+**disableImplicitSignUp**：（可选）为 true 时，禁用新用户自动注册。必须显式请求带注册意图的登录。
 
-**disableImplicitSignUp**: (Optional) If true, disables automatic sign-up for new users. Sign-in must be explicitly requested with sign-up intent.
+**disableSignUp**：（可选）为 true 时，完全禁用新用户注册。只能登录已有用户。
 
-**disableSignUp**: (Optional) If true, disables sign-up for new users entirely. Only existing users can sign in.
+**authentication**：（可选）令牌请求的认证方法。可以是 `'basic'` 或 `'post'`。默认 `'post'`。
 
-**authentication**: (Optional) The authentication method for token requests. Can be `'basic'` or `'post'`. Defaults to `'post'`.
+**discoveryHeaders**：（可选）发现请求中包含的自定义头。适用于需要特殊头的提供商。
 
-**discoveryHeaders**: (Optional) Custom headers to include in the discovery request. Useful for providers that require special headers.
+**authorizationHeaders**：（可选）授权请求中包含的自定义头。适用于需要特殊头的提供商。
 
-**authorizationHeaders**: (Optional) Custom headers to include in the authorization request. Useful for providers that require special headers.
+**overrideUserInfo**：（可选）为 true 时，每次登录时用提供商信息更新数据库中的用户信息。默认 `false`。
 
-**overrideUserInfo**: (Optional) If true, the user's info in your database will be updated with the provider's info every time they sign in. Defaults to `false`.
+## 安全性：发行者验证
 
-## Security: Issuer Validation
+Better Auth 验证 OAuth 提供商的发行者，以防止混淆攻击（[RFC 9207](https://datatracker.ietf.org/doc/html/rfc9207)）。混淆攻击发生在恶意授权服务器欺骗应用将授权码发往错误的令牌端点时。
 
-Better Auth validates the OAuth provider's issuer to protect against mix-up attacks ([RFC 9207](https://datatracker.ietf.org/doc/html/rfc9207)). A mix-up attack occurs when a malicious authorization server tricks your application into sending an authorization code to the wrong token endpoint.
+### 工作原理
 
-### How It Works
+支持 RFC 9207 的 OAuth 提供商会在授权响应中包含 `iss`（发行者）参数。Better Auth 会验证该参数是否与预期发行者匹配，确保响应来自正确的提供商。
 
-When an OAuth provider supports RFC 9207, it includes an `iss` (issuer) parameter in the authorization response. Better Auth validates this parameter against the expected issuer to ensure the response came from the intended provider.
+### 配置示例
 
-### Configuration Examples
-
-**Auto-discovery (recommended for OIDC providers):**
+**自动发现（推荐给 OIDC 提供商）：**
 ```ts
 genericOAuth({
   config: [{
@@ -340,26 +339,26 @@ genericOAuth({
     discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
     clientId: "...",
     clientSecret: "...",
-    // issuer is automatically fetched from discovery document
+    // 发行者自动从发现文档获取
   }]
 })
 ```
 
-**Manual issuer configuration:**
+**手动配置发行者：**
 ```ts
 genericOAuth({
   config: [{
     providerId: "custom-oauth",
     authorizationUrl: "https://auth.example.com/authorize",
     tokenUrl: "https://auth.example.com/token",
-    issuer: "https://auth.example.com",  // manually specify expected issuer
+    issuer: "https://auth.example.com",  // 手动指定预期发行者
     clientId: "...",
     clientSecret: "...",
   }]
 })
 ```
 
-**Strict mode (recommended for modern providers):**
+**严格模式（推荐现代提供商）：**
 ```ts
 genericOAuth({
   config: [{
@@ -367,29 +366,29 @@ genericOAuth({
     discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
     clientId: "...",
     clientSecret: "...",
-    requireIssuerValidation: true,  // reject if iss parameter is missing
+    requireIssuerValidation: true,  // 若缺失 iss 参数则拒绝
   }]
 })
 ```
 
-### Validation Behavior
+### 验证行为
 
-| Scenario | `requireIssuerValidation` | Result |
-|----------|---------------------------|--------|
-| `iss` matches expected | - | Success |
-| `iss` doesn't match | - | `issuer_mismatch` error |
-| `iss` missing | `false` (default) | Success (backward compatible) |
-| `iss` missing | `true` | `issuer_missing` error |
+| 场景                  | `requireIssuerValidation` | 结果                |
+|-----------------------|---------------------------|---------------------|
+| `iss` 匹配预期         | -                         | 成功                |
+| `iss` 不匹配           | -                         | 抛出 `issuer_mismatch` 错误  |
+| `iss` 缺失             | `false`（默认）           | 成功（向后兼容）     |
+| `iss` 缺失             | `true`                    | 抛出 `issuer_missing` 错误   |
 
 <Callout>
-For maximum security with modern OAuth/OIDC providers (Google, Auth0, Okta, etc.), we recommend enabling `requireIssuerValidation: true`.
+为实现最高安全性（适用于 Google、Auth0、Okta 等现代 OAuth/OIDC 提供商），推荐启用 `requireIssuerValidation: true`。
 </Callout>
 
-## Advanced Usage
+## 高级用法
 
-### Custom Token Exchange
+### 自定义令牌交换
 
-For providers with non-standard token endpoints that use GET requests or custom parameters, you can provide a custom `getToken` function:
+对于使用 GET 请求或自定义参数的非标准令牌端点，你可以提供自定义 `getToken` 函数：
 
 ```ts
 genericOAuth({
@@ -400,9 +399,9 @@ genericOAuth({
       clientSecret: process.env.CUSTOM_CLIENT_SECRET,
       authorizationUrl: "https://provider.example.com/oauth/authorize",
       scopes: ["profile", "email"],
-      // Custom token exchange for non-standard endpoints
+      // 自定义令牌交换用于非标准端点
       getToken: async ({ code, redirectURI }) => {
-        // Example: GET request instead of POST
+        // 示例：使用 GET 请求替代 POST
         const response = await fetch(
           `https://provider.example.com/oauth/token?` +
           `client_id=${process.env.CUSTOM_CLIENT_ID}&` +
@@ -420,12 +419,12 @@ genericOAuth({
           refreshToken: data.refresh_token,
           accessTokenExpiresAt: new Date(Date.now() + data.expires_in * 1000),
           scopes: data.scope?.split(" ") ?? [],
-          // Preserve provider-specific fields in raw
+          // 保留提供商特定字段在 raw 中
           raw: data,
         };
       },
       getUserInfo: async (tokens) => {
-        // Access provider-specific fields from raw token data
+        // 访问 raw 令牌数据中的提供商特定字段
         const userId = tokens.raw?.user_id as string;
 
         const response = await fetch(
@@ -448,24 +447,24 @@ genericOAuth({
 });
 ```
 
-### Custom User Info Fetching
+### 自定义获取用户信息
 
-You can provide a custom `getUserInfo` function to handle specific provider requirements:
+你可以提供自定义的 `getUserInfo` 函数以满足特定提供商需求：
 
 ```ts
 genericOAuth({
   config: [
     {
       providerId: "custom-provider",
-      // ... other config options
+      // ... 其他配置选项
       getUserInfo: async (tokens) => {
-        // Custom logic to fetch and return user info
+        // 自定义逻辑获取并返回用户信息
         const userInfo = await fetchUserInfoFromCustomProvider(tokens);
         return {
           id: userInfo.sub,
           email: userInfo.email,
           name: userInfo.name,
-          // ... map other fields as needed
+          // ... 根据需要映射其他字段
         };
       }
     }
@@ -473,20 +472,20 @@ genericOAuth({
 })
 ```
 
-### Map User Info Fields
+### 映射用户信息字段
 
-If the user info returned by the provider does not match the expected format, or you need to map additional fields, you can use the `mapProfileToUser`:
+如果提供商返回的用户信息格式不符合预期，或需要映射额外字段，可以使用 `mapProfileToUser`：
 
 ```ts
 genericOAuth({
   config: [
     {
       providerId: "custom-provider",
-      // ... other config options
+      // ... 其他配置选项
       mapProfileToUser: async (profile) => {
         return {
           firstName: profile.given_name,
-          // ... map other fields as needed
+          // ... 根据需要映射其他字段
         };
       }
     }
@@ -494,17 +493,17 @@ genericOAuth({
 })
 ```
 
-### Accessing Raw Token Data
+### 访问原始令牌数据
 
-The `tokens` parameter includes a `raw` field that preserves the original token response from the provider. This is useful for accessing provider-specific fields:
+`tokens` 参数包含一个 `raw` 字段，保存了提供商返回的原始令牌响应。此字段用于访问提供商特定字段：
 
 ```ts
 getUserInfo: async (tokens) => {
-  // Access provider-specific fields
+  // 访问提供商特定字段
   const customField = tokens.raw?.custom_provider_field as string;
   const userId = tokens.raw?.provider_user_id as string;
 
-  // Use in your logic
+  // 在你的逻辑中使用
   return {
     id: userId,
     // ...
@@ -512,6 +511,6 @@ getUserInfo: async (tokens) => {
 }
 ```
 
-### Error Handling
+### 错误处理
 
-The plugin includes built-in error handling for common OAuth issues. Errors are typically redirected to your application's error page with an appropriate error message in the URL parameters. If the callback URL is not provided, the user will be redirected to Better Auth's default error page.
+插件内置了常见 OAuth 错误处理。错误通常会重定向到你的应用错误页面，并附带适当的错误信息 URL 参数。如果未提供错误回调 URL，用户将被重定向到 Better Auth 的默认错误页面。

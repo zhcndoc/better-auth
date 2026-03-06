@@ -1,29 +1,29 @@
 ---
-title: Introduction
-description: Introduction to Better Auth.
+title: 介绍
+description: 关于 Better Auth 的介绍。
 ---
 
-Better Auth is a framework-agnostic, universal authentication and authorization framework for TypeScript. It provides a comprehensive set of features out of the box and includes a plugin ecosystem that simplifies adding advanced functionalities. Whether you need 2FA, passkey, multi-tenancy, multi-session support, or even enterprise features like SSO, creating your own IDP, it lets you focus on building your application instead of reinventing the wheel.
+Better Auth 是一个与框架无关的通用 TypeScript 身份验证和授权框架。它开箱即用，提供全面的功能集，并包含一个插件生态系统，简化了添加高级功能的过程。无论你需要二步验证（2FA）、通行密钥、多租户、多会话支持，甚至企业级功能如单点登录（SSO）、创建自有身份提供者（IDP），它都能让你专注于构建应用，而不是重新发明轮子。
 
-## Features
+## 功能
 
-Better Auth aims to be the most comprehensive auth library. It provides a wide range of features out of the box and allows you to extend it with plugins. Here are some of the features:
+Better Auth 致力于成为最全面的身份验证库。它开箱即用提供了丰富的功能，并允许你通过插件扩展。以下是部分功能：
 
 <Features/>
 
-...and much more!
+……以及更多内容！
 
 ---
 
-## AI tooling
+## AI 工具
 
 ### LLMs.txt
 
-Better Auth exposes an `LLMs.txt` that helps AI models understand how to integrate and interact with your authentication system. See it at [https://better-auth.com/llms.txt](https://better-auth.com/llms.txt).
+Better Auth 提供了一个 `LLMs.txt`，帮助 AI 模型了解如何集成和与您的身份验证系统交互。访问地址：[https://better-auth.com/llms.txt](https://better-auth.com/llms.txt)。
 
-### Skills
+### 技能
 
-Better Auth provides skills that can be added to your AI coding assistant to help it understand Better Auth best practices and implementation patterns.
+Better Auth 提供了可添加到你的 AI 编程助手中的技能，帮助它理解 Better Auth 的最佳实践和实现模式。
 
 ```bash title="terminal"
 npx skills add better-auth/skills
@@ -31,13 +31,13 @@ npx skills add better-auth/skills
 
 ### MCP
 
-Better Auth provides an MCP server so you can use it with any AI model that supports the Model Context Protocol (MCP).
+Better Auth 提供了一个 MCP 服务器，使你可以在任何支持模型上下文协议（Model Context Protocol, MCP）的 AI 模型中使用它。
 
 <AddToCursor />
 
-#### CLI Options
+#### CLI 选项
 
-Use the Better Auth CLI to easily add the MCP server to your preferred client:
+使用 Better Auth CLI，可轻松将 MCP 服务器添加到你喜欢的客户端：
 
 <Tabs items={["Cursor", "Claude Code", "Open Code", "Manual"]}>
     <Tab value="Cursor">
@@ -62,9 +62,9 @@ Use the Better Auth CLI to easily add the MCP server to your preferred client:
     </Tab>
 </Tabs>
 
-#### Manual Configuration
+#### 手动配置
 
-Alternatively, you can manually configure the MCP server for each client:
+你也可以为每个客户端手动配置 MCP 服务器：
 
 <Tabs items={["Claude Code", "Open Code", "Manual"]}>
     <Tab value="Claude Code">
@@ -80,7 +80,7 @@ Alternatively, you can manually configure the MCP server for each client:
                 "better-auth": {
                     "type": "remote",
                     "url": "https://mcp.inkeep.com/better-auth/mcp",
-                    "enabled": true,
+                    "enabled": true
                 }
             }
         }
@@ -98,6 +98,5 @@ Alternatively, you can manually configure the MCP server for each client:
 </Tabs>
 
 <Callout>
-We provide a first‑party MCP, powered by [Inkeep](https://inkeep.com). You can alternatively use [`context7`](https://context7.com/) and other MCP providers.
+我们提供了由 [Inkeep](https://inkeep.com) 支持的第一方 MCP。你也可以选择使用 [`context7`](https://context7.com/) 以及其他 MCP 提供商。
 </Callout>
-

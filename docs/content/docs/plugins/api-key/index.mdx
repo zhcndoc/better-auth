@@ -1,34 +1,34 @@
 ---
-title: API Key
-description: API Key plugin for Better Auth.
+title: API 密钥
+description: Better Auth 的 API 密钥插件。
 ---
 
-The API Key plugin allows you to create and manage API keys for your application. It provides a way to authenticate and authorize API requests by verifying API keys.
+API 密钥插件允许您为应用程序创建和管理 API 密钥。它通过验证 API 密钥来认证和授权 API 请求。
 
-## Features
+## 功能
 
-- Create, manage, and verify API keys
-- [Built-in rate limiting](/docs/plugins/api-key/advanced#rate-limiting)
-- [Custom expiration times, remaining count, and refill systems](/docs/plugins/api-key/advanced#remaining-refill-and-expiration)
-- [Metadata for API keys](/docs/plugins/api-key/advanced#metadata)
-- Custom prefix
-- [Sessions from API keys](/docs/plugins/api-key/advanced#sessions-from-api-keys)
-- [Secondary storage support](/docs/plugins/api-key/advanced#storage-modes) for high-performance API key lookups
-- [Multiple configurations](/docs/plugins/api-key/advanced#multiple-configurations) for different API key types
-- [Organization-owned API keys](/docs/plugins/api-key/advanced#organization-owned-api-keys) in addition to user-owned keys
+- 创建、管理和验证 API 密钥
+- [内置速率限制](/docs/plugins/api-key/advanced#rate-limiting)
+- [自定义过期时间、剩余次数及补充系统](/docs/plugins/api-key/advanced#remaining-refill-and-expiration)
+- [API 密钥元数据](/docs/plugins/api-key/advanced#metadata)
+- 自定义前缀
+- [基于 API 密钥的会话](/docs/plugins/api-key/advanced#sessions-from-api-keys)
+- [支持二级存储](/docs/plugins/api-key/advanced#storage-modes) 实现高性能的 API 密钥查找
+- [多配置支持](/docs/plugins/api-key/advanced#multiple-configurations) 以适配不同类型的 API 密钥
+- 除用户拥有的密钥外，还支持[组织拥有的 API 密钥](/docs/plugins/api-key/advanced#organization-owned-api-keys)
 
-## Installation
+## 安装
 
 <Steps>
     <Step>
-        ### Install the plugin
+        ### 安装插件
 
         ```package-install
         @better-auth/api-key
         ```
     </Step>
     <Step>
-        ### Add Plugin to the server
+        ### 将插件添加到服务器
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -42,9 +42,9 @@ The API Key plugin allows you to create and manage API keys for your application
         ```
     </Step>
     <Step>
-        ### Migrate the database
+        ### 迁移数据库
 
-        Run the migration or generate the schema to add the necessary fields and tables to the database.
+        运行迁移或生成模式(schema)以向数据库添加必要的字段和表。
 
         <Tabs items={["migrate", "generate"]}>
             <Tab value="migrate">
@@ -58,10 +58,10 @@ The API Key plugin allows you to create and manage API keys for your application
             ```
             </Tab>
         </Tabs>
-        See the [Schema](/docs/plugins/api-key/reference#schema) section to add the fields manually.
+        详细信息见[模式(Schema)](/docs/plugins/api-key/reference#schema)部分，可手动添加字段。
     </Step>
     <Step>
-        ### Add the client plugin
+        ### 添加客户端插件
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
@@ -77,83 +77,83 @@ The API Key plugin allows you to create and manage API keys for your application
 
 </Steps>
 
-## Usage
+## 使用方法
 
-You can view the list of API Key plugin options [here](/docs/plugins/api-key/reference#api-key-plugin-options).
+您可以在[这里](/docs/plugins/api-key/reference#api-key-plugin-options)查看 API 密钥插件的所有选项。
 
-### Create an API key
+### 创建 API 密钥
 
 <APIMethod
   path="/api-key/create"
   method="POST"
-  serverOnlyNote="If you're creating an API key on the server, without access to headers, you must pass the `userId` property (for user-owned keys) or `organizationId` (for organization-owned keys)."
-  clientOnlyNote="You can adjust more specific API key configurations by using the server method instead."
+  serverOnlyNote="如果在服务器创建 API 密钥且无法访问请求头，必须传入 `userId` 属性（适用于用户拥有的密钥）或 `organizationId`（适用于组织拥有的密钥）。"
+  clientOnlyNote="您可以使用服务器方法来调整更具体的 API 密钥配置。"
 >
 ```ts
 type createApiKey = {
     /**
-     * The configuration ID to use. If not provided, the default configuration is used.
+     * 要使用的配置 ID。如果未提供，使用默认配置。
      */
     configId?: string
     /**
-     * Name of the Api Key.
+     * API 密钥名称。
      */
     name?: string = 'project-api-key'
     /**
-     * Expiration time of the Api Key in seconds.
+     * API 密钥的过期时间（秒）。
      */
     expiresIn?: number = 60 * 60 * 24 * 7
     /**
-     * User Id of the user that the Api Key belongs to. server-only.
-     * Required for user-owned keys when not using session headers.
+     * API 密钥所属用户 ID，仅服务器使用。
+     * 不使用会话头时，用户拥有的密钥必须设置此项。
      * @serverOnly
      */
     userId?: string = "user-id"
     /**
-     * Organization Id that the Api Key belongs to. 
-     * Required for organization-owned keys (when config has `references: "organization"`).
+     * API 密钥所属组织 ID。
+     * 针对组织拥有的密钥（配置中设置 `references: "organization"`）必填。
      */
     organizationId?: string = "org-id"
     /**
-     * Prefix of the Api Key.
+     * API 密钥的前缀。
      */
     prefix?: string = 'project-api-key'
     /**
-     * Remaining number of requests. server-only.
+     * 剩余请求次数，仅服务器使用。
      * @serverOnly
      */
     remaining?: number = 100
     /**
-     * Metadata of the Api Key.
+     * API 密钥的元数据。
      */
     metadata?: any | null = { someKey: 'someValue' }
     /**
-     * Amount to refill the remaining count of the Api Key. server-only.
+     * 剩余请求次数的补充数量，仅服务器使用。
      * @serverOnly
      */
     refillAmount?: number = 100
     /**
-     * Interval to refill the Api Key in milliseconds. server-only.
+     * 补充请求次数的间隔时间（毫秒），仅服务器使用。
      * @serverOnly
      */
     refillInterval?: number = 1000
     /**
-     * The duration in milliseconds where each request is counted. Once the `maxRequests` is reached, the request will be rejected until the `timeWindow` has passed, at which point the `timeWindow` will be reset. server-only.
+     * 计数请求的时间窗口（毫秒）。达到最大请求数后，请求将被拒绝，直到时间窗口结束并重置，服务器端使用。
      * @serverOnly
      */
     rateLimitTimeWindow?: number = 1000
     /**
-     * Maximum amount of requests allowed within a window. Once the `maxRequests` is reached, the request will be rejected until the `timeWindow` has passed, at which point the `timeWindow` will be reset. server-only.
+     * 时间窗口内允许的最大请求数。达到后请求被拒，等待时间窗口重置，服务器端使用。
      * @serverOnly
      */
     rateLimitMax?: number = 100
     /**
-     * Whether the key has rate limiting enabled. server-only.
+     * 是否启用速率限制，仅服务器使用。
      * @serverOnly
      */
     rateLimitEnabled?: boolean = true
     /**
-     * Permissions of the Api Key.
+     * API 密钥权限。
      * @serverOnly
      */
     permissions?: Record<string, string[]>
@@ -161,16 +161,16 @@ type createApiKey = {
 ```
 </APIMethod>
 
-<Callout>API keys can be owned by either a user or an organization, depending on the configuration's `references` setting.</Callout>
+<Callout>API 密钥可以是用户拥有，也可以是组织拥有，具体取决于配置中的 `references` 设置。</Callout>
 
-#### Result
+#### 返回结果
 
-It'll return the `ApiKey` object which includes the `key` value for you to use.
-Otherwise if it throws, it will throw an `APIError`.
+返回包含 `key` 值的 `ApiKey` 对象供您使用。
+如果发生异常，则抛出 `APIError`。
 
 ---
 
-### Verify an API key
+### 验证 API 密钥
 
 <APIMethod
   path="/api-key/verify"
@@ -178,21 +178,21 @@ Otherwise if it throws, it will throw an `APIError`.
   isServerOnly
 >
 ```ts
-const permissions = { // Permissions to check are optional.
+const permissions = { // 可选：需检查的权限。
   projects: ["read", "read-write"],
 }
 
 type verifyApiKey = {
     /**
-     * The configuration ID to use for verification. If not provided, the default configuration is used.
+     * 用于验证的配置 ID。如果未提供，使用默认配置。
      */
     configId?: string
     /**
-     * The key to verify.
+     * 需要验证的密钥。
      */
     key: string = "your_api_key_here"
     /**
-     * The permissions to verify. Optional.
+     * 需要验证的权限，可选。
      */
     permissions?: Record<string, string[]>
 }
@@ -200,7 +200,7 @@ type verifyApiKey = {
 </APIMethod>
 
 
-#### Result
+#### 返回结果
 
 ```ts
 type Result = {
@@ -212,7 +212,7 @@ type Result = {
 
 ---
 
-### Get an API key
+### 获取 API 密钥
 
 <APIMethod
   path="/api-key/get"
@@ -222,21 +222,21 @@ type Result = {
 ```ts
 type getApiKey = {
     /**
-     * The configuration ID to use for the API key lookup. If not provided, the default configuration is used.
+     * 用于查找 API 密钥的配置 ID。如果未提供，使用默认配置。
      */
     configId?: string
     /**
-     * The id of the Api Key.
+     * API 密钥的 ID。
      */
     id: string = "some-api-key-id"
 }
 ```
 </APIMethod>
 
-#### Result
+#### 返回结果
 
-You'll receive everything about the API key details, except for the `key` value itself.
-If it fails, it will throw an `APIError`.
+返回除 `key` 字段外的所有 API 密钥详细信息。
+如果失败，会抛出 `APIError`。
 
 ```ts
 type Result = Omit<ApiKey, "key">;
@@ -244,75 +244,75 @@ type Result = Omit<ApiKey, "key">;
 
 ---
 
-### Update an API key
+### 更新 API 密钥
 
 <APIMethod path="/api-key/update" method="POST">
 ```ts
 type updateApiKey = {
     /**
-     * The configuration ID to use for the API key lookup. If not provided, the default configuration is used.
+     * 用于查找 API 密钥的配置 ID。如果未提供，使用默认配置。
      */
     configId?: string
     /**
-     * The id of the Api Key to update.
+     * 待更新 API 密钥的 ID。
      */
     keyId: string = "some-api-key-id"
     /**
-     * The id of the user which the api key belongs to. server-only.
+     * API 密钥所属用户 ID，仅服务器使用。
      * @serverOnly
      */
     userId?: string = "some-user-id"
     /**
-     * The name of the key.
+     * 密钥名称。
      */
     name?: string = "some-api-key-name"
     /**
-     * Whether the Api Key is enabled or not. server-only.
+     * 是否启用 API 密钥，仅服务器使用。
      * @serverOnly
      */
     enabled?: boolean = true
     /**
-     * The number of remaining requests. server-only.
+     * 剩余请求次数，仅服务器使用。
      * @serverOnly
      */
     remaining?: number = 100
     /**
-     * The refill amount. server-only.
+     * 补充数量，仅服务器使用。
      * @serverOnly
      */
     refillAmount?: number = 100
     /**
-     * The refill interval in milliseconds. server-only.
+     * 补充时间间隔（毫秒），仅服务器使用。
      * @serverOnly
      */
     refillInterval?: number = 1000
     /**
-     * The metadata of the Api Key. server-only.
+     * API 密钥元数据，仅服务器使用。
      * @serverOnly
      */
     metadata?: any | null = { "key": "value" }
     /**
-     * Expiration time of the Api Key in seconds. server-only.
+     * 过期时间（秒），仅服务器使用。
      * @serverOnly
      */
     expiresIn?: number = 60 * 60 * 24 * 7
     /**
-     * Whether the key has rate limiting enabled. server-only.
+     * 是否启用速率限制，仅服务器使用。
      * @serverOnly
      */
     rateLimitEnabled?: boolean = true
     /**
-     * The duration in milliseconds where each request is counted. server-only.
+     * 计数请求的时间窗口（毫秒），仅服务器使用。
      * @serverOnly
      */
     rateLimitTimeWindow?: number = 1000
     /**
-     * Maximum amount of requests allowed within a window. Once the `maxRequests` is reached, the request will be rejected until the `timeWindow` has passed, at which point the `timeWindow` will be reset. server-only.
+     * 时间窗口内允许的最大请求数，服务器端使用。
      * @serverOnly
      */
     rateLimitMax?: number = 100
     /**
-     * Update the permissions on the API Key. server-only.
+     * 更新 API 密钥的权限，仅服务器使用。
      * @serverOnly
      */
     permissions?: Record<string, string[]>
@@ -320,39 +320,39 @@ type updateApiKey = {
 ```
 </APIMethod>
 
-#### Result
+#### 返回结果
 
-If fails, throws `APIError`.
-Otherwise, you'll receive the API Key details, except for the `key` value itself.
+如果失败，则抛出 `APIError`。
+成功时返回 API 密钥详细信息，但不包含 `key` 字段。
 
 ---
 
-### Delete an API Key
+### 删除 API 密钥
 
 <APIMethod
   path="/api-key/delete"
   method="POST"
   requireSession
-  note="This endpoint is attempting to delete the API key from the perspective of the user. It will check if the user's ID matches the key owner to be able to delete it. If you want to delete a key without these checks, we recommend you use an ORM to directly mutate your DB instead."
+  note="此接口尝试从用户视角删除 API 密钥。会验证用户 ID 是否与密钥所有者匹配才能删除。如需跳过这些校验，建议直接使用 ORM 操作数据库。"
 >
 ```ts
 type deleteApiKey = {
     /**
-     * The configuration ID to use for the API key lookup. If not provided, the default configuration is used.
+     * 用于查找 API 密钥的配置 ID。如果未提供，使用默认配置。
      */
     configId?: string
     /**
-     * The id of the Api Key to delete.
+     * 待删除 API 密钥的 ID。
      */
     keyId: string = "some-api-key-id"
 }
 ```
 </APIMethod>
 
-#### Result
+#### 返回结果
 
-If fails, throws `APIError`.
-Otherwise, you'll receive:
+如果失败，则抛出 `APIError`。
+成功时返回：
 
 ```ts
 type Result = {
@@ -362,7 +362,7 @@ type Result = {
 
 ---
 
-### List API keys
+### 列出 API 密钥
 
 <APIMethod
   path="/api-key/list"
@@ -372,38 +372,38 @@ type Result = {
 ```ts
 type listApiKeys = {
     /**
-     * Filter by configuration ID. If not provided, returns keys from all configurations.
+     * 按配置 ID 过滤。如果未提供，返回所有配置下的密钥。
      */
     configId?: string
     /**
-     * Organization ID to list keys for. If provided, returns organization-owned keys.
-     * If not provided, returns user-owned keys for the current session user.
+     * 组织 ID。提供则返回该组织拥有的密钥。
+     * 未提供则返回当前会话用户拥有的密钥。
      */
     organizationId?: string
     /**
-     * The number of API keys to return.
+     * 返回的 API 密钥数量限制。
      */
     limit?: number
     /**
-     * The offset to start from (for pagination).
+     * 偏移量，用于分页。
      */
     offset?: number
     /**
-     * The field to sort by (e.g., "createdAt", "name", "expiresAt").
+     * 排序字段（如 "createdAt", "name", "expiresAt"）。
      */
     sortBy?: string
     /**
-     * The direction to sort by.
+     * 排序方向。
      */
     sortDirection?: "asc" | "desc"
 }
 ```
 </APIMethod>
 
-#### Result
+#### 返回结果
 
-If fails, throws `APIError`.
-Otherwise, you'll receive a paginated response:
+如果失败，抛出 `APIError`。
+成功时返回分页响应：
 
 ```ts
 type Result = {
@@ -414,25 +414,25 @@ type Result = {
 };
 ```
 
-#### Pagination Examples
+#### 分页用例
 
 ```ts
-// Get first 10 API keys for the current user
+// 获取当前用户的前 10 个 API 密钥
 const result = await authClient.apiKey.list({
   query: { limit: 10 }
 });
 
-// Get second page (10 items per page)
+// 获取第二页（每页10条）
 const page2 = await authClient.apiKey.list({
   query: { limit: 10, offset: 10 }
 });
 
-// Sort by creation date (newest first)
+// 按创建时间排序（最新优先）
 const sorted = await authClient.apiKey.list({
   query: { sortBy: "createdAt", sortDirection: "desc" }
 });
 
-// Combined pagination and sorting
+// 分页和排序结合
 const combined = await authClient.apiKey.list({
   query: { 
     limit: 20, 
@@ -442,12 +442,12 @@ const combined = await authClient.apiKey.list({
   }
 });
 
-// List organization-owned keys
+// 列出组织拥有的密钥
 const orgKeys = await authClient.apiKey.list({
   query: { organizationId: "org_123" }
 });
 
-// List organization keys with specific config
+// 列出指定配置的组织密钥
 const orgPublicKeys = await authClient.apiKey.list({
   query: { 
     organizationId: "org_123",
@@ -458,9 +458,9 @@ const orgPublicKeys = await authClient.apiKey.list({
 
 ---
 
-### Delete all expired API keys
+### 删除所有过期的 API 密钥
 
-This function will delete all API keys that have an expired expiration date.
+此功能会删除所有已过期的 API 密钥。
 
 <APIMethod
   path="/api-key/delete-all-expired-api-keys"
@@ -474,20 +474,19 @@ type deleteAllExpiredApiKeys = {
 </APIMethod>
 
 <Callout>
-  We automatically delete expired API keys every time any apiKey plugin
-  endpoints were called, however they are rate-limited to a 10 second cool down
-  each call to prevent multiple calls to the database.
+  我们会在每次调用任何 apiKey 插件的接口时自动删除过期密钥，
+  但调用频率限制为每 10 秒冷却一次，以防多次访问数据库。
 </Callout>
 
-## Next Steps
+## 后续步骤
 
 <Cards>
 
-<Card href="/docs/plugins/api-key/advanced" title="Advanced Features">
-  Sessions, multiple configurations, organization keys, storage, rate limiting, and more.
+<Card href="/docs/plugins/api-key/advanced" title="高级功能">
+  会话、多配置、组织密钥、存储、速率限制等。
 </Card>
 
-<Card href="/docs/plugins/api-key/reference" title="Reference">
-  Plugin options, permissions, and schema.
+<Card href="/docs/plugins/api-key/reference" title="参考">
+  插件选项、权限及模式。
 </Card>
 </Cards>

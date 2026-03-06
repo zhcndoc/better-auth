@@ -1,23 +1,23 @@
 ---
-title: Captcha
-description: Captcha plugin
+title: 验证码
+description: 验证码插件
 ---
 
-The **Captcha Plugin** integrates bot protection into your Better Auth system by adding captcha verification for key endpoints. This plugin ensures that only human users can perform actions like signing up, signing in, or resetting passwords. The following providers are currently supported:
+**验证码插件**通过为关键端点添加验证码验证，将机器人保护集成到您的 Better Auth 系统中。该插件确保只有人类用户才能执行注册、登录或重置密码等操作。目前支持以下提供商：
 - [Google reCAPTCHA](https://developers.google.com/recaptcha)
 - [Cloudflare Turnstile](https://www.cloudflare.com/application-services/products/turnstile/)
 - [hCaptcha](https://www.hcaptcha.com/)
 - [CaptchaFox](https://captchafox.com/)
 
 <Callout type="info">
-  This plugin works out of the box with <Link href="/docs/authentication/email-password">Email & Password</Link> authentication. To use it with other authentication methods, you will need to configure the <Link href="/docs/plugins/captcha#plugin-options">endpoints</Link> array in the plugin options.
+  此插件开箱即用，支持 <Link href="/docs/authentication/email-password">邮箱与密码</Link> 认证。若要在其他认证方式下使用，您需要在插件选项中配置 <Link href="/docs/plugins/captcha#plugin-options">endpoints</Link> 数组。
 </Callout>
 
-## Installation
+## 安装
 
 <Steps>
   <Step>
-    ### Add the plugin to your **auth** config
+    ### 将插件添加到您的 **auth** 配置中
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";
@@ -26,7 +26,7 @@ The **Captcha Plugin** integrates bot protection into your Better Auth system by
     export const auth = betterAuth({
         plugins: [
             captcha({ // [!code highlight]
-                provider: "cloudflare-turnstile", // or google-recaptcha, hcaptcha, captchafox // [!code highlight]
+                provider: "cloudflare-turnstile", // 或者 google-recaptcha、hcaptcha、captchafox // [!code highlight]
                 secretKey: process.env.TURNSTILE_SECRET_KEY!, // [!code highlight]
             }), // [!code highlight]
         ],
@@ -35,13 +35,13 @@ The **Captcha Plugin** integrates bot protection into your Better Auth system by
 
   </Step>
   <Step>
-    ### Add the captcha token to your request headers
+    ### 将验证码令牌添加到您的请求头
 
     <Callout type="warning">
-      The `x-captcha-user-remote-ip` header is no longer required—IP is now auto-detected server-side.
+      现在不再需要 `x-captcha-user-remote-ip` 头 — IP 地址由服务端自动检测。
     </Callout>
 
-    Add the captcha token to your request headers for all protected endpoints. This example shows how to include it in a `signIn` request:
+    在所有受保护端点的请求头中添加验证码令牌。以下示例展示了在 `signIn` 请求中如何包含：
 
     ```ts
     import { authClient } from "@/lib/auth-client"
@@ -57,36 +57,34 @@ The **Captcha Plugin** integrates bot protection into your Better Auth system by
     });
     ```
 
-    - To implement Cloudflare Turnstile on the client side, follow the official [Cloudflare Turnstile documentation](https://developers.cloudflare.com/turnstile/) or use a library like [react-turnstile](https://www.npmjs.com/package/@marsidev/react-turnstile).
-    - To implement Google reCAPTCHA on the client side, follow the official [Google reCAPTCHA documentation](https://developers.google.com/recaptcha/intro) or use libraries like [react-google-recaptcha](https://www.npmjs.com/package/react-google-recaptcha) (v2) and [react-google-recaptcha-v3](https://www.npmjs.com/package/react-google-recaptcha-v3) (v3).
-    - To implement hCaptcha on the client side, follow the official [hCaptcha documentation](https://docs.hcaptcha.com/#add-the-hcaptcha-widget-to-your-webpage) or use libraries like [@hcaptcha/react-hcaptcha](https://www.npmjs.com/package/@hcaptcha/react-hcaptcha)
-    - To implement CaptchaFox on the client side, follow the official [CaptchaFox documentation](https://docs.captchafox.com/getting-started) or use libraries like [@captchafox/react](https://www.npmjs.com/package/@captchafox/react)
+    - 若在客户端实现 Cloudflare Turnstile，请参考官方 [Cloudflare Turnstile 文档](https://developers.cloudflare.com/turnstile/) 或使用如 [react-turnstile](https://www.npmjs.com/package/@marsidev/react-turnstile) 的库。
+    - 若在客户端实现 Google reCAPTCHA，请参考官方 [Google reCAPTCHA 文档](https://developers.google.com/recaptcha/intro) 或使用如 [react-google-recaptcha](https://www.npmjs.com/package/react-google-recaptcha)（v2）和 [react-google-recaptcha-v3](https://www.npmjs.com/package/react-google-recaptcha-v3)（v3）等库。
+    - 若在客户端实现 hCaptcha，请参考官方 [hCaptcha 文档](https://docs.hcaptcha.com/#add-the-hcaptcha-widget-to-your-webpage) 或使用如 [@hcaptcha/react-hcaptcha](https://www.npmjs.com/package/@hcaptcha/react-hcaptcha) 的库。
+    - 若在客户端实现 CaptchaFox，请参考官方 [CaptchaFox 文档](https://docs.captchafox.com/getting-started) 或使用如 [@captchafox/react](https://www.npmjs.com/package/@captchafox/react) 的库。
   </Step>
 </Steps>
 
-## How it works
+## 工作原理
 
 <Steps>
   <Step>
-    The plugin acts as a middleware: it intercepts all `POST` requests to configured endpoints (see `endpoints`
-    in the [Plugin Options](#plugin-options) section).
+    该插件作为中间件运行：拦截所有对配置端点的 `POST` 请求（请参见 [插件选项](#plugin-options) 中的 `endpoints`）。
   </Step>
   <Step>
-    it validates the captcha token on the server, by calling the captcha provider's `/siteverify`.
+    它通过调用验证码提供商的 `/siteverify` 接口，在服务器端验证验证码令牌。
   </Step>
   <Step>
-    - if the token is missing, gets rejected by the captcha provider, or if the `/siteverify` endpoint is
-    unavailable, the plugin returns an error and interrupts the request.
-    - if the token is accepted by the captcha provider, the middleware returns `undefined`, meaning the request is allowed to proceed.
+    - 如果令牌缺失、被验证码提供商拒绝，或 `/siteverify` 端点不可用，插件将返回错误并中断请求。
+    - 如果令牌被验证码提供商接受，中间件返回 `undefined`，表示请求允许继续处理。
 
   </Step>
 </Steps>
 
-## Plugin Options
+## 插件选项
 
-- **`provider` (required)**: your captcha provider.
-- **`secretKey` (required)**: your provider's secret key used for the server-side validation.
-- `endpoints` (optional): replaces the default array of paths where captcha verification is enforced. If set, only the specified paths will be protected. Default is `["/sign-up/email", "/sign-in/email", "/request-password-reset"]`.
-- `minScore` (optional - only *Google ReCAPTCHA v3*): minimum score threshold. Default is `0.5`.
-- `siteKey` (optional - only *hCaptcha* and *CaptchaFox*): prevents tokens issued on one sitekey from being redeemed elsewhere.
-- `siteVerifyURLOverride` (optional): overrides endpoint URL for the captcha verification request.
+- **`provider`（必填）**：您的验证码提供商。
+- **`secretKey`（必填）**：用于服务器端验证的提供商密钥。
+- `endpoints`（可选）：替换默认的验证码验证路径数组。设置后，只有指定路径会被保护。默认值为 `["/sign-up/email", "/sign-in/email", "/request-password-reset"]`。
+- `minScore`（可选 — 仅适用于 *Google ReCAPTCHA v3*）：最低分数阈值。默认值为 `0.5`。
+- `siteKey`（可选 — 仅适用于 *hCaptcha* 和 *CaptchaFox*）：防止一个 sitekey 出具的令牌在其他 sitekey 上被使用。
+- `siteVerifyURLOverride`（可选）：覆盖验证码验证请求的端点 URL。

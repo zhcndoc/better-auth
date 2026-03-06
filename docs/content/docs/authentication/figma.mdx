@@ -1,27 +1,27 @@
 ---
 title: Figma
-description: Figma provider setup and usage.
+description: Figma 提供者的设置与使用。
 ---
 
 <Steps>
     <Step>
-        ### Get your Credentials
-        1. Sign in to your Figma account and go to the [Developer Apps page](https://www.figma.com/developers/apps)
-        2. Click "Create new app"
-        3. Fill out the app details (name, description, etc.)
-        4. Configure your redirect URI (e.g., `https://yourdomain.com/api/auth/callback/figma`)
-        5. Note your Client ID and Client Secret
+        ### 获取您的凭证
+        1. 登录您的 Figma 账户并访问 [开发者应用页面](https://www.figma.com/developers/apps)
+        2. 点击“创建新应用”
+        3. 填写应用详情（名称、描述等）
+        4. 配置您的重定向 URI（例如，`https://yourdomain.com/api/auth/callback/figma`）
+        5. 记录您的客户端 ID 和客户端密钥
 
         <Callout type="info">
-            The default scope is `current_user:read`. For additional scopes like `file_content:read`, refer to the [Figma OAuth scopes documentation](https://developers.figma.com/docs/rest-api/scopes).
+            默认的权限范围是 `current_user:read`。如需更多权限范围例如 `file_content:read`，请参考 [Figma OAuth 权限范围文档](https://developers.figma.com/docs/rest-api/scopes)。
         </Callout>
 
-        Make sure to set the redirect URI to match your application's callback URL. If you change the base path of the auth routes, you should update the redirect URI accordingly.
+        确保将重定向 URI 设置为与您应用的回调 URL 匹配。如果您更改了认证路由的基础路径，应相应更新重定向 URI。
     </Step>
 
-  <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+    <Step>
+        ### 配置提供者
+        配置提供者时，您需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -36,10 +36,10 @@ description: Figma provider setup and usage.
         })
         ```
     </Step>
-       <Step>
-        ### Sign In with Figma
-        To sign in with Figma, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-        - `provider`: The provider to use. It should be set to `figma`.
+    <Step>
+        ### 使用 Figma 登录
+        要使用 Figma 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
+        - `provider`：要使用的提供者，应设置为 `figma`。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
@@ -52,7 +52,7 @@ description: Figma provider setup and usage.
         }
         ```
         <Callout type="info">
-        For more information about Figma's OAuth scopes and API capabilities, refer to the [official Figma API documentation](https://www.figma.com/developers/api).
+        关于 Figma 的 OAuth 权限范围及 API 功能的更多信息，请参考 [Figma 官方 API 文档](https://www.figma.com/developers/api)。
         </Callout>
     </Step>
 

@@ -1,61 +1,51 @@
 ---
 title: state_not_found
-description: The state parameter was not found in the request.
+description: 请求中未找到 state 参数。
 ---
 
-## What is it?
+## 它是什么？
 
-During the OAuth callback, Better Auth expects a `state` value to be present on the incoming request. 
-This `state` is originally generated when the OAuth flow starts and is sent to the provider. When the 
-provider redirects back to your app, it should include the same `state` value in the callback request.
-If the `state` is missing entirely in the callback request (query or body), 
-we cannot validate the flow and the request is rejected.
+在 OAuth 回调期间，Better Auth 期望请求中包含 `state` 值。  
+该 `state` 最初是在 OAuth 流程开始时生成并发送给提供者的。当提供者重定向回您的应用时，回调请求中应包含相同的 `state` 值。  
+如果回调请求（查询参数或请求体）中完全缺少 `state`，  
+我们将无法验证该流程，且请求会被拒绝。
 
-This check prevents CSRF and replay attacks by ensuring the callback belongs to the same browser session 
-that initiated the flow.
+此检查通过确保回调属于发起该流程的相同浏览器会话，防止 CSRF 和重放攻击。
 
-## Common Causes
+## 常见原因
 
-* You navigated directly to `/api/auth/callback` without starting an OAuth flow first.
-* A reverse proxy, CDN, or rewrite stripped query or body parameters from the callback request.
-* The OAuth provider was not given a `state` on the authorize request (custom/manual flow overriding parameters).
-* The callback URL registered at the provider does not match your actual callback route, causing an intermediate 
-  redirect that drops query or body parameters.
-* The callback reached a different route/handler than expected due to framework routing or middleware, and the 
-  handler is not reading the query or body you think it is.
-* Mobile/WebView or deep-link handoff opened a new context that lost the original query string.
+* 直接导航到 `/api/auth/callback`，但未先启动 OAuth 流程。  
+* 反向代理、CDN 或重写规则在回调请求中剥离了查询或请求体参数。  
+* 授权请求中未向 OAuth 提供者传递 `state`（自定义/手动流程覆盖了参数）。  
+* 提供者处注册的回调 URL 与您实际的回调路由不匹配，导致中间重定向丢失查询或请求体参数。  
+* 由于框架路由或中间件，回调请求到达了不同的路由/处理器，且该处理器未读取您预期的查询或请求体。  
+* 移动端/WebView 或深度链接传递过程中打开了新的上下文，导致丢失了原始查询字符串。
 
-## How to resolve
+## 解决方法
 
-### Start the flow via Better Auth APIs
+### 通过 Better Auth API 启动流程
 
-Always initiate OAuth through Better Auth so we can generate and send `state` correctly. Avoid manually hitting 
-callback endpoints or constructing authorize URLs unless you fully mirror Better Auth's parameters.
+始终通过 Better Auth 启动 OAuth，以便我们正确生成和发送 `state`。避免手动访问回调端点或构造授权 URL，除非您完全复制了 Better Auth 的参数。
 
-### Verify the callback URL and method
+### 验证回调 URL 和请求方式
 
-* Ensure the provider's configured callback URL exactly matches your app's `/api/auth/callback` route (including 
-  protocol and domain).
-* Most providers redirect via GET with query parameters. If you have custom handlers or methods, confirm the 
-  handler reads the query/body consistent with your provider's redirect.
+* 确保提供者配置的回调 URL 与您应用的 `/api/auth/callback` 路由完全匹配（包括协议和域名）。  
+* 大多数提供者使用带查询参数的 GET 方式重定向。如使用自定义处理器或方法，请确认其读取查询或请求体的方式与提供者重定向一致。
 
-### Check proxies, rewrites, and middleware
+### 检查代理、重写和中间件
 
-* Confirm that any reverse proxies (Vercel, Cloudflare, Nginx) and app-level rewrites preserve the full query 
-  string (including `state`).
-* If you have middleware that redirects or rewrites the callback path, ensure it forwards query & body parameters intact.
+* 确认任何反向代理（Vercel、Cloudflare、Nginx）和应用级别的重写规则保持完整的查询字符串（包括 `state`）。  
+* 若有中间件重定向或重写回调路径，确保其完整转发查询和请求体参数。
 
-### Debug locally
+### 本地调试
 
-Use your browser DevTools → Network to inspect the callback request:
+使用浏览器开发者工具 → 网络面板检查回调请求：
 
-* Confirm the callback URL includes `?state=...` (or that the request body contains `state` if you expect one).
-* Verify the authorize request was sent earlier from the same session and that a `state` cookie exists prior to 
-  the redirect back.
-* Log request query/body fields in your callback handler during local debugging to confirm what is actually 
-  received by the server.
+* 确认回调 URL 包含 `?state=...`（或者若期望包含于请求体，则请求体包含 `state`）。  
+* 验证同一会话中之前是否发送了授权请求，并且在重定向回调前存在 `state` Cookie。  
+* 在本地调试时，在回调处理器中打印请求的查询/请求体字段，确认服务器实际接收到了什么。
 
-### Edge cases to consider
+### 需要考虑的边缘情况
 
-* Preview vs production domains can behave differently if extra redirects or rewrites occur.
-* Mobile/WebView environments and deep links can drop or alter query parameters during handoff.
+* 预览环境和生产域名在发生额外重定向或重写时行为可能不同。  
+* 移动/WebView 环境和深度链接在传递过程中可能丢失或更改查询参数。

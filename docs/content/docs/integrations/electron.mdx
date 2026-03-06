@@ -1,45 +1,45 @@
 ---
-title: Electron Integration
-description: Integrate Better Auth with Electron.
+title: Electron 集成
+description: 将 Better Auth 集成到 Electron 中。
 ---
 
-Electron is a popular framework for building cross-platform desktop applications using web technologies.
+Electron 是一个流行的框架，使用 Web 技术构建跨平台的桌面应用程序。
 
-Better Auth can be integrated into Electron apps to provide secure authentication flows, leveraging the system browser.
+Better Auth 可以集成到 Electron 应用中，提供安全的认证流程，利用系统浏览器。
 
-## Installation
+## 安装
 
 <Steps>
   <Step>
-    ### Configure a Better Auth front- & back-end
+    ### 配置 Better Auth 前后端
     
-    Before integrating with Electron, ensure you have a Better Auth server and client set up.
+    在集成 Electron 之前，确保您已经搭建了 Better Auth 服务器和客户端。
     
-    To get started, check out our [installation](/docs/installation) guide for setting up Better Auth.
+    入门请查看我们的 [安装指南](/docs/installation) 来进行 Better Auth 的设置。
   </Step>
   
   <Step>
-    ### Install the required packages
+    ### 安装所需包
 
-    Install the Better Auth server package and the Electron integration package in your server, Electron app, and web client projects.
+    在您的服务器、Electron 应用和 Web 客户端项目中安装 Better Auth 服务器包和 Electron 集成包。
 
-    **In each project, run:**
+    **在每个项目中运行：**
 
     ```package-install
     better-auth @better-auth/electron
     ```
 
     <Callout type="info">
-      We support two major versions behind the latest stable major release of Electron.
-      This keeps you on versions that receive security updates and aligns with [Electron's version support policy](https://www.electronjs.org/docs/latest/tutorial/electron-timelines#breaking-api-changes).
+      我们支持比最新稳定版本 Electron 主要版本晚两个主要版本。
+      这样能让您使用获得安全更新的版本，且符合 [Electron 的版本支持策略](https://www.electronjs.org/docs/latest/tutorial/electron-timelines#breaking-api-changes)。
     </Callout>
 
   </Step>
   
   <Step>
-    ### Add the Electron plugin to your Better Auth server
+    ### 在 Better Auth 服务器添加 Electron 插件
   
-    Add the Electron plugin to your Better Auth server.
+    向您的 Better Auth 服务器添加 Electron 插件。
     
     ```ts title="web/lib/auth.ts"
     import { betterAuth } from "better-auth";
@@ -61,9 +61,9 @@ Better Auth can be integrated into Electron apps to provide secure authenticatio
   </Step>
   
   <Step>
-    ### Add the proxy plugin to your web client
+    ### 在 Web 客户端添加代理插件
 
-    On your frontend, add the proxy plugin to handle redirects back into the Electron app.
+    在前端添加代理插件，以处理重定向回 Electron 应用。
 
     ```ts title="web/lib/auth-client.ts"
     import { createAuthClient } from "better-auth/client";
@@ -84,26 +84,26 @@ Better Auth can be integrated into Electron apps to provide secure authenticatio
   </Step>
   
   <Step>
-      ### Initialize the Electron client
+      ### 初始化 Electron 客户端
   
       ```ts title="electron/lib/auth-client.ts"
       import { createAuthClient } from "better-auth/client";
       import { electronClient } from "@better-auth/electron/client";
       
       export const authClient = createAuthClient({
-        baseURL: "http://localhost:8081", // Base URL of your Better Auth frontend
+        baseURL: "http://localhost:8081", // Better Auth 前端的基础 URL
         plugins: [
           electronClient({
-            signInURL: "https://app.example.com/sign-in", // The URL to redirect to for authentication
+            signInURL: "https://app.example.com/sign-in", // 用于认证跳转的 URL
             protocol: {
-              scheme: "com.example.app" // The custom protocol scheme registered by your Electron app
+              scheme: "com.example.app" // Electron 应用注册的自定义协议
             },
             storage: {
               getItem: async (key) => {
-                // retrieve entry from storage
+                // 从存储中取值
               },
               setItem: async (key, value) => {
-                // set entry in storage
+                // 存入存储
               },
             },
           }),
@@ -111,13 +111,13 @@ Better Auth can be integrated into Electron apps to provide secure authenticatio
       });
       ```
       
-      If you'd rather not implement your own storage solution, we offer a default option:
+      如果您不想自己实现存储方案，我们提供默认选项：
       
-      1. Make sure to install the `conf` package:
+      1. 确保安装了 `conf` 包：
       ```package-install
       conf
       ```
-      2. Then, you can use it as follows:
+      2. 然后您可以这样使用：
       
       ```ts title="electron/lib/auth-client.ts"
       import { storage } from "@better-auth/electron/storage";
@@ -128,21 +128,21 @@ Better Auth can be integrated into Electron apps to provide secure authenticatio
       ```
 
       <Callout type="warning">
-          You should never expose the authClient directly
-          to the renderer process. Instead, [create an IPC bridge](#creating-ipc-bridges) to securely communicate between the main and renderer processes.
+          您绝不应该直接将 authClient 暴露给渲染进程。
+          应使用 [创建 IPC 桥](#creating-ipc-bridges) 的方式，安全地在主进程和渲染进程间通信。
 
-          Also make sure not to expose any sensitive data like tokens or cookies to the renderer process to mitigate injection attacks.
+          还应确保不要向渲染进程暴露任何敏感数据，如令牌或 cookie，以防注入攻击。
       </Callout>
 
   </Step>
   
   <Step>
-      ### Scheme and Trusted Origins
+      ### 协议与信任来源
   
-      The Electron plugin uses deep links to redirect users back to your app after authentication.
-      To enable this, you need to add your app's protocol scheme to the `trustedOrigins` on your **Better Auth server**.
+      Electron 插件使用深度链接（deep links）在认证后重定向用户回您的应用。
+      为此，您需要将应用的协议方案添加至 **Better Auth 服务器** 的 `trustedOrigins` 中。
       
-      First, make sure you have a custom protocol scheme registered in your build configuration.
+      首先，确保您在构建配置里注册了自定义协议方案。
       
       <Tabs items={["electron-forge", "electron-builder"]}>
         <Tab value="electron-forge">
@@ -154,7 +154,7 @@ Better Auth can be integrated into Electron apps to provide secure authenticatio
                 schemes: ["com.example.app"],
               }],
             },
-            // ...other config options
+            // ...其他配置选项
           };
           ```
         </Tab>
@@ -168,13 +168,13 @@ Better Auth can be integrated into Electron apps to provide secure authenticatio
               "schemes": ["com.example.app"]
             }
           ],
-          // ...other config options
+          // ...其他配置选项
         }
         ```
         </Tab>
       </Tabs>
       
-      Then, update your Better Auth config to include the scheme in `trustedOrigins`:
+      然后，更新您的 Better Auth 配置，在 `trustedOrigins` 中加入协议：
       
       ```ts title="web/lib/auth.ts"
       export const auth = betterAuth({
@@ -184,9 +184,9 @@ Better Auth can be integrated into Electron apps to provide secure authenticatio
   </Step>
   
   <Step>
-      ### Configure the BrowserWindow
+      ### 配置 BrowserWindow
       
-      Ensure that your `BrowserWindow` is configured with `nodeIntegration` set to `false` and `contextIsolation` set to `true`, to ensure NodeJS APIs aren't exposed to any JavaScript process running in the browser.
+      确保您的 `BrowserWindow` 配置了 `nodeIntegration: false` 和 `contextIsolation: true`，防止 NodeJS API 被浏览器环境中的任何 JavaScript 访问。
       
       ```ts title="electron/main.ts"
       import { BrowserWindow } from "electron";
@@ -202,10 +202,10 @@ Better Auth can be integrated into Electron apps to provide secure authenticatio
       ```
 
       <Callout type="warning">
-        To run your process in `sandbox` mode, you need to ensure that `@better-auth/electron` is bundled into the preload script.
-        Import only `@better-auth/electron/preload` inside the preload script with tree-shaking enabled, to avoid bundling unwanted dependencies.
+        如果要在 `sandbox` 模式下运行进程，需确保 `@better-auth/electron` 被打包进预加载脚本 preload。
+        在 preload 脚本内只导入 `@better-auth/electron/preload`，开启 tree-shaking 以避免引入不需要的依赖。
 
-        The following example uses electron-vite, but the concept applies to any bundler:
+        下面的示例使用 electron-vite，概念适用于任何打包器：
 
         ```ts title="electron.vite.config.ts"
         import { defineConfig } from "electron-vite";
@@ -221,21 +221,21 @@ Better Auth can be integrated into Electron apps to provide secure authenticatio
         });
         ```
 
-        If your config uses a list of externals instead, do **not** add `@better-auth/electron` to that list so it gets bundled.
+        如果您的配置使用外部依赖数组，请**不要**将 `@better-auth/electron` 添加进去，否则不会被打包。
       </Callout>
 
   </Step>
   
   <Step>
-      ### Setup the Main Process
+      ### 设置主进程
       
-      In your Electron main process, use the `setupMain()` method from the Electron auth client to handle necessary configurations.
+      在 Electron 主进程中，使用 Electron auth client 的 `setupMain()` 方法进行必要配置。
       
-      This will:
-      - Register the protocol handler for deep links.
-      - Register the [user image proxy](#user-image-proxy) protocol.
-      - Set up content security policies.
-      - Set up IPC bridges for communication between main and renderer processes.
+      它会：
+      - 注册深度链接的协议处理器。
+      - 注册 [用户头像代理](#user-image-proxy) 协议。
+      - 设置内容安全策略 (CSP)。
+      - 设置主进程与渲染进程间的 IPC 桥。
       
       ```ts title="electron/main.ts"
       import { authClient } from "./lib/auth-client";
@@ -243,13 +243,13 @@ Better Auth can be integrated into Electron apps to provide secure authenticatio
       authClient.setupMain();
       ```
       
-      Note that this must be called before the app is ready.
+      注意此调用须在 app 准备好之前执行。
   </Step>
   
   <Step>
-      ### Setup the Renderer Process
+      ### 设置渲染进程
 
-      In your preload script, use the `setupRenderer()` method from the Electron auth client to expose safe IPC bridges to the renderer process.
+      在您的 preload 脚本中，使用 Electron auth client 的 `setupRenderer()` 方法，向渲染进程暴露安全的 IPC 桥。
 
       ```ts title="electron/preload.ts"
       import { setupRenderer } from "@better-auth/electron/preload";
@@ -257,10 +257,10 @@ Better Auth can be integrated into Electron apps to provide secure authenticatio
       setupRenderer();
       ```
 
-      Note that this must also be called before the app is ready.
+      同样，须在 app 准备好之前调用。
 
       <Callout type="info">
-        To infer the types of the exposed bridges, you can use `authClient.$Infer.Bridges` to extend the `Window` interface.
+        如果想推断暴露桥的类型，可用 `authClient.$Infer.Bridges` 来扩展 `Window` 接口。
 
         ```ts title="electron/preload.d.ts"
         import type { authClient } from "./lib/auth-client";
@@ -275,13 +275,13 @@ Better Auth can be integrated into Electron apps to provide secure authenticatio
   </Step>
 </Steps>
 
-## Usage
+## 用法
 
-### Handling Authorization in the Browser
+### 浏览器中的授权处理
 
-In order to redirect users back to your Electron application, you need to call the `ensureElectronRedirect()` method on your web sign-in callback page. Also make sure to preserve any PKCE and state parameters during the sign-in initiation, by passing them via `fetchOptions.query`.
+为了将用户重定向回您的 Electron 应用，您需要在 Web 的登录回调页面调用 `ensureElectronRedirect()` 方法。同时，确保在发起登录请求时通过 `fetchOptions.query` 保留 PKCE 和 state 参数。
 
-The following example uses React, but the same logic applies to any framework:
+以下示例使用 React，但逻辑适用于任意框架：
 
 ```tsx title="web/pages/sign-in.tsx"
 import { useEffect, use } from "react";
@@ -311,32 +311,32 @@ function SignIn({
       onClick={() =>
         authClient.signIn.social({
           provider: "google",
-          fetchOptions: { query }, // preserve PKCE/state
+          fetchOptions: { query }, // 保留 PKCE 和 state
         });
       }
     >
-      Sign in with Google
+      使用 Google 登录
     </button>
   );
 }
 ```
 
-To handle already signed-in users, you can use the `electron.transferUser` method on the client and `electronTransferUser` on the server to transfer the user to the Electron app. [See Example](https://github.com/better-auth/better-auth/blob/main/demo/nextjs/app/(auth)/sign-in/_components/electron.tsx)
+对于已登录用户，您可以在客户端用 `electron.transferUser` 方法，在服务器端用 `electronTransferUser` 方法，将用户转移至 Electron 应用。[示例查看](https://github.com/better-auth/better-auth/blob/main/demo/nextjs/app/(auth)/sign-in/_components/electron.tsx)
 
-### Handling Authentication in Electron
+### Electron 中的身份认证处理
 
-In your Electron renderer process, you can use the IPC bridges exposed by the preload script.
+在 Electron 的渲染进程中，您可以使用 preload 脚本暴露的 IPC 桥：
 
 ```tsx title="electron/App.tsx"
 function Auth() {
   useEffect(() => {
     const unsubscribeAuthenticated =
       window.onAuthenticated((user) => {
-        console.log("Authenticated user:", user);
+        console.log("认证用户:", user);
       });
     const unsubscribeAuthError =
       window.onAuthError((ctx) => {
-        toast.error(`Authentication error: ${ctx.message}`);
+        toast.error(`认证错误: ${ctx.message}`);
       });
 
     return () => {
@@ -348,23 +348,23 @@ function Auth() {
   return (
     <>
       <button onClick={() => window.requestAuth()}>
-        Sign in with Browser
+        使用浏览器登录
       </button>
       <button
         onClick={() =>
           window.requestAuth({
-            provider: "google", // sign in with social provider, redirecting directly to the provider
+            provider: "google", // 通过社交供应商登录，直接重定向
           });
         }
       >
-        Sign in with Google
+        使用 Google 登录
       </button>
     </>
   );
 }
 ```
 
-In the main process, you can call from the auth client directly:
+在主进程中，您可以直接调用 auth client：
 
 ```ts title="electron/main.ts"
 import { authClient } from "./lib/auth-client";
@@ -372,48 +372,48 @@ import { authClient } from "./lib/auth-client";
 authClient.requestAuth();
 ```
 
-### Sign Out
+### 登出
 
-To sign out the user inside the renderer process, you can use the `signOut` bridge in the renderer process:
+在渲染进程中，可以使用 `signOut` 桥退出登录：
 
 ```ts title="electron/App.tsx"
-<button onClick={() => window.signOut()}>Sign out</button>
+<button onClick={() => window.signOut()}>退出登录</button>
 ```
 
-### Subscribing to User Updates
+### 订阅用户更新
 
-You can listen for user changes via the `onUserUpdated` bridge in the renderer process:
+可通过渲染进程的 `onUserUpdated` 桥监听用户信息更改：
 
 ```ts title="electron/App.tsx"
 useEffect(() => {
   const unsubscribe = window.onUserUpdated((user) => {
-    console.log("User updated:", user);
+    console.log("用户更新:", user);
   });
   return () => unsubscribe();
 }, []);
 ```
 
-### Handling Errors
+### 错误处理
 
-Listen for authentication errors via the `onAuthError` bridge in the renderer process. The bridge will receive error context forwarded from fetch hooks.
+通过渲染进程的 `onAuthError` 桥监听认证错误。该桥会接收由 fetch 钩子转发的错误上下文。
 
 ```ts title="electron/error-listener.tsx"
 useEffect(() => {
   const unsubscribe = window.onAuthError((ctx) => {
-    console.error("Authentication error:", ctx);
+    console.error("认证错误:", ctx);
   });
   return () => unsubscribe();
 }, []);
 ```
 
-### Manual Token Exchange
+### 手动令牌交换
 
-In some environments, deep link redirects may not work reliably (e.g. certain Linux desktop environments, sandboxed browsers, or when the Electron app isn't registered as the default handler for the protocol scheme).
-As a fallback, users can manually copy the authorization code from the web UI and paste it into the Electron app.
+在某些环境中，深度链接跳转可能不稳定（如某些 Linux 桌面环境、沙箱浏览器，或者 Electron 应用未被注册为该协议的默认处理程序）。
+作为备选方案，用户可以从 Web 界面手动复制授权码并粘贴进入 Electron 应用。
 
-**Front-end:**
+**前端：**
 
-After authentication completes, the authorization code is available via the `electron.getAuthorizationCode()` method on the proxy client. You can display this code to the user so they can copy it:
+认证完成后，可通过代理客户端的 `electron.getAuthorizationCode()` 方法获取授权码。您可以将该码展示给用户以便复制：
 
 ```tsx title="web/components/providers.tsx"
 import { useEffect } from "react";
@@ -423,8 +423,8 @@ function Providers({ children }) {
   useEffect(() => {
     const authorizationCode = authClient.electron.getAuthorizationCode();
     if (authorizationCode) {
-      // Display the code to the user
-      console.log("Authorization code:", authorizationCode);
+      // 向用户展示授权码
+      console.log("授权码:", authorizationCode);
     }
   }, []);
 
@@ -432,8 +432,7 @@ function Providers({ children }) {
 }
 ```
 
-The authorization code is also returned after a successful sign-in initiated from the Electron app or when using the `transferUser` method.
-
+授权码也会在 Electron 应用调用登录或使用 `transferUser` 方法成功后返回：
 
 ```tsx title="web/pages/sign-in.tsx"
 const { data } = await authClient.electron.transferUser({
@@ -443,24 +442,24 @@ const { data } = await authClient.electron.transferUser({
 });
 
 if (data?.electron_authorization_code) {
-  // Display the code to the user
+  // 向用户展示授权码
 }
 ```
 
-**Electron:**
+**Electron：**
 
-In the Electron renderer, provide an input for the user to paste the authorization code, then call `window.authenticate()` to exchange it for a session:
+在 Electron 渲染进程中，提供输入框供用户粘贴授权码，然后调用 `window.authenticate()` 交换会话：
 
 ```tsx title="electron/App.tsx"
 function ManualCodeEntry() {
   return (
     <input
       type="text"
-      placeholder="Paste code here"
+      placeholder="请粘贴授权码"
       maxLength={32}
       onChange={(e) => {
         if (e.target.value.length === 32) {
-          // Important: requestAuth() must have been called before
+          // 重要：必须先调用过 requestAuth()
           window.authenticate({ token: e.target.value }); // [!code highlight]
         }
       }}
@@ -469,34 +468,34 @@ function ManualCodeEntry() {
 }
 ```
 
-The `authenticate` bridge sends the authorization code to the main process, which exchanges it for a session using the stored PKCE code verifier and state. On success, the `onAuthenticated` bridge is triggered.
+`authenticate` 桥会将授权码发送给主进程，主进程使用存储的 PKCE 验证码和 state 进行交换。成功时，会触发 `onAuthenticated` 桥。
 
 <Callout type="info">
-  The authorization code is a short-lived 32-character string. A `requestAuth()` call must have been made before `authenticate()` can be used, as it relies on the code verifier and state generated during the initial request.
+  授权码是一个短时有效的 32 字符字符串。必须先调用 `requestAuth()`，因为其生成的验证码和 state 是 `authenticate()` 所依赖的。
 </Callout>
 
-### User Image Proxy
+### 用户头像代理
 
-To avoid CSP issues, the Electron plugin securely proxies user avatar images through a custom `user-image://` protocol.
+为避免 CSP 问题，Electron 插件通过自定义协议 `user-image://` 安全代理用户头像图片。
 
-You can use the image URL directly in your renderer:
+您可以直接在渲染进程使用图片 URL：
 
 ```tsx title="electron/App.tsx"
-<img src={user.image} alt="Avatar" />
-{/* or <img src="user-image://<user-id>" /> */}
+<img src={user.image} alt="头像" />
+{/* 或 <img src="user-image://<user-id>" /> */}
 ```
 
-To configure or disable the proxy, see the [`userImageProxy`](#userimageproxy) option.
+要配置或禁用代理，请参见 [`userImageProxy`](#user-image-proxy) 选项。
 
 <Callout type="warning">
-  To access avatars for users other than the current one, you need to enable the [Admin](/docs/plugins/admin) plugin.
+  若要访问除当前用户外其他用户的头像，需启用 [管理员插件](/docs/plugins/admin)。
 </Callout>
 
-### Creating IPC bridges
+### 创建 IPC 桥
 
-You should create IPC bridges to extend the functionality exposed to your renderer process. This ensures a minimal, safe API surface.
+您应创建 IPC 桥以扩展渲染进程的功能暴露，确保 API 面尽可能小且安全。
 
-First, create an IPC handler in the main process that uses the `authClient` to perform the desired action:
+首先，在主进程创建 IPC 处理器，使用 `authClient` 执行相应操作：
 
 ```ts title="electron/main.ts"
 import { authClient } from "./lib/auth-client";
@@ -513,7 +512,7 @@ ipcMain.handle("myBridge", async (_event, data) => {
 });
 ```
 
-Next, expose the bridge in your preload script using `contextBridge`:
+接着，在 preload 脚本中使用 `contextBridge` 暴露桥：
 
 ```ts title="electron/preload.ts"
 import { contextBridge, ipcRenderer } from "electron";
@@ -524,7 +523,7 @@ contextBridge.exposeInMainWorld("myBridge", (data: Record<string, any>) => {
 ```
 
 <Callout type="info">
-    To infer the types of your bridge, extend the `Window` interface:
+    若想推断桥的类型，可扩展 `Window` 接口：
 
     ```ts title="electron/preload.d.ts"
     import type { authClient } from "./lib/auth-client";
@@ -539,7 +538,7 @@ contextBridge.exposeInMainWorld("myBridge", (data: Record<string, any>) => {
 
 </Callout>
 
-Now you can call your custom bridge from anywhere in the renderer process:
+现在您可以在渲染进程任何位置调用自定义桥：
 
 ```ts title="electron/App.tsx"
 useEffect(() => {
@@ -548,44 +547,44 @@ useEffect(() => {
       foo: "bar",
     })
     .then((res) => {
-      console.log("Bridge response:", res);
+      console.log("桥响应:", res);
     });
 }, []);
 ```
 
-For more details, check out Electron's [Inter-Process Communication](https://www.electronjs.org/docs/latest/tutorial/ipc) tutorial.
+更多详情请查看 Electron 的[进程间通信(IPCs)](https://www.electronjs.org/docs/latest/tutorial/ipc)教程。
 
-## Options
+## 选项
 
-### Server plugin
+### 服务器插件
 
 #### `codeExpiresIn?`
 
-The duration, in seconds, for which the authorization code is valid. (defaults to `300`)
+授权码有效时长（秒）。默认 `300`
 
-Note that the authorization code will be refreshed during active endpoint usage.
+注意，授权码在活跃的端点使用中会刷新。
 
 ```ts title="web/auth.ts"
 electron({
-  codeExpiresIn: 300, // 5 minutes
+  codeExpiresIn: 300, // 5 分钟
 });
 ```
 
 #### `redirectCookieExpiresIn?`
 
-The duration, in seconds, for which the redirect cookie remains valid. (defaults to `120`)
+重定向 cookie 有效时长（秒）。默认 `120`
 
 ```ts title="web/auth.ts"
 electron({
-  redirectCookieExpiresIn: 120, // 2 minutes
+  redirectCookieExpiresIn: 120, // 2 分钟
 });
 ```
 
-The redirect cookie name is derived by the `clientID`.
+重定向 cookie 名称由 `clientID` 派生。
 
 #### `cookiePrefix?`
 
-The prefix to use for cookies set by the plugin. (defaults to `better-auth`)
+插件设置的 cookie 前缀。默认 `better-auth`
 
 ```ts title="web/auth.ts"
 electron({
@@ -595,9 +594,9 @@ electron({
 
 #### `clientID?`
 
-The client id to use for identifying the Electron client during authorization. (defaults to `electron`)
+用于识别 Electron 客户端的 client id。默认 `electron`
 
-Make sure this matches the clientID provided to both the proxy and electron client plugin.
+确保与代理客户端和 electron 客户端插件使用的 clientID 一致。
 
 ```ts title="web/auth.ts"
 electron({
@@ -607,9 +606,9 @@ electron({
 
 #### `disableOriginOverride?`
 
-Override the origin for Electron API routes. (defaults to `false`)
+覆盖 Electron API 路由的 origin。默认 `false`
 
-Enable this if you're facing cors origin issues with Electron API routes.
+如果遇到 Electron API 路由的跨域 origin 问题，可启用此项。
 
 ```ts title="web/auth.ts"
 electron({
@@ -617,15 +616,15 @@ electron({
 });
 ```
 
-### Proxy client
+### 代理客户端
 
 #### `protocol`
 
-The protocol scheme to use for deep linking in Electron.
+Electron 深度链接使用的协议方案。
 
-Should follow the [reverse domain name notation](https://datatracker.ietf.org/doc/html/rfc8252#section-7.1) to ensure uniqueness.
+应遵循 [反向域名命名规范](https://datatracker.ietf.org/doc/html/rfc8252#section-7.1) 保证唯一性。
 
-Make sure this matches the protocol scheme provided to the Electron client and `trustedOrigins`.
+确保与 Electron 客户端和 `trustedOrigins` 使用的协议一致。
 
 ```ts title="web/auth-client.ts"
 electronProxyClient({
@@ -643,9 +642,9 @@ electronProxyClient({
 
 #### `callbackPath?`
 
-The callback path to use for authentication redirects. (defaults to `/auth/callback`)
+认证重定向使用的回调路径。默认 `/auth/callback`
 
-Make sure this matches the path provided to the electron client plugin.
+确保与 electron 客户端插件路径一致。
 
 ```ts title="web/auth-client.ts"
 electronProxyClient({
@@ -655,9 +654,9 @@ electronProxyClient({
 
 #### `clientID?`
 
-The client id to use for identifying the Electron client during authorization. (defaults to `electron`)
+用于识别 Electron 客户端的 client id。默认 `electron`
 
-Make sure this matches the clientID provided to both the server and electron client plugin.
+确保与服务器和 electron 客户端插件的 clientID 一致。
 
 ```ts title="web/auth-client.ts"
 electronProxyClient({
@@ -667,7 +666,7 @@ electronProxyClient({
 
 #### `cookiePrefix?`
 
-The prefix to use for cookies set by the plugin. (defaults to `better-auth`)
+插件设置的 cookie 前缀。默认 `better-auth`
 
 ```ts title="web/auth-client.ts"
 electronProxyClient({
@@ -675,11 +674,11 @@ electronProxyClient({
 });
 ```
 
-### Client plugin
+### 客户端插件
 
 #### `signInURL`
 
-The URL to redirect to for authentication.
+用于认证跳转的 URL。
 
 ```ts title="electron/auth-client.ts"
 electronClient({
@@ -689,11 +688,11 @@ electronClient({
 
 #### `protocol`
 
-The protocol scheme to use for deep linking in Electron.
+Electron 深度链接使用的协议方案。
 
-Should follow the [reverse domain name notation](https://datatracker.ietf.org/doc/html/rfc8252#section-7.1) to ensure uniqueness.
+应遵循 [反向域名命名规范](https://datatracker.ietf.org/doc/html/rfc8252#section-7.1) 保证唯一性。
 
-Make sure this matches the protocol scheme provided to the proxy client and `trustedOrigins`.
+确保与代理客户端和 `trustedOrigins` 的协议一致。
 
 ```ts title="web/auth-client.ts"
 electronProxyClient({
@@ -711,9 +710,9 @@ electronProxyClient({
 
 #### `callbackPath?`
 
-The callback path to use for authentication redirects. (defaults to `/auth/callback`)
+认证重定向使用的回调路径。默认 `/auth/callback`
 
-Make sure this matches the path provided to the proxy client plugin.
+确保与代理客户端插件路径一致。
 
 ```ts title="electron/auth-client.ts"
 electronClient({
@@ -723,18 +722,18 @@ electronClient({
 
 #### `storage`
 
-Storage solution to use to store session and cookie data.
+用于存储会话和 cookie 数据的存储方案。
 
-By default a storage file is generated in the `userData` directory. The name is derived by the project name.
+默认是生成一个放在 `userData` 目录的存储文件，文件名由项目名派生。
 
 ```ts title="electron/auth-client.ts"
 electronClient({
   storage: {
     getItem: (key) => {
-      // get entry from storage
+      // 从存储读取条目
     },
     setItem: (key, value) => {
-      // set entry in storage
+      // 在存储写入条目
     },
   },
 });
@@ -742,7 +741,7 @@ electronClient({
 
 #### `storagePrefix?`
 
-Prefix for local storage keys. (defaults to `better-auth`)
+本地存储键的前缀。默认 `better-auth`
 
 ```ts title="electron/auth-client.ts"
 electronClient({
@@ -752,10 +751,9 @@ electronClient({
 
 #### `cookiePrefix?`
 
-Prefix(es) for server cookie names to filter. (defaults to `better-auth`)
+服务器 cookie 名称的前缀(数组)。默认 `better-auth`
 
-This is used to identify which cookies belong to better-auth to
-prevent infinite refetching when third-party cookies are set.
+用于识别哪类 cookie 属于 better-auth，防止第三方 cookie 引起无限重新请求。
 
 ```ts title="electron/auth-client.ts"
 electronClient({
@@ -771,7 +769,7 @@ electronClient({
 
 #### `channelPrefix?`
 
-Channel prefix for IPC bridges. (defaults to `better-auth`)
+IPC 桥通信通道的前缀。默认 `better-auth`
 
 ```ts title="electron/auth-client.ts"
 electronClient({
@@ -781,9 +779,9 @@ electronClient({
 
 #### `clientID?`
 
-The client id to use for identifying the Electron client during authorization. (defaults to `electron`)
+用于识别 Electron 客户端的 client id。默认 `electron`
 
-Make sure this matches the clientID provided to both the server and proxy client plugin.
+确保和服务器及代理客户端插件中的 clientID 一致。
 
 ```ts title="electron/auth-client.ts"
 electronClient({
@@ -793,7 +791,7 @@ electronClient({
 
 #### `sanitizeUser?`
 
-A function to sanitize the user object before it is sent to the renderer process. Use this to strip sensitive fields.
+发送给渲染进程前对用户对象做 sanitize 的函数。用于剥离敏感字段。
 
 ```ts title="electron/auth-client.ts"
 electronClient({
@@ -806,18 +804,18 @@ electronClient({
 
 #### `userImageProxy?`
 
-Configuration for the user image proxy. See [User Image Proxy](#user-image-proxy) for details.
+用户头像代理的配置。详见 [用户头像代理](#user-image-proxy)。
 
 ```ts title="electron/auth-client.ts"
 electronClient({
   userImageProxy: {
-    enabled: true, // default: true
-    maxSize: 1024 * 1024 * 5, // default: 5MB
+    enabled: true, // 默认开启
+    maxSize: 1024 * 1024 * 5, // 默认 5MB
   },
 });
 ```
 
-To disable the proxy entirely:
+若要完全禁用代理：
 
 ```ts title="electron/auth-client.ts"
 electronClient({
@@ -829,7 +827,7 @@ electronClient({
 
 #### `disableCache?`
 
-Whether to disable caching the session data locally. (defaults to `false`)
+是否禁用会话数据的本地缓存。默认 `false`
 
 ```ts title="electron/auth-client.ts"
 electronClient({

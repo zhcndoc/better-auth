@@ -1,37 +1,37 @@
 ---
-title: OIDC Provider
-description: Open ID Connect plugin for Better Auth that allows you to have your own OIDC provider.
+title: OIDC 提供者
+description: Better Auth 的 Open ID Connect 插件，允许您拥有自己的 OIDC 提供者。
 ---
 
 <Callout type="warn">
-This plugin will soon be deprecated in favor of the [OAuth Provider Plugin](/docs/plugins/oauth-provider).
+此插件即将被弃用，将由 [OAuth Provider Plugin](/docs/plugins/oauth-provider) 取代。
 </Callout>
 
-The **OIDC Provider Plugin** enables you to build and manage your own OpenID Connect (OIDC) provider, granting full control over user authentication without relying on third-party services like Okta or Azure AD. It also allows other services to authenticate users through your OIDC provider.
+**OIDC 提供者插件** 使您能够构建并管理自己的 OpenID Connect (OIDC) 提供者，全面掌控用户认证，无需依赖第三方服务如 Okta 或 Azure AD。它还允许其他服务通过您的 OIDC 提供者进行用户认证。
 
-**Key Features**:
+**主要功能**：
 
-- **Client Registration**: Register clients to authenticate with your OIDC provider.
-- **Dynamic Client Registration**: Allow clients to register dynamically.
-- **Trusted Clients**: Configure hard-coded trusted clients with optional consent bypass.
-- **Authorization Code Flow**: Support the Authorization Code Flow.
-- **Public Clients**: Support public clients for SPA, mobile apps, CLI tools, etc.
-- **JWKS Endpoint**: Publish a JWKS endpoint to allow clients to verify tokens. (Not fully implemented)
-- **Refresh Tokens**: Issue refresh tokens and handle access token renewal using the `refresh_token` grant.
-- **OAuth Consent**: Implement OAuth consent screens for user authorization, with an option to bypass consent for trusted applications.
-- **UserInfo Endpoint**: Provide a UserInfo endpoint for clients to retrieve user details.
+- **客户端注册**：注册客户端以使用您的 OIDC 提供者进行认证。
+- **动态客户端注册**：允许客户端动态注册。
+- **受信任客户端**：配置硬编码的受信任客户端，支持可选的跳过用户同意。
+- **授权码流程**：支持授权码流程。
+- **公共客户端**：支持 SPA、移动应用、CLI 工具等公共客户端。
+- **JWKS 端点**：发布 JWKS 端点供客户端验证令牌。（尚未完全实现）
+- **刷新令牌**：签发刷新令牌并使用 `refresh_token` 授权刷新访问令牌。
+- **OAuth 同意**：实现 OAuth 同意页面供用户授权，受信任应用可选择跳过同意。
+- **UserInfo 端点**：提供 UserInfo 端点，客户端可获取用户详情。
 
 <Callout type="warn">
-This plugin is in active development and may not be suitable for production use. Please report any issues or bugs on [GitHub](https://github.com/better-auth/better-auth).
+此插件正在积极开发中，可能不适合生产环境使用。如发现问题或 Bug，请在 [GitHub](https://github.com/better-auth/better-auth) 报告。
 </Callout>
 
-## Installation
+## 安装
 
 <Steps>
     <Step>
-        ### Mount the Plugin
+        ### 挂载插件
 
-        Add the OIDC plugin to your auth config. See [Configuration Section](#configuration) on how to configure the plugin.
+        将 OIDC 插件添加到您的 auth 配置中。查看[配置部分](#configuration)了解插件的配置方法。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth";
@@ -40,8 +40,8 @@ This plugin is in active development and may not be suitable for production use.
         const auth = betterAuth({
             plugins: [
             oidcProvider({ // [!code highlight]
-                loginPage: "/sign-in", // path to the login page // [!code highlight]
-                // ...other options // [!code highlight]
+                loginPage: "/sign-in", // 登录页面路径 // [!code highlight]
+                // ...其他选项 // [!code highlight]
               }) // [!code highlight]
             ]
         })
@@ -49,9 +49,9 @@ This plugin is in active development and may not be suitable for production use.
     </Step>
 
     <Step>
-        ### Migrate the Database
+        ### 数据库迁移
 
-        Run the migration or generate the schema to add the necessary fields and tables to the database.
+        运行迁移或生成数据库结构以添加必要的字段和表。
 
         <Tabs items={["migrate", "generate"]}>
             <Tab value="migrate">
@@ -65,13 +65,13 @@ This plugin is in active development and may not be suitable for production use.
             ```
             </Tab>
         </Tabs>
-        See the [Schema](#schema) section to add the fields manually.
+        请参阅 [Schema](#schema) 部分了解如何手动添加字段。
     </Step>
 
     <Step>
-        ### Add the Client Plugin
+        ### 添加客户端插件
 
-        Add the OIDC client plugin to your auth client config.
+        将 OIDC 客户端插件添加到您的 auth 客户端配置中。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client";
@@ -80,7 +80,7 @@ This plugin is in active development and may not be suitable for production use.
         const authClient = createAuthClient({
             plugins: [
             oidcClient({ // [!code highlight]
-                // Your OIDC configuration // [!code highlight]
+                // 您的 OIDC 配置 // [!code highlight]
               }) // [!code highlight]
             ]
         })
@@ -88,87 +88,87 @@ This plugin is in active development and may not be suitable for production use.
     </Step>
 </Steps>
 
-## Usage
+## 使用
 
-Once installed, you can utilize the OIDC Provider to manage authentication flows within your application.
+安装完成后，您可以利用 OIDC 提供者来管理应用内的认证流程。
 
-### Register a New Client
+### 注册新客户端
 
-To register a new OIDC client, use the `oauth2.register` method on the client or `auth.api.registerOAuthApplication` on the server.
+要注册新的 OIDC 客户端，可以在客户端调用 `oauth2.register` 方法，或在服务器调用 `auth.api.registerOAuthApplication` 接口。
 
 <APIMethod 
   path="/oauth2/register" 
   method="POST"
-  note="By default, client registration requires authentication. Set `allowDynamicClientRegistration: true` to allow public registration. Make sure to add the `oidcClient()` plugin to your auth client configuration."
+  note="默认情况下，客户端注册需认证。设置 `allowDynamicClientRegistration: true` 可允许公开注册。确保在 Auth 客户端配置中添加 `oidcClient()` 插件。"
 >
 ```ts
 type registerOAuthApplication = {
     /**
-     * A list of redirect URIs. 
+     * 重定向 URI 列表。 
      */
     redirect_uris: string[] = ["https://client.example.com/callback"]
     /**
-     * The authentication method for the token endpoint. 
+     * 令牌端点的认证方法。 
      */
     token_endpoint_auth_method?: "none" | "client_secret_basic" | "client_secret_post" = "client_secret_basic"
     /**
-     * The grant types supported by the application. 
+     * 应用支持的授权类型。 
      */
     grant_types?: ("authorization_code" | "implicit" | "password" | "client_credentials" | "refresh_token" | "urn:ietf:params:oauth:grant-type:jwt-bearer" | "urn:ietf:params:oauth:grant-type:saml2-bearer")[] = ["authorization_code"]
     /**
-     * The response types supported by the application. 
+     * 应用支持的响应类型。 
      */
     response_types?: ("code" | "token")[] = ["code"]
     /**
-     * The name of the application. 
+     * 应用名称。 
      */
     client_name?: string = "My App"
     /**
-     * The URI of the application. 
+     * 应用 URI。 
      */
     client_uri?: string = "https://client.example.com"
     /**
-     * The URI of the application logo. 
+     * 应用图标 URI。 
      */
     logo_uri?: string = "https://client.example.com/logo.png"
     /**
-     * The scopes supported by the application. Separated by spaces. 
+     * 应用支持的作用域，空格分隔。 
      */
     scope?: string = "profile email"
     /**
-     * The contact information for the application. 
+     * 应用联系方式。 
      */
     contacts?: string[] = ["admin@example.com"]
     /**
-     * The URI of the application terms of service. 
+     * 应用服务条款 URI。 
      */
     tos_uri?: string = "https://client.example.com/tos"
     /**
-     * The URI of the application privacy policy. 
+     * 应用隐私政策 URI。 
      */
     policy_uri?: string = "https://client.example.com/policy"
     /**
-     * The URI of the application JWKS. 
+     * 应用 JWKS URI。 
      */
     jwks_uri?: string = "https://client.example.com/jwks"
     /**
-     * The JWKS of the application. 
+     * 应用 JWKS 数据。 
      */
     jwks?: Record<string, any> = {"keys": [{"kty": "RSA", "alg": "RS256", "use": "sig", "n": "...", "e": "..."}]}
     /**
-     * The metadata of the application. 
+     * 应用元数据。 
      */
     metadata?: Record<string, any> = {"key": "value"}
     /**
-     * The software ID of the application. 
+     * 应用软件 ID。 
      */
     software_id?: string = "my-software"
     /**
-     * The software version of the application. 
+     * 应用软件版本。 
      */
     software_version?: string = "1.0.0"
     /**
-     * The software statement of the application. 
+     * 应用软件声明。 
      */
     software_statement?: string
 }
@@ -176,14 +176,14 @@ type registerOAuthApplication = {
 </APIMethod>
 
 <Callout>
-This endpoint supports [RFC7591](https://datatracker.ietf.org/doc/html/rfc7591) compliant client registration.
+此接口支持符合 [RFC7591](https://datatracker.ietf.org/doc/html/rfc7591) 标准的客户端注册。
 </Callout>
 
-Once the application is created, you will receive a `client_id` and `client_secret` that you can display to the user.
+应用创建成功后，您将获得 `client_id` 和 `client_secret`，可展示给用户。
 
-### Trusted Clients
+### 受信任客户端
 
-For first-party applications and internal services, you can configure trusted clients directly in your OIDC provider configuration. Trusted clients bypass database lookups for better performance and can optionally skip consent screens for improved user experience.
+针对第一方应用和内部服务，您可以直接在 OIDC 提供者配置中添加受信任客户端。受信任客户端绕过数据库查找以提升性能，且可选择跳过用户同意页面，提升用户体验。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -197,21 +197,21 @@ const auth = betterAuth({
             {
                 clientId: "internal-dashboard",
                 clientSecret: "secure-secret-here",
-                name: "Internal Dashboard",
+                name: "内部管理后台",
                 type: "web",
                 redirectUrls: ["https://dashboard.company.com/auth/callback"],
                 disabled: false,
-                skipConsent: true, // Skip consent for this trusted client
+                skipConsent: true, // 此受信任客户端跳过同意页面
                 metadata: { internal: true }
             },
             {
                 clientId: "mobile-app",
                 clientSecret: "mobile-secret", 
-                name: "Company Mobile App",
+                name: "公司移动应用",
                 type: "native",
                 redirectUrls: ["com.company.app://auth"],
                 disabled: false,
-                skipConsent: false, // Still require consent if needed
+                skipConsent: false, // 需要同意时仍显示同意页面
                 metadata: {}
             }
         ]
@@ -219,13 +219,13 @@ const auth = betterAuth({
 })
 ```
 
-### UserInfo Endpoint
+### UserInfo 端点
 
-The OIDC Provider includes a UserInfo endpoint that allows clients to retrieve information about the authenticated user. This endpoint is available at `/oauth2/userinfo` and requires a valid access token.
+OIDC 提供者包含 UserInfo 端点，允许客户端获取认证用户的信息。该端点路径为 `/oauth2/userinfo`，需提供有效的访问令牌。
 
 <Endpoint path="/oauth2/userinfo" method="GET" />
 
-#### Server-Side Usage
+#### 服务器端用法
 
 ```ts title="server.ts"
 import { auth } from "@/lib/auth";
@@ -235,12 +235,12 @@ const userInfo = await auth.api.oAuth2userInfo({
     authorization: "Bearer ACCESS_TOKEN"
   }
 });
-// userInfo contains user details based on the scopes granted
+// userInfo 中包含基于授权作用域的用户详情
 ```
 
-#### Client-Side Usage (For Third-Party OAuth Clients)
+#### 客户端用法（针对第三方 OAuth 客户端）
 
-Third-party OAuth clients can call the UserInfo endpoint using standard HTTP requests:
+第三方 OAuth 客户端可通过标准 HTTP 请求调用 UserInfo 端点：
 
 ```ts title="external-client.ts"
 const response = await fetch('https://your-domain.com/api/auth/oauth2/userinfo', {
@@ -252,15 +252,15 @@ const response = await fetch('https://your-domain.com/api/auth/oauth2/userinfo',
 const userInfo = await response.json();
 ```
 
-**Returned claims based on scopes:**
+**根据作用域返回的声明包括：**
 
-- With `openid` scope: Returns the user's ID (`sub` claim)
-- With `profile` scope: Returns `name`, `picture`, `given_name`, `family_name`
-- With `email` scope: Returns `email` and `email_verified`
+- 包含 `openid`：返回用户的 ID (`sub` 声明)
+- 包含 `profile`：返回 `name`、`picture`、`given_name`、`family_name`
+- 包含 `email`：返回 `email` 和 `email_verified`
 
-#### Custom Claims
+#### 自定义声明
 
-The `getAdditionalUserInfoClaim` function receives the user object, requested scopes array, and the client, allowing you to conditionally include claims based on the scopes granted during authorization. These additional claims will be included in both the UserInfo endpoint response and the ID token.
+`getAdditionalUserInfoClaim` 函数接收用户对象、请求的作用域数组以及客户端，可以基于授权时赋予的作用域有条件地加入自定义声明，这些额外声明将包含在 UserInfo 端点响应和 ID 令牌中。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -273,13 +273,13 @@ export const auth = betterAuth({
             getAdditionalUserInfoClaim: async (user, scopes, client) => {
                 const claims: Record<string, any> = {};
                 
-                // Add custom claims based on scopes
+                // 根据作用域添加自定义声明
                 if (scopes.includes("profile")) {
                     claims.department = user.department;
                     claims.job_title = user.jobTitle;
                 }
                 
-                // Add claims based on client metadata
+                // 基于客户端元数据添加声明
                 if (client.metadata?.includeRoles) {
                     claims.roles = user.roles;
                 }
@@ -291,11 +291,11 @@ export const auth = betterAuth({
 });
 ```
 
-### Consent Screen
+### 同意页面
 
-When a user is redirected to the OIDC provider for authentication, they may be prompted to authorize the application to access their data. This is known as the consent screen. By default, Better Auth will display a sample consent screen. You can customize the consent screen by providing a `consentPage` option during initialization.
+当用户被重定向到 OIDC 提供者进行认证时，可能会被提示授权应用访问其数据，即同意页面。默认情况下，Better Auth 会显示示例同意页面。你也可以通过初始化时传入 `consentPage` 选项来自定义同意页面。
 
-**Note**: Trusted clients with `skipConsent: true` will bypass the consent screen entirely, providing a seamless experience for first-party applications.
+**注意**：`skipConsent: true` 的受信任客户端将直接跳过同意页面，提供无缝体验。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -310,48 +310,48 @@ export const auth = betterAuth({
 })
 ```
 
-The plugin will redirect the user to the specified path with `consent_code`, `client_id` and `scope` query parameters. You can use this information to display a custom consent screen. Once the user consents, you can call `oauth2.consent` to complete the authorization.
+插件会将用户重定向到指定路径，并附带 `consent_code`、`client_id` 和 `scope` 查询参数。您可以使用这些信息显示自定义同意页面。用户同意后，可以调用 `oauth2.consent` 完成授权。
 
 <Endpoint path="/oauth2/consent" method="POST" />
 
-The consent endpoint supports two methods for passing the consent code:
+同意端点支持两种传递同意码的方法：
 
-**Method 1: URL Parameter**
+**方法一：URL 参数**
 ```ts title="consent-page.ts"
 import { authClient } from "@/lib/auth-client"
 
-// Get the consent code from the URL
+// 从 URL 获取同意码
 const params = new URLSearchParams(window.location.search);
 
-// Submit consent with the code in the request body
+// 在请求体中提交同意码
 const consentCode = params.get('consent_code');
 if (!consentCode) {
-	throw new Error('Consent code not found in URL parameters');
+	throw new Error('URL 参数中未找到同意码');
 }
 
 const res = await authClient.oauth2.consent({
-	accept: true, // or false to deny
+	accept: true, // 或 false 拒绝
 	consent_code: consentCode,
 });
 ```
 
-**Method 2: Cookie-Based**
+**方法二：基于 Cookie**
 ```ts title="consent-page.ts"
 import { authClient } from "@/lib/auth-client"
 
-// The consent code is automatically stored in a signed cookie
-// Just submit the consent decision
+// 同意码会自动存储在签名 Cookie 中
+// 直接提交同意结果即可
 const res = await authClient.oauth2.consent({
-	accept: true, // or false to deny
-	// consent_code not needed when using cookie-based flow
+	accept: true, // 或 false 拒绝
+	// 使用基于 Cookie 的流程时无需传递 consent_code
 });
 ```
 
-Both methods are fully supported. The URL parameter method works well with mobile apps and third-party contexts, while the cookie-based method provides a simpler implementation for web applications.
+两种方式均完全支持。URL 参数方式便于移动端和第三方使用，Cookie 方式便于 Web 应用实现。
 
-### Handling Login
+### 处理登录
 
-When a user is redirected to the OIDC provider for authentication, if they are not already logged in, they will be redirected to the login page. You can customize the login page by providing a `loginPage` option during initialization.
+当用户被重定向到 OIDC 提供者进行认证，且尚未登录时，会重定向到登录页面。您可以通过初始化传入 `loginPage` 选项来自定义登录页面。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -365,13 +365,13 @@ export const auth = betterAuth({
 })
 ```
 
-You don't need to handle anything from your side; when a new session is created, the plugin will handle continuing the authorization flow.
+您无需额外处理，插件将在新会话创建后继续进行授权流程。
 
-## Configuration
+## 配置
 
-### OIDC Metadata
+### OIDC 元数据
 
-Customize the OIDC metadata by providing a configuration object during initialization.
+通过初始化时传入配置对象，定制 OIDC 元数据。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -384,18 +384,18 @@ export const auth = betterAuth({
             issuer: "https://your-domain.com",
             authorization_endpoint: "/custom/oauth2/authorize",
             token_endpoint: "/custom/oauth2/token",
-            // ...other custom metadata
+            // ...其他自定义元数据
         }
       })
     ]
 })
 ```
 
-### JWKS Endpoint
+### JWKS 端点
 
-The OIDC Provider plugin can integrate with the JWT plugin to provide asymmetric key signing for ID tokens verifiable at a JWKS endpoint.
+OIDC 提供者插件可以与 JWT 插件整合，为 ID 令牌提供非对称密钥签名，令牌可通过 JWKS 端点校验。
 
-To make your plugin OIDC compliant, you **MUST** disable the `/token` endpoint, the OAuth equivalent is located at `/oauth2/token` instead.
+为使插件符合 OIDC 标准，您**必须禁用** `/token` 端点，OAuth 等价接口位于 `/oauth2/token`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -407,23 +407,23 @@ export const auth = betterAuth({
         "/token",
     ],
     plugins: [
-        jwt(), // Make sure to add the JWT plugin
+        jwt(), // 确保添加 JWT 插件
         oidcProvider({
-            useJWTPlugin: true, // Enable JWT plugin integration
+            useJWTPlugin: true, // 启用 JWT 插件集成
             loginPage: "/sign-in",
-            // ... other options
+            // ... 其他选项
         })
     ]
 })
 ```
 
 <Callout type="info">
-When `useJWTPlugin: false` (default), ID tokens are signed with the application secret.
+当 `useJWTPlugin: false`（默认）时，ID 令牌使用应用密钥以 HMAC-SHA256 签名。
 </Callout>
 
-### Dynamic Client Registration
+### 动态客户端注册
 
-If you want to allow clients to register dynamically, you can enable this feature by setting the `allowDynamicClientRegistration` option to `true`.
+若允许客户端动态注册，可开启该功能，设置 `allowDynamicClientRegistration` 为 `true`。
 
 ```ts title="auth.ts"
 const auth = betterAuth({
@@ -435,219 +435,219 @@ const auth = betterAuth({
 })
 ```
 
-This will allow clients to register using the `/register` endpoint to be publicly available.
+此时，客户端可通过 `/register` 端点公开注册。
 
-## Schema
+## 数据库结构
 
-The OIDC Provider plugin adds the following tables to the database:
+OIDC 提供者插件在数据库中添加以下表：
 
-### OAuth Application
+### OAuth 应用
 
-Table Name: `oauthApplication`
+表名：`oauthApplication`
 
 <DatabaseTable
   fields={[
    {
       name: "id",
       type: "string",
-      description: "Database ID of the OAuth client",
+      description: "OAuth 客户端的数据库 ID",
       isPrimaryKey: true
    },
     { 
       name: "clientId", 
       type: "string", 
-      description: "Unique identifier for each OAuth client",
+      description: "每个 OAuth 客户端唯一标识",
       isPrimaryKey: true
     },
     { 
       name: "clientSecret", 
       type: "string", 
-      description: "Secret key for the OAuth client. Optional for public clients using PKCE.",
+      description: "OAuth 客户端密钥，公共客户端使用 PKCE 可选",
       isOptional: true
     },
     { 
       name: "name", 
       type: "string", 
-      description: "Name of the OAuth client",
+      description: "OAuth 客户端名称",
       isRequired: true
     },
     { 
       name: "redirectUrls",
       type: "string", 
-      description: "Comma-separated list of redirect URLs",
+      description: "逗号分隔的重定向 URL 列表",
       isRequired: true
     },
     { 
       name: "metadata", 
       type: "string",
-      description: "Additional metadata for the OAuth client",
+      description: "OAuth 客户端的附加元数据",
       isOptional: true
     },
     { 
       name: "type", 
       type: "string",
-      description: "Type of OAuth client (e.g., web, mobile)",
+      description: "OAuth 客户端类型（例如 web、mobile）",
       isRequired: true
     },
     { 
       name: "disabled", 
       type: "boolean", 
-      description: "Indicates if the client is disabled",
+      description: "客户端是否被禁用",
       isRequired: true
     },
     { 
       name: "userId", 
       type: "string", 
-      description: "ID of the user who owns the client. (optional)",
+      description: "拥有该客户端的用户 ID（可选）",
       isOptional: true,
       references: { model: "user", field: "id" }
     },
     { 
       name: "createdAt", 
       type: "Date", 
-      description: "Timestamp of when the OAuth client was created" 
+      description: "OAuth 客户端创建时间" 
     },
    {
       name: "updatedAt",
       type: "Date",
-      description: "Timestamp of when the OAuth client was last updated"
+      description: "OAuth 客户端更新时间"
    }
   ]}
 />
 
-### OAuth Access Token
+### OAuth 访问令牌
 
-Table Name: `oauthAccessToken`
+表名：`oauthAccessToken`
 
 <DatabaseTable
   fields={[
     {
       name: "id",
       type: "string",
-      description: "Database ID of the access token",
+      description: "访问令牌的数据库 ID",
       isPrimaryKey: true
    },
     { 
       name: "accessToken", 
       type: "string", 
-      description: "Access token issued to the client",
+      description: "签发给客户端的访问令牌",
     },
     { 
       name: "refreshToken", 
       type: "string", 
-      description: "Refresh token issued to the client",
+      description: "签发给客户端的刷新令牌",
       isRequired: true
     },
     { 
       name: "accessTokenExpiresAt", 
       type: "Date", 
-      description: "Expiration date of the access token",
+      description: "访问令牌过期时间",
       isRequired: true
     },
     { 
       name: "refreshTokenExpiresAt", 
       type: "Date", 
-      description: "Expiration date of the refresh token",
+      description: "刷新令牌过期时间",
       isRequired: true
     },
     { 
       name: "clientId", 
       type: "string", 
-      description: "ID of the OAuth client",
+      description: "OAuth 客户端 ID",
       isForeignKey: true,
       references: { model: "oauthApplication", field: "clientId" }
     },
     { 
       name: "userId", 
       type: "string", 
-      description: "ID of the user associated with the token",
+      description: "与令牌关联的用户 ID",
       isForeignKey: true,
       references: { model: "user", field: "id" }
     },
     { 
       name: "scopes", 
       type: "string", 
-      description: "Comma-separated list of scopes granted",
+      description: "逗号分隔的授权作用域列表",
       isRequired: true
     },
     { 
       name: "createdAt", 
       type: "Date", 
-      description: "Timestamp of when the access token was created" 
+      description: "访问令牌创建时间" 
     },
     {
       name: "updatedAt",
       type: "Date",
-      description: "Timestamp of when the access token was last updated"
+      description: "访问令牌更新时间"
     }
   ]}
 />
 
-### OAuth Consent
+### OAuth 同意
 
-Table Name: `oauthConsent`
+表名：`oauthConsent`
 
 <DatabaseTable
   fields={[
     { 
       name: "id", 
       type: "string", 
-      description: "Database ID of the consent",
+      description: "同意记录的数据库 ID",
       isPrimaryKey: true
     },
     { 
       name: "userId", 
       type: "string", 
-      description: "ID of the user who gave consent",
+      description: "授权用户 ID",
       isForeignKey: true,
       references: { model: "user", field: "id" }
     },
     { 
       name: "clientId", 
       type: "string", 
-      description: "ID of the OAuth client",
+      description: "OAuth 客户端 ID",
       isForeignKey: true,
       references: { model: "oauthApplication", field: "clientId" }
     },
     { 
       name: "scopes", 
       type: "string", 
-      description: "Comma-separated list of scopes consented to",
+      description: "同意的作用域列表，逗号分隔",
       isRequired: true
     },
     { 
       name: "consentGiven", 
       type: "boolean", 
-      description: "Indicates if consent was given",
+      description: "是否已同意",
       isRequired: true
     },
     { 
       name: "createdAt", 
       type: "Date", 
-      description: "Timestamp of when the consent was given" 
+      description: "同意时间" 
     },
     {
       name: "updatedAt",
       type: "Date",
-      description: "Timestamp of when the consent was last updated"
+      description: "同意更新时间"
     }
   ]}
 />
 
-## Options
+## 选项
 
-**allowDynamicClientRegistration**: `boolean` - Enable or disable dynamic client registration.
+**allowDynamicClientRegistration**: `boolean` - 启用或禁用动态客户端注册。
 
-**metadata**: `OIDCMetadata` - Customize the OIDC provider metadata.
+**metadata**: `OIDCMetadata` - 定制 OIDC 提供者元数据。
 
-**loginPage**: `string` - Path to the custom login page.
+**loginPage**: `string` - 自定义登录页面路径。
 
-**consentPage**: `string` - Path to the custom consent page.
+**consentPage**: `string` - 自定义同意页面路径。
 
-**trustedClients**: `(Client & { skipConsent?: boolean })[]` - Array of trusted clients that are configured directly in the provider options. These clients bypass database lookups and can optionally skip consent screens.
+**trustedClients**: `(Client & { skipConsent?: boolean })[]` - 在提供者选项中直接配置的受信任客户端数组。这些客户端绕过数据库查找，且可选择跳过同意页面。
 
-**getAdditionalUserInfoClaim**: `(user: User, scopes: string[], client: Client) => Record<string, any>` - Function to get additional user info claims.
+**getAdditionalUserInfoClaim**: `(user: User, scopes: string[], client: Client) => Record<string, any>` - 获取自定义用户信息声明的函数。
 
-**useJWTPlugin**: `boolean` - When `true`, ID tokens are signed using the JWT plugin's asymmetric keys. When `false` (default), ID tokens are signed with HMAC-SHA256 using the application secret.
+**useJWTPlugin**: `boolean` - 为 `true` 时，ID 令牌使用 JWT 插件的非对称密钥签名。为 `false`（默认）时，ID 令牌用应用密钥进行 HMAC-SHA256 签名。
 
-**schema**: `AuthPluginSchema` - Customize the OIDC provider schema.
+**schema**: `AuthPluginSchema` - 定制 OIDC 提供者的数据库结构。

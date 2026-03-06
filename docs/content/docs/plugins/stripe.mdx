@@ -1,48 +1,48 @@
 ---
 title: Stripe
-description: Stripe plugin for Better Auth to manage subscriptions and payments.
+description: Stripe 插件，用于 Better Auth，管理订阅和支付。
 ---
 
-The Stripe plugin integrates Stripe's payment and subscription functionality with Better Auth. Since payment and authentication are often tightly coupled, this plugin simplifies the integration of Stripe into your application, handling customer creation, subscription management, and webhook processing.
+Stripe 插件将 Stripe 的支付与订阅功能集成到 Better Auth 中。由于支付和认证通常紧密相关，此插件简化了在应用中集成 Stripe 的流程，负责客户创建、订阅管理和 webhook 处理。
 
-## Features
+## 功能
 
-- Create Stripe Customers automatically when users sign up
-- Manage subscription plans and pricing
-- Process subscription lifecycle events (creation, updates, cancellations)
-- Handle Stripe webhooks securely with signature verification
-- Expose subscription data to your application
-- Support for trial periods and subscription upgrades
-- **Automatic trial abuse prevention** - Users can only get one trial per account across all plans
-- Flexible reference system to associate subscriptions with users or organizations
-- Team subscription support with seats management
+- 用户注册时自动创建 Stripe 客户
+- 管理订阅计划和价格
+- 处理订阅生命周期事件（创建、更新、取消）
+- 安全处理 Stripe webhook，带签名验证
+- 向应用暴露订阅数据
+- 支持试用期和订阅升级
+- **自动防止试用滥用** — 用户在所有计划中每个账户只可获一次试用
+- 灵活的引用系统，关联订阅与用户或组织
+- 支持团队订阅和座位管理
 
-## Installation
+## 安装
 
 <Steps>
     <Step>
-        ### Install the plugin
+        ### 安装插件
 
-        First, install the plugin:
+        首先，安装插件：
 
         ```package-install
         @better-auth/stripe
         ```
         <Callout>
-        If you're using a separate client and server setup, make sure to install the plugin in both parts of your project.
+        如果你的项目采用客户端和服务器分离，确保在两端都安装该插件。
         </Callout>
     </Step>
     <Step>
-        ### Install the Stripe SDK
+        ### 安装 Stripe SDK
 
-        Next, install the Stripe SDK on your server:
+        接下来，在服务器端安装 Stripe SDK：
 
         ```package-install
         stripe@^20.0.0
         ```
     </Step>
     <Step>
-        ### Add the plugin to your auth config
+        ### 在 auth 配置中添加插件
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -50,11 +50,11 @@ The Stripe plugin integrates Stripe's payment and subscription functionality wit
         import Stripe from "stripe"
 
         const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-            apiVersion: "2025-11-17.clover", // Latest API version as of Stripe SDK v20.0.0
+            apiVersion: "2025-11-17.clover", // Stripe SDK v20.0.0 支持的最新 API 版本
         })
 
         export const auth = betterAuth({
-            // ... your existing config
+            // ... 你已有的配置
             plugins: [
                 stripe({
                     stripeClient,
@@ -66,30 +66,30 @@ The Stripe plugin integrates Stripe's payment and subscription functionality wit
         ```
 
         <Callout type="info">
-        **Upgrading from Stripe v18?** Version 19 uses async webhook signature verification (`constructEventAsync`) which is handled internally by the plugin. No code changes required on your end!
+        **从 Stripe v18 升级？** 版本 19 采用了异步的 webhook 签名验证（`constructEventAsync`），插件内部已处理，无需你改动代码！
         </Callout>
     </Step>
     <Step>
-        ### Add the client plugin
+        ### 添加客户端插件
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
         import { stripeClient } from "@better-auth/stripe/client"
 
         export const authClient = createAuthClient({
-            // ... your existing config
+            // ... 你已有的配置
             plugins: [
                 stripeClient({
-                    subscription: true //if you want to enable subscription management
+                    subscription: true // 如果启用订阅管理
                 })
             ]
         })
         ```
     </Step>
     <Step>
-        ### Migrate the database
+        ### 迁移数据库
 
-        Run the migration or generate the schema to add the necessary tables to the database.
+        运行迁移或生成 schema 以向数据库添加所需表：
 
         <Tabs items={["migrate", "generate"]}>
             <Tab value="migrate">
@@ -103,47 +103,46 @@ The Stripe plugin integrates Stripe's payment and subscription functionality wit
             ```
             </Tab>
         </Tabs>
-        See the [Schema](#schema) section to add the tables manually.
+        你也可以查看 [Schema](#schema) 手动添加表。
     </Step>
     <Step>
-        ### Set up Stripe webhooks
+        ### 设置 Stripe webhook
 
-        Create a webhook endpoint in your Stripe dashboard pointing to:
+        在 Stripe 仪表盘创建 webhook，指向：
 
         ```
         https://your-domain.com/api/auth/stripe/webhook
         ```
-        `/api/auth` is the default path for the auth server.
+        `/api/auth` 是认证服务器的默认路径。
         
-        Make sure to select at least these events:
+        确保至少选择以下事件：
         - `checkout.session.completed`
         - `customer.subscription.created`
         - `customer.subscription.updated`
         - `customer.subscription.deleted`
 
-        Save the webhook signing secret provided by Stripe and add it to your environment variables as `STRIPE_WEBHOOK_SECRET`.
+        保存 Stripe 提供的 webhook 签名密钥，作为环境变量 `STRIPE_WEBHOOK_SECRET`。
     </Step>
 </Steps>
 
-## Usage
+## 使用
 
-### Customer Management
+### 客户管理
 
-You can use this plugin solely for customer management without enabling subscriptions. This is useful if you just want to link Stripe customers to your users.
+你可以仅使用此插件进行客户管理，而不启用订阅。适合你仅想关联 Stripe 客户和用户的场景。
 
-When you set `createCustomerOnSignUp: true`, a Stripe customer is automatically created on signup and linked to the user in your database.
-You can customize the customer creation process:
+当设置 `createCustomerOnSignUp: true` 时，用户注册时会自动创建 Stripe 客户，并与数据库中的用户关联。你也可定制客户创建流程：
 
 ```ts title="auth.ts"
 stripe({
-    // ... other options
+    // ... 其他选项
     createCustomerOnSignUp: true,
     onCustomerCreate: async ({ stripeCustomer, user }, ctx) => {
-        // Do something with the newly created customer
-        console.log(`Customer ${stripeCustomer.id} created for user ${user.id}`);
+        // 处理新创建的客户
+        console.log(`客户 ${stripeCustomer.id} 已为用户 ${user.id} 创建`);
     },
     getCustomerCreateParams: async (user, ctx) => {
-        // Customize the Stripe customer creation parameters
+        // 定制 Stripe 客户创建参数
         return {
             metadata: {
                 referralSource: user.metadata?.referralSource
@@ -153,21 +152,21 @@ stripe({
 })
 ```
 
-### Subscription Management
+### 订阅管理
 
-#### Defining Plans
+#### 定义计划
 
-You can define your subscription plans either statically or dynamically:
+你可以静态定义订阅计划，也可动态获取：
 
 ```ts title="auth.ts"
-// Static plans
+// 静态定义
 subscription: {
     enabled: true,
     plans: [
         {
-            name: "basic", // the name of the plan, it'll be automatically lower cased when stored in the database
-            priceId: "price_1234567890", // the price ID from stripe
-            annualDiscountPriceId: "price_1234567890", // (optional) the price ID for annual billing with a discount
+            name: "basic", // 计划名称，存入数据库时自动小写
+            priceId: "price_1234567890", // Stripe 价格 ID
+            annualDiscountPriceId: "price_1234567890", // （可选）年付折扣价格 ID
             limits: {
                 projects: 5,
                 storage: 10
@@ -187,7 +186,7 @@ subscription: {
     ]
 }
 
-// Dynamic plans (fetched from database or API)
+// 动态定义（数据库或接口获取）
 subscription: {
     enabled: true,
     plans: async () => {
@@ -201,11 +200,11 @@ subscription: {
 }
 ```
 
-see [plan configuration](#plan-configuration) for more.
+详情见 [计划配置](#plan-configuration)。
 
-#### Creating a Subscription
+#### 创建订阅
 
-To create a subscription, use the `subscription.upgrade` method:
+通过调用 `subscription.upgrade` 方法创建订阅：
 
 <APIMethod
   path="/subscription/upgrade"
@@ -215,86 +214,84 @@ To create a subscription, use the `subscription.upgrade` method:
 ```ts
 type upgradeSubscription = {
     /**
-     * The name of the plan to upgrade to.
+     * 要升级的计划名称。
      */
     plan: string = "pro"
     /**
-     * Whether to upgrade to an annual plan.
+     * 是否升级为年付计划。
      */
     annual?: boolean = true
     /**
-     * Reference id of the subscription. Defaults based on customerType.
+     * 订阅的引用 ID。默认根据 customerType 赋值。
      */
     referenceId?: string = "123"
     /**
-     * The id of the subscription to upgrade.
+     * 要升级的订阅 ID。
      */
     subscriptionId?: string = "sub_123"
     /**
-     * Additional metadata to store with the subscription.
+     * 附加元数据，存储于订阅。
      */
     metadata?: Record<string, any>
     /**
-     * The type of customer for billing. (Default: "user")
+     * 计费的客户类型。（默认："user"）
      */
     customerType?: "user" | "organization"
     /**
-     * Number of seats to upgrade to (if applicable).
+     * 要升级的座位数（如适用）。
      */
     seats?: number = 1
     /**
-     * The IETF language tag of the locale Checkout is displayed in.
-     * If not provided or set to `auto`, the browser's locale is used.
+     * 显示 Checkout 的 IETF 语言标签。未提供或设为 `auto` 时使用浏览器语言。
      */
     locale?: string
     /**
-     * The URL to which Stripe should send customers when payment or setup is complete.
+     * 支付或设置完成后 Stripe 重定向的 URL。
      */
     successUrl: string
     /**
-     * If set, checkout shows a back button and customers will be directed here if they cancel payment.
+     * 若设置，Checkout 显示返回按钮，取消支付时重定向此处。
      */
     cancelUrl: string
     /**
-     * The URL to return to from the Billing Portal (used when upgrading existing subscriptions)
+     * 从账单门户返回的 URL（用于升级现有订阅）
      */
     returnUrl?: string
     /**
-     * Disable redirect after successful subscription.
+     * 成功订阅后禁用自动重定向。
      */
     disableRedirect: boolean = false
     /**
-     * Schedule the plan change at the end of the current billing period
-     * instead of applying it immediately.
+     * 在当前计费周期结束时调度计划变更，而不是即时生效。
      */
     scheduleAtPeriodEnd?: boolean = false
 }
 ```
 </APIMethod>
 
-**Simple Example:**
+**简单示例：**
 
 ```ts title="client.ts"
 await authClient.subscription.upgrade({
     plan: "pro",
     successUrl: "/dashboard",
     cancelUrl: "/pricing",
-    annual: true, // Optional: upgrade to an annual plan
-    referenceId: "org_123", // Optional: defaults based on customerType
-    seats: 5, // Optional: for team plans
-    locale: "en" // Optional: display checkout in English
+    annual: true, // 可选：升级为年付计划
+    referenceId: "org_123", // 可选：默认为 customerType 的值
+    seats: 5, // 可选：团队计划座位数
+    locale: "en" // 可选：用英文显示 Checkout
 });
 ```
 
-This will create a Checkout Session and redirect the user to the Stripe Checkout page.
+这会创建一个 Checkout 会话，并将用户重定向至 Stripe Checkout 页面。
 
 <Callout type="info">
-The plugin only supports one active or trialing subscription per reference ID (user or organization) at a time. Multiple concurrent subscriptions for the same reference ID are not supported.
+插件只支持每个引用 ID（用户或组织）最多一个活跃或试用订阅，不支持同一引用并发多订阅。
 
-If the user already has an active subscription, you **must** provide the `subscriptionId` parameter when upgrading. Otherwise, a new subscription may be created alongside the existing one, resulting in duplicate billing.
+如果用户已有活跃订阅，切记升级时**必须**提供 `subscriptionId` 参数，否则可能同时创建新订阅，导致重复计费。
 </Callout>
 
-> **Important:** The `successUrl` parameter will be internally modified to handle race conditions between checkout completion and webhook processing. The plugin creates an intermediate redirect that ensures subscription status is properly updated before redirecting to your success page.
+> **重要提示：** `successUrl` 参数会在内部被修改，以处理结账完成与 webhook 处理之间的竞态条件。插件会创建跳转中转页面，确保订阅状态被正确更新后再跳转到你指定的成功页。
 
 ```ts
 const { error } = await authClient.subscription.upgrade({
@@ -307,22 +304,24 @@ if(error) {
 }
 ```
 
-#### Switching Plans
+#### 切换计划
 
-To switch a subscription to a different plan, use the `subscription.upgrade` method:
+想切换订阅计划，可以调用 `subscription.upgrade`：
+
 ```ts title="client.ts"
 await authClient.subscription.upgrade({
     plan: "pro",
     successUrl: "/dashboard",
     cancelUrl: "/pricing",
-    subscriptionId: "sub_123", // the Stripe subscription ID of the user's current plan
+    subscriptionId: "sub_123", // 当前用户计划的 Stripe 订阅 ID
 });
 ```
-This ensures that the user only pays for the new plan, and not both.
 
-#### Scheduling Plan Changes at Period End
+确保用户仅支付新计划，不会同时支付两个计划费用。
 
-By default, plan changes take effect immediately with prorated billing. You may want to defer the change to the end of the current billing period so the user can continue using their current plan until it expires:
+#### 在周期结束时调度计划更改
+
+默认计划调整立即生效，且自动按比例计费。若希望用户继续使用当前计划直到结算周期结束，再切换计划，可以这样：
 
 ```ts title="client.ts"
 await authClient.subscription.upgrade({
@@ -330,23 +329,23 @@ await authClient.subscription.upgrade({
     successUrl: "/dashboard",
     cancelUrl: "/pricing",
     returnUrl: "/billing",
-    scheduleAtPeriodEnd: true, // [!code highlight] Default: false
+    scheduleAtPeriodEnd: true, // 默认 false
 });
 ```
 
-This uses the [Stripe Subscription Schedules API](https://docs.stripe.com/billing/subscriptions/subscription-schedules) to create a two-phase schedule: the current plan continues until the billing period ends, then the new plan starts automatically with no proration.
+此方案利用 [Stripe 订阅调度 API](https://docs.stripe.com/billing/subscriptions/subscription-schedules)，创建两阶段执行：当前计划持续至周期结束，然后自动启动新计划，且不会按比例计费。
 
 <Callout type="info">
-When `scheduleAtPeriodEnd` is `true`:
-- The subscription plan is **not changed** until the billing period ends — only `stripeScheduleId` is stored so clients can detect the pending change
-- No redirect to Stripe Checkout or Billing Portal occurs, the change is applied server-side
-- At the end of the billing period, Stripe fires a `customer.subscription.updated` webhook which updates the subscription record automatically
-- If a new upgrade or schedule is requested before the period ends, the existing pending schedule is released first
+当 `scheduleAtPeriodEnd` 为 `true` 时：
+- 订阅计划**保持不变**直到周期结束，仅存储 `stripeScheduleId` 以供客户端检测待切换状态
+- 不会跳转到 Stripe Checkout 或账单门户，调整由服务端执行
+- 计费周期结束后 Stripe 会触发 `customer.subscription.updated` webhook，自动更新订阅记录
+- 若周期前请求新的升级或调度，先释放已有挂起调度
 </Callout>
 
-#### Listing Active Subscriptions
+#### 列出活跃订阅
 
-To get the user's active subscriptions:
+获取用户的活跃订阅：
 
 <APIMethod
   path="/subscription/list"
@@ -357,32 +356,32 @@ To get the user's active subscriptions:
 ```ts
 type listActiveSubscriptions = {
     /**
-     * Reference id of the subscription to list.
+     * 要列出的订阅引用 ID。
      */
     referenceId?: string = '123'
     /**
-     * The type of customer for billing. (Default: "user")
+     * 计费客户类型。（默认："user"）
      */
     customerType?: "user" | "organization"
 }
 
-// get the active subscription
+// 获取活跃订阅
 const activeSubscription = subscriptions.find(
     sub => sub.status === "active" || sub.status === "trialing"
 );
 
-// Check subscription limits
+// 检查订阅限制
 const projectLimit = subscriptions?.limits?.projects || 0;
 ```
 </APIMethod>
 
-Make sure to provide `authorizeReference` in your plugin config to authorize the reference ID
+确保插件配置中加入了 `authorizeReference` 以授权引用 ID：
 
 ```ts title="auth.ts"
 stripe({
-    // ... other options
+    // ... 其他选项
     subscription: {
-        // ... other subscription options
+        // ... 其他订阅配置
         authorizeReference: async ({ user, session, referenceId, action }) => {
             if(action === "list-subscription") {
                 const org = await db.member.findFirst({
@@ -393,15 +392,16 @@ stripe({
                 });
                 return org?.role === "owner"
             }
-            // Check if the user has permission to list subscriptions for this reference
+            // 检查用户是否有权限列出此引用的订阅
             return true;
         }
     }
 })
 ```
-#### Canceling a Subscription
 
-To cancel a subscription:
+#### 取消订阅
+
+取消订阅：
 
 <APIMethod
   path="/subscription/cancel"
@@ -411,47 +411,46 @@ To cancel a subscription:
 ```ts
 type cancelSubscription = {
     /**
-     * Reference id of the subscription to cancel. Defaults based on customerType.
+     * 要取消的订阅引用 ID。默认根据 customerType 赋值。
      */
     referenceId?: string = 'org_123'
     /**
-     * The type of customer for billing. (Default: "user")
+     * 计费客户类型。（默认："user"）
      */
     customerType?: "user" | "organization"
     /**
-     * The id of the subscription to cancel.
+     * 要取消的订阅 ID。
      */
     subscriptionId?: string = 'sub_123'
     /**
-     * URL to take customers to when they click on the billing portal's link to return to your website.
+     * 用户点击账单门户中的链接返回你网站时的跳转 URL。
      */
     returnUrl: string = '/account'
 }
 ```
 </APIMethod>
 
-This will redirect the user to the Stripe Billing Portal where they can cancel their subscription.
+将会重定向用户进入 Stripe 账单门户，让用户自行取消订阅。
 
 <Callout type="info">
-**Understanding Cancellation States**
+**取消状态说明**
 
-Stripe supports different types of cancellation, and the plugin tracks all of them:
+Stripe 支持多种取消状态，插件会跟踪它们：
 
-| Field               | Description                                                                                                                      |
-|---------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| `cancelAtPeriodEnd` | Whether this subscription will (if status=active) or did (if status=canceled) cancel at the end of the current billing period.   |
-| `cancelAt`          | If the subscription is scheduled to be canceled, this is the time at which the cancellation will take effect.                    |
-| `canceledAt`        | If the subscription has been canceled, this is the time when it was canceled.                                                    |
-| `endedAt`           | If the subscription has ended, the date the subscription ended.                                                                  |
-| `status`            | Changes to "canceled" only after the subscription has actually ended.                                                            |
+| 字段                 | 说明                                                                                                            |
+|---------------------|-----------------------------------------------------------------------------------------------------------------|
+| `cancelAtPeriodEnd` | 若订阅状态为 active，表示将在当前计费期结束时取消；若状态为 canceled，表示已在期末取消。                          |
+| `cancelAt`          | 订阅计划被取消时生效的时间点（若已排期取消）。                                                                 |
+| `canceledAt`        | 已取消订阅的请求时间。注意：若通过 `cancelAtPeriodEnd` 取消，此时间为取消请求时间，不是实际结束时间。              |
+| `endedAt`           | 订阅真正结束的日期。                                                                                             |
+| `status`            | 仅当订阅真正结束后，才会切换为 "canceled" 状态。                                                                |
 </Callout>
 
-#### Restoring a Subscription
+#### 恢复订阅
 
-> <small className='font-normal'>**Note:** This only works for subscriptions that are still active but have a pending cancellation or a scheduled plan change. It cannot restore subscriptions that have already ended (`status: "canceled"` with `endedAt` set).</small>
+> <small className='font-normal'>**注意：** 只支持活动订阅且处于待取消或待调度变更状态的恢复。已结束的订阅（`status: "canceled"` 且 `endedAt` 已设）无法恢复。</small>
 
-If a user changes their mind after canceling a subscription or scheduling a plan change, you can restore the subscription:
-
+用户取消或排期变更后改变主意，可以恢复订阅：
 
 <APIMethod
   path="/subscription/restore"
@@ -461,15 +460,15 @@ If a user changes their mind after canceling a subscription or scheduling a plan
 ```ts
 type restoreSubscription = {
     /**
-     * Reference id of the subscription to restore. Defaults based on customerType.
+     * 要恢复的订阅引用 ID。默认根据 customerType 赋值。
      */
     referenceId?: string = '123'
     /**
-     * The type of customer for billing. (Default: "user")
+     * 计费客户类型。（默认："user"）
      */
     customerType?: "user" | "organization"
     /**
-     * The id of the subscription to restore.
+     * 要恢复的订阅 ID。
      */
     subscriptionId?: string = 'sub_123'
 }
@@ -477,16 +476,15 @@ type restoreSubscription = {
 </APIMethod>
 
 <Callout type="info">
-This endpoint handles two cases:
+此接口处理两种情况：
 
-- **Pending cancellation**: Sets `cancelAtPeriodEnd` to `false` and clears `cancelAt` / `canceledAt`, so the subscription continues to renew.
-- **Pending plan change** (via `scheduleAtPeriodEnd`): Releases the Stripe subscription schedule and clears `stripeScheduleId`, so the current plan remains unchanged.
+- **待取消**：取消期末生效的订阅，设置 `cancelAtPeriodEnd` 为 `false`，清除 `cancelAt` 和 `canceledAt`，保证订阅续期继续。
+- **待计划变更**（通过 `scheduleAtPeriodEnd`）：释放 Stripe 订阅调度，清除 `stripeScheduleId`，保持当前计划不变。
 </Callout>
 
+#### 创建账单门户会话
 
-#### Creating Billing Portal Sessions
-
-To create a [Stripe billing portal session](https://docs.stripe.com/api/customer_portal/sessions/create) where customers can manage their subscriptions, update payment methods, and view billing history:
+创建 [Stripe 账单门户会话](https://docs.stripe.com/api/customer_portal/sessions/create)，让客户管理订阅、支付方式和账单历史：
 
 <APIMethod
   path="/subscription/billing-portal"
@@ -496,24 +494,23 @@ To create a [Stripe billing portal session](https://docs.stripe.com/api/customer
 ```ts
 type createBillingPortal = {
     /**
-    * The IETF language tag of the locale Customer Portal is displayed in.
-    * If not provided or set to `auto`, the browser's locale is used.
+    * 显示账单门户的 IETF 语言标签。未提供或 `auto` 时使用浏览器语言。
     */
     locale?: string
     /**
-     * Reference id of the subscription.
+     * 订阅引用 ID。
      */
     referenceId?: string = "123"
     /**
-     * The type of customer for billing. (Default: "user")
+     * 计费客户类型。（默认："user"）
      */
     customerType?: "user" | "organization"
     /**
-     * Return URL to redirect back after exiting the billing portal.
+     * 退出账单门户后跳转的 URL。
      */
     returnUrl?: string
     /**
-     * Disable the automatic redirect to the billing page.
+     * 禁用自动重定向到账单页面。
      * @default false
      */
     disableRedirect?: boolean = false
@@ -521,26 +518,26 @@ type createBillingPortal = {
 ```
 </APIMethod>
 <Callout type="info" >
-For supported locales, see the [IETF language tag documentation](https://docs.stripe.com/js/appendix/supported_locales).
+支持的语言标签请查看 [IETF 语言标签文档](https://docs.stripe.com/js/appendix/supported_locales)。
 </Callout>
-        
-This endpoint creates a Stripe billing portal session and returns a URL in the response as `data.url`. You can redirect users to this URL to allow them to manage their subscription, payment methods, and billing history.
 
-### Reference System
+该接口会创建 Stripe 账单门户会话，响应中以 `data.url` 返回，可以重定向用户至该地址进行订阅和支付管理。
 
-By default, subscriptions are associated with the user ID. However, you can use a custom reference ID to associate subscriptions with other entities, such as organizations:
+### 引用系统
+
+默认订阅与用户 ID 关联。你也可以自定义引用 ID，将订阅关联到其他实体，如组织：
 
 ```ts title="client.ts"
-// Create a subscription for an organization
+// 为组织创建订阅
 await authClient.subscription.upgrade({
     plan: "pro",
     referenceId: "org_123456",
     successUrl: "/dashboard",
     cancelUrl: "/pricing",
-    seats: 5 // Number of seats for team plans
+    seats: 5 // 团队计划座位数
 });
 
-// List subscriptions for an organization
+// 列出组织的订阅
 const { data: subscriptions } = await authClient.subscription.list({
     query: {
         referenceId: "org_123456"
@@ -548,29 +545,29 @@ const { data: subscriptions } = await authClient.subscription.list({
 });
 ```
 
-#### Team Subscriptions with Seats
+#### 团队订阅与座位数
 
-For team or organization plans, you can specify the number of seats:
+团队或组织计划可以指定座位数：
 
 ```ts
 await authClient.subscription.upgrade({
     plan: "team",
     referenceId: "org_123456",
-    seats: 10, // 10 team members
+    seats: 10, // 10 个团队成员
     successUrl: "/org/billing/success",
     cancelUrl: "/org/billing"
 });
 ```
 
-The `seats` parameter is passed to Stripe as the quantity for the subscription item. You can use this value in your application logic to limit the number of members in a team or organization.
+`seats` 参数会传给 Stripe 作为订阅品项数量，可用于应用逻辑中限制团队成员数。
 
-To authorize reference IDs, implement the `authorizeReference` function:
+要授权引用 ID，请实现 `authorizeReference`：
 
 ```ts title="auth.ts"
 subscription: {
-    // ... other options
+    // ... 其他选项
     authorizeReference: async ({ user, session, referenceId, action }) => {
-        // Check if the user has permission to manage subscriptions for this reference
+        // 检查用户是否有权限管理此引用的订阅
         if (action === "upgrade-subscription" || action === "cancel-subscription" || action === "restore-subscription") {
             const org = await db.member.findFirst({
                 where: {
@@ -585,67 +582,67 @@ subscription: {
 }
 ```
 
-### Webhook Handling
+### Webhook 处理
 
-The plugin automatically handles common webhook events:
+插件自动处理常见 webhook 事件：
 
-- `checkout.session.completed`: Updates subscription status after checkout
-- `customer.subscription.created`: Creates a subscription when created outside the checkout flow
-- `customer.subscription.updated`: Updates subscription details when changed
-- `customer.subscription.deleted`: Marks subscription as canceled
+- `checkout.session.completed`：结账完成后更新订阅状态
+- `customer.subscription.created`：在非结账流程创建订阅时触发
+- `customer.subscription.updated`：订阅更新时触发
+- `customer.subscription.deleted`：标记订阅已取消
 
-You can also handle custom events:
+你也可以响应自定义事件：
 
 ```ts title="auth.ts"
 stripe({
-    // ... other options
+    // ... 其他选项
     onEvent: async (event) => {
-        // Handle any Stripe event
+        // 处理任何 Stripe 事件
         switch (event.type) {
             case "invoice.paid":
-                // Handle paid invoice
+                // 处理已付款发票
                 break;
             case "payment_intent.succeeded":
-                // Handle successful payment
+                // 处理支付成功
                 break;
         }
     }
 })
 ```
 
-### Subscription Lifecycle Hooks
+### 订阅生命周期钩子
 
-You can hook into various subscription lifecycle events:
+你可以挂载订阅各种生命周期事件回调：
 
 ```ts title="auth.ts"
 subscription: {
-    // ... other options
+    // ... 其他选项
     onSubscriptionComplete: async ({ event, subscription, stripeSubscription, plan }) => {
-        // Called when a subscription is successfully created via checkout
+        // 结账方式成功创建订阅时调用
         await sendWelcomeEmail(subscription.referenceId, plan.name);
     },
     onSubscriptionCreated: async ({ event, subscription, stripeSubscription, plan }) => {
-        // Called when a subscription is created outside the checkout flow (e.g. Stripe dashboard)
+        // 订阅在结账外创建时调用（比如后台仪表盘）
         await sendSubscriptionCreatedEmail(subscription.referenceId, plan.name);
     },
     onSubscriptionUpdate: async ({ event, subscription }) => {
-        // Called when a subscription is updated
-        console.log(`Subscription ${subscription.id} updated`);
+        // 订阅更新时调用
+        console.log(`订阅 ${subscription.id} 已更新`);
     },
     onSubscriptionCancel: async ({ event, subscription, stripeSubscription, cancellationDetails }) => {
-        // Called when a subscription is canceled
+        // 订阅取消时调用
         await sendCancellationEmail(subscription.referenceId);
     },
     onSubscriptionDeleted: async ({ event, subscription, stripeSubscription }) => {
-        // Called when a subscription is deleted
-        console.log(`Subscription ${subscription.id} deleted`);
+        // 订阅删除时调用
+        console.log(`订阅 ${subscription.id} 已删除`);
     }
 }
 ```
 
-### Trial Periods
+### 试用期
 
-You can configure trial periods for your plans:
+你可以为计划配置试用期：
 
 ```ts title="auth.ts"
 {
@@ -654,15 +651,15 @@ You can configure trial periods for your plans:
     freeTrial: {
         days: 14,
         onTrialStart: async (subscription) => {
-            // Called when a trial starts
+            // 试用期开始时调用
             await sendTrialStartEmail(subscription.referenceId);
         },
         onTrialEnd: async ({ subscription }, ctx) => {
-            // Called when a trial ends
+            // 试用期结束时调用
             await sendTrialEndEmail(subscription.referenceId);
         },
         onTrialExpired: async (subscription, ctx) => {
-            // Called when a trial expires without conversion
+            // 试用到期未转换时调用
             await sendTrialExpiredEmail(subscription.referenceId);
         }
     }
@@ -671,19 +668,18 @@ You can configure trial periods for your plans:
 
 ## Schema
 
-The Stripe plugin adds the following tables to your database:
-
+Stripe 插件会向数据库添加以下表：
 
 ### User
 
-Table Name: `user`
+表名：`user`
 
 <DatabaseTable
   fields={[
     { 
       name: "stripeCustomerId", 
       type: "string", 
-      description: "The Stripe customer ID",
+      description: "Stripe 客户 ID",
       isOptional: true
     },
   ]}
@@ -691,14 +687,14 @@ Table Name: `user`
 
 ### Organization
 
-Table Name: `organization` <small className='text-xs'>(only when `organization.enabled` is `true`)</small>
+表名：`organization` <small className='text-xs'>(仅当 `organization.enabled` 为 `true` 时)</small>
 
 <DatabaseTable
   fields={[
     {
       name: "stripeCustomerId",
       type: "string",
-      description: "The Stripe customer ID for the organization",
+      description: "组织的 Stripe 客户 ID",
       isOptional: true
     },
   ]}
@@ -706,221 +702,221 @@ Table Name: `organization` <small className='text-xs'>(only when `organization.e
 
 ### Subscription
 
-Table Name: `subscription`
+表名：`subscription`
 
 <DatabaseTable
   fields={[
     { 
       name: "id", 
       type: "string", 
-      description: "Unique identifier for each subscription",
+      description: "订阅唯一标识",
       isPrimaryKey: true
     },
     { 
       name: "plan", 
       type: "string", 
-      description: "The name of the subscription plan" 
+      description: "订阅计划名称" 
     },
     { 
       name: "referenceId", 
       type: "string", 
-      description: "The ID this subscription is associated with (user ID by default). This should NOT be a unique field in your database, as it must allow users to resubscribe after a cancellation.",
+      description: "订阅关联 ID（默认用户 ID）。**不**应为唯一字段，允许用户取消后重新订阅。",
       isUnique: false
     },
     { 
       name: "stripeCustomerId", 
       type: "string", 
-      description: "The Stripe customer ID",
+      description: "Stripe 客户 ID",
       isOptional: true
     },
     { 
       name: "stripeSubscriptionId", 
       type: "string", 
-      description: "The Stripe subscription ID",
+      description: "Stripe 订阅 ID",
       isOptional: true
     },
     { 
       name: "status", 
       type: "string", 
-      description: "The status of the subscription (active, canceled, etc.)",
+      description: "订阅状态（active、canceled 等）",
       defaultValue: "incomplete"
     },
     { 
       name: "periodStart", 
       type: "Date", 
-      description: "Start date of the current billing period",
+      description: "当前计费周期起始时间",
       isOptional: true
     },
     { 
       name: "periodEnd", 
       type: "Date", 
-      description: "End date of the current billing period",
+      description: "当前计费周期结束时间",
       isOptional: true
     },
     { 
       name: "cancelAtPeriodEnd", 
       type: "boolean", 
-      description: "Whether the subscription will be canceled at the end of the period",
+      description: "是否在计费结束时取消订阅",
       defaultValue: false,
       isOptional: true
     },
     { 
       name: "cancelAt", 
       type: "Date", 
-      description: "If the subscription is scheduled to be canceled, this is the time at which the cancellation will take effect",
+      description: "订阅被计划取消的时间点",
       isOptional: true
     },
     { 
       name: "canceledAt", 
       type: "Date", 
-      description: "If the subscription has been canceled, this is the time when the cancellation was requested. Note: If the subscription was canceled with cancelAtPeriodEnd, this reflects the cancellation request time, not when the subscription actually ends",
+      description: "订阅取消请求时间。注意：`cancelAtPeriodEnd` 取消时此处为请求时间，不是结束时间。",
       isOptional: true
     },
     { 
       name: "endedAt", 
       type: "Date", 
-      description: "If the subscription has ended, this is the date the subscription ended",
+      description: "订阅实际结束时间",
       isOptional: true
     },
     { 
       name: "seats", 
       type: "number", 
-      description: "Number of seats for team plans",
+      description: "团队计划座位数",
       isOptional: true
     },
     { 
       name: "trialStart", 
       type: "Date", 
-      description: "Start date of the trial period",
+      description: "试用期起始时间",
       isOptional: true
     },
     {
       name: "trialEnd",
       type: "Date",
-      description: "End date of the trial period",
+      description: "试用期结束时间",
       isOptional: true
     },
     {
       name: "billingInterval",
       type: "string",
-      description: "The billing interval of the subscription (e.g. 'month', 'year')",
+      description: "订阅计费间隔（如 'month', 'year'）",
       isOptional: true
     },
     {
       name: "stripeScheduleId",
       type: "string",
-      description: "Stripe Subscription Schedule ID, present when a scheduled plan change is pending",
+      description: "Stripe 订阅调度 ID，存在则说明有待处理计划变更",
       isOptional: true
     }
   ]}
 />
 
-### Customizing the Schema
+### 自定义 Schema
 
-To change the schema table names or fields, you can pass a `schema` option to the Stripe plugin:
+若需要更改表名或字段，可传入 `schema` 选项至 Stripe 插件：
 
 ```ts title="auth.ts"
 stripe({
-    // ... other options
+    // ... 其他选项
     schema: {
         subscription: {
-            modelName: "stripeSubscriptions", // map the subscription table to stripeSubscriptions
+            modelName: "stripeSubscriptions", // 将订阅表映射为 stripeSubscriptions
             fields: {
-                plan: "planName" // map the plan field to planName
+                plan: "planName" // 将 plan 字段映射为 planName
             }
         }
     }
 })
 ```
 
-## Options
+## 选项
 
-| Option                    | Type       | Description                                                                                   |
-| ------------------------- | ---------- | --------------------------------------------------------------------------------------------- |
-| `stripeClient`            | `Stripe`   | The Stripe client instance. **Required.**                                                     |
-| `stripeWebhookSecret`     | `string`   | The webhook signing secret from Stripe. **Required.**                                         |
-| `createCustomerOnSignUp`  | `boolean`  | Whether to automatically create a Stripe customer when a user signs up. Default: `false`.     |
-| `onCustomerCreate`        | `function` | Callback called after a customer is created. Receives `{ stripeCustomer, user }` and context. |
-| `getCustomerCreateParams` | `function` | Customize Stripe customer creation parameters. Receives `user` and context.                   |
-| `onEvent`                 | `function` | Callback called for any Stripe webhook event. Receives `Stripe.Event`.                        |
-| `subscription`            | `object`   | Subscription configuration. See [below](#subscription-options).                               |
-| `organization`            | `object`   | Enable Organization Customer support. See [below](#organization-options).                     |
-| `schema`                  | `object`   | Customize the database schema for the Stripe plugin.                                          |
+| 选项                       | 类型         | 说明                                                                                  |
+| ------------------------- | ------------ | ------------------------------------------------------------------------------------- |
+| `stripeClient`            | `Stripe`     | Stripe 客户端实例。**必需**。                                                        |
+| `stripeWebhookSecret`     | `string`     | Stripe webhook 签名密钥。**必需**。                                                  |
+| `createCustomerOnSignUp`  | `boolean`    | 用户注册时是否自动创建 Stripe 客户。默认：`false`。                                 |
+| `onCustomerCreate`        | `function`   | 客户创建后回调，参数 `{ stripeCustomer, user }` 和上下文。                           |
+| `getCustomerCreateParams` | `function`   | 自定义 Stripe 客户创建参数，参数是 `user` 和上下文。                                |
+| `onEvent`                 | `function`   | 收到任何 Stripe webhook 事件时回调，参数为 `Stripe.Event`。                         |
+| `subscription`            | `object`     | 订阅配置。详见下文 [订阅选项](#subscription-options)。                               |
+| `organization`            | `object`     | 启用组织客户支持。详见下文 [组织选项](#organization-options)。                       |
+| `schema`                  | `object`     | 自定义 Stripe 插件的数据库 schema。                                                  |
 
-### Subscription Options
+### 订阅选项
 
-| Option                     | Type                         | Description                                                                                                            |
-| -------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `enabled`                  | `boolean`                    | Whether to enable subscription functionality. **Required.**                                                            |
-| `plans`                    | `StripePlan[]` or `function` | An array of subscription plans or an async function that returns plans. **Required** if enabled.                       |
-| `requireEmailVerification` | `boolean`                    | Whether to require email verification before allowing subscription upgrades. Default: `false`.                         |
-| `authorizeReference`       | `function`                   | Authorize reference IDs. Receives `{ user, session, referenceId, action }` and context.                                |
-| `getCheckoutSessionParams` | `function`                   | Customize Stripe Checkout session parameters. Receives `{ user, session, plan, subscription }`, request, and context.  |
-| `onSubscriptionComplete`   | `function`                   | Called when a subscription is created via checkout. Receives `{ event, stripeSubscription, subscription, plan }` and context. |
-| `onSubscriptionCreated`    | `function`                   | Called when a subscription is created outside checkout. Receives `{ event, stripeSubscription, subscription, plan }`.  |
-| `onSubscriptionUpdate`     | `function`                   | Called when a subscription is updated. Receives `{ event, subscription }`.                                             |
-| `onSubscriptionCancel`     | `function`                   | Called when a subscription is canceled. Receives `{ event, subscription, stripeSubscription, cancellationDetails }`.   |
-| `onSubscriptionDeleted`    | `function`                   | Called when a subscription is deleted. Receives `{ event, stripeSubscription, subscription }`.                         |
+| 选项                        | 类型                          | 说明                                                                                                       |
+| -------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `enabled`                  | `boolean`                    | 是否启用订阅功能。**必需**。                                                                               |
+| `plans`                    | `StripePlan[]` 或 `function` | 订阅计划数组或异步返回计划的函数。启用时**必需**。                                                        |
+| `requireEmailVerification` | `boolean`                    | 是否要求用户验证邮箱后才允许订阅升级。默认：`false`。                                                     |
+| `authorizeReference`       | `function`                   | 授权引用 ID。参数 `{ user, session, referenceId, action }` 和上下文。                                    |
+| `getCheckoutSessionParams` | `function`                   | 自定义 Stripe Checkout 会话参数。参数 `{ user, session, plan, subscription }`，请求和上下文。             |
+| `onSubscriptionComplete`   | `function`                   | 通过结账创建订阅时调用。参数 `{ event, stripeSubscription, subscription, plan }` 和上下文。              |
+| `onSubscriptionCreated`    | `function`                   | 在非结账流程创建订阅时调用。参数 `{ event, stripeSubscription, subscription, plan }`。                    |
+| `onSubscriptionUpdate`     | `function`                   | 订阅更新时调用。参数 `{ event, subscription }`。                                                         |
+| `onSubscriptionCancel`     | `function`                   | 订阅取消时调用。参数 `{ event, subscription, stripeSubscription, cancellationDetails }`。                 |
+| `onSubscriptionDeleted`    | `function`                   | 订阅被删除时调用。参数 `{ event, stripeSubscription, subscription }`。                                   |
 
-#### Plan Configuration
+#### 计划配置
 
-| Option                    | Type       | Description                                                  |
-| ------------------------- | ---------- | ------------------------------------------------------------ |
-| `name`                    | `string`   | The name of the plan. **Required.**                          |
-| `priceId`                 | `string`   | The Stripe price ID. **Required** unless using `lookupKey`.  |
-| `lookupKey`               | `string`   | The Stripe price lookup key. Alternative to `priceId`.       |
-| `annualDiscountPriceId`   | `string`   | A price ID for annual billing.                               |
-| `annualDiscountLookupKey` | `string`   | The Stripe price lookup key for annual billing.              |
-| `limits`                  | `object`   | Limits for plan (e.g. `{ projects: 10, storage: 5 }`).       |
-| `group`                   | `string`   | A group name for categorizing plans.                         |
-| `seatPriceId`             | `string`   | Per-seat billing price ID. Requires the `organization` plugin. |
-| `lineItems`               | `LineItem[]` | Additional line items to include in the checkout session.   |
-| `freeTrial`               | `object`   | Trial configuration. See [below](#free-trial-configuration). |
-
-<Callout type="info">
-Stripe does not support [mixed-interval subscriptions](https://docs.stripe.com/billing/subscriptions/mixed-interval) via Checkout Sessions. All line items in a checkout should use the **same billing interval** (e.g. all monthly or all yearly). If intervals differ, the Stripe API will reject the request.
-</Callout>
-
-#### Free Trial Configuration
-
-| Option           | Type       | Description                                                                              |
-| ---------------- | ---------- | ---------------------------------------------------------------------------------------- |
-| `days`           | `number`   | Number of trial days. **Required.**                                                      |
-| `onTrialStart`   | `function` | Called when a trial starts. Receives `subscription`.                                     |
-| `onTrialEnd`     | `function` | Called when a trial ends. Receives `{ subscription }` and context.                       |
-| `onTrialExpired` | `function` | Called when a trial expires without conversion. Receives `subscription` and context.     |
-
-### Organization Options
-
-| Option                    | Type       | Description                                                                                                              |
-| ------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `enabled`                 | `boolean`  | Enable Organization Customer support. **Required.**                                                                      |
-| `getCustomerCreateParams` | `function` | Customize Stripe customer creation parameters for organizations. Receives `organization` and context.                   |
-| `onCustomerCreate`        | `function` | Called after an organization customer is created. Receives `{ stripeCustomer, organization }` and context.              |
-
-## Advanced Usage
-
-### Using with Organizations
-
-The Stripe plugin integrates with the [organization plugin](/docs/plugins/organization) to enable organizations as Stripe Customers. Instead of individual users, organizations become the billing entity for subscriptions. This is useful for B2B services where billing is tied to the organization rather than individual user.
+| 选项                        | 类型         | 说明                                                                           |
+| ------------------------- | ------------ | ------------------------------------------------------------------------------ |
+| `name`                    | `string`     | 计划名称。**必需**。                                                           |
+| `priceId`                 | `string`     | Stripe 价格 ID。除非使用 `lookupKey`，否则必需。                               |
+| `lookupKey`               | `string`     | Stripe 价格查找键。可替代 `priceId`。                                         |
+| `annualDiscountPriceId`   | `string`     | 年付计费价格 ID。                                                             |
+| `annualDiscountLookupKey` | `string`     | 年付计费价格查找键。                                                          |
+| `limits`                  | `object`     | 计划限制（如 `{ projects: 10, storage: 5 }`）。                             |
+| `group`                   | `string`     | 计划分组名称。                                                                 |
+| `seatPriceId`             | `string`     | 按座位计费价格 ID，需启用 `organization` 插件。                             |
+| `lineItems`               | `LineItem[]` | 额外的结账会话商品条目。                                                      |
+| `freeTrial`               | `object`     | 试用配置，详见下文 [免费试用配置](#free-trial-configuration)。                 |
 
 <Callout type="info">
-**When Organization Customer is enabled:**
-
-- A Stripe Customer is automatically created when an organization first subscribes
-- Organization name changes are synced to the Stripe Customer
-- Organizations with active subscriptions cannot be deleted
+Stripe Checkout 会话不支持 [混合周期订阅](https://docs.stripe.com/billing/subscriptions/mixed-interval)。结账中所有商品条目必须使用相同计费间隔（如全部月付或全部年付）。若周期不同，Stripe API 会拒绝请求。
 </Callout>
 
-#### Enabling Organization Customer
+#### 免费试用配置
 
-To enable Organization Customer, set `organization.enabled` to `true` and ensure the organization plugin is installed:
+| 选项                | 类型         | 说明                                                                              |
+| ----------------- | ------------ | --------------------------------------------------------------------------------- |
+| `days`            | `number`     | 试用天数。**必需**。                                                              |
+| `onTrialStart`    | `function`   | 试用开始时调用，参数 `subscription`。                                            |
+| `onTrialEnd`      | `function`   | 试用结束时调用，参数 `{ subscription }` 和上下文。                              |
+| `onTrialExpired`  | `function`   | 试用过期且未转化时调用，参数 `subscription` 和上下文。                          |
+
+### 组织选项
+
+| 选项                         | 类型         | 说明                                                                                          |
+| -------------------------- | ------------ | ------------------------------------------------------------------------------------------- |
+| `enabled`                  | `boolean`    | 启用组织客户支持。**必需**。                                                                 |
+| `getCustomerCreateParams`  | `function`   | 自定义组织的 Stripe 客户创建参数，参数为 `organization` 和上下文。                         |
+| `onCustomerCreate`         | `function`   | 组织客户创建后调用，参数 `{ stripeCustomer, organization }` 和上下文。                    |
+
+## 高级用法
+
+### 与组织插件一起使用
+
+Stripe 插件集成了 [organization 插件](/docs/plugins/organization)，支持组织作为 Stripe 客户。订阅的计费对象由个人用户转为组织，适合 B2B 场景。
+
+<Callout type="info">
+**启用组织客户时：**
+
+- 组织首次订阅时自动创建 Stripe 客户
+- 同步组织名称更改到 Stripe 客户
+- 有活跃订阅的组织无法被删除
+</Callout>
+
+#### 启用组织客户
+
+设置 `organization.enabled` 为 `true`，并确保已安装组织插件：
 
 ```ts title="auth.ts"
 plugins: [
     organization(),
     stripe({
-        // ... other options
+        // ... 其他选项
         subscription: {
             enabled: true,
             plans: [...],
@@ -932,9 +928,9 @@ plugins: [
 ]
 ```
 
-#### Creating Organization Subscriptions
+#### 创建组织订阅
 
-Even with Organization Customer enabled, user subscriptions remain available and are the default. To use the organization as the billing entity, pass `customerType: "organization"`:
+即使启用了组织客户，用户订阅仍可用且为默认。若需组织作为计费客户，传入 `customerType: "organization"`：
 
 ```ts title="client.ts"
 await authClient.subscription.upgrade({
@@ -947,13 +943,13 @@ await authClient.subscription.upgrade({
 });
 ```
 
-#### Authorization
+#### 授权
 
-Make sure to implement the `authorizeReference` function to verify that the user has permission to manage subscriptions for the organization:
+请实现 `authorizeReference`，确认用户有权管理组织订阅：
 
 ```ts title="auth.ts"
 subscription: {
-    // ... other subscription options
+    // ... 其他订阅选项
     authorizeReference: async ({ user, referenceId, action }) => {
         const member = await db.members.findFirst({
             where: {
@@ -967,10 +963,10 @@ subscription: {
 }
 ```
 
-#### Organization Billing Email
+#### 组织计费邮箱
 
-Unlike users, organization billing email is not automatically synced because organization itself doesn't have a unique email. Organizations often use a dedicated billing email separate from user accounts.
-To change the billing email after checkout, update it through the Stripe Dashboard or implement custom logic using `stripeClient`:
+组织没有唯一邮箱，账单邮箱不会自动同步。组织一般使用专门账单邮箱，和用户账户不同。
+你可在结账后通过 Stripe 仪表盘修改邮箱，或用 `stripeClient` 自定义：
 
 ```ts
 await stripeClient.customers.update(organization.stripeCustomerId, {
@@ -978,9 +974,9 @@ await stripeClient.customers.update(organization.stripeCustomerId, {
 });
 ```
 
-### Custom Checkout Session Parameters
+### 自定义结账会话参数
 
-You can customize the Stripe Checkout session with additional parameters:
+你可以传递额外参数给 Stripe Checkout：
 
 ```ts title="auth.ts"
 getCheckoutSessionParams: async ({ user, session, plan, subscription }, ctx) => {
@@ -993,7 +989,7 @@ getCheckoutSessionParams: async ({ user, session, plan, subscription }, ctx) => 
             billing_address_collection: "required",
             custom_text: {
                 submit: {
-                    message: "We'll start your subscription right away"
+                    message: "我们将立即为您启用订阅"
                 }
             },
             metadata: {
@@ -1008,13 +1004,13 @@ getCheckoutSessionParams: async ({ user, session, plan, subscription }, ctx) => 
 }
 ```
 
-### Tax Collection
+### 税务收集
 
-To collect tax IDs from the customer, set `tax_id_collection` to true:
+开启税务 ID 收集：
 
 ```ts title="auth.ts"
 subscription: {
-    // ... other options
+    // ... 其他选项
     getCheckoutSessionParams: async ({ user, session, plan, subscription }, ctx) => {
         return {
             params: {
@@ -1027,13 +1023,13 @@ subscription: {
 }
 ```
 
-### Automatic Tax Calculation
+### 自动税费计算
 
-To enable automatic tax calculation using the customer's location, set `automatic_tax` to true. Enabling this parameter causes Checkout to collect any billing address information necessary for tax calculation. You need to have tax registration setup and configured in the Stripe dashboard first for this to work.
+启用自动税费计算（按客户位置），设置 `automatic_tax`：
 
 ```ts title="auth.ts"
 subscription: {
-    // ... other options
+    // ... 其他选项
     getCheckoutSessionParams: async ({ user, session, plan, subscription }, ctx) => {
         return {
             params: {
@@ -1046,49 +1042,51 @@ subscription: {
 }
 ```
 
-### Trial Period Management
+注意需先在 Stripe 仪表盘设置税务注册和配置。
 
-The Stripe plugin automatically prevents users from getting multiple free trials. Once a user has used a trial period (regardless of which plan), they will not be eligible for additional trials on any plan.
+### 试用期管理
 
-**How it works:**
-- The system tracks trial usage across all plans for each user
-- When a user subscribes to a plan with a trial, the system checks their subscription history
-- If the user has ever had a trial (indicated by `trialStart`/`trialEnd` fields or `trialing` status), no new trial will be offered
-- This prevents abuse where users cancel subscriptions and resubscribe to get multiple free trials
+插件自动防止用户多次获取免费试用。用户在任一计划使用过试用后，其他计划将不再提供试用。
 
-**Example scenario:**
-1. User subscribes to "Starter" plan with 7-day trial
-2. User cancels the subscription after the trial
-3. User tries to subscribe to "Premium" plan - no trial will be offered
-4. User will be charged immediately for the Premium plan
+**原理：**
+- 系统跟踪用户所有计划的试用使用情况
+- 用户订阅含试用的计划时，查询历史是否曾试用
+- 若有试用记录（`trialStart`、`trialEnd` 或 `trialing` 状态），则新订阅不提供试用
+- 防止用户反复取消订阅、重新订阅以骗取多次试用
 
-This behavior is automatic and requires no additional configuration. The trial eligibility is determined at the time of subscription creation and cannot be overridden through configuration.
+**示例：**
+1. 用户订阅“Starter”计划，有 7 天试用
+2. 用户试用后取消订阅
+3. 用户尝试订阅“Premium”计划，试用被禁止
+4. 用户即刻支付 Premium 计划费用
 
-## Troubleshooting
+此行为自动生效，无需额外配置，且不可通过配置覆盖。
 
-### Webhook Issues
+## 故障排查
 
-If webhooks aren't being processed correctly:
+### webhook 问题
 
-1. Check that your webhook URL is correctly configured in the Stripe dashboard
-2. Verify that the webhook signing secret is correct
-3. Ensure you've selected all the necessary events in the Stripe dashboard
-4. Check your server logs for any errors during webhook processing
+若 webhook 未正确处理：
 
-### Subscription Status Issues
+1. 确认 Stripe 仪表盘配置的 webhook URL 是否正确
+2. 验证 webhook 签名密钥是否正确
+3. 检查是否勾选全部必需事件
+4. 查看服务器日志是否有处理错误
 
-If subscription statuses aren't updating correctly:
+### 订阅状态异常
 
-1. Make sure the webhook events are being received and processed
-2. Check that the `stripeCustomerId` and `stripeSubscriptionId` fields are correctly populated
-3. Verify that the reference IDs match between your application and Stripe
+若订阅状态未正确更新：
 
-### Testing Webhooks Locally
+1. 确认 webhook 事件已接收并处理
+2. 确认 `stripeCustomerId` 与 `stripeSubscriptionId` 是否正确填写
+3. 核对应用中引用 ID 是否与 Stripe 一致
 
-For local development, you can use the Stripe CLI to forward webhooks to your local environment:
+### 本地测试 webhook
+
+可用 Stripe CLI 转发 webhook 至本地：
 
 ```bash
 stripe listen --forward-to localhost:3000/api/auth/stripe/webhook
 ```
 
-This will provide you with a webhook signing secret that you can use in your local environment.
+CLI 会输出本地使用的 webhook 签名密钥，配置至本地环境即可。

@@ -1,15 +1,15 @@
 ---
-title: Organization
-description: The organization plugin allows you to manage your organization's members and teams.
+title: 组织
+description: 组织插件允许您管理组织的成员和团队。
 ---
 
-Organizations simplifies user access and permissions management. Assign roles and permissions to streamline project management, team coordination, and partnerships.
+组织简化了用户访问和权限管理。分配角色和权限以简化项目管理、团队协调和合作。
 
-## Installation
+## 安装
 
 <Steps>
 <Step>
-### Add the plugin to your **auth** config
+### 将插件添加到您的 **auth** 配置中
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
 import { organization } from "better-auth/plugins" // [!code highlight]
@@ -23,9 +23,9 @@ export const auth = betterAuth({
 </Step>
 
 <Step>
-    ### Migrate the database
+    ### 迁移数据库
 
-    Run the migration or generate the schema to add the necessary fields and tables to the database.
+    运行迁移或生成模式，以将必要的字段和表添加到数据库。
 
     <Tabs items={["migrate", "generate"]}>
         <Tab value="migrate">
@@ -39,12 +39,12 @@ export const auth = betterAuth({
         ```
         </Tab>
     </Tabs>
-    See the [Schema](#schema) section to add the fields manually.
+    查看 [Schema](#schema) 部分，了解如何手动添加字段。
 
 </Step>
 
 <Step>
-    ### Add the client plugin
+    ### 添加客户端插件
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -60,13 +60,13 @@ export const auth = betterAuth({
 </Step>
 </Steps>
 
-## Usage
+## 用法
 
-Once you've installed the plugin, you can start using the organization plugin to manage your organization's members and teams. The client plugin will provide you with methods under the `organization` namespace, and the server `api` will provide you with the necessary endpoints to manage your organization and give you an easier way to call the functions on your own backend.
+安装插件后，您就可以开始使用组织插件来管理组织的成员和团队。客户端插件会在 `organization` 命名空间下提供方法，服务器端的 `api` 会提供管理组织所需的接口，并让您更轻松地调用后端函数。
 
-## Organization
+## 组织
 
-### Create an organization
+### 创建组织
 
 <APIMethod path="/organization/create" method="POST" requireSession>
 
@@ -75,28 +75,28 @@ const metadata = { someKey: "someValue" };
 
 type createOrganization = {
   /**
-  * The organization name.
+  * 组织名称。
   */
   name: string = "My Organization"
   /**
-  * The organization slug.
+  * 组织短名称（slug）。
   */
   slug: string = "my-org"
   /**
-  * The organization logo.
+  * 组织徽标。
   */
   logo?: string = "https://example.com/logo.png"
   /**
-  * The metadata of the organization.
+  * 组织元数据。
   */
   metadata?: Record<string, any>
   /**
-  * The user ID of the organization creator.
-  * @serverOnly - This is ignored if session headers are provided.
+  * 组织创建者的用户 ID。
+  * @serverOnly - 如果提供会话头，则忽略此字段。
   */
   userId?: string = "some_user_id"
   /**
-  * Whether to keep the current active organization active after creating a new one.
+  * 新建组织后是否保持当前活跃组织。
   */
   keepCurrentActiveOrganization?: boolean = false
 }
@@ -105,18 +105,18 @@ type createOrganization = {
 </APIMethod>
 
 <Callout type="warn">
-**Mutually Exclusive Parameters**
+**互斥参数**
 
-The `userId` and session headers cannot be used together:
-- **With session headers:** The organization is created for the authenticated session user. The `userId` field is **silently ignored**.
-- **Without session headers (Server-side only):** The organization is created for the user specified by `userId`.
+`userId` 和会话头不能同时使用：
+- **使用会话头时：** 组织为认证会话用户创建。`userId` 字段将被**静默忽略**。
+- **不使用会话头（仅服务器端）：** 组织为指定的 `userId` 创建。
 
-**For Admins:** To create an organization on behalf of another user, you must make the API call server-side **without** passing session headers.
+**管理员说明：** 若需代表其他用户创建组织，必须在服务器端调用 API，且**不传递会话头**。
 </Callout>
 
-#### Restrict who can create an organization
+#### 限制谁可以创建组织
 
-By default, any user can create an organization. To restrict this, set the `allowUserToCreateOrganization` option to a function that returns a boolean, or directly to `true` or `false`.
+默认情况下，任何用户都可以创建组织。若要限制，设置 `allowUserToCreateOrganization` 选项为返回布尔值的函数，或直接为 `true` 或 `false`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -135,31 +135,31 @@ const auth = betterAuth({
 });
 ```
 
-#### Check if organization slug is taken
+#### 检查组织短名称是否已被占用
 
-To check if an organization slug is taken or not you can use the `checkSlug` function provided by the client. The function takes an object with the following properties:
+您可以使用客户端提供的 `checkSlug` 函数检查组织短名称是否已被占用。此函数接受一个包含以下属性的对象：
 
 <APIMethod path="/organization/check-slug" method="POST">
 ```ts
 type checkOrganizationSlug = {
     /**
-     * The organization slug to check.  
+     * 要检查的组织短名称。  
      */
     slug: string = "my-org"
 }
 ```
 </APIMethod>
 
-### Organization Hooks
+### 组织钩子
 
-You can customize organization operations using hooks that run before and after various organization-related activities. Better Auth provides two ways to configure hooks:
+您可以使用钩子来自定义组织操作，钩子会在各种组织相关活动的前后运行。Better Auth 提供了两种配置钩子方式：
 
-1. **Legacy organizationCreation hooks** (deprecated, use `organizationHooks` instead)
-2. **Modern organizationHooks** (recommended) - provides comprehensive control over all organization-related activities
+1. **遗留的 organizationCreation 钩子**（已弃用，改用 `organizationHooks`）
+2. **现代的 organizationHooks**（推荐）- 提供对所有组织活动的全面控制
 
-#### Organization Creation and Management Hooks
+#### 组织创建与管理钩子
 
-Control organization lifecycle operations:
+控制组织生命周期操作：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -169,10 +169,10 @@ export const auth = betterAuth({
   plugins: [
     organization({
       organizationHooks: {
-        // Organization creation hooks
+        // 组织创建前钩子
         beforeCreateOrganization: async ({ organization, user }) => {
-          // Run custom logic before organization is created
-          // Optionally modify the organization data
+          // 创建组织前运行自定义逻辑
+          // 可选地修改组织数据
           return {
             data: {
               ...organization,
@@ -184,14 +184,14 @@ export const auth = betterAuth({
         },
 
         afterCreateOrganization: async ({ organization, member, user }) => {
-          // Run custom logic after organization is created
-          // e.g., create default resources, send notifications
+          // 创建组织后运行自定义逻辑
+          // 例如，创建默认资源，发送通知
           await setupDefaultResources(organization.id);
         },
 
-        // Organization update hooks
+        // 组织更新前钩子
         beforeUpdateOrganization: async ({ organization, user, member }) => {
-          // Validate updates, apply business rules
+          // 验证更新，应用业务规则
           return {
             data: {
               ...organization,
@@ -201,7 +201,7 @@ export const auth = betterAuth({
         },
 
         afterUpdateOrganization: async ({ organization, user, member }) => {
-          // Sync changes to external systems
+          // 同步更改到外部系统
           await syncOrganizationToExternalSystems(organization);
         },
       },
@@ -211,14 +211,14 @@ export const auth = betterAuth({
 ```
 
 <Callout type="info">
-  The legacy `organizationCreation` hooks are still supported but deprecated.
-  Use `organizationHooks.beforeCreateOrganization` and
-  `organizationHooks.afterCreateOrganization` instead for new projects.
+  遗留的 `organizationCreation` 钩子仍受支持但已弃用。
+  新项目请使用 `organizationHooks.beforeCreateOrganization` 和
+  `organizationHooks.afterCreateOrganization`。
 </Callout>
 
-#### Member Hooks
+#### 成员钩子
 
-Control member operations within organizations:
+控制组织内成员操作：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -228,50 +228,50 @@ export const auth = betterAuth({
   plugins: [
     organization({
       organizationHooks: {
-        // Before a member is added to an organization
+        // 添加成员前
         beforeAddMember: async ({ member, user, organization }) => {
-          // Custom validation or modification
+          // 自定义验证或修改
           console.log(`Adding ${user.email} to ${organization.name}`);
 
-          // Optionally modify member data
+          // 可选地修改成员数据
           return {
             data: {
               ...member,
-              role: "custom-role", // Override the role
+              role: "custom-role", // 覆盖角色
             },
           };
         },
 
-        // After a member is added
+        // 添加成员后
         afterAddMember: async ({ member, user, organization }) => {
-          // Send welcome email, create default resources, etc.
+          // 发送欢迎邮件，创建默认资源等
           await sendWelcomeEmail(user.email, organization.name);
         },
 
-        // Before a member is removed
+        // 移除成员前
         beforeRemoveMember: async ({ member, user, organization }) => {
-          // Cleanup user's resources, send notification, etc.
+          // 清理用户资源，发送通知等
           await cleanupUserResources(user.id, organization.id);
         },
 
-        // After a member is removed
+        // 移除成员后
         afterRemoveMember: async ({ member, user, organization }) => {
           await logMemberRemoval(user.id, organization.id);
         },
 
-        // Before updating a member's role
+        // 更新成员角色前
         beforeUpdateMemberRole: async ({
           member,
           newRole,
           user,
           organization,
         }) => {
-          // Validate role change permissions
+          // 验证角色变更权限
           if (newRole === "owner" && !hasOwnerUpgradePermission(user)) {
             throw new Error("Cannot upgrade to owner role");
           }
 
-          // Optionally modify the role
+          // 可选地修改角色
           return {
             data: {
               role: newRole,
@@ -279,7 +279,7 @@ export const auth = betterAuth({
           };
         },
 
-        // After updating a member's role
+        // 更新成员角色后
         afterUpdateMemberRole: async ({
           member,
           previousRole,
@@ -294,9 +294,9 @@ export const auth = betterAuth({
 });
 ```
 
-#### Invitation Hooks
+#### 邀请钩子
 
-Control invitation lifecycle:
+控制邀请流程：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -306,16 +306,16 @@ export const auth = betterAuth({
   plugins: [
     organization({
       organizationHooks: {
-        // Before creating an invitation
+        // 创建邀请前
         beforeCreateInvitation: async ({
           invitation,
           inviter,
           organization,
         }) => {
-          // Custom validation or expiration logic
+          // 自定义验证或过期逻辑
           const customExpiration = new Date(
             Date.now() + 1000 * 60 * 60 * 24 * 7
-          ); // 7 days
+          ); // 7 天
 
           return {
             data: {
@@ -325,49 +325,49 @@ export const auth = betterAuth({
           };
         },
 
-        // After creating an invitation
+        // 创建邀请后
         afterCreateInvitation: async ({
           invitation,
           inviter,
           organization,
         }) => {
-          // Send custom invitation email, track metrics, etc.
+          // 发送自定义邀请邮件，统计指标等
           await sendCustomInvitationEmail(invitation, organization);
         },
 
-        // Before accepting an invitation
+        // 接受邀请前
         beforeAcceptInvitation: async ({ invitation, user, organization }) => {
-          // Additional validation before acceptance
+          // 接受前额外验证
           await validateUserEligibility(user, organization);
         },
 
-        // After accepting an invitation
+        // 接受邀请后
         afterAcceptInvitation: async ({
           invitation,
           member,
           user,
           organization,
         }) => {
-          // Setup user account, assign default resources
+          // 设置用户账户，分配默认资源
           await setupNewMemberResources(user, organization);
         },
 
-        // Before/after rejecting invitations
+        // 拒绝邀请前后
         beforeRejectInvitation: async ({ invitation, user, organization }) => {
-          // Log rejection reason, send notification to inviter
+          // 记录拒绝原因，通知邀请者等
         },
 
         afterRejectInvitation: async ({ invitation, user, organization }) => {
           await notifyInviterOfRejection(invitation.inviterId, user.email);
         },
 
-        // Before/after cancelling invitations
+        // 取消邀请前后
         beforeCancelInvitation: async ({
           invitation,
           cancelledBy,
           organization,
         }) => {
-          // Verify cancellation permissions
+          // 验证取消权限
         },
 
         afterCancelInvitation: async ({
@@ -383,9 +383,9 @@ export const auth = betterAuth({
 });
 ```
 
-#### Team Hooks
+#### 团队钩子
 
-Control team operations (when teams are enabled):
+控制团队操作（启用团队时生效）：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -396,9 +396,9 @@ export const auth = betterAuth({
     organization({
       teams: { enabled: true },
       organizationHooks: {
-        // Before creating a team
+        // 创建团队前
         beforeCreateTeam: async ({ team, user, organization }) => {
-          // Validate team name, apply naming conventions
+          // 验证团队名称，应用命名规范
           return {
             data: {
               ...team,
@@ -407,15 +407,15 @@ export const auth = betterAuth({
           };
         },
 
-        // After creating a team
+        // 创建团队后
         afterCreateTeam: async ({ team, user, organization }) => {
-          // Create default team resources, channels, etc.
+          // 创建默认团队资源、频道等
           await createDefaultTeamResources(team.id);
         },
 
-        // Before updating a team
+        // 更新团队前
         beforeUpdateTeam: async ({ team, updates, user, organization }) => {
-          // Validate updates, apply business rules
+          // 验证更新，应用业务规则
           return {
             data: {
               ...updates,
@@ -424,30 +424,30 @@ export const auth = betterAuth({
           };
         },
 
-        // After updating a team
+        // 更新团队后
         afterUpdateTeam: async ({ team, user, organization }) => {
           await syncTeamChangesToExternalSystems(team);
         },
 
-        // Before deleting a team
+        // 删除团队前
         beforeDeleteTeam: async ({ team, user, organization }) => {
-          // Backup team data, notify members
+          // 备份团队数据，通知成员
           await backupTeamData(team.id);
         },
 
-        // After deleting a team
+        // 删除团队后
         afterDeleteTeam: async ({ team, user, organization }) => {
           await cleanupTeamResources(team.id);
         },
 
-        // Team member operations
+        // 团队成员操作
         beforeAddTeamMember: async ({
           teamMember,
           team,
           user,
           organization,
         }) => {
-          // Validate team membership limits, permissions
+          // 验证团队成员限制，权限
           const memberCount = await getTeamMemberCount(team.id);
           if (memberCount >= 10) {
             throw new Error("Team is full");
@@ -469,7 +469,7 @@ export const auth = betterAuth({
           user,
           organization,
         }) => {
-          // Backup user's team-specific data
+          // 备份用户的团队专属数据
           await backupTeamMemberData(user.id, team.id);
         },
 
@@ -487,9 +487,9 @@ export const auth = betterAuth({
 });
 ```
 
-#### Hook Error Handling
+#### 钩子错误处理
 
-All hooks support error handling. Throwing an error in a `before` hook will prevent the operation from proceeding:
+所有钩子支持错误处理。在 `before` 钩子中抛出错误将阻止操作执行：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -501,7 +501,7 @@ export const auth = betterAuth({
     organization({
       organizationHooks: {
         beforeAddMember: async ({ member, user, organization }) => {
-          // Check if user has pending violations
+          // 检查用户是否存在未处理违规
           const violations = await checkUserViolations(user.id);
           if (violations.length > 0) {
             throw new APIError("BAD_REQUEST", {
@@ -512,7 +512,7 @@ export const auth = betterAuth({
         },
 
         beforeCreateTeam: async ({ team, user, organization }) => {
-          // Validate team name uniqueness
+          // 验证团队名称唯一性
           const existingTeam = await findTeamByName(team.name, organization.id);
           if (existingTeam) {
             throw new APIError("BAD_REQUEST", {
@@ -526,9 +526,9 @@ export const auth = betterAuth({
 });
 ```
 
-### List User's Organizations
+### 列出用户所在组织
 
-To list the organizations that a user is a member of, you can use `useListOrganizations` hook. It implements a reactive way to get the organizations that the user is a member of.
+要列出用户所在的所有组织，可以使用 `useListOrganizations` 钩子。它实现了响应式地获取用户成员组织列表的功能。
 
 <Tabs items={["React", "Vue", "Svelte"]} default="React">
 <Tab value="React">
@@ -554,13 +554,13 @@ return (
   const organizations = authClient.useListOrganizations();
 </script>
 
-<h1>Organizations</h1>
+<h1>组织</h1>
 
 {#if $organizations.isPending}
 
-  <p>Loading...</p>
+  <p>加载中...</p>
 {:else if !$organizations.data?.length}
-  <p>No organizations found.</p>
+  <p>未找到组织。</p>
 {:else}
   <ul>
     {#each $organizations.data as organization}
@@ -585,9 +585,9 @@ export default {
 
 <template>
     <div>
-        <h1>Organizations</h1>
-        <div v-if="organizations.isPending">Loading...</div>
-        <div v-else-if="organizations.data === null">No organizations found.</div>
+        <h1>组织</h1>
+        <div v-if="organizations.isPending">加载中...</div>
+        <div v-else-if="organizations.data === null">未找到组织。</div>
         <ul v-else>
             <li v-for="organization in organizations.data" :key="organization.id">
                 {{ organization.name }}
@@ -599,7 +599,7 @@ export default {
 </Tab>
 </Tabs>
 
-Or alternatively, you can call `organization.list` if you don't want to use a hook.
+或者，如果不想使用钩子，也可以调用 `organization.list`。
 
 <APIMethod path="/organization/list" method="GET" requireSession>
   ```ts
@@ -609,42 +609,41 @@ Or alternatively, you can call `organization.list` if you don't want to use a ho
 </APIMethod>
 
 
-### Active Organization
+### 活跃组织
 
-Active organization is the workspace the user is currently working on. By default when the user is signed in the active organization is set to `null`. You can set the active organization to the user session.
+活跃组织是用户当前工作的工作区。默认情况下，用户登录时活跃组织设置为 `null`。您可以为用户会话设置活跃组织。
 
 <Callout type="info">
-  It's not always you want to persist the active organization in the session.
-  You can manage the active organization in the client side only. For example,
-  multiple tabs can have different active organizations.
+  并非所有情况下都需要在会话中持久化活跃组织。
+  您可以仅在客户端管理活跃组织。例如，
+  多个标签页可以有不同的活跃组织。
 </Callout>
 
-#### Set Active Organization
+#### 设置活跃组织
 
-You can set the active organization by calling the `organization.setActive` function. It'll set the active organization for the user session.
+您可以调用 `organization.setActive` 函数设置活跃组织。它会将活跃组织设置到用户会话中。
 
 <Callout>
-  In some applications, you may want the ability to unset an active
-  organization. In this case, you can call this endpoint with `organizationId`
-  set to `null`.
+  在某些应用中，您可能希望能取消设置活跃组织。
+  这时可以调用此接口，将 `organizationId` 设置为 `null`。
 </Callout>
 
 <APIMethod path="/organization/set-active" method="POST" requireSession>
 ```ts
 type setActiveOrganization = {
     /**
-     * The organization ID to set as active. It can be null to unset the active organization.  
+     * 要设置的活跃组织 ID。可以为 null 以取消活跃组织。  
      */
     organizationId?: string | null = "org-id"
     /**
-     * The organization slug to set as active. It can be null to unset the active organization if organizationId is not provided.  
+     * 要设置的活跃组织短名称。如果未传递 organizationId，也可设置为 null 取消活跃组织。  
      */
     organizationSlug?: string = "org-slug"
 }
 ```
 </APIMethod>
 
-To automatically set an active organization when a session is created, you can use [database hooks](/docs/concepts/database#database-hooks). You'll need to implement logic to determine which organization to set as the initial active organization.
+要在会话创建时自动设置活跃组织，可以使用 [数据库钩子](/docs/concepts/database#database-hooks)。您需要实现逻辑，以确定初始活跃组织。
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -654,7 +653,7 @@ export const auth = betterAuth({
     session: {
       create: {
         before: async (session) => {
-          // Implement your custom logic to set initial active organization
+          // 自定义设置初始活跃组织逻辑
           const organization = await getInitialOrganization(session.userId);
           return {
             data: {
@@ -669,9 +668,9 @@ export const auth = betterAuth({
 });
 ```
 
-#### Use Active Organization
+#### 使用活跃组织
 
-To retrieve the active organization for the user, you can call the `useActiveOrganization` hook. It returns the active organization for the user. Whenever the active organization changes, the hook will re-evaluate and return the new active organization.
+要获取用户的活跃组织，可以调用 `useActiveOrganization` 钩子。该钩子返回用户的活跃组织并会在其变化时重新评估。
 
 <Tabs items={['React', 'Vue', 'Svelte']}>
     <Tab value="React">
@@ -695,12 +694,12 @@ To retrieve the active organization for the user, you can call the `useActiveOrg
     const activeOrganization = authClient.useActiveOrganization();
     </script>
 
-    <h2>Active Organization</h2>
+    <h2>活跃组织</h2>
 
     {#if $activeOrganization.isPending}
-    <p>Loading...</p>
+    <p>加载中...</p>
     {:else if $activeOrganization.data === null}
-    <p>No active organization found.</p>
+    <p>未找到活跃组织。</p>
     {:else}
     <p>{$activeOrganization.data.name}</p>
     {/if}
@@ -719,9 +718,9 @@ To retrieve the active organization for the user, you can call the `useActiveOrg
 
     <template>
         <div>
-            <h2>Active organization</h2>
-            <div v-if="activeOrganization.isPending">Loading...</div>
-            <div v-else-if="activeOrganization.data === null">No active organization.</div>
+            <h2>活跃组织</h2>
+            <div v-if="activeOrganization.isPending">加载中...</div>
+            <div v-else-if="activeOrganization.data === null">无活跃组织。</div>
             <div v-else>
                 {{ activeOrganization.data.name }}
             </div>
@@ -732,10 +731,9 @@ To retrieve the active organization for the user, you can call the `useActiveOrg
 
 </Tabs>
 
-### Get Full Organization
+### 获取完整组织信息
 
-To get the full details of an organization, you can use the `getFullOrganization` function.
-By default, if you don't pass any properties, it will use the active organization.
+要获取组织的完整详情，可以使用 `getFullOrganization` 函数。默认情况下，如果不传任何属性，将使用活跃组织。
 
 <APIMethod
   path="/organization/get-full-organization"
@@ -745,15 +743,15 @@ By default, if you don't pass any properties, it will use the active organizatio
 ```ts
 type getFullOrganization = {
     /**
-     * The organization ID to get. By default, it will use the active organization.  
+     * 要获取的组织 ID。默认使用活跃组织。  
      */
     organizationId?: string = "org-id"
     /**
-     * The organization slug to get.  
+     * 要获取的组织短名称。  
      */
     organizationSlug?: string = "org-slug"
     /**
-     * The limit of members to get. By default, it uses the membershipLimit option which defaults to 100.
+     * 要获取的成员数量限制。默认使用 membershipLimit 选项，默认值为 100。
      */
     membersLimit?: number = 100
 }
@@ -761,9 +759,9 @@ type getFullOrganization = {
 </APIMethod>
 
 
-### Update Organization
+### 更新组织
 
-To update organization info, you can use `organization.update`
+要更新组织信息，可以使用 `organization.update`。
 
 <APIMethod
   path="/organization/update"
@@ -773,37 +771,37 @@ To update organization info, you can use `organization.update`
 ```ts
 type updateOrganization = {
     /**
-     * A partial list of data to update the organization. 
+     * 要更新组织的部分数据。 
      */
     data: {
         /**
-         * The name of the organization. 
+         * 组织名称。 
          */
         name?: string = "updated-name"
         /**
-         * The slug of the organization. 
+         * 组织短名称。 
          */
         slug?: string = "updated-slug"
         /**
-         * The logo of the organization. 
+         * 组织徽标。 
          */
         logo?: string = "new-logo.url"
         /**
-         * The metadata of the organization. 
+         * 组织元数据。 
          */
         metadata?: Record<string, any> | null = { customerId: "test" }
     }
     /**
-     * The organization ID. to update.
+     * 要更新的组织 ID。
      */
     organizationId?: string = "org-id"
 }
 ```
 </APIMethod>
 
-### Delete Organization
+### 删除组织
 
-To remove user owned organization, you can use `organization.delete`
+要删除用户拥有的组织，可以使用 `organization.delete`。
 
 <APIMethod
   path="/organization/delete"
@@ -813,16 +811,16 @@ To remove user owned organization, you can use `organization.delete`
 ```ts
 type deleteOrganization = {
     /*
-    * The organization ID to delete.
+    * 要删除的组织 ID。
     */
     organizationId: string = "org-id"
 }
 ```
 </APIMethod>
 
-If the user has the necessary permissions (by default: role is owner) in the specified organization, all members, invitations and organization information will be removed.
+如果用户在指定组织中拥有必要权限（默认角色为所有者），则会删除所有成员、邀请和组织信息。
 
-You can configure how organization deletion is handled through `organizationDeletion` option:
+您可以通过 `organizationDeletion` 选项配置组织删除的处理方式：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -831,13 +829,13 @@ import { organization } from "better-auth/plugins";
 const auth = betterAuth({
   plugins: [
     organization({
-      disableOrganizationDeletion: true, //to disable it altogether
+      disableOrganizationDeletion: true, // 完全禁用删除功能
       organizationHooks: {
         beforeDeleteOrganization: async (data, request) => {
-          // a callback to run before deleting org
+          // 删除组织前回调
         },
         afterDeleteOrganization: async (data, request) => {
-          // a callback to run after deleting org
+          // 删除组织后回调
         },
       },
     }),
@@ -845,15 +843,15 @@ const auth = betterAuth({
 });
 ```
 
-## Invitations
+## 邀请
 
-To add a member to an organization, we first need to send an invitation to the user. The user will receive an email/sms with the invitation link. Once the user accepts the invitation, they will be added to the organization.
+要添加成员到组织，首先需要向用户发送邀请。用户会收到包含邀请链接的邮件或短信。用户接受邀请后，将被添加到组织中。
 
-### Setup Invitation Email
+### 设置邀请邮件
 
-For member invitation to work we first need to provide `sendInvitationEmail` to the `better-auth` instance. This function is responsible for sending the invitation email to the user.
+要实现成员邀请功能，首先需要为 `better-auth` 实例配置 `sendInvitationEmail`。此函数负责向用户发送邀请邮件。
 
-You'll need to construct and send the invitation link to the user. The link should include the invitation ID, which will be used with the acceptInvitation function when the user clicks on it.
+您需要构造并发送邀请链接给用户，该链接应包含邀请 ID，用户点击时用于调用 `acceptInvitation`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -878,31 +876,31 @@ export const auth = betterAuth({
 });
 ```
 
-### Send Invitation
+### 发送邀请
 
-To invite users to an organization, you can use the `invite` function provided by the client. The `invite` function takes an object with the following properties:
+要邀请用户加入组织，可以使用客户端提供的 `invite` 函数。此函数接受如下对象：
 
 <APIMethod path="/organization/invite-member" method="POST" requireSession>
 ```ts
 type createInvitation = {
     /**
-     * The email address of the user to invite.  
+     * 受邀用户的邮箱地址。  
      */
     email: string = "example@gmail.com"
     /**
-     * The role(s) to assign to the user. It can be `admin`, `member`, `owner`
+     * 指定赋予用户的角色，支持 `admin`、`member`、`owner`。
      */
     role: string | string[] = "member"
     /**
-     * The organization ID to invite the user to. Defaults to the active organization.  
+     * 要邀请用户加入的组织 ID，默认活跃组织。  
      */
     organizationId?: string = "org-id"
     /**
-     * Resend the invitation email, if the user is already invited.  
+     * 若用户已被邀请，是否重发邀请邮件。  
      */
     resend?: boolean = true
     /**
-     * The team ID to invite the user to.  
+     * 要邀请用户加入的团队 ID。  
      */
     teamId?: string = "team-id"
 }
@@ -910,34 +908,29 @@ type createInvitation = {
 </APIMethod>
 
 <Callout>
-  - If the user is already a member of the organization, the invitation will be
-  canceled. - If the user is already invited to the organization, unless
-  `resend` is set to `true`, the invitation will not be sent again. - If
-  `cancelPendingInvitationsOnReInvite` is set to `true`, the invitation will be
-  canceled if the user is already invited to the organization and a new
-  invitation is sent.
+  - 若用户已是组织成员，邀请将被取消。- 若用户已被邀请（非重发），邀请邮件不会重复发送。- 若设置了 `cancelPendingInvitationsOnReInvite` 为 `true`，则会取消已存在邀请并发送新邀请。
 </Callout>
 
-### Accept Invitation
+### 接受邀请
 
-When a user receives an invitation email, they can click on the invitation link to accept the invitation. The invitation link should include the invitation ID, which will be used to accept the invitation.
+用户收到邀请邮件后，可点击邀请链接接受邀请。邀请链接应包含邀请 ID，接受时用于调用对应接口。
 
-Make sure to call the `acceptInvitation` function after the user is logged in.
+请确保用户登录后调用 `acceptInvitation`。
 
 <APIMethod path="/organization/accept-invitation" method="POST" requireSession>
 ```ts
 type acceptInvitation = {
     /**
-     * The ID of the invitation to accept.  
+     * 要接受的邀请 ID。  
      */
     invitationId: string = "invitation-id"
 }
 ```
 </APIMethod>
 
-#### Email Verification Requirement
+#### 邮箱验证要求
 
-If the `requireEmailVerificationOnInvitation` option is enabled in your organization configuration, users must verify their email address before they can accept invitations. This adds an extra security layer to ensure that only verified users can join your organization.
+如果组织配置中启用了 `requireEmailVerificationOnInvitation`，则用户必须验证邮箱后才能接受邀请，确保只有验证过邮箱的用户能加入组织。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -948,39 +941,39 @@ export const auth = betterAuth({
     organization({
       requireEmailVerificationOnInvitation: true, // [!code highlight]
       async sendInvitationEmail(data) {
-        // ... your email sending logic
+        // 邮件发送逻辑
       },
     }),
   ],
 });
 ```
 
-### Cancel Invitation
+### 取消邀请
 
-If a user has sent out an invitation, you can use this method to cancel it.
+若发出邀请后需要取消，可以调用此方法。
 
-If you're looking for how a user can reject an invitation, you can find that [here](#reject-invitation).
+若用户想要拒绝邀请，详见[拒绝邀请](#reject-invitation)。
 
 <APIMethod path="/organization/cancel-invitation" method="POST" noResult requireSession>
 ```ts
 type cancelInvitation = {
     /**
-     * The ID of the invitation to cancel.  
+     * 要取消的邀请 ID。  
      */
     invitationId: string = "invitation-id"
 }
 ```
 </APIMethod>
 
-### Reject Invitation
+### 拒绝邀请
 
-If this user has received an invitation, but wants to decline it, this method will allow you to do so by rejecting it.
+用户收到邀请但想拒绝，可调用此方法。
 
 <APIMethod path="/organization/reject-invitation" method="POST" noResult requireSession>
 ```ts
 type rejectInvitation = {
     /**
-     * The ID of the invitation to reject.  
+     * 要拒绝的邀请 ID。  
      */
     invitationId: string = "invitation-id"
 }
@@ -988,15 +981,12 @@ type rejectInvitation = {
 </APIMethod>
 
 <Callout type="info">
-  Like accepting invitations, rejecting invitations also requires email
-  verification when the `requireEmailVerificationOnInvitation` option is
-  enabled. Users with unverified emails will receive an error when attempting to
-  reject invitations.
+  与接受邀请类似，启用 `requireEmailVerificationOnInvitation` 后，拒绝邀请也需要邮箱验证。未验证邮箱的用户拒绝时会报错。
 </Callout>
 
-### Get Invitation
+### 获取邀请
 
-To get an invitation you can use the `organization.getInvitation` function provided by the client. You need to provide the invitation id as a query parameter.
+您可以使用客户端的 `organization.getInvitation` 获取邀请信息。需提供邀请 ID。
 
 <APIMethod
   path="/organization/get-invitation"
@@ -1006,31 +996,31 @@ To get an invitation you can use the `organization.getInvitation` function provi
 ```ts
 type getInvitation = {
     /**
-     * The ID of the invitation to get.  
+     * 要获取的邀请 ID。  
      */
     id: string = "invitation-id"
 }
 ```
 </APIMethod>
 
-### List Invitations
+### 列出邀请
 
-To list all invitations for a given organization you can use the `listInvitations` function provided by the client.
+要列出特定组织的所有邀请，可使用客户端的 `listInvitations`。
 
 <APIMethod path="/organization/list-invitations" method="GET" requireSession>
 ```ts
 type listInvitations = {
     /**
-     * An optional ID of the organization to list invitations for. If not provided, will default to the user's active organization. 
+     * 可选组织 ID，默认活跃组织。 
      */
     organizationId?: string = "organization-id"
 }
 ```
 </APIMethod>
 
-### List user invitations
+### 列出用户邀请
 
-To list all invitations for a given user you can use the `listUserInvitations` function provided by the client.
+要列出给特定用户的所有邀请，可使用客户端的 `listUserInvitations`。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -1038,7 +1028,7 @@ import { authClient } from "@/lib/auth-client"
 const invitations = await authClient.organization.listUserInvitations();
 ```
 
-On the server, you can pass the user ID as a query parameter.
+服务器端可通过查询参数传递用户邮箱。
 
 ```ts title="list-user-invitations.ts"
 const invitations = await auth.api.listUserInvitations({
@@ -1049,101 +1039,100 @@ const invitations = await auth.api.listUserInvitations({
 ```
 
 <Callout type="warn">
-  The `email` query parameter is only available on the server to query for
-  invitations for a specific user.
+  查询参数 `email` 仅在服务器端可用，用于查询指定用户的邀请。
 </Callout>
 
-## Members
+## 成员
 
-### List Members
+### 列出成员
 
-To list all members of an organization you can use the `listMembers` function.
+您可以使用 `listMembers` 函数列出组织的所有成员。
 
 <APIMethod path="/organization/list-members" method="GET" requireSession>
 
 ```ts
 type listMembers = {
     /**
-     * An optional organization ID to list members for. If not provided, will default to the user's active organization.
+     * 可选的组织 ID，默认活跃组织。
      */
     organizationId?: string = "organization-id"
     /**
-     * The limit of members to return.
+     * 返回成员数量限制。
      */
     limit?: number = 100
     /**
-     * The offset to start from.
+     * 起始偏移量。
      */
     offset?: number = 0
     /**
-     * The field to sort by.
+     * 排序字段。
      */
     sortBy?: string = "createdAt"
     /**
-     * The direction to sort by.
+     * 排序方向。
      */
     sortDirection?: "asc" | "desc" = "desc"
     /**
-     * The field to filter by.
+     * 过滤字段。
      */
     filterField?: string = "createdAt"
     /**
-     * The operator to filter by.
+     * 过滤操作符。
      */
     filterOperator?: "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "in" | "not_in" | "contains" | "starts_with" | "ends_with" = "eq"
     /**
-     * The value to filter by.
+     * 过滤值。
      */
     filterValue?: string | number | boolean | string[] | number[] = "value"
 }
 ```
 </APIMethod>
 
-### Remove Member
+### 移除成员
 
-To remove you can use `organization.removeMember`
+您可以调用 `organization.removeMember` 来移除成员。
 
 <APIMethod path="/organization/remove-member" method="POST" requireSession>
 ```ts
 type removeMember = {
     /**
-     * The ID or email of the member to remove. 
+     * 成员的 ID 或邮箱。 
      */
     memberIdOrEmail: string = "user@example.com"
     /**
-     * The ID of the organization to remove the member from. If not provided, the active organization will be used. 
+     * 要移除成员的组织 ID，默认活跃组织。 
      */
     organizationId?: string = "org-id"
 }
 ```
 </APIMethod>
 
-### Update Member Role
+### 更新成员角色
 
-To update the role of a member in an organization, you can use the `organization.updateMemberRole`. If the user has the permission to update the role of the member, the role will be updated.
+您可以使用 `organization.updateMemberRole` 来更新组织内成员的角色。若当前用户有权限，角色将被更新。
 
 <APIMethod path="/organization/update-member-role" method="POST" noResult requireSession>
 ```ts
 type updateMemberRole = {
     /**
-     * The new role to be applied. This can be a string or array of strings representing the roles. 
+     * 新角色，支持字符串或字符串数组。 
      */
     role: string | string[] = ["admin", "sale"]
     /**
-     * The member id to apply the role update to. 
+     * 要更新的成员 ID。 
      */
     memberId: string = "member-id"
     /**
-     * An optional organization ID which the member is a part of to apply the role update. If not provided, you must provide session headers to get the active organization. 
+     * 可选组织 ID。若不传，则使用会话头中的活跃组织。 
      */
     organizationId?: string = "organization-id"
 }
 ```
 </APIMethod>
 
-### Get Active Member
+### 获取当前活跃成员
 
-To get the current member of the active organization you can use the `organization.getActiveMember` function. This function will return the user's member details in their active organization.
+获取当前活跃组织的成员详细信息，调用 `organization.getActiveMember`。
 
 <APIMethod
   path="/organization/get-active-member"
@@ -1157,8 +1146,9 @@ To get the current member of the active organization you can use the `organizati
   ```
 </APIMethod>
 
-### Get Active Member Role
-To get the current role member of the active organization you can use the `organization.getActiveMemberRole` function. This function will return the user's member role in their active organization.
+### 获取当前活跃成员角色
+
+获取当前活跃组织的成员角色，调用 `organization.getActiveMemberRole`。
 
 <APIMethod
   path="/organization/get-active-member-role"
@@ -1172,9 +1162,9 @@ To get the current role member of the active organization you can use the `organ
   ```
 </APIMethod>
 
-### Add Member
+### 添加成员
 
-If you want to add a member directly to an organization without sending an invitation, you can use the `addMember` function which can only be invoked on the server.
+如果想直接添加成员到组织（不发送邀请），可以使用只能在服务器调用的 `addMember` 接口。
 
 <APIMethod
   path="/organization/add-member"
@@ -1184,28 +1174,28 @@ If you want to add a member directly to an organization without sending an invit
 ```ts
 type addMember = {
     /**
-     * The user ID which represents the user to be added as a member. If `null` is provided, then it's expected to provide session headers. 
+     * 要添加的用户 ID。如果为 `null`，则需传递会话头。 
      */
     userId?: string | null = "user-id"
     /**
-     * The role(s) to assign to the new member. 
+     * 指定赋予成员的角色。 
      */
     role: string | string[] = ["admin", "sale"]
     /**
-     * An optional organization ID to pass. If not provided, will default to the user's active organization. 
+     * 可选组织 ID。默认使用活跃组织。 
      */
     organizationId?: string = "org-id"
     /**
-     * An optional team ID to add the member to. 
+     * 可选团队 ID。 
      */
     teamId?: string = "team-id"
 }
 ```
 </APIMethod>
 
-### Leave Organization
+### 退出组织
 
-To leave organization you can use `organization.leave` function. This function will remove the current user from the organization.
+调用 `organization.leave` 函数，让当前用户退出组织。
 
 <APIMethod
   path="/organization/leave"
@@ -1216,64 +1206,63 @@ To leave organization you can use `organization.leave` function. This function w
 ```ts
 type leaveOrganization = {
     /**
-     * The organization ID for the member to leave. 
+     * 要退出的组织 ID。 
      */
     organizationId: string = "organization-id"
 }
 ```
 </APIMethod>
 
-## Access Control
+## 访问控制
 
-The organization plugin provides a very flexible access control system. You can control the access of the user based on the role they have in the organization. You can define your own set of permissions based on the role of the user.
+组织插件提供了灵活的访问控制系统。您可以根据用户在组织中的角色来控制其访问权限。您可以基于角色定义自己的权限集。
 
-### Roles
+### 角色
 
-By default, there are three roles in the organization:
+默认情况下，组织中有三种角色：
 
-`owner`: The user who created the organization by default. The owner has full control over the organization and can perform any action.
+`owner`（所有者）：默认创建组织的用户，拥有组织的完全控制权，并可执行任何操作。
 
-`admin`: Users with the admin role have full control over the organization except for deleting the organization or changing the owner.
+`admin`（管理员）：拥有除删除组织和更改所有者外的完全控制权。
 
-`member`: Users with the member role have limited control over the organization. They can only read organization data and have no permissions to create, update, or delete resources.
+`member`（成员）：权限受限，仅能读取组织数据，无权限创建、更新或删除资源。
 
 <Callout>
-  A user can have multiple roles. Multiple roles are stored as string separated
-  by comma (",").
+  用户可拥有多个角色。多个角色以逗号（","）分隔的字符串存储。
 </Callout>
 
-### Permissions
+### 权限
 
-By default, there are three resources, and these have two to three actions.
+默认定义了三个资源，每个资源具有两到三个操作。
 
-**organization**:
+**organization**：
 
     `update` `delete`
 
-**member**:
+**member**：
 
     `create` `update` `delete`
 
-**invitation**:
+**invitation**：
 
     `create` `cancel`
 
-The owner has full control over all the resources and actions. The admin has full control over all the resources except for deleting the organization or changing the owner. The member has no control over any of those actions other than reading the data.
+所有者拥有所有资源和操作的完整控制。管理员拥有除删除组织和更改所有者权之外的完整控制。成员仅有读取权限。
 
-### Custom Permissions
+### 自定义权限
 
-The plugin provides an easy way to define your own set of permissions for each role.
+插件提供了简单的方式，为每个角色定义自定义权限。
 
 <Steps>
     <Step>
-    #### Create Access Control
+    #### 创建访问控制
 
-    You first need to create access controller by calling `createAccessControl` function and passing the statement object. The statement object should have the resource name as the key and the array of actions as the value.
+    先调用 `createAccessControl` 函数并传入声明对象。声明对象以资源名作为key，动作数组作为值。
     ```ts title="permissions.ts"
     import { createAccessControl } from "better-auth/plugins/access";
 
     /**
-     * make sure to use `as const` so typescript can infer the type correctly
+     * 请使用 `as const` 以便 TypeScript 正确推断类型。
      */
     const statement = { // [!code highlight]
         project: ["create", "share", "update", "delete"], // [!code highlight]
@@ -1283,14 +1272,14 @@ The plugin provides an easy way to define your own set of permissions for each r
     ```
     
     <Callout type="warning">
-      To keep bundle sizes small, make sure to import from `better-auth/plugins/access` instead of `better-auth/plugins`.
+      为减小包体积，请从 `better-auth/plugins/access` 导入，而非 `better-auth/plugins`。
     </Callout>
     </Step>
 
     <Step>
-    #### Create Roles
+    #### 创建角色
 
-    Once you have created the access controller you can create roles with the permissions you have defined.
+    创建访问控制后，可以根据权限声明创建角色。
 
     ```ts title="permissions.ts"
     import { createAccessControl } from "better-auth/plugins/access";
@@ -1319,7 +1308,7 @@ The plugin provides an easy way to define your own set of permissions for each r
     }); // [!code highlight]
     ```
 
-      When you create custom roles for existing roles, the predefined permissions for those roles will be overridden. To add the existing permissions to the custom role, you need to import `defaultStatements` and merge it with your new statement, plus merge the roles' permissions set with the default roles.
+      创建自定义角色时会覆盖预设权限。若想保留原有权限，需要引入 `defaultStatements`，并将其和新声明、角色权限合并。
 
     ```ts title="permissions.ts"
     import { createAccessControl } from "better-auth/plugins/access";
@@ -1341,9 +1330,9 @@ The plugin provides an easy way to define your own set of permissions for each r
     </Step>
 
     <Step>
-        #### Pass Roles to the Plugin
+        #### 将角色传递给插件
 
-        Once you have created the roles you can pass them to the organization plugin both on the client and the server.
+        创建角色后，将它们同时传给服务端和客户端的组织插件。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -1365,7 +1354,7 @@ The plugin provides an easy way to define your own set of permissions for each r
         });
         ```
 
-        You also need to pass the access controller and the roles to the client plugin.
+        同时也需传递访问控制和角色给客户端插件。
 
         ```ts title="auth-client"
         import { createAuthClient } from "better-auth/client"
@@ -1390,11 +1379,11 @@ The plugin provides an easy way to define your own set of permissions for each r
 
 </Steps>
 
-### Access Control Usage
+### 访问控制使用
 
-**Has Permission**:
+**权限检查**：
 
-You can use the `hasPermission` action provided by the `api` to check the permission of the user.
+可调用 `api` 提供的 `hasPermission` 方法检测用户权限。
 
 ```ts title="has-permission.ts"
 import { auth } from "@/lib/auth"
@@ -1403,24 +1392,24 @@ await auth.api.hasPermission({
   headers: await headers(),
   body: {
     permissions: {
-      project: ["create"], // This must match the structure in your access control
+      project: ["create"], // 需与访问控制结构一致
     },
   },
 });
 
-// You can also check multiple resource permissions at the same time
+// 可同时检查多个资源权限
 await auth.api.hasPermission({
   headers: await headers(),
   body: {
     permissions: {
-      project: ["create"], // This must match the structure in your access control
+      project: ["create"],
       sale: ["create"],
     },
   },
 });
 ```
 
-If you want to check the permission of the user on the client from the server you can use the `hasPermission` function provided by the client.
+若需要在客户端从服务器检查权限，可使用客户端的 `hasPermission`。
 
 ```ts title="auth-client.ts"
 const canCreateProject = await authClient.organization.hasPermission({
@@ -1429,7 +1418,7 @@ const canCreateProject = await authClient.organization.hasPermission({
   },
 });
 
-// You can also check multiple resource permissions at the same time
+// 同时检查多个权限
 const canCreateProjectAndCreateSale =
   await authClient.organization.hasPermission({
     permissions: {
@@ -1439,9 +1428,9 @@ const canCreateProjectAndCreateSale =
   });
 ```
 
-**Check Role Permission**:
+**检查角色权限**：
 
-Once you have defined the roles and permissions to avoid checking the permission from the server you can use the `checkRolePermission` function provided by the client.
+定义好角色权限后，客户端可用 `checkRolePermission` 方法同步检查权限，避免每次请求服务器。
 
 ```ts title="auth-client.ts"
 import { authClient } from "@/lib/auth-client"
@@ -1453,7 +1442,7 @@ const canCreateProject = authClient.organization.checkRolePermission({
   role: "admin",
 });
 
-// You can also check multiple resource permissions at the same time
+// 同时检查多个权限
 const canCreateProjectAndCreateSale =
   authClient.organization.checkRolePermission({
     permissions: {
@@ -1465,23 +1454,21 @@ const canCreateProjectAndCreateSale =
 ```
 
 <Callout type="warn">
-  This will not include any dynamic roles as everything is ran synchronously on the client side.
-  Please use the [hasPermission](#access-control-usage) APIs to include checks for any dynamic roles & permissions.
+  该方法不会包含任何动态角色，因其是客户端同步执行。
+  如需包含动态角色权限，请使用 [hasPermission](#access-control-usage) API。
 </Callout>
 
 ---
 
-## Dynamic Access Control 
+## 动态访问控制 
 
-Dynamic access control allows you to create roles at runtime for organizations. This is achieved by storing the
-created roles and permissions associated with an organization in a database table.
+动态访问控制允许您在运行时为组织创建角色。通过在数据库表中存储组织关联的角色及权限实现。
 
-### Enabling Dynamic Access Control
+### 启用动态访问控制
 
-To enable dynamic access control, pass the `dynamicAccessControl` configuration option with `enabled` set to `true` to both server and client plugins.
+要启用动态访问控制，请向服务器和客户端插件传入 `dynamicAccessControl` 配置项，设置 `enabled: true`。
 
-Ensure you have pre-defined an `ac` instance on the server auth plugin.
-This is important as this is how we can infer the permissions that are available for use.
+确保服务器端的 `ac` 实例已预定义，因其用于推断可用权限。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -1491,7 +1478,7 @@ import { ac } from "@/auth/permissions";
 export const auth = betterAuth({
     plugins: [
         organization({ // [!code highlight]
-            ac, // Must be defined in order for dynamic access control to work // [!code highlight]
+            ac, // 必须定义以支持动态访问控制 // [!code highlight]
             dynamicAccessControl: { // [!code highlight]
               enabled: true, // [!code highlight]
             }, // [!code highlight]
@@ -1516,22 +1503,22 @@ export const authClient = createAuthClient({
 ```
 
 <Callout>
-  This will require you to run migrations to add the new `organizationRole` table to the database.
+  启用后，需要迁移新增数据库中 `organizationRole` 表。
 </Callout>
 
 
 <Callout type="warn">
-  The `authClient.organization.checkRolePermission` function will not include any dynamic roles as everything is ran synchronously on the client side.
-  Please use the [hasPermission](#access-control-usage) APIs to include checks for any dynamic roles.
+  `authClient.organization.checkRolePermission` 函数仍不会包含动态角色，因其是客户端同步执行。
+  请使用 [hasPermission](#access-control-usage) API 以包含动态角色权限检测。
 </Callout>
 
-### Creating a role
+### 创建角色
 
-To create a new role for an organization at runtime, you can use the `createRole` function.
+运行时为组织创建新角色，可调用 `createRole`。
 
-Only users with roles which contain the `ac` resource with the `create` permission can create a new role.
-By default, only the `admin` and `owner` roles have this permission. You also cannot add permissions that your
-current role in that organization can't already access.
+仅具备 `ac` 资源中 `create` 权限的角色可创建新角色。
+默认只有管理员和所有者拥有该权限。
+且无法添加超出自身权限的权限。
 
 <APIMethod
   path="/organization/create-role"
@@ -1540,35 +1527,33 @@ current role in that organization can't already access.
   noResult
 >
 ```ts
-// To use custom resources or permissions,
-// make sure they are defined in the `ac` instance of your organization config.
+// 使用自定义资源或权限时，确保在组织的 `ac` 配置中定义。
 const permission = {
   project: ["create", "update", "delete"]
 }
 
 type createOrgRole = {
     /**
-     * A unique name of the role to create.
+     * 角色名，需唯一。
      */
     role: string = "my-unique-role"
     /**
-     * The permissions to assign to the role.
+     * 赋予角色的权限。
      */
     permission?: Record<string, string[]> = permission,
     /**
-     * The organization ID which the role will be created in. Defaults to the active organization.
+     * 创建角色的组织 ID，默认活跃组织。
      */
     organizationId?: string = "organization-id"
 }
 ```
 </APIMethod>
 
-Now you can freely call [`updateMemberRole`](#update-member-role) to update the role of a member with your newly created role!
+之后可随意调用 [`updateMemberRole`](#update-member-role)，将新角色赋予成员！
 
-### Deleting a role
+### 删除角色
 
-To delete a role, you can use the `deleteRole` function, then provide either a `roleName` or `roleId` parameter along
-with the `organizationId` parameter.
+删除角色时调用 `deleteRole`，需提供 `roleName` 或 `roleId` 以及 `organizationId`。
 
 <APIMethod
   path="/organization/delete-role"
@@ -1579,25 +1564,25 @@ with the `organizationId` parameter.
 ```ts
 type deleteOrgRole = {
     /**
-     * The name of the role to delete. Alternatively, you can pass a `roleId` parameter instead.
+     * 角色名，或使用 `roleId` 替代。
      */
     roleName?: string = "my-role"
     /**
-     * The id of the role to delete. Alternatively, you can pass a `roleName` parameter instead.
+     * 角色 ID，或使用 `roleName` 替代。
      */
     roleId?: string = "role-id"
     /**
-     * The organization ID which the role will be deleted in. Defaults to the active organization.
+     * 删除角色的组织 ID，默认活跃组织。
      */
     organizationId?: string = "organization-id"
 }
 ```
 </APIMethod>
 
-### Listing roles
+### 列出角色
 
-To list roles, you can use the `listOrgRoles` function.
-This requires the `ac` resource with the `read` permission for the member to be able to list roles.
+调用 `listOrgRoles` 列出组织内的所有角色。
+该操作需要成员具有 `ac` 资源中的 `read` 权限。
 
 <APIMethod
   path="/organization/list-roles"
@@ -1608,18 +1593,17 @@ This requires the `ac` resource with the `read` permission for the member to be 
 ```ts
 type listOrgRoles = {
     /**
-     * The organization ID which the roles are under to list. Defaults to the user's active organization. 
+     * 组织 ID，默认活跃组织。 
      */
     organizationId?: string = "organization-id"
 }
 ```
 </APIMethod>
 
-### Getting a specific role
+### 获取指定角色
 
-To get a specific role, you can use the `getOrgRole` function and pass either a `roleName` or `roleId` parameter.
-This requires the `ac` resource with the `read` permission for the member to be able to get a role.
-
+调用 `getOrgRole` 获取特定角色，需传入 `roleName` 或 `roleId`。
+该操作需要成员具有 `ac` 资源中的 `read` 权限。
 
 <APIMethod
   path="/organization/get-role"
@@ -1630,25 +1614,24 @@ This requires the `ac` resource with the `read` permission for the member to be 
 ```ts
 type getOrgRole = {
     /**
-     * The name of the role to get. Alternatively, you can pass a `roleId` parameter instead.
+     * 角色名，或使用 `roleId` 替代。
      */
     roleName?: string = "my-role"
     /**
-     * The id of the role to get. Alternatively, you can pass a `roleName` parameter instead.
+     * 角色 ID，或使用 `roleName` 替代。
      */
     roleId?: string = "role-id"
     /**
-     * The organization ID from which the role will be retrieved. Defaults to the active organization.
+     * 组织 ID，默认活跃组织。
      */
     organizationId?: string = "organization-id"
 }
 ```
 </APIMethod>
 
-### Updating a role
+### 更新角色
 
-To update a role, you can use the `updateOrgRole` function and pass either a `roleName` or `roleId` parameter.
-
+调用 `updateOrgRole` 更新角色，需传入 `roleName` 或 `roleId`。
 
 <APIMethod
   path="/organization/update-role"
@@ -1659,27 +1642,27 @@ To update a role, you can use the `updateOrgRole` function and pass either a `ro
 ```ts
 type updateOrgRole = {
     /**
-     * The name of the role to update. Alternatively, you can pass a `roleId` parameter instead.
+     * 角色名，或使用 `roleId` 替代。
      */
     roleName?: string = "my-role"
     /**
-     * The id of the role to update. Alternatively, you can pass a `roleName` parameter instead.
+     * 角色 ID，或使用 `roleName` 替代。
      */
     roleId?: string = "role-id"
     /**
-     * The organization ID which the role will be updated in. Defaults to the active organization.
+     * 组织 ID，默认活跃组织。
      */
     organizationId?: string = "organization-id"
     /**
-     * The data which will be updated
+     * 待更新数据
     */
     data: {
       /**
-       * Optionally update the permissions of the role.
+       * 可选更新角色权限。
        */
       permission?: Record<string, string[]> = { project: ["create", "update", "delete"] }
       /**
-       * Optionally update the name of the role.
+       * 可选更新角色名。
        */
       roleName?: string = "my-new-role"
     }
@@ -1688,13 +1671,13 @@ type updateOrgRole = {
 </APIMethod>
 
 
-### Configuration Options
+### 配置选项
 
-Below is a list of options that can be passed to the `dynamicAccessControl` object.
+以下是可传递给 `dynamicAccessControl` 对象的选项列表。
 
 #### `enabled`
 
-This option is used to enable or disable dynamic access control. By default, it is disabled.
+启用或禁用动态访问控制，默认禁用。
 
 ```ts
 organization({
@@ -1706,9 +1689,9 @@ organization({
 
 #### `maximumRolesPerOrganization`
 
-This option is used to limit the number of roles that can be created for an organization.
+限制每个组织可创建角色数量。
 
-By default, the maximum number of roles that can be created for an organization is infinite.
+默认无限制。
 
 ```ts
 organization({
@@ -1718,7 +1701,7 @@ organization({
 })
 ```
 
-You can also pass a function that returns a number.
+也可以传入返回数字的函数。
 
 ```ts
 organization({
@@ -1731,33 +1714,33 @@ organization({
 })
 ```
 
-### Additional Fields
+### 额外字段
 
-To add additional fields to the `organizationRole` table, you can pass the `additionalFields` configuration option to the `organization` plugin.
+要在 `organizationRole` 表中添加额外字段，可传递 `additionalFields` 配置项。
 
 ```ts
 organization({
   schema: {
     organizationRole: {
       additionalFields: {
-        // Role colors!
+        // 角色颜色！
         color: {
           type: "string",
           defaultValue: "#ffffff",
         },
-        //... other fields
+        //... 其他字段
       },
     },
   },
 })
 ```
 
-Then, if you don't already use `inferOrgAdditionalFields` to infer the additional fields, you can use it to infer the additional fields.
+若未使用 `inferOrgAdditionalFields` 推断额外字段，可以使用它推断。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
 import { organizationClient, inferOrgAdditionalFields } from "better-auth/client/plugins"
-import type { auth } from "@/lib/auth" // import the auth object type only
+import type { auth } from "@/lib/auth" // 仅导入 auth 对象类型
 
 export const authClient = createAuthClient({
     plugins: [
@@ -1767,7 +1750,7 @@ export const authClient = createAuthClient({
     ]
 })
 ```
-Otherwise, you can pass the schema values directly, the same way you do on the org plugin in the server.
+否则，可以直接传递 schema 值，和服务器端插件相同。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -1794,13 +1777,13 @@ export const authClient = createAuthClient({
 
 ---
 
-## Teams
+## 团队
 
-Teams allow you to group members within an organization. The teams feature provides additional organization structure and can be used to manage permissions at a more granular level.
+团队允许您在组织内对成员进行分组。团队功能提供了额外的组织结构，可用于更细粒度地管理权限。
 
-### Enabling Teams
+### 启用团队
 
-To enable teams, pass the `teams` configuration option to both server and client plugins:
+传递 `teams` 配置项给服务器和客户端插件启用团队：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -1811,8 +1794,8 @@ export const auth = betterAuth({
     organization({
       teams: {
         enabled: true,
-        maximumTeams: 10, // Optional: limit teams per organization
-        allowRemovingAllTeams: false, // Optional: prevent removing the last team
+        maximumTeams: 10, // 可选：限制团队数量
+        allowRemovingAllTeams: false, // 可选：禁止移除最后一个团队
       },
     }),
   ],
@@ -1834,30 +1817,30 @@ export const authClient = createAuthClient({
 });
 ```
 
-### Managing Teams
+### 团队管理
 
-#### Create Team
+#### 创建团队
 
-Create a new team within an organization:
+在组织内创建新团队：
 
 <APIMethod path="/organization/create-team" method="POST">
 ```ts
 type createTeam = {
     /**
-     * The name of the team. 
+     * 团队名称。 
      */
     name: string = "my-team"
     /**
-     * The organization ID which the team will be created in. Defaults to the active organization. 
+     * 团队所属组织 ID，默认活跃组织。 
      */
     organizationId?: string = "organization-id"
 }
 ```
 </APIMethod>
 
-#### List Teams
+#### 列出团队
 
-Get all teams in an organization:
+获取组织内所有团队：
 
 <APIMethod
   path="/organization/list-teams"
@@ -1867,16 +1850,16 @@ Get all teams in an organization:
 ```ts
 type listOrganizationTeams = {
     /**
-    * The organization ID which the teams are under to list. Defaults to the user's active organization. 
+    * 组织 ID，默认活跃组织。 
     */
     organizationId?: string = "organization-id"
 }
 ```
 </APIMethod>
 
-#### Update Team
+#### 更新团队
 
-Update a team's details:
+更新团队详情：
 
 <APIMethod
   path="/organization/update-team"
@@ -1886,27 +1869,27 @@ Update a team's details:
 ```ts
 type updateTeam = {
     /**
-     * The ID of the team to be updated. 
+     * 要更新的团队 ID。 
      */
     teamId: string = "team-id"
     /**
-     * A partial object containing options for you to update.
+     * 部分更新数据。
      */
     data: {
         /**
-         * The name of the team to be updated.
+         * 团队名称。
          */
         name?: string = "My new team name"
         /**
-         * The organization ID which the team falls under.
+         * 归属组织 ID。
          */
         organizationId?: string = "My new organization ID for this team"
         /**
-         * The timestamp of when the team was created.
+         * 创建时间。
          */
         createdAt?: Date = new Date()
         /**
-         * The timestamp of when the team was last updated.
+         * 更新时间。
          */
         updatedAt?: Date = new Date()
     }
@@ -1914,43 +1897,43 @@ type updateTeam = {
 ```
 </APIMethod>
 
-#### Remove Team
+#### 移除团队
 
-Delete a team from an organization:
+从组织删除团队：
 
 <APIMethod path="/organization/remove-team" method="POST">
 ```ts
 type removeTeam = {
     /**
-     * The team ID of the team to remove. 
+     * 要移除的团队 ID。 
      */
     teamId: string = "team-id"
     /**
-     * The organization ID which the team falls under. If not provided, it will default to the user's active organization. 
+     * 所属组织 ID，默认活跃组织。 
      */
     organizationId?: string = "organization-id"
 }
 ```
 </APIMethod>
 
-#### Set Active Team
+#### 设置活跃团队
 
-Sets the given team as the current active team. If `teamId` is `null` the current active team is unset.
+设置当前活跃团队；`teamId` 为 `null` 时取消活跃团队。
 
 <APIMethod path="/organization/set-active-team" method="POST" requireSession>
 ```ts
 type setActiveTeam = {
     /**
-     * The team ID of the team to set as the current active team.
+     * 要设置为活跃的团队 ID。
      */
     teamId?: string = "team-id"
 }
 ```
 </APIMethod>
 
-#### List User Teams
+#### 列出用户团队
 
-List all teams that the current user is a part of.
+列出当前用户所属的所有团队。
 
 <APIMethod path="/organization/list-user-teams" method="GET" requireSession>
   ```ts 
@@ -1959,109 +1942,109 @@ List all teams that the current user is a part of.
   ```
 </APIMethod>
 
-#### List Team Members
+#### 列出团队成员
 
-List the members of the given team.
+列出指定团队的成员。
 
 <APIMethod path="/organization/list-team-members" method="POST" forceAsQuery requireSession>
 ```ts
 type listTeamMembers = {
     /**
-     * The team whose members we should return. If this is not provided the members of the current active team get returned.
+     * 团队 ID。不传时返回活跃团队成员。
      */
     teamId?: string = "team-id"
 }
 ```
 </APIMethod>
 
-#### Add Team Member
+#### 添加团队成员
 
-Add a member to a team.
+添加成员到团队。
 
 <APIMethod path="/organization/add-team-member" method="POST" requireSession>
 ```ts
 type addTeamMember = {
     /**
-     * The team the user should be a member of.
+     * 所属团队。
      */
     teamId: string = "team-id"
     /**
-     * The user ID which represents the user to be added as a member.
+     * 用户 ID。
      */
     userId: string = "user-id"
 }
 ```
 </APIMethod>
 
-#### Remove Team Member
+#### 移除团队成员
 
-Remove a member from a team.
+从团队移除成员。
 
 <APIMethod path="/organization/remove-team-member" method="POST" requireSession>
 ```ts
 type removeTeamMember = {
     /**
-     * The team the user should be removed from.
+     * 所属团队。
      */
     teamId: string = "team-id"
     /**
-     * The user which should be removed from the team.
+     * 用户 ID。
      */
     userId: string = "user-id"
 }
 ```
 </APIMethod>
 
-### Team Permissions
+### 团队权限
 
-Teams follow the organization's permission system. To manage teams, users need the following permissions:
+团队使用组织权限体系。管理团队需要以下权限：
 
-- `team:create` - Create new teams
-- `team:update` - Update team details
-- `team:delete` - Remove teams
+- `team:create` - 创建团队
+- `team:update` - 更新团队
+- `team:delete` - 删除团队
 
-By default:
+默认情况下：
 
-- Organization owners and admins can manage teams
-- Regular members cannot create, update, or delete teams
+- 组织所有者和管理员可以管理团队
+- 普通成员无管理权限
 
-### Team Configuration Options
+### 团队配置选项
 
-The teams feature supports several configuration options:
+团队功能支持以下配置：
 
-- `maximumTeams`: Limit the number of teams per organization
+- `maximumTeams`: 限制每组织最大团队数
 
   ```ts
   teams: {
     enabled: true,
-    maximumTeams: 10 // Fixed number
+    maximumTeams: 10 // 固定数目
     // OR
     maximumTeams: async ({ organizationId, session }, ctx) => {
-      // Dynamic limit based on organization plan
+      // 基于组织计划动态限制
       const plan = await getPlan(organizationId)
       return plan === 'pro' ? 20 : 5
     },
-    maximumMembersPerTeam: 10 // Fixed number
+    maximumMembersPerTeam: 10 // 固定数目
     // OR
     maximumMembersPerTeam: async ({ teamId, session, organizationId }, ctx) => {
-      // Dynamic limit based on team plan
+      // 基于团队计划动态限制
       const plan = await getPlan(organizationId, teamId)
       return plan === 'pro' ? 50 : 10
     },
   }
   ```
 
-- `allowRemovingAllTeams`: Control whether the last team can be removed
+- `allowRemovingAllTeams`: 是否允许移除最后一个团队
   ```ts
   teams: {
     enabled: true,
-    allowRemovingAllTeams: false // Prevent removing the last team
+    allowRemovingAllTeams: false // 禁止移除最后一个团队
   }
   ```
 
-### Team Members
+### 团队成员
 
-When inviting members to an organization, you can specify a team:
+邀请成员加入组织时可指定团队：
 
 ```ts
 await authClient.organization.inviteMember({
@@ -2071,371 +2054,371 @@ await authClient.organization.inviteMember({
 });
 ```
 
-The invited member will be added to the specified team upon accepting the invitation.
+用户接受邀请后会加入指定团队。
 
-### Database Schema
+### 数据库模式
 
-When teams are enabled, new `team` and `teamMember` tables are added to the database.
+启用团队时，数据库中新增 `team` 和 `teamMember` 表。
 
-Table Name: `team`
+表名：`team`
 
 <DatabaseTable
   fields={[
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each team",
+      description: "团队唯一标识",
       isPrimaryKey: true,
     },
     {
       name: "name",
       type: "string",
-      description: "The name of the team",
+      description: "团队名称",
     },
     {
       name: "organizationId",
       type: "string",
-      description: "The ID of the organization",
+      description: "所属组织 ID",
       isForeignKey: true,
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "Timestamp of when the team was created",
+      description: "团队创建时间",
     },
     {
       name: "updatedAt",
       type: "Date",
       isOptional: true,
-      description: "Timestamp of when the team was created",
+      description: "更新时间",
     },
   ]}
 />
 
-Table Name: `teamMember`
+表名：`teamMember`
 
 <DatabaseTable
   fields={[
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each team member",
+      description: "团队成员唯一标识",
       isPrimaryKey: true,
     },
     {
       name: "teamId",
       type: "string",
-      description: "Unique identifier for each team",
+      description: "所属团队 ID",
       isForeignKey: true,
     },
     {
       name: "userId",
       type: "string",
-      description: "The ID of the user",
+      description: "用户 ID",
       isForeignKey: true,
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "Timestamp of when the team member was created",
+      description: "团队成员加入时间",
     },
   ]}
 />
 
-## Schema
+## 模式
 
-The organization plugin adds the following tables to the database:
+组织插件向数据库添加以下表：
 
-### Organization
+### 组织
 
-Table Name: `organization`
+表名：`organization`
 
 <DatabaseTable
   fields={[
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each organization",
+      description: "组织唯一标识",
       isPrimaryKey: true,
     },
     {
       name: "name",
       type: "string",
-      description: "The name of the organization",
+      description: "组织名称",
     },
     {
       name: "slug",
       type: "string",
-      description: "The slug of the organization",
+      description: "组织短名称",
     },
     {
       name: "logo",
       type: "string",
-      description: "The logo of the organization",
+      description: "组织徽标",
       isOptional: true,
     },
     {
       name: "metadata",
       type: "string",
-      description: "Additional metadata for the organization",
+      description: "组织额外元数据",
       isOptional: true,
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "Timestamp of when the organization was created",
+      description: "组织创建时间",
     },
   ]}
 />
 
-### Member
+### 成员
 
-Table Name: `member`
+表名：`member`
 
 <DatabaseTable
   fields={[
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each member",
+      description: "成员唯一标识",
       isPrimaryKey: true,
     },
     {
       name: "userId",
       type: "string",
-      description: "The ID of the user",
+      description: "用户 ID",
       isForeignKey: true,
     },
     {
       name: "organizationId",
       type: "string",
-      description: "The ID of the organization",
+      description: "组织 ID",
       isForeignKey: true,
     },
     {
       name: "role",
       type: "string",
-      description: "The role of the user in the organization",
+      description: "用户在组织中的角色",
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "Timestamp of when the member was added to the organization",
+      description: "成员加入组织时间",
     },
   ]}
 />
 
-### Invitation
+### 邀请
 
-Table Name: `invitation`
+表名：`invitation`
 
 <DatabaseTable
   fields={[
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each invitation",
+      description: "邀请唯一标识",
       isPrimaryKey: true,
     },
     {
       name: "email",
       type: "string",
-      description: "The email address of the user",
+      description: "用户邮箱地址",
     },
     {
       name: "inviterId",
       type: "string",
-      description: "The ID of the inviter",
+      description: "邀请者 ID",
       isForeignKey: true,
     },
     {
       name: "organizationId",
       type: "string",
-      description: "The ID of the organization",
+      description: "组织 ID",
       isForeignKey: true,
     },
     {
       name: "role",
       type: "string",
-      description: "The role of the user in the organization",
+      description: "用户在组织中的角色",
     },
     {
       name: "status",
       type: "string",
-      description: "The status of the invitation",
+      description: "邀请状态",
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "Timestamp of when the invitation was created"
+      description: "邀请创建时间"
     },
     {
       name: "expiresAt",
       type: "Date",
-      description: "Timestamp of when the invitation expires",
+      description: "邀请过期时间",
     },
   ]}
 />
 
-If teams are enabled, you need to add the following fields to the invitation table:
+启用团队时，需要在邀请表添加如下字段：
 
 <DatabaseTable
   fields={[
     {
       name: "teamId",
       type: "string",
-      description: "The ID of the team",
+      description: "团队 ID",
       isOptional: true,
     },
   ]}
 />
 
-### Session
+### 会话
 
-Table Name: `session`
+表名：`session`
 
-You need to add two more fields to the session table to store the active organization ID and the active team ID.
+需向会话表中添加两个字段，用于存储活跃组织 ID 和活跃团队 ID。
 
 <DatabaseTable
   fields={[
     {
       name: "activeOrganizationId",
       type: "string",
-      description: "The ID of the active organization",
+      description: "活跃组织 ID",
       isOptional: true,
     },
     {
       name: "activeTeamId",
       type: "string",
-      description: "The ID of the active team",
+      description: "活跃团队 ID",
       isOptional: true,
     },
   ]}
 />
 
-### Organization Role (optional)
+### 组织角色（可选）
 
-Table Name: `organizationRole`
+表名：`organizationRole`
 
 <DatabaseTable
   fields={[
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each organization role",
+      description: "组织角色唯一标识",
     },
     {
       name: "organizationId",
       type: "string",
-      description: "The ID of the organization",
+      description: "组织 ID",
       isForeignKey: true,
     },
     {
       name: "role",
       type: "string",
-      description: "The name of the role",
+      description: "角色名",
     },
     {
       name: "permission",
       type: "string",
-      description: "The permission of the role",
+      description: "角色权限",
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "Timestamp of when the organization role was created",
+      description: "创建时间",
     },
     {
       name: "updatedAt",
       type: "Date",
-      description: "Timestamp of when the organization role was updated",
+      description: "更新时间",
     },
   ]}
 />
 
-### Teams (optional)
+### 团队（可选）
 
-Table Name: `team`
+表名：`team`
 
 <DatabaseTable
   fields={[
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each team",
+      description: "团队唯一标识",
       isPrimaryKey: true,
     },
     {
       name: "name",
       type: "string",
-      description: "The name of the team",
+      description: "团队名称",
     },
     {
       name: "organizationId",
       type: "string",
-      description: "The ID of the organization",
+      description: "组织 ID",
       isForeignKey: true,
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "Timestamp of when the team was created",
+      description: "创建时间",
     },
     {
       name: "updatedAt",
       type: "Date",
       isOptional: true,
-      description: "Timestamp of when the team was created",
+      description: "更新时间",
     },
   ]}
 />
 
-Table Name: `teamMember`
+表名：`teamMember`
 
 <DatabaseTable
   fields={[
     {
       name: "id",
       type: "string",
-      description: "Unique identifier for each team member",
+      description: "团队成员唯一标识",
       isPrimaryKey: true,
     },
     {
       name: "teamId",
       type: "string",
-      description: "Unique identifier for each team",
+      description: "团队 ID",
       isForeignKey: true,
     },
     {
       name: "userId",
       type: "string",
-      description: "The ID of the user",
+      description: "用户 ID",
       isForeignKey: true,
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "Timestamp of when the team member was created",
+      description: "成员加入时间",
     },
   ]}
 />
 
-Table Name: `invitation`
+表名：`invitation`
 
 <DatabaseTable
   fields={[
     {
       name: "teamId",
       type: "string",
-      description: "The ID of the team",
+      description: "团队 ID",
       isOptional: true,
     },
   ]}
 />
 
-### Customizing the Schema
+### 自定义模式
 
-To change the schema table name or fields, you can pass `schema` option to the organization plugin.
+若需更改表名或字段，可传递 `schema` 选项给组织插件。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -2446,12 +2429,12 @@ const auth = betterAuth({
     organization({
       schema: {
         organization: {
-          modelName: "organizations", //map the organization table to organizations
+          modelName: "organizations", // 将 organization 表映射为 organizations
           fields: {
-            name: "title", //map the name field to title
+            name: "title", // 将 name 字段映射为 title
           },
           additionalFields: {
-            // Add a new field to the organization table
+            // 为组织表添加新字段
             myCustomField: {
               type: "string",
               input: true,
@@ -2465,11 +2448,11 @@ const auth = betterAuth({
 });
 ```
 
-#### Additional Fields
+#### 额外字段
 
-Starting with [Better Auth v1.3](https://github.com/better-auth/better-auth/releases/tag/v1.3.0), you can easily add custom fields to the `organization`, `invitation`, `member`, and `team` tables.
+从 [Better Auth v1.3](https://github.com/better-auth/better-auth/releases/tag/v1.3.0) 起，您可轻松为 `organization`、`invitation`、`member` 和 `team` 表添加自定义字段。
 
-When you add extra fields to a model, the relevant API endpoints will automatically accept and return these new properties. For instance, if you add a custom field to the `organization` table, the `createOrganization` endpoint will include this field in its request and response payloads as needed.
+添加额外字段后，相应 API 端点会自动接收和返回这些字段。比如在 `organization` 表中添加字段，`createOrganization` 接口会支持请求体和响应中包含该字段。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -2495,7 +2478,7 @@ const auth = betterAuth({
 });
 ```
 
-For inferring the additional fields, you can use the `inferOrgAdditionalFields` function. This function will infer the additional fields from the auth object type.
+若要推断额外字段，可使用 `inferOrgAdditionalFields` 函数。它会根据 auth 对象类型推断。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client";
@@ -2503,7 +2486,7 @@ import {
   inferOrgAdditionalFields,
   organizationClient,
 } from "better-auth/client/plugins";
-import type { auth } from "@/lib/auth" // import the auth object type only
+import type { auth } from "@/lib/auth" // 仅导入 auth 类型
 
 const client = createAuthClient({
   plugins: [
@@ -2514,7 +2497,7 @@ const client = createAuthClient({
 });
 ```
 
-if you can't import the auth object type, you can use the `inferOrgAdditionalFields` function without the generic. This function will infer the additional fields from the schema object.
+若无法导入 auth 类型，也可传入 schema 对象来推断。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client";
@@ -2541,33 +2524,33 @@ const client = createAuthClient({
   ],
 });
 ```
-#### Example usage
+#### 示例用法
 ```ts
 await client.organization.create({
   name: "Test",
   slug: "test",
-  newField: "123", //this should be allowed
-  //@ts-expect-error - this field is not available
-  unavailableField: "123", //this should be not allowed
+  newField: "123", // 允许
+  //@ts-expect-error - 不存在字段
+  unavailableField: "123", // 不允许
 });
 ```
 
-## Options
+## 选项
 
-**allowUserToCreateOrganization**: `boolean` | `((user: User) => Promise<boolean> | boolean)` - A function that determines whether a user can create an organization. By default, it's `true`. You can set it to `false` to restrict users from creating organizations.
+**allowUserToCreateOrganization**: `boolean` | `((user: User) => Promise<boolean> | boolean)` - 决定用户是否可创建组织的函数。默认 `true`。设置 `false` 禁止创建。
 
-**organizationLimit**: `number` | `((user: User) => Promise<boolean> | boolean)` - The maximum number of organizations allowed for a user. By default, it's `unlimited`. You can set it to any number you want, or a function that returns a boolean. **If you provide a function, it should return `true` if the user has reached their organization limit (blocking further creation), or `false` if they have not reached their limit (allowing further creation).**
+**organizationLimit**: `number` | `((user: User) => Promise<boolean> | boolean)` - 用户允许创建的最大组织数。默认无限制。传函数时，函数应返回 `true` 表示已达限制（禁止新建），返回 `false` 表示未达限制（允许新建）。
 
-**creatorRole**: `admin | owner` - The role of the user who creates the organization. By default, it's `owner`. You can set it to `admin`.
+**creatorRole**: `admin | owner` - 创建组织的用户角色，默认 `owner`，可设为 `admin`。
 
-**membershipLimit**: `number` | `((user: User, organization: Organization) => Promise<number> | number)` - The maximum number of members allowed in an organization. By default, it's `100`. You can set it to any number you want or a function that returns the limit number.
+**membershipLimit**: `number` | `((user: User, organization: Organization) => Promise<number> | number)` - 组织内允许的最大成员数。默认 100。
 
-**sendInvitationEmail**: `async (data) => Promise<void>` - A function that sends an invitation email to the user.
+**sendInvitationEmail**: `async (data) => Promise<void>` - 发送邀请邮件的异步函数。
 
-**invitationExpiresIn** : `number` - How long the invitation link is valid for in seconds. By default, it's 48 hours (2 days).
+**invitationExpiresIn** : `number` - 邀请链接有效时间（秒），默认 48 小时（2 天）。
 
-**cancelPendingInvitationsOnReInvite**: `boolean` - Whether to cancel pending invitations if the user is already invited to the organization. By default, it's `false`.
+**cancelPendingInvitationsOnReInvite**: `boolean` - 如果用户已邀请，是否取消待处理邀请。默认 `false`。
 
-**invitationLimit**: `number` | `((user: User) => Promise<boolean> | boolean)` - The maximum number of invitations allowed for a user. By default, it's `100`. You can set it to any number you want or a function that returns a boolean.
+**invitationLimit**: `number` | `((user: User) => Promise<boolean> | boolean)` - 用户允许的最大邀请数。默认 100。
 
-**requireEmailVerificationOnInvitation**: `boolean` - Whether to require email verification before accepting or rejecting invitations. By default, it's `false`. When enabled, users must have verified their email address before they can accept or reject organization invitations.
+**requireEmailVerificationOnInvitation**: `boolean` - 是否要求用户在接受或拒绝邀请前先验证邮箱。默认 `false`。开启后，未验证邮箱的用户会被拒绝操作邀请。

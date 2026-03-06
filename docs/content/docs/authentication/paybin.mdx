@@ -1,26 +1,26 @@
 ---
 title: Paybin
-description: Paybin provider setup and usage.
+description: Paybin 提供者的设置和使用说明。
 ---
 
 <Steps>
     <Step>
-        ### Get your Paybin credentials
-        To use Paybin sign in, you need to create an OAuth 2.0 Client through your Paybin Portfolio application.
+        ### 获取您的 Paybin 凭证
+        要使用 Paybin 登录，您需要通过 Paybin Portfolio 应用创建一个 OAuth 2.0 客户端。
 
-        1. Log in to your [Paybin Portfolio](https://portfolio.paybin.io)
-        2. Navigate to Developer Settings or OAuth Applications section
-        3. Click "Create OAuth Application" or "New Application"
-        4. Fill in the required fields:
-           - **Application Name**: The name shown to users during authorization
-           - **Redirect URIs**: Set to `http://localhost:3000/api/auth/callback/paybin` for local development. For production, set it to `https://yourdomain.com/api/auth/callback/paybin`. If you change the base path of the auth routes, update the redirect URI accordingly.
+        1. 登录您的 [Paybin Portfolio](https://portfolio.paybin.io)
+        2. 进入开发者设置或 OAuth 应用页面
+        3. 点击“创建 OAuth 应用”或“新建应用”
+        4. 填写必填字段：
+           - **应用名称**：用户授权时显示的名称
+           - **重定向 URI**：本地开发环境设置为 `http://localhost:3000/api/auth/callback/paybin`，线上生产环境设置为 `https://yourdomain.com/api/auth/callback/paybin`。如果修改了认证路由的基础路径，请相应更新重定向 URI。
 
-        5. After creation, copy the Client ID and Client Secret to your environment variables. Keep these credentials secure.
+        5. 创建完成后，将客户端 ID 和客户端密钥复制到环境变量中，妥善保管这些凭证。
     </Step>
 
-  <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+    <Step>
+        ### 配置提供者
+        配置提供者时，需要导入该提供者并将其传入认证实例的 `socialProviders` 选项中。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -36,8 +36,8 @@ description: Paybin provider setup and usage.
         ```
     </Step>
     <Step>
-        ### Sign In with Paybin
-        To sign in with Paybin, you can use the `signIn.social` function provided by the client, where the `provider` should be set to `paybin`.
+        ### 使用 Paybin 登录
+        使用 Paybin 登录时，可以调用客户端提供的 `signIn.social` 函数，`provider` 参数应设置为 `paybin`。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
@@ -53,12 +53,12 @@ description: Paybin provider setup and usage.
 
 </Steps>
 
-## Additional Configuration
+## 其他配置
 
-### Scopes
-By default, Paybin provider requests the following scopes: `openid`, `email`, and `profile`. You can customize the scopes based on your application's needs.
+### 权限范围
+默认情况下，Paybin 提供者请求以下权限范围：`openid`、`email` 和 `profile`。您可以根据应用需求自定义请求的权限。
 
-For a complete list of available scopes and their descriptions, see the [Paybin OIDC Scopes Documentation](https://developers.paybin.io/knowledge-center/oidc#available-scopes).
+有关可用权限及其说明的完整列表，请参见 [Paybin OIDC 权限范围文档](https://developers.paybin.io/knowledge-center/oidc#available-scopes)。
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -72,10 +72,10 @@ export const auth = betterAuth({
 })
 ```
 
-### User Profile Mapping
-Paybin returns user information in the ID token following OpenID Connect standards. The provider automatically extracts:
-- `id` from `sub` claim
-- `name` from `name`, `preferred_username`, or `email` (in order of preference)
-- `email` from `email` claim
-- `image` from `picture` claim
-- `emailVerified` from `email_verified` claim
+### 用户资料映射
+Paybin 按照 OpenID Connect 标准在 ID Token 中返回用户信息。该提供者会自动提取：
+- `id` 来自 `sub` 声明
+- `name` 来自 `name`、`preferred_username` 或 `email`（依优先顺序）
+- `email` 来自 `email` 声明
+- `image` 来自 `picture` 声明
+- `emailVerified` 来自 `email_verified` 声明

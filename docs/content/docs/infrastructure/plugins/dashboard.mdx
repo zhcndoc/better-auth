@@ -1,11 +1,11 @@
 ---
-title: Dashboard
-description: The `dash()` plugin connects your Better Auth instance to Better Auth Infrastructure, enabling analytics tracking, activity monitoring, and admin dashboard APIs.
+title: 仪表盘
+description: "`dash()` 插件将您的 Better Auth 实例连接到 Better Auth 基础设施，实现分析跟踪、活动监控和管理员仪表盘 API。"
 ---
 
-The Dashboard plugin is the core connection between your Better Auth instance and Better Auth Infrastructure. It powers the web dashboard with real-time data, tracks user activity, and enables admin APIs.
+Dashboard 插件是您的 Better Auth 实例和 Better Auth 基础设施之间的核心连接。它为网页仪表盘提供实时数据，跟踪用户活动，并启用管理员 API。
 
-## Installation
+## 安装
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -18,32 +18,32 @@ export const auth = betterAuth({
 });
 ```
 
-## Configuration Options
+## 配置选项
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `apiUrl` | `string` | Better Auth Infrastructure API URL |
-| `kvUrl` | `string` | KV store URL for caching |
-| `apiKey` | `string` | Your API key for authentication |
-| `activityTracking` | `object` | Activity tracking configuration |
+| 选项 | 类型 | 描述 |
+|------|------|------|
+| `apiUrl` | `string` | Better Auth 基础设施 API 地址 |
+| `kvUrl` | `string` | 用于缓存的 KV 存储地址 |
+| `apiKey` | `string` | 用于认证的 API 密钥 |
+| `activityTracking` | `object` | 活动跟踪配置 |
 
-## Activity Tracking
+## 活动跟踪
 
-Track when users were last active in your application. When enabled, a `lastActiveAt` field is automatically updated on user activity.
+跟踪用户在您的应用中的最后活跃时间。启用时，用户活动时会自动更新 `lastActiveAt` 字段。
 
 ```ts
 dash({
   apiKey: process.env.BETTER_AUTH_API_KEY,
   activityTracking: {
     enabled: true,
-    updateInterval: 300000,  // Update interval in ms (default: 5 minutes)
+    updateInterval: 300000,  // 更新间隔，单位毫秒（默认：5 分钟）
   },
 }),
 ```
 
-### Schema Changes
+### 模式变更
 
-When activity tracking is enabled, the plugin adds a field to your user schema:
+启用活动跟踪时，插件会在您的用户模式中添加一个字段：
 
 ```ts
 user: {
@@ -55,9 +55,9 @@ user: {
 }
 ```
 
-Make sure to run database migrations after enabling activity tracking.
+启用活动跟踪后，请务必运行数据库迁移。
 
-## Client Setup
+## 客户端设置
 
 ```ts
 import { createAuthClient } from "better-auth/client";
@@ -68,7 +68,7 @@ export const authClient = createAuthClient({
 });
 ```
 
-### Client Configuration
+### 客户端配置
 
 ```ts
 dashClient({
@@ -78,22 +78,22 @@ dashClient({
 }),
 ```
 
-## What the Dashboard Plugin Enables
+## Dashboard 插件的功能
 
-Once `dash()` is active, the Better Auth Infrastructure dashboard gives you:
+启用 `dash()` 后，Better Auth 基础设施仪表盘为您提供：
 
-- **User management** — view, search, ban, and delete users
-- **Session monitoring** — see active sessions and revoke them
-- **Organization overview** — manage organizations and members
-- **Analytics** — track sign-ups, sign-ins, and active users over time
-- **Audit logs** — query event history ([learn more](/docs/infrastructure/plugins/audit-logs))
+- **用户管理** — 查看、搜索、封禁和删除用户
+- **会话监控** — 查看活动会话并撤销
+- **组织概览** — 管理组织和成员
+- **分析** — 跟踪注册、登录及活跃用户的变化趋势
+- **审计日志** — 查询事件历史记录（[了解更多](/docs/infrastructure/plugins/audit-logs)）
 
-## Best Practices
+## 最佳实践
 
-1. **Always set an API key** — without it, the plugin cannot communicate with the infrastructure API.
+1. **始终设置 API 密钥** — 没有它，插件无法与基础设施 API 通信。
 
-2. **Use activity tracking wisely** — the update interval affects database writes. For high-traffic apps, consider a longer interval.
+2. **合理使用活动跟踪** — 更新间隔会影响数据库写入频率。对于高流量应用，考虑使用更长的间隔。
 
-3. **Monitor audit log retention** — different plans have different retention periods. Check your plan limits.
+3. **监控审计日志保留期限** — 不同套餐的保留周期不同，请检查您的套餐限制。
 
-4. **Secure your endpoints** — dashboard endpoints require authentication. Make sure your dashboard users have appropriate permissions.
+4. **保护您的端点** — 仪表盘端点需要认证。确保您的仪表盘用户拥有适当权限。

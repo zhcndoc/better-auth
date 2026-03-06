@@ -1,33 +1,33 @@
 ---
-title: NestJS Integration
-description: Integrate Better Auth with NestJS.
+title: NestJS 集成
+description: 将 Better Auth 与 NestJS 集成。
 ---
 
-This guide will show you how to integrate Better Auth with [NestJS](https://nestjs.com/).
+本指南将向您展示如何将 Better Auth 与 [NestJS](https://nestjs.com/) 集成。
 
-Before you start, make sure you have a Better Auth instance configured. If you haven't done that yet, check out the [installation](/docs/installation).
+在开始之前，确保您已经配置了一个 Better Auth 实例。如果还没有，请查看[安装](/docs/installation)。
 
 <Callout type="info">
-The NestJS integration is **community maintained**. If you encounter any issues, please open them at [nestjs-better-auth](https://github.com/ThallesP/nestjs-better-auth).
+NestJS 集成是由**社区维护**的。如果您遇到任何问题，请在 [nestjs-better-auth](https://github.com/ThallesP/nestjs-better-auth) 上提交。
 </Callout>
 
-## Installation
+## 安装
 
-Install the NestJS integration library:
+安装 NestJS 集成库：
 
 ```package-install
 @thallesp/nestjs-better-auth
 ```
 
-## Basic Setup
+## 基本设置
 
 <Callout type="warn">
-Currently the library has beta support for Fastify, if you experience any issues with it, please open an issue at [nestjs-better-auth](https://github.com/ThallesP/nestjs-better-auth).
+目前该库对 Fastify 提供的是测试版支持，如果您在使用过程中遇到任何问题，请在 [nestjs-better-auth](https://github.com/ThallesP/nestjs-better-auth) 上提交 issue。
 </Callout>
 
-### 1. Disable Body Parser
+### 1. 禁用 Body Parser
 
-Disable NestJS's built-in body parser to allow Better Auth to handle the raw request body:
+禁用 NestJS 内置的 body parser，以允许 Better Auth 处理原始请求体：
 
 ```ts title="main.ts"
 import { NestFactory } from "@nestjs/core";
@@ -35,21 +35,21 @@ import { AppModule } from "./app.module";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    bodyParser: false, // Required for Better Auth
+    bodyParser: false, // Better Auth 需要
   });
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
 ```
 
-### 2. Import AuthModule
+### 2. 导入 AuthModule
 
-Import the `AuthModule` in your root module:
+在根模块中导入 `AuthModule`：
 
 ```ts title="app.module.ts"
 import { Module } from '@nestjs/common';
 import { AuthModule } from '@thallesp/nestjs-better-auth';
-import { auth } from "./auth"; // Your Better Auth instance
+import { auth } from "./auth"; // 您的 Better Auth 实例
 
 @Module({
   imports: [
@@ -59,11 +59,11 @@ import { auth } from "./auth"; // Your Better Auth instance
 export class AppModule {}
 ```
 
-### 3. Route Protection
+### 3. 路由保护
 
-**Global by default**: An `AuthGuard` is registered globally by this module. All routes are protected unless you explicitly allow access.
+**默认全局保护**：该模块会全局注册一个 `AuthGuard`。所有路由默认受到保护，除非您显式允许访问。
 
-Use the `Session` decorator to access the user session:
+使用 `Session` 装饰器访问用户会话：
 
 ```ts title="user.controller.ts"
 import { Controller, Get } from '@nestjs/common';
@@ -77,19 +77,19 @@ export class UserController {
   }
 
   @Get('public')
-  @AllowAnonymous() // Allow anonymous access
+  @AllowAnonymous() // 允许匿名访问
   async getPublic() {
-    return { message: 'Public route' };
+    return { message: '公共路由' };
   }
 
   @Get('optional')
-  @OptionalAuth() // Authentication is optional
+  @OptionalAuth() // 认证可选
   async getOptional(@Session() session: UserSession) {
     return { authenticated: !!session };
   }
 }
 ```
 
-## Full Documentation
+## 完整文档
 
-For comprehensive documentation including decorators, hooks, global guards, and advanced configuration, visit the [NestJS Better Auth repository](https://github.com/thallesp/nestjs-better-auth).
+有关装饰器、钩子、全局守卫和高级配置的完整文档，请访问 [NestJS Better Auth 仓库](https://github.com/thallesp/nestjs-better-auth)。

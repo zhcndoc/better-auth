@@ -1,37 +1,37 @@
 ---
-title: Create a Database Adapter
-description: Learn how to create a custom database adapter for Better-Auth
+title: 创建数据库适配器
+description: 了解如何为 Better-Auth 创建自定义数据库适配器
 ---
 
-Learn how to create a custom database adapter for Better-Auth using `createAdapterFactory`.
+了解如何使用 `createAdapterFactory` 为 Better-Auth 创建自定义数据库适配器。
 
-Our `createAdapterFactory` function is designed to be very flexible, and we've done our best to make it easy to understand and use.
-Our hope is to allow you to focus on writing database logic, and not have to worry about how the adapter is working with Better-Auth.
+我们的 `createAdapterFactory` 函数设计得非常灵活，我们尽力让它易于理解和使用。  
+我们希望您可以专注于编写数据库逻辑，而无需担心适配器如何与 Better-Auth 配合工作。
 
-Anything from custom schema configurations, custom ID generation, safe JSON parsing, key mapping, joins, and more is handled by the `createAdapterFactory` function.
-All you need to do is provide the database logic, and the `createAdapterFactory` function will handle the rest.
+从自定义模式配置、自定义 ID 生成、安全 JSON 解析、键映射、连接查询等，都由 `createAdapterFactory` 函数处理。  
+您只需提供数据库逻辑，`createAdapterFactory` 函数将处理剩余工作。
 
-## Quick Start
+## 快速开始
 
 <Steps>
 <Step>
-### Get things ready
+### 准备工作
 
-1. Import `createAdapterFactory`.
-2. Create `CustomAdapterConfig` interface that represents your adapter config options.
-3. Create the adapter!
+1. 导入 `createAdapterFactory`。
+2. 创建表示适配器配置选项的 `CustomAdapterConfig` 接口。
+3. 创建适配器！
 
 ```ts
 import { createAdapterFactory, type DBAdapterDebugLogOption } from "better-auth/adapters";
 
-// Your custom adapter config options
+// 你的自定义适配器配置选项
 interface CustomAdapterConfig {
   /**
-   * Helps you debug issues with the adapter.
+   * 帮助你调试适配器问题。
    */
   debugLogs?: DBAdapterDebugLogOption;
   /**
-   * If the table names in the schema are plural.
+   * 模式中的表名是否为复数形式。
    */
   usePlural?: boolean;
 }
@@ -45,24 +45,24 @@ export const myAdapter = (config: CustomAdapterConfig = {}) =>
 </Step>
 
 <Step>
-### Configure the adapter
+### 配置适配器
 
-The `config` object is mostly used to provide information about the adapter to Better-Auth.
-We try to minimize the amount of code you need to write in your adapter functions, and these `config` options are used to help us do that.
+`config` 对象主要用于向 Better-Auth 提供关于适配器的信息。  
+我们尽量减少您在适配器函数中需要编写的代码量，而这些 `config` 选项帮助我们实现这一点。
 
 ```ts
 // ...
 export const myAdapter = (config: CustomAdapterConfig = {}) =>
   createAdapterFactory({
     config: {
-      adapterId: "custom-adapter", // A unique identifier for the adapter.
-      adapterName: "Custom Adapter", // The name of the adapter.
-      usePlural: config.usePlural ?? false, // Whether the table names in the schema are plural.
-      debugLogs: config.debugLogs ?? false, // Whether to enable debug logs.
-      supportsJSON: false, // Whether the database supports JSON. (Default: false)
-      supportsDates: true, // Whether the database supports dates. (Default: true)
-      supportsBooleans: true, // Whether the database supports booleans. (Default: true)
-      supportsNumericIds: true, // Whether the database supports auto-incrementing numeric IDs. (Default: true)
+      adapterId: "custom-adapter", // 适配器的唯一标识符。
+      adapterName: "Custom Adapter", // 适配器名称。
+      usePlural: config.usePlural ?? false, // 模式中的表名是否为复数形式。
+      debugLogs: config.debugLogs ?? false, // 是否启用调试日志。
+      supportsJSON: false, // 数据库是否支持 JSON。（默认：false）
+      supportsDates: true, // 数据库是否支持日期。（默认：true）
+      supportsBooleans: true, // 数据库是否支持布尔值。（默认：true）
+      supportsNumericIds: true, // 数据库是否支持自增数字 ID。（默认：true）
     },
     // ...
   });
@@ -70,9 +70,9 @@ export const myAdapter = (config: CustomAdapterConfig = {}) =>
 </Step>
 
 <Step>
-### Create the adapter
+### 创建适配器
 
-The `adapter` function is where you write the code that interacts with your database.
+`adapter` 函数是你编写与数据库交互代码的地方。
 
 ```ts
 // ...
@@ -102,33 +102,33 @@ export const myAdapter = (config: CustomAdapterConfig = {}) =>
 ```
 
 <Callout>
-Learn more about the `adapter` here [here](/docs/concepts/database#adapters).
+了解更多关于 `adapter` 的内容请点击[这里](/docs/concepts/database#adapters)。
 </Callout>
 </Step>
 
 </Steps>
 
-## Adapter
+## 适配器
 
-The `adapter` function is where you write the code that interacts with your database.
+`adapter` 函数是你编写与数据库交互代码的地方。
 
-If you haven't already, check out the `options` object in the [config section](#config), as it can be useful for your adapter.
+如果你还没有，建议先查看[配置部分](#config)中的 `options` 对象，它对你的适配器可能非常有用。
 
-Before we get into the adapter function, let's go over the parameters that are available to you.
+在深入适配器函数之前，让我们先了解可用的参数。
 
-- `options`: The Better Auth options.
-- `schema`: The schema from the user's Better Auth instance.
-- `debugLog`: The debug log function.
-- `getFieldName`: Function to get the transformed field name for the database.
-- `getModelName`: Function to get the transformed model name for the database.
-- `getDefaultModelName`: Function to get the default model name from the schema.
-- `getDefaultFieldName`: Function to get the default field name from the schema.
-- `getFieldAttributes`: Function to get field attributes for a specific model and field.
-- `transformInput`: Function to transform input data before saving to the database.
-- `transformOutput`: Function to transform output data after retrieving from the database.
-- `transformWhereClause`: Function to transform where clauses for database queries.
+- `options`：Better Auth 的选项。
+- `schema`：用户 Better Auth 实例的模式。
+- `debugLog`：调试日志函数。
+- `getFieldName`：获取数据库中字段转换后的名称的函数。
+- `getModelName`：获取数据库中模型转换后的名称的函数。
+- `getDefaultModelName`：从模式中获取默认模型名称的函数。
+- `getDefaultFieldName`：从模式中获取默认字段名称的函数。
+- `getFieldAttributes`：获取特定模型和字段的字段属性的函数。
+- `transformInput`：保存到数据库之前转换输入数据的函数。
+- `transformOutput`：从数据库取出后转换输出数据的函数。
+- `transformWhereClause`：转换数据库查询的 where 条件的函数。
 
-```ts title="Example"
+```ts title="示例"
 adapter: ({
   options,
   schema,
@@ -148,154 +148,153 @@ adapter: ({
 };
 ```
 
-### Adapter Methods
+### 适配器方法
 
-- All `model` values are already transformed into the correct model name for the database based on the end-user's schema configuration.
-  - This also means that if you need access to the `schema` version of a given model, you can't use this exact `model` value, you'll need to use the `getDefaultModelName` function provided in the options to convert the `model` to the `schema` version.
-- We will automatically fill in any missing fields you return based on the user's `schema` configuration.
-- Any method that includes a `select` parameter, is only for the purpose of getting data from your database more efficiently. You do not need to worry about only returning what the `select` parameter states, as we will handle that for you.
+- 所有的 `model` 值已根据最终用户的模式配置，转换为数据库正确的模型名称。
+  - 这也意味着如果你需要访问给定模型的 `schema` 版本，你不能直接使用此 `model` 值，需要使用 `getDefaultModelName` 函数将 `model` 转换为 `schema` 版本。
+- 我们会自动根据用户的 `schema` 配置，填充你返回的任何缺失字段。
+- 任何包含 `select` 参数的方法，仅用于更高效地从数据库获取数据。你无需担心严格按照 `select` 参数返回数据，我们会帮你处理。
 
-### `create` method
+### `create` 方法
 
-The `create` method is used to create a new record in the database.
-
-<Callout>
-It's possible to pass `forceAllowId` as a parameter to the `create` method, which allows `id` to be provided in the `data` object.
-We handle `forceAllowId` internally, so you don't need to worry about it.
-</Callout>
-
-parameters:
-
-- `model`: The model/table name that new data will be inserted into.
-- `data`: The data to insert into the database.
-- `select`: An array of fields to return from the database.
+`create` 方法用于在数据库中新建记录。
 
 <Callout>
-  Make sure to return the data that is inserted into the database.
+可以向 `create` 方法传递 `forceAllowId` 参数，允许在 `data` 对象中提供 `id`。  
+我们会内部处理 `forceAllowId`，你无需担心。
 </Callout>
 
-```ts title="Example"
+参数：
+
+- `model`：将插入新数据的模型/表名称。
+- `data`：插入数据库的数据。
+- `select`：从数据库返回的字段数组。
+
+<Callout>
+确保返回插入到数据库中的数据。
+</Callout>
+
+```ts title="示例"
 create: async ({ model, data, select }) => {
-  // Example of inserting data into the database.
+  // 插入数据的示例
   return await db.insert(model).values(data);
 };
 ```
 
-### `update` method
+### `update` 方法
 
-The `update` method is used to update a record in the database.
+`update` 方法用于更新数据库中的一条记录。
 
-parameters:
+参数：
 
-- `model`: The model/table name that the record will be updated in.
-- `where`: The `where` clause to update the record by.
-- `update`: The data to update the record with.
+- `model`：将更新记录的模型/表名称。
+- `where`：更新记录的筛选条件。
+- `update`：用来更新记录的数据。
 
 <Callout>
-  Make sure to return the data in the row which is updated. This includes any
-  fields that were not updated.
+确保返回被更新的整条数据，包括未变更的字段。
 </Callout>
 
-```ts title="Example"
+```ts title="示例"
 update: async ({ model, where, update }) => {
-  // Example of updating data in the database.
+  // 更新数据的示例
   return await db.update(model).set(update).where(where);
 };
 ```
 
-### `updateMany` method
+### `updateMany` 方法
 
-The `updateMany` method is used to update multiple records in the database.
+`updateMany` 方法用于批量更新数据库中的多条记录。
 
-parameters:
+参数：
 
-- `model`: The model/table name that the records will be updated in.
-- `where`: The `where` clause to update the records by.
-- `update`: The data to update the records with.
+- `model`：将更新记录的模型/表名称。
+- `where`：更新记录的筛选条件。
+- `update`：用来更新记录的数据。
 
-<Callout>Make sure to return the number of records that were updated.</Callout>
+<Callout>确保返回更新的记录数。</Callout>
 
-```ts title="Example"
+```ts title="示例"
 updateMany: async ({ model, where, update }) => {
-  // Example of updating multiple records in the database.
+  // 批量更新数据的示例
   return await db.update(model).set(update).where(where);
 };
 ```
 
-### `delete` method
+### `delete` 方法
 
-The `delete` method is used to delete a record from the database.
+`delete` 方法用于删除数据库中的一条记录。
 
-parameters:
+参数：
 
-- `model`: The model/table name that the record will be deleted from.
-- `where`: The `where` clause to delete the record by.
+- `model`：将删除记录的模型/表名称。
+- `where`：删除记录的筛选条件。
 
-```ts title="Example"
+```ts title="示例"
 delete: async ({ model, where }) => {
-  // Example of deleting a record from the database.
+  // 删除记录的示例
   await db.delete(model).where(where);
 }
 ```
 
-### `deleteMany` method
+### `deleteMany` 方法
 
-The `deleteMany` method is used to delete multiple records from the database.
+`deleteMany` 方法用于批量删除数据库中的多条记录。
 
-parameters:
+参数：
 
-- `model`: The model/table name that the records will be deleted from.
-- `where`: The `where` clause to delete the records by.
+- `model`：将删除记录的模型/表名称。
+- `where`：删除记录的筛选条件。
 
-<Callout>Make sure to return the number of records that were deleted.</Callout>
+<Callout>确保返回删除的记录数。</Callout>
 
-```ts title="Example"
+```ts title="示例"
 deleteMany: async ({ model, where }) => {
-  // Example of deleting multiple records from the database.
+  // 批量删除记录的示例
   return await db.delete(model).where(where);
 };
 ```
 
-### `findOne` method
+### `findOne` 方法
 
-The `findOne` method is used to find a single record in the database.
+`findOne` 方法用于查找数据库中的单条记录。
 
-parameters:
+参数：
 
-- `model`: The model/table name that the record will be found in.
-- `where`: The `where` clause to find the record by.
-- `select`: The `select` clause to return.
-- `join`: Optional join configuration to fetch related records in a single query.
+- `model`：查找记录的模型/表名称。
+- `where`：查找记录的筛选条件。
+- `select`：返回字段的筛选条件。
+- `join`：可选的连接配置，用于在单次查询中获取关联记录。
 
-<Callout>Make sure to return the data that is found in the database.</Callout>
+<Callout>确保返回查询到的数据。</Callout>
 
-```ts title="Example"
+```ts title="示例"
 findOne: async ({ model, where, select, join }) => {
-  // Example of finding a single record in the database.
+  // 查找单条记录的示例
   return await db.select().from(model).where(where).limit(1);
 };
 ```
 
-### `findMany` method
+### `findMany` 方法
 
-The `findMany` method is used to find multiple records in the database.
+`findMany` 方法用于查找数据库中的多条记录。
 
-parameters:
+参数：
 
-- `model`: The model/table name that the records will be found in.
-- `where`: The `where` clause to find the records by.
-- `limit`: The limit of records to return.
-- `sortBy`: The `sortBy` clause to sort the records by.
-- `offset`: The offset of records to return.
-- `join`: Optional join configuration to fetch related records in a single query.
+- `model`：查找记录的模型/表名称。
+- `where`：查找记录的筛选条件。
+- `limit`：返回记录的数量限制。
+- `sortBy`：排序条件。
+- `offset`：偏移数量。
+- `join`：可选的连接配置，用于在单次查询中获取关联记录。
 
 <Callout>
-  Make sure to return the array of data that is found in the database.
+确保返回查询到的数据数组。
 </Callout>
 
-```ts title="Example"
+```ts title="示例"
 findMany: async ({ model, where, limit, sortBy, offset, join }) => {
-  // Example of finding multiple records in the database.
+  // 查找多条记录的示例
   return await db
     .select()
     .from(model)
@@ -306,29 +305,29 @@ findMany: async ({ model, where, limit, sortBy, offset, join }) => {
 };
 ```
 
-### `count` method
+### `count` 方法
 
-The `count` method is used to count the number of records in the database.
+`count` 方法用于统计数据库中记录的数量。
 
-parameters:
+参数：
 
-- `model`: The model/table name that the records will be counted in.
-- `where`: The `where` clause to count the records by.
+- `model`：统计记录的模型/表名称。
+- `where`：统计记录的筛选条件。
 
-<Callout>Make sure to return the number of records that were counted.</Callout>
+<Callout>确保返回统计出的记录数。</Callout>
 
-```ts title="Example"
+```ts title="示例"
 count: async ({ model, where }) => {
-  // Example of counting the number of records in the database.
+  // 统计记录数的示例
   return await db.select().from(model).where(where).count();
 };
 ```
 
-### `options` (optional)
+### `options`（可选）
 
-The `options` object is for any potential config that you got from your custom adapter options.
+`options` 对象用于传递自定义适配器配置中可能包含的任何配置。
 
-```ts title="Example"
+```ts title="示例"
 const myAdapter = (config: CustomAdapterConfig) =>
   createAdapterFactory({
     config: {
@@ -342,32 +341,32 @@ const myAdapter = (config: CustomAdapterConfig) =>
   });
 ```
 
-### `createSchema` (optional)
+### `createSchema`（可选）
 
-The `createSchema` method allows the [Better Auth CLI](/docs/concepts/cli) to [generate](/docs/concepts/cli/#generate) a schema for the database.
+`createSchema` 方法允许 [Better Auth CLI](/docs/concepts/cli) 为数据库[生成](/docs/concepts/cli/#generate)模式。
 
-parameters:
+参数：
 
-- `tables`: The tables from the user's Better-Auth instance schema; which is expected to be generated into the schema file.
-- `file`: The file the user may have passed in to the `generate` command as the expected schema file output path.
+- `tables`：用户 Better-Auth 实例模式中的表，预期生成进模式文件。
+- `file`：用户传入 `generate` 命令的期望模式文件输出路径。
 
-```ts title="Example"
+```ts title="示例"
 createSchema: async ({ file, tables }) => {
-  // ... Custom logic to create a schema for the database.
+  // ... 为数据库自定义生成模式的逻辑。
 };
 ```
 
-## Test your adapter
+## 测试你的适配器
 
-We've provided a test suite via the `@better-auth/test-utils` package that you can use to test your adapter. It requires you to use `vitest`.
+我们提供了一个通过 `@better-auth/test-utils` 包的测试套件，你可以用它来测试你的适配器。它需要你使用 `vitest`。
 
-First, install the test utilities:
+首先安装测试工具：
 
 ```bash
 npm install -D @better-auth/test-utils
 ```
 
-Then create a test file using `testAdapter` and `createTestSuite`:
+然后使用 `testAdapter` 和 `createTestSuite` 创建测试文件：
 
 ```ts title="my-adapter.test.ts"
 import { testAdapter, createTestSuite } from "@better-auth/test-utils/adapter";
@@ -375,104 +374,100 @@ import { myAdapter } from "./my-adapter";
 
 const normalTestSuite = createTestSuite("Normal", ({ test, adapter }) => [
   test("should create and find a user", async () => {
-    // Write your adapter tests here using the adapter instance
+    // 在这里使用 adapter 实例编写你的适配器测试
   }),
 ]);
 
 const { execute } = await testAdapter({
   adapter: (options) => {
-    return myAdapter(/* your adapter config */);
+    return myAdapter(/* 你的适配器配置 */);
   },
   runMigrations: async (options) => {
-    // Run your database migrations here
+    // 在这里运行数据库迁移
   },
   tests: [
     normalTestSuite(),
   ],
   async onFinish() {
-    // Optional: cleanup after all tests (e.g., delete a DB file)
+    // 可选：所有测试完成后的清理（例如删除数据库文件）
   },
 });
 
 execute();
 ```
 
-The `testAdapter` function handles the test lifecycle for you, including running migrations before tests and cleaning up all tables after tests complete.
+`testAdapter` 函数为你处理测试生命周期，包括在测试前运行迁移和测试完成后清理所有表。
 
 <Callout type="info">
-  In v1.4, adapter tests used `runAdapterTest` and `runNumberIdAdapterTest` from `better-auth/adapters/test`. That export has been removed in v1.5. Use `@better-auth/test-utils/adapter` instead.
+  在 v1.4 版本中，适配器测试使用了 `better-auth/adapters/test` 中的 `runAdapterTest` 和 `runNumberIdAdapterTest`，该导出在 v1.5 中已移除。请改用 `@better-auth/test-utils/adapter`。
 </Callout>
 
-## Config
+## 配置
 
-The `config` object is used to provide information about the adapter to Better-Auth.
+`config` 对象用于向 Better-Auth 提供关于适配器的信息。
 
-We **highly recommend** going through and reading each provided option below, as it will help you understand how to properly configure your adapter.
+我们**强烈建议**认真阅读以下各项配置选项，它们将帮助你正确配置适配器。
 
-### Required Config
+### 必需配置
 
 ### `adapterId`
 
-A unique identifier for the adapter.
+适配器的唯一标识符。
 
 ### `adapterName`
 
-The name of the adapter.
+适配器的名称。
 
-### Optional Config
+### 可选配置
 
 ### `supportsNumericIds`
 
-Whether the database supports numeric IDs. If this is set to `false` and the user's config has enabled `useNumberId`, then we will throw an error.
+数据库是否支持数字 ID。如果设为 `false`，而用户配置启用了 `useNumberId`，则会抛出错误。
 
 ### `supportsJSON`
 
-Whether the database supports JSON. If the database doesn't support JSON, we will use a `string` to save the JSON data.And when we retrieve the data, we will safely parse the `string` back into a JSON object.
+数据库是否支持 JSON。如果不支持，我们将使用字符串保存 JSON 数据，并在取出时安全地将字符串解析回 JSON 对象。
 
 ### `supportsDates`
 
-Whether the database supports dates. If the database doesn't support dates, we will use a `string` to save the date. (ISO string) When we retrieve the data, we will safely parse the `string` back into a `Date` object.
+数据库是否支持日期。如果不支持，我们将把日期保存为字符串（ISO 字符串），取出时安全地解析回 `Date` 对象。
 
 ### `supportsBooleans`
 
-Whether the database supports booleans. If the database doesn't support booleans, we will use a `0` or `1` to save the boolean value. When we retrieve the data, we will safely parse the `0` or `1` back into a boolean value.
+数据库是否支持布尔值。如果不支持，将使用 `0` 或 `1` 保存布尔值，取出时安全解析回布尔值。
 
 ### `usePlural`
 
-Whether the table names in the schema are plural. This is often defined by the user, and passed down through your custom adapter options. If you do not intend to allow the user to customize the table names, you can ignore this option, or set this to `false`.
+模式中的表名是否为复数形式。通常由用户定义，并通过你的自定义适配器选项传递。如果你不打算允许用户自定义表名，可以忽略此选项或设为 `false`。
 
-```ts title="Example"
+```ts title="示例"
 const adapter = myAdapter({
-  // This value then gets passed into the `usePlural`
-  // option in the createAdapterFactory `config` object.
+  // 该值会传递至 createAdapterFactory 的 `config` 对象中的 `usePlural`
   usePlural: true,
 });
 ```
 
 ### `transaction`
 
-Whether the adapter supports transactions. If `false`, operations run sequentially; otherwise provide a function that executes a callback with a `TransactionAdapter`.
+适配器是否支持事务。如果为 `false`，操作顺序执行；否则需提供一个函数，用于执行带 `TransactionAdapter` 的回调。
 
 <Callout type="warn">
-  If your database does not support transactions, the error handling and rollback
-  will not be as robust. We recommend using a database that supports transactions
-  for better data integrity.
+  如果你的数据库不支持事务，错误处理和回滚不会那么健壮。建议使用支持事务的数据库以保证数据完整性。
 </Callout>
 
 ### `debugLogs`
 
-Used to enable debug logs for the adapter. You can pass in a boolean, or an object with the following keys: `create`, `update`, `updateMany`, `findOne`, `findMany`, `delete`, `deleteMany`, `count`.
-If any of the keys are `true`, the debug logs will be enabled for that method.
+启用适配器的调试日志。你可以传入布尔值，或一个包含 `create`、`update`、`updateMany`、`findOne`、`findMany`、`delete`、`deleteMany`、`count` 等键的对象。任何键值为 `true` 的方法会启用调试日志。
 
-```ts title="Example"
-// Will log debug logs for all methods.
+```ts title="示例"
+// 为所有方法启用调试日志。
 const adapter = myAdapter({
   debugLogs: true,
 });
 ```
 
-```ts title="Example"
-// Will only log debug logs for the `create` and `update` methods.
+```ts title="示例"
+// 仅为 `create` 和 `update` 方法启用调试日志。
 const adapter = myAdapter({
   debugLogs: {
     create: true,
@@ -483,69 +478,66 @@ const adapter = myAdapter({
 
 ### `disableIdGeneration`
 
-Whether to disable ID generation. If this is set to `true`, then the user's `generateId` option will be ignored.
+是否禁用 ID 生成。如果设为 `true`，则忽略用户的 `generateId` 选项。
 
 ### `customIdGenerator`
 
-If your database only supports a specific custom ID generation, then you can use this option to generate your own IDs.
+如果你的数据库只支持特定的自定义 ID 生成，可以使用此选项生成自己的 ID。
 
 ### `mapKeysTransformInput`
 
-If your database uses a different key name for a given situation, you can use this option to map the keys. This is useful for databases that expect a different key name for a given situation.
-For example, MongoDB uses `_id` while in Better-Auth we use `id`.
+如果数据库在某些情况下使用不同的键名，可以用此选项映射键名。适用于数据库期望某些键名不同的情况。  
+例如，MongoDB 使用 `_id`，而 Better-Auth 使用 `id`。
 
-Each key in the returned object represents the old key to replace.
-The value represents the new key.
+返回对象中的每个键表示待替换的旧键，值为新键。
 
-This can be a partial object that only transforms some keys.
+可以是部分对象，仅转换部分键。
 
-```ts title="Example"
+```ts title="示例"
 mapKeysTransformInput: {
-  id: "_id", // We want to replace `id` to `_id` to save into MongoDB
+  id: "_id", // 我们希望将 `id` 替换为 `_id` 以保存进 MongoDB
 },
 ```
 
 ### `mapKeysTransformOutput`
 
-If your database uses a different key name for a given situation, you can use this option to map the keys. This is useful for databases that use a different key name for a given situation.
-For example, MongoDB uses `_id` while in Better-Auth we use `id`.
+如果数据库在某些情况下使用不同的键名，可以用此选项映射键名。适用于数据库使用不同键名的场景。  
+例如，MongoDB 使用 `_id`，而 Better-Auth 使用 `id`。
 
-Each key in the returned object represents the old key to replace.
-The value represents the new key.
+返回对象中的每个键表示待替换的旧键，值为新键。
 
-This can be a partial object that only transforms some keys.
+可以是部分对象，仅转换部分键。
 
-```ts title="Example"
+```ts title="示例"
 mapKeysTransformOutput: {
-  _id: "id", // We want to replace `_id` (from MongoDB) to `id` (for Better-Auth)
+  _id: "id", // 我们希望将 `_id`（来自 MongoDB）替换为 `id`（供 Better-Auth 使用）
 },
 ```
 
 ### `customTransformInput`
 
-If you need to transform the input data before it is saved to the database, you can use this option to transform the data.
+如果需要在数据保存到数据库前转换输入数据，可以使用此选项。
 
 <Callout type="warn">
-  If you're using `supportsJSON`, `supportsDates`, or `supportsBooleans`, then
-  the transformations will be applied before your `customTransformInput`
-  function is called.
+  如果你启用了 `supportsJSON`、`supportsDates` 或 `supportsBooleans`，这些转换会在调用你的 `customTransformInput` 函数之前执行。
 </Callout>
-The `customTransformInput` function receives the following arguments:
 
-- `data`: The data to transform.
-- `field`: The field that is being transformed.
-- `fieldAttributes`: The field attributes of the field that is being transformed.
-- `action`: The action which was called from the adapter (`create` or `update`).
-- `model`: The model that is being transformed.
-- `schema`: The schema that is being transformed.
-- `options`: Better Auth options.
+`customTransformInput` 函数接受以下参数：
 
-The `customTransformInput` function runs at every key in the data object of a given action.
+- `data`：需转换的数据。
+- `field`：当前转换的字段。
+- `fieldAttributes`：该字段的属性。
+- `action`：调用的适配器动作（`create` 或 `update`）。
+- `model`：当前模型。
+- `schema`：当前模式。
+- `options`：Better Auth 选项。
 
-```ts title="Example"
+`customTransformInput` 函数在给定动作的数据对象的每个键上运行。
+
+```ts title="示例"
 customTransformInput: ({ field, data }) => {
   if (field === "id") {
-    return "123"; // Force the ID to be "123"
+    return "123"; // 强制 ID 为 "123"
   }
 
   return data;
@@ -554,13 +546,13 @@ customTransformInput: ({ field, data }) => {
 
 ### `customTransformOutput`
 
-If you need to transform the output data before it is returned to the user, you can use this option to transform the data. The `customTransformOutput` function is used to transform the output data.
-Similar to the `customTransformInput` function, it runs at every key in the data object of a given action, but it runs after the data is retrieved from the database.
+如果需要在数据返回给用户前转换输出数据，可以使用此选项。  
+它和 `customTransformInput` 类似，但在数据从数据库取出后执行。
 
-```ts title="Example"
+```ts title="示例"
 customTransformOutput: ({ field, data }) => {
   if (field === "name") {
-    return "Bob"; // Force the name to be "Bob"
+    return "Bob"; // 强制姓名为 "Bob"
   }
 
   return data;
@@ -575,42 +567,41 @@ const some_data = await adapter.create({
   },
 });
 
-// The name will be "Bob"
+// 姓名将会是 "Bob"
 console.log(some_data.name);
 ```
 
 ### `disableTransformInput`
 
-Whether to disable input transformation. This should only be used if you know what you're doing and are manually handling all transformations.
+是否禁用输入转换。只有在你明确知道自己在做什么，并手动处理所有转换时才应禁用。
 
 <Callout type="warn">
-  Disabling input transformation can break important adapter functionality like ID generation, boolean/date/JSON conversion, and key mapping.
+  禁用输入转换可能导致重要的适配器功能失效，例如 ID 生成、布尔/日期/JSON 转换和键映射。
 </Callout>
 
 ### `disableTransformOutput`
 
-Whether to disable output transformation. This should only be used if you know what you're doing and are manually handling all transformations.
+是否禁用输出转换。只有在你明确知道自己在做什么，并手动处理所有转换时才应禁用。
 
 <Callout type="warn">
-  Disabling output transformation can break important adapter functionality like boolean/date/JSON parsing and key mapping.
+  禁用输出转换可能导致重要的适配器功能失效，例如布尔/日期/JSON 解析和键映射。
 </Callout>
 
 ### `disableTransformJoin`
 
-Whether to disable join transformation. This should only be used if you know what you're doing and are manually handling joins.
+是否禁用连接转换。只有在你明确知道自己在做什么，并手动处理连接查询时才应禁用。
 
 <Callout type="warn">
-  Disabling join transformation can break join functionality.
+  禁用连接转换可能导致连接功能失效。
 </Callout>
 
 ### `supportsJoin`
 
-Whether the adapter supports native joins. If set to `false` (the default), Better-Auth will handle joins by making multiple queries and combining the results. If set to `true`, the adapter is expected to handle joins natively (e.g., SQL JOIN operations).
+适配器是否支持原生连接查询。如果设置为 `false`（默认），Better-Auth 会通过多次查询合并结果来处理连接；如果设为 `true`，则适配器需支持原生连接（如 SQL JOIN 操作）。
 
-```ts title="Example"
-// For adapters that support native SQL joins
+```ts title="示例"
+// 适配器支持原生 SQL 连接查询
 const adapter = myAdapter({
   supportsJoin: true,
 });
 ```
- 

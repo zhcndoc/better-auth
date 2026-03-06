@@ -1,52 +1,50 @@
 ---
-title: Contributing to BetterAuth
-description: A concise guide to contributing to BetterAuth
+title: 为 BetterAuth 贡献代码  
+description: 关于如何为 BetterAuth 贡献代码的简明指南  
 ---
 
-Thank you for your interest in contributing to Better Auth! This guide is a concise guide to contributing to Better Auth.
+感谢你对贡献 Better Auth 的兴趣！本指南是为 Better Auth 贡献代码的简明指南。
 
-## Getting Started
+## 入门
 
-Before diving in, here are a few important resources:
+在开始之前，这里有一些重要资源：
 
-- Take a look at our existing <Link href="https://github.com/better-auth/better-auth/issues">issues</Link> and <Link href="https://github.com/better-auth/better-auth/pulls">pull requests</Link>
-- Join our community discussions in <Link href="https://discord.gg/better-auth">Discord</Link>
+- 浏览我们现有的 <Link href="https://github.com/better-auth/better-auth/issues">问题</Link> 和 <Link href="https://github.com/better-auth/better-auth/pulls">拉取请求</Link>  
+- 加入我们的 <Link href="https://discord.gg/better-auth">Discord 社区讨论</Link>  
 
+## 开发环境搭建
 
-## Development Setup
-
-To get started with development:
+开始开发前：
 
 <Callout type="warn">
-  Make sure you have <Link href="https://nodejs.org/en/download">Node.JS</Link>{" "}
-  installed, preferably on LTS.
+  请确保你已安装 <Link href="https://nodejs.org/en/download">Node.JS</Link> ，建议使用 LTS 版本。
 </Callout>
 
 <Steps>
 
     <Step>
-        ### 1. Fork the repository
+        ### 1. Fork 仓库
 
-        Visit https://github.com/better-auth/better-auth
+        访问 https://github.com/better-auth/better-auth
 
-        Click the "Fork" button in the top right.
+        点击右上角的 “Fork” 按钮。
 
     </Step>
 
     <Step>
-        ### 2. Clone your fork
+        ### 2. 克隆你的 Fork
 
         ```bash
-        # Replace YOUR-USERNAME with your GitHub username
+        # 用你的 GitHub 用户名替换 YOUR-USERNAME
         git clone https://github.com/YOUR-USERNAME/better-auth.git
         cd better-auth
         ```
     </Step>
 
     <Step>
-        ### 3. Install dependencies
+        ### 3. 安装依赖
 
-        Make sure you have <Link href="https://pnpm.io/installation">pnpm</Link> installed!
+        请确保你已经安装了 <Link href="https://pnpm.io/installation">pnpm</Link>！
 
         ```bash
         pnpm install
@@ -54,9 +52,9 @@ To get started with development:
     </Step>
 
     <Step>
-        ### 4. Prepare ENV files
+        ### 4. 准备环境变量文件
 
-        Copy the example env file to create your new `.env` file.
+        复制示例 env 文件创建新的 `.env` 文件。
 
         ```bash
         cp -n ./docs/.env.example ./docs/.env
@@ -65,86 +63,86 @@ To get started with development:
 
 </Steps>
 
-## Making changes
+## 进行更改
 
-Once you have an idea of what you want to contribute, you can start making changes. Here are some steps to get started:
+当你确定想要贡献的内容后，就可以开始更改了。以下是入门步骤：
 
 <Steps>
     <Step>
-        ### 1. Create a new branch
+        ### 1. 创建新分支
 
         ```bash
-        # Add upstream remote (if not already added)
+        # 添加上游远程（如果未添加）
         git remote add upstream https://github.com/better-auth/better-auth.git
 
-        # Make sure you're on canary
+        # 确保当前在 canary 分支
         git checkout canary
 
-        # Pull latest changes
+        # 拉取最新更改
         git pull upstream canary
 
-        # Create and switch to a new branch
+        # 创建并切换到新分支
         git checkout -b feature/your-feature-name
         ```
     </Step>
     <Step>
-        ### 2. Start development server
+        ### 2. 启动开发服务器
 
-        Start the development server:
+        启动开发服务器：
 
         ```bash
         pnpm dev
         ```
 
-        To start the docs server:
+        启动文档服务器：
 
         ```bash
         pnpm -F docs dev
         ```
     </Step>
     <Step>
-        ### 3. Make Your Changes
+        ### 3. 进行更改
 
-        * Make your changes to the codebase.
+        * 修改代码库。
 
-        * Write tests if needed. (Read more about testing <Link href="/docs/reference/contributing#testing">here</Link>)
+        * 如需要，编写测试。（关于测试的更多内容请见 <Link href="/docs/reference/contributing#testing">这里</Link>）
 
-        * Update documentation.  (Read more about documenting <Link href="/docs/reference/contributing#documentation">here</Link>)
+        * 更新文档。（关于文档的更多内容请见 <Link href="/docs/reference/contributing#documentation">这里</Link>）
 
     </Step>
 
 </Steps>
 
 
-### Issues and Bug Fixes
+### 问题和 Bug 修复
 
-- Check our [GitHub issues](https://github.com/better-auth/better-auth/issues) for tasks labeled `good first issue`
-- When reporting bugs, include steps to reproduce and expected behavior
-- Comment on issues you'd like to work on to avoid duplicate efforts
+- 查看我们的 [GitHub issues](https://github.com/better-auth/better-auth/issues) 中标注为 `good first issue` 的任务  
+- 报告 Bug 时请包含复现步骤和预期行为  
+- 在你希望参与的问题上留言，以避免重复工作  
 
-### Framework Integrations
+### 框架集成
 
-We welcome contributions to support more frameworks:
+欢迎为更多框架贡献支持：
 
-- Focus on framework-agnostic solutions where possible
-- Keep integrations minimal and maintainable
-- All integrations currently live in the main package
+- 尽可能关注框架无关的解决方案  
+- 保持集成方案简洁且易于维护  
+- 所有集成目前都在主包中  
 
-### Plugin Development
+### 插件开发
 
-- For core plugins: Open an issue first to discuss your idea
-- For community plugins: Feel free to develop independently
-- Follow our plugin architecture guidelines
+- 核心插件：请先开 issue 讨论你的想法  
+- 社区插件：可独立开发  
+- 遵循我们的插件架构指南  
 
-### Documentation
+### 文档
 
-- Fix typos and errors
-- Add examples and clarify existing content
-- Ensure documentation is up to date with code changes
+- 修正拼写和错误  
+- 添加示例，澄清现有内容  
+- 确保文档与代码更改同步更新  
 
-## Testing
+## 测试
 
-We use Vitest for testing. Place test files next to the source files they test:
+我们使用 Vitest 作为测试工具。请将测试文件放置在对应源码文件旁：
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -153,47 +151,47 @@ import { getTestInstance } from "./test-utils/test-instance";
 describe("Feature", () => {
     it("should work as expected", async () => {
         const { client } = await getTestInstance();
-        // Test code here
+        // 这里写测试代码
         expect(result).toBeDefined();
     });
 });
 ```
 
-### Using the Test Instance Helper
+### 使用测试实例辅助工具
 
-The test instance helper now includes improved async context support for managing user sessions:
+测试实例辅助工具现已支持改进的异步上下文管理以处理用户会话：
 
 ```ts
 const { client, runWithUser, signInWithTestUser } = await getTestInstance();
 
-// Run tests with a specific user context
+// 以指定用户上下文运行测试
 await runWithUser("user@example.com", "password", async (headers) => {
-    // All client calls within this block will use the user's session
+    // 该代码块内所有客户端调用将使用该用户的会话
     const response = await client.getSession();
-    // headers are automatically applied
+    // headers 会自动应用
 });
 
-// Or use the test user with async context
+// 或使用测试用户的异步上下文
 const { runWithDefaultUser } = await signInWithTestUser();
 await runWithDefaultUser(async (headers) => {
-    // Code here runs with the test user's session context
+    // 此处代码在测试用户会话上下文中运行
 });
 ```
 
-### Testing Best Practices
+### 测试最佳实践
 
-- Write clear commit messages
-- Update documentation to reflect your changes
-- Add tests for new features
-- Follow our coding standards
-- Keep pull requests focused on a single change
+- 编写清晰的提交信息  
+- 更新文档以反映更改  
+- 为新功能添加测试  
+- 遵循我们的编码规范  
+- 保持拉取请求专注于单一更改  
 
-## Need Help?
+## 需要帮助？
 
-Don't hesitate to ask for help! You can:
+请随时寻求帮助！你可以：
 
-- Open an <Link href="https://github.com/better-auth/better-auth/issues">issue</Link> with questions
-- Join our <Link href="https://discord.gg/better-auth">community discussions</Link>
-- Reach out to project maintainers
+- 提交 <Link href="https://github.com/better-auth/better-auth/issues">issue</Link> 提问  
+- 加入我们的 <Link href="https://discord.gg/better-auth">社区讨论</Link>  
+- 联系项目维护者  
 
-Thank you for contributing to Better Auth!
+感谢你为 Better Auth 做出的贡献！

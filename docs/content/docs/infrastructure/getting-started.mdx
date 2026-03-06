@@ -1,22 +1,22 @@
 ---
-title: Getting Started
-description: This guide will help you integrate Better Auth Infrastructure into your application.
+title: 入门指南
+description: 本指南将帮助您将 Better Auth 基础设施集成到您的应用程序中。
 ---
 <Steps>
 
   <Step>
-    ## Prerequisites
+    ## 前提条件
 
-    Before you begin, make sure you have:
+    开始之前，请确保您已经拥有：
 
-    1. A working [Better Auth](/docs/installation) installation
-    2. An account & API Key from the [Better Auth Infrastructure](/dashboard) dashboard
+    1. 一个可用的 [Better Auth](/docs/installation) 安装实例
+    2. 来自 [Better Auth 基础设施](/dashboard) 仪表盘的账号和 API 密钥
   </Step>
 
   <Step>
-    ## Installation
+    ## 安装
 
-    Install the `@better-auth/infra` package:
+    安装 `@better-auth/infra` 包：
 
     ```package-install
     @better-auth/infra
@@ -24,37 +24,37 @@ description: This guide will help you integrate Better Auth Infrastructure into 
   </Step>
 
   <Step>
-    ## Environment Variables
+    ## 环境变量
 
-    Once you've gotten the API Key from the infrastructure dashboard,
-    go ahead and add the `BETTER_AUTH_API_KEY` environment variable in your production environment variables.
+    一旦您从基础设施仪表盘获取到 API 密钥，
+    请在生产环境变量中添加 `BETTER_AUTH_API_KEY` 环境变量。
 
     ```dotenv
-    # Required: Your Better Auth Infrastructure API key
+    # 必填：您的 Better Auth 基础设施 API 密钥
     BETTER_AUTH_API_KEY=your_api_key_here
     ```
 
     <Callout>
-      You can get your API key by signing-up and creating a new project in the
-      [Better Auth Infrastructure dashboard](/dashboard).
+      您可以通过注册并在
+      [Better Auth 基础设施仪表盘](/dashboard) 创建新项目来获取您的 API 密钥。
     </Callout>
   </Step>
 
 </Steps>
 
 
-## Server Setup
+## 服务器设置
 
-### Basic Configuration
+### 基础配置
 
-Add the `dash()` plugin to your Better Auth configuration:
+将 `dash()` 插件添加到您的 Better Auth 配置中：
 
 ```ts
 import { betterAuth } from "better-auth";
 import { dash } from "@better-auth/infra"; // [!code highlight]
 
 export const auth = betterAuth({
-  // ... your existing Better Auth config
+  // ... 您现有的 Better Auth 配置
   plugins: [
     dash({ // [!code highlight]
       apiKey: process.env.BETTER_AUTH_API_KEY, // [!code highlight]
@@ -63,7 +63,7 @@ export const auth = betterAuth({
 });
 ```
 
-If you're on **pro** plan or above, you can use the `sentinel()` plugin to enable security checks, abuse protection, and more:
+如果您订阅的是 **pro** 计划及以上，您可以使用 `sentinel()` 插件启用安全检查、滥用防护等功能：
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -79,11 +79,11 @@ export const auth = betterAuth({
 });
 ```
 
-## Client Setup
+## 客户端设置
 
-### Basic Client Configuration
+### 基础客户端配置
 
-Add the client plugins to your auth client:
+将客户端插件添加到您的认证客户端中：
 
 ```ts
 import { createAuthClient } from "better-auth/client";
@@ -93,7 +93,7 @@ export const authClient = createAuthClient({
   plugins: [
     dashClient(),
     sentinelClient({
-      autoSolveChallenge: true, // Automatically solve PoW challenges
+      autoSolveChallenge: true, // 自动解决 PoW 挑战
     }),
   ],
 });
@@ -101,19 +101,19 @@ export const authClient = createAuthClient({
 
 
 
-### Plugin Overview
+### 插件概览
 
-- **`dash()`** - Enables analytics tracking, audit logging, dashboard admin APIs, and more
-- **`sentinel()`** - Enables security checks and abuse protection
+- **`dash()`** - 启用分析追踪、审计日志、仪表盘管理 API 等功能
+- **`sentinel()`** - 启用安全检查和滥用防护
 
-You can use either plugin independently, but using both together provides the full Better Auth Infrastructure experience.
+您可以单独使用其中任何一个插件，但同时使用两者可获得完整的 Better Auth 基础设施体验。
 
-## Next Steps
+## 后续步骤
 
-Now that you have the basic setup, explore these topics:
+既然您已经完成基础设置，可继续探索以下内容：
 
-- [Dashboard](/docs/infrastructure/plugins/dashboard) - Analytics, activity tracking, and admin APIs
-- [Audit Logs](/docs/infrastructure/plugins/audit-logs) - Track and query authentication events
-- [Sentinel](/docs/infrastructure/plugins/sentinel) - Configure advanced security
-- [Email Service](/docs/infrastructure/services/email) - Set up transactional emails
-- [SMS Service](/docs/infrastructure/services/sms) - Enable SMS verification
+- [仪表盘](/docs/infrastructure/plugins/dashboard) - 分析、活动追踪和管理 API
+- [审计日志](/docs/infrastructure/plugins/audit-logs) - 跟踪和查询认证事件
+- [Sentinel](/docs/infrastructure/plugins/sentinel) - 配置高级安全防护
+- [邮件服务](/docs/infrastructure/services/email) - 设置事务性邮件
+- [短信服务](/docs/infrastructure/services/sms) - 启用短信验证码

@@ -1,24 +1,24 @@
 ---
-title: Other Social Providers
-description: Other social providers setup and usage.
+title: 其他社交登录提供商
+description: 其他社交登录提供商的设置和使用。
 ---
 
-Better Auth provides support for any social provider that implements the OAuth2 protocol or OpenID Connect (OIDC) flows through the [Generic OAuth Plugin](/docs/plugins/generic-oauth). You can use pre-configured helper functions for popular providers like Auth0, Keycloak, Okta, Microsoft Entra ID, and Slack, or manually configure any OAuth provider.
+Better Auth 支持任何实现了 OAuth2 协议或 OpenID Connect（OIDC）流程的社交登录提供商，通过 [Generic OAuth 插件](/docs/plugins/generic-oauth) 实现。你可以使用为常见提供商（如 Auth0、Keycloak、Okta、Microsoft Entra ID 和 Slack）预配置的辅助函数，或者手动配置任何 OAuth 提供商。
 
-## Installation
+## 安装
 
 <Steps>
   <Step>
-    ### Add the plugin to your auth config
+    ### 将插件添加到你的认证配置中
 
-    To use the Generic OAuth plugin, add it to your auth config.
+    要使用 Generic OAuth 插件，需要将其添加到你的认证配置中。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
     import { genericOAuth } from "better-auth/plugins" // [!code highlight]
 
     export const auth = betterAuth({
-        // ... other config options
+        // ... 其他配置选项
         plugins: [
             genericOAuth({ // [!code highlight]
                 config: [ // [!code highlight]
@@ -27,9 +27,9 @@ Better Auth provides support for any social provider that implements the OAuth2 
                         clientId: "test-client-id", // [!code highlight]
                         clientSecret: "test-client-secret", // [!code highlight]
                         discoveryUrl: "https://auth.example.com/.well-known/openid-configuration", // [!code highlight]
-                        // ... other config options // [!code highlight]
+                        // ... 其他配置选项 // [!code highlight]
                     }, // [!code highlight]
-                    // Add more providers as needed // [!code highlight]
+                    // 根据需要添加更多提供商 // [!code highlight]
                 ] // [!code highlight]
             }) // [!code highlight]
         ]
@@ -39,9 +39,9 @@ Better Auth provides support for any social provider that implements the OAuth2 
   </Step>
 
   <Step>
-    ### Add the client plugin
+    ### 添加客户端插件
 
-    Include the Generic OAuth client plugin in your authentication client instance.
+    在你的认证客户端实例中包含 Generic OAuth 客户端插件。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -58,13 +58,13 @@ Better Auth provides support for any social provider that implements the OAuth2 
 </Steps>
 
 <Callout>
-  Read more about installation and usage of the Generic Oauth plugin
-  [here](/docs/plugins/generic-oauth#usage).
+  详细了解 Generic OAuth 插件的安装和使用请见
+  [这里](/docs/plugins/generic-oauth#usage)。
 </Callout>
 
-## Example Usage
+## 使用示例
 
-Here's a basic example of configuring a generic OAuth provider:
+以下是配置通用 OAuth 提供商的基本示例：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -86,9 +86,9 @@ export const auth = betterAuth({
 })
 ```
 
-## Using Pre-configured Providers
+## 使用预配置提供商
 
-Better Auth provides pre-configured helper functions for popular OAuth providers. Here's an example using Slack:
+Better Auth 为流行的 OAuth 提供商提供了预配置的辅助函数。下面是使用 Slack 的示例：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -115,20 +115,20 @@ const response = await authClient.signIn.oauth2({
 })
 ```
 
-For more pre-configured providers (Auth0, Keycloak, Okta, Microsoft Entra ID) and their configuration options, see the [Generic OAuth Plugin documentation](/docs/plugins/generic-oauth#pre-configured-provider-helpers).
+有关更多预配置提供商（Auth0、Keycloak、Okta、Microsoft Entra ID）及其配置选项，请参阅 [Generic OAuth 插件文档](/docs/plugins/generic-oauth#pre-configured-provider-helpers)。
 
-## Manual Configuration Examples
+## 手动配置示例
 
-If you need to configure a provider that doesn't have a pre-configured helper, you can manually configure it:
+如果你需要配置没有预定义辅助函数的提供商，可以手动进行配置：
 
-### Instagram Example
+### Instagram 示例
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 import { genericOAuth } from "better-auth/plugins";
 
 export const auth = betterAuth({
-  // ... other config options
+  // ... 其他配置选项
   plugins: [
     genericOAuth({
       config: [
@@ -149,18 +149,18 @@ export const auth = betterAuth({
 ```ts title="sign-in.ts"
 const response = await authClient.signIn.oauth2({
   providerId: "instagram",
-  callbackURL: "/dashboard", // the path to redirect to after the user is authenticated
+  callbackURL: "/dashboard", // 用户认证成功后的重定向路径
 });
 ```
 
-### Coinbase Example
+### Coinbase 示例
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 import { genericOAuth } from "better-auth/plugins";
 
 export const auth = betterAuth({
-  // ... other config options
+  // ... 其他配置选项
   plugins: [
     genericOAuth({
       config: [
@@ -170,7 +170,7 @@ export const auth = betterAuth({
           clientSecret: process.env.COINBASE_CLIENT_SECRET as string,
           authorizationUrl: "https://www.coinbase.com/oauth/authorize",
           tokenUrl: "https://api.coinbase.com/oauth/token",
-          scopes: ["wallet:user:read"], // and more...
+          scopes: ["wallet:user:read"], // 以及更多...
         },
       ],
     }),
@@ -181,6 +181,6 @@ export const auth = betterAuth({
 ```ts title="sign-in.ts"
 const response = await authClient.signIn.oauth2({
   providerId: "coinbase",
-  callbackURL: "/dashboard", // the path to redirect to after the user is authenticated
+  callbackURL: "/dashboard", // 用户认证成功后的重定向路径
 });
 ```

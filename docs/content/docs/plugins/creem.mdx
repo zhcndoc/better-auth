@@ -1,52 +1,52 @@
 ---
 title: Creem
-description: Better Auth Plugin for Payment and Subscriptions using Creem
+description: 使用 Creem 的支付和订阅管理的更好认证插件
 ---
 
-[Creem](https://creem.io) is a financial OS that enables teams and individuals selling software globally to split revenue and collaborate on financial workflows without any tax compliance headaches. This plugin integrates Creem with Better Auth, bringing payment processing and subscription management directly into your authentication layer.
+[Creem](https://creem.io) 是一个金融操作系统，帮助团队和个人在全球销售软件时无税务合规难题地分账收入并协作处理财务工作流。此插件将 Creem 与 Better Auth 集成，将支付处理及订阅管理直接嵌入您的认证层。
 
 <Callout>
-  This plugin is maintained by the Creem team. For bugs, issues or feature requests,
-  please visit the [Creem GitHub repo](https://github.com/armitage-labs/creem-betterauth).
+  此插件由 Creem 团队维护。如遇错误、问题或功能请求，
+  请访问 [Creem GitHub 仓库](https://github.com/armitage-labs/creem-betterauth)。
 </Callout>
 
-<Card href="https://discord.gg/q3GKZs92Av" title="Get support on Creem Discord or in our in-app live-chat">
-  Need help? Reach out to our team anytime on Discord.
+<Card href="https://discord.gg/q3GKZs92Av" title="在 Creem Discord 或应用内实时聊天中获得支持">
+  需要帮助？随时在 Discord 上联系我们的团队。
 </Card>
 
 
-## Features
+## 功能
 
-- **Database Persistence** - Automatically synchronize customer and subscription data with your database
-- **Access Management** - Automatically grant or revoke access to users based on their subscription status
-- **Customer Synchronization** - Synchronize Creem customer IDs with your database users
-- **Checkout Integration** - Create checkout sessions either automatically for authenticated users or manually for unauthenticated users
-- **Customer Portal** - Enable users to manage subscriptions, view invoices, and update payment methods
-- **Subscription Management** - Cancel, retrieve, and track subscription details for authenticated users or manually for unauthenticated users
-- **Transaction History** - Search and filter transaction records for authenticated users or manually for unauthenticated users
-- **Webhook Processing** - Handle Creem webhooks securely with signature verification
-- **Flexible Architecture** - Use Better Auth endpoints or direct server-side functions
-- **Trial Abuse Prevention** - Users can only get one trial per account across all plans (when using database mode)
+- **数据库持久化** - 自动同步客户和订阅数据到您的数据库
+- **访问管理** - 根据用户订阅状态自动授予或撤销访问权限
+- **客户同步** - 将 Creem 客户 ID 与数据库用户同步
+- **结账集成** - 为已认证用户自动或为未认证用户手动创建结账会话
+- **客户门户** - 允许用户管理订阅、查看发票、更新支付方式
+- **订阅管理** - 为已认证用户自动或为未认证用户手动取消、检索和跟踪订阅详情
+- **交易历史** - 为已认证用户自动或为未认证用户手动搜索和过滤交易记录
+- **Webhook 处理** - 通过签名验证安全处理 Creem webhook
+- **灵活架构** - 可使用 Better Auth 端点或直接调用服务器端函数
+- **试用滥用防护** - 在数据库模式下，用户整个账户所有计划仅能享受一次试用
 
-## Installation
+## 安装
 
 <Steps>
   <Step>
-    ### Install the plugin
+    ### 安装插件
 
     ```package-install
     @creem_io/better-auth
     ```
 
     <Callout>
-      If you're using a separate client and server setup, make sure to install the plugin in both parts of your project.
+      若您采用前后端分离的架构，请确保在项目的客户端和服务端部分都安装此插件。
     </Callout>
   </Step>
 
   <Step>
-    ### Get your API Key
+    ### 获取 API Key
 
-    Get your Creem API Key from the [Creem dashboard](https://creem.io/dashboard/developers), under the 'Developers' menu and add it to your environment variables:
+    在 [Creem 控制面板](https://creem.io/dashboard/developers) 的“Developers”菜单下获取您的 API Key， 并将其添加到环境变量：
 
     ```bash
     # .env
@@ -54,17 +54,17 @@ description: Better Auth Plugin for Payment and Subscriptions using Creem
     ```
 
     <Callout type="warn">
-      Test Mode and Production have different API keys. Make sure you're using the correct one for your environment.
+      测试模式和生产环境使用不同的 API Key，请确保所用的密钥对应正确的环境。
     </Callout>
   </Step>
 
 </Steps>
 
-## Configuration
+## 配置
 
-### Server Configuration
+### 服务端配置
 
-Configure Better Auth with the Creem plugin:
+配置 Better Auth 并使用 Creem 插件：
 
 ```typescript
 // lib/auth.ts
@@ -73,23 +73,23 @@ import { creem } from "@creem_io/better-auth";
 
 export const auth = betterAuth({
   database: {
-    // your database config
+    // 您的数据库配置
   },
   plugins: [
     creem({
       apiKey: process.env.CREEM_API_KEY!,
-      webhookSecret: process.env.CREEM_WEBHOOK_SECRET, // Optional, webhooks are automatically enabled when passing a signing secret
-      testMode: true, // Optional, use test mode for development
-      defaultSuccessUrl: "/success", // Optional, redirect to this URL after successful payments
-      persistSubscriptions: true, // Optional, enable database persistence (default: true)
+      webhookSecret: process.env.CREEM_WEBHOOK_SECRET, // 可选，传入签名密钥后自动启用 webhook
+      testMode: true, // 可选，开发时使用测试模式
+      defaultSuccessUrl: "/success", // 可选，支付成功后的跳转地址
+      persistSubscriptions: true, // 可选，启用数据库持久化（默认：true）
     }),
   ],
 });
 ```
 
-### Client Configuration
+### 客户端配置
 
-### Standard Setup
+### 标准配置
 
 ```typescript
 // lib/auth-client.ts
@@ -102,9 +102,9 @@ export const authClient = createAuthClient({
 });
 ```
 
-### Enhanced TypeScript Support (React-Only)
+### 增强的 TypeScript 支持（仅限 React）
 
-For improved TypeScript IntelliSense and autocomplete:
+获得更好的 TypeScript 智能提示和自动补全：
 
 ```typescript
 // lib/auth-client.ts
@@ -118,14 +118,14 @@ export const authClient = createCreemAuthClient({
 ```
 
 <Callout>
-  The `createCreemAuthClient` wrapper provides enhanced TypeScript support and cleaner parameter types. It's optimized for use with the Creem plugin.
+  `createCreemAuthClient` 包装方法提供了增强的 TypeScript 支持和更简洁的参数类型，针对 Creem 插件进行了优化。
 </Callout>
 
-### Database Migration
+### 数据库迁移
 
-If you're using database persistence (`persistSubscriptions: true`), generate and run the database schema:
+如果启用数据库持久化（`persistSubscriptions: true`），请生成并运行数据库模式：
 
-<Tabs items={["migrate", "generate"]}>
+<Tabs items={["迁移", "生成"]}>
     <Tab value="migrate">
     ```package-install
     npx auth migrate
@@ -139,38 +139,38 @@ If you're using database persistence (`persistSubscriptions: true`), generate an
 </Tabs>
 
 <Callout type="info">
-  Depending on your database adapter, additional setup steps may be required. Refer to the [Better Auth adapter documentation](https://www.better-auth.com/docs/adapters/mysql) for details.
+  根据您使用的数据库适配器，可能需要额外的设置。请参阅 [Better Auth 适配器文档](https://www.better-auth.com/docs/adapters/mysql) 了解详情。
 </Callout>
 
-### Webhook Setup
+### Webhook 设置
 
 <Steps>
   <Step>
-    ### Create Webhook Endpoint
+    ### 创建 Webhook 端点
 
-    In your [Creem dashboard](https://creem.io/dashboard/developers/webhooks), create a webhook endpoint pointing to your local or production server pointing to:
+    在您的 [Creem 控制面板](https://creem.io/dashboard/developers/webhooks)中新建一个 webhook 端点，指向您的本地或生产服务器地址：
 
     ```text
     https://your-domain.com/api/auth/creem/webhook
     ```
 
-    (`/api/auth` is the default Better Auth server path)
+    （`/api/auth` 是 Better Auth 服务端默认路径）
 
     <Callout type="info">
-      Check step 3 if local development.
+      如果本地开发，请参阅步骤 3。
     </Callout>
   </Step>
 
   <Step>
-    ### Configure Webhook Secret
+    ### 配置 Webhook 密钥
 
-    Copy the webhook signing secret from Creem and add it to your environment:
+    复制 Creem 提供的 webhook 签名密钥，并添加到环境变量：
 
     ```bash
     CREEM_WEBHOOK_SECRET=your_webhook_secret_here
     ```
 
-    Update your server configuration:
+    更新服务端配置：
 
     ```typescript
     creem({
@@ -182,50 +182,50 @@ If you're using database persistence (`persistSubscriptions: true`), generate an
   </Step>
 
   <Step>
-    ### Local Development (Optional)
+    ### 本地开发（可选）
 
-    For local testing, use a tool like [ngrok](https://ngrok.com) to expose your local server:
+    本地测试时，可使用类似 [ngrok](https://ngrok.com) 的工具将本地服务器暴露到公网：
 
     ```bash
     ngrok http 3000
     ```
 
-    Add the ngrok URL to your Creem webhook settings.
+    并将 ngrok 生成的网址添加到 Creem webhook 配置。
   </Step>
 </Steps>
 
-## Database Schema
+## 数据库模式
 
-When `persistSubscriptions: true`, the plugin creates the following schema:
+启用 `persistSubscriptions: true` 时，插件创建以下数据表：
 
-### Creem Subscription Table
+### Creem 订阅表
 
-Table Name: `creem_subscription`
+表名：`creem_subscription`
 
-| Field                 | Type    | Description                      |
+| 字段                  | 类型    | 描述                             |
 | --------------------- | ------- | -------------------------------- |
-| `id`                  | string  | Primary key                      |
-| `productId`           | string  | Creem product ID                 |
-| `referenceId`         | string  | Your user/organization ID        |
-| `creemCustomerId`     | string  | Creem customer ID                |
-| `creemSubscriptionId` | string  | Creem subscription ID            |
-| `creemOrderId`        | string  | Creem order ID                   |
-| `status`              | string  | Subscription status              |
-| `periodStart`         | date    | Billing period start date        |
-| `periodEnd`           | date    | Billing period end date          |
-| `cancelAtPeriodEnd`   | boolean | Whether subscription will cancel |
+| `id`                  | string  | 主键                             |
+| `productId`           | string  | Creem 产品 ID                    |
+| `referenceId`         | string  | 您的用户或组织 ID                 |
+| `creemCustomerId`     | string  | Creem 客户 ID                   |
+| `creemSubscriptionId` | string  | Creem 订阅 ID                   |
+| `creemOrderId`        | string  | Creem 订单 ID                   |
+| `status`              | string  | 订阅状态                         |
+| `periodStart`         | date    | 账单周期起始日期                 |
+| `periodEnd`           | date    | 账单周期结束日期                 |
+| `cancelAtPeriodEnd`   | boolean | 是否订阅将在周期结束时取消       |
 
-### User Table Extension
+### 用户表扩展字段
 
-| Field             | Type   | Description                  |
-| ----------------- | ------ | ---------------------------- |
-| `creemCustomerId` | string | Links user to Creem customer |
+| 字段             | 类型   | 描述                  |
+| ----------------- | ------ | ---------------------- |
+| `creemCustomerId` | string | 关联用户到 Creem 客户  |
 
-## Usage
+## 使用说明
 
-### Checkout
+### 结账
 
-Create a checkout session to process payments:
+创建结账会话以处理支付：
 
 ```typescript
 "use client";
@@ -237,8 +237,8 @@ export function SubscribeButton({ productId }: { productId: string }) {
     const { data, error } = await authClient.creem.createCheckout({
       productId,
       successUrl: "/dashboard",
-      discountCode: "LAUNCH50", // Optional
-      metadata: { planType: "pro" }, // Optional
+      discountCode: "LAUNCH50", // 可选
+      metadata: { planType: "pro" }, // 可选
     });
 
     if (data?.url) {
@@ -246,36 +246,36 @@ export function SubscribeButton({ productId }: { productId: string }) {
     }
   };
 
-  return <button onClick={handleCheckout}>Subscribe Now</button>;
+  return <button onClick={handleCheckout}>立即订阅</button>;
 }
 ```
 
-#### Checkout Options
+#### 结账参数说明
 
-- `productId` (required) - The Creem product ID
-- `units` - Number of units (default: 1)
-- `successUrl` - Redirect URL after successful payment
-- `discountCode` - Discount code to apply
-- `customer` - Customer information (auto-populated from session)
-- `metadata` - Additional metadata (auto-includes user ID as `referenceId`)
-- `requestId` - Idempotency key for duplicate prevention
+- `productId`（必需）- Creem 产品 ID
+- `units` - 订购数量（默认：1）
+- `successUrl` - 支付成功后跳转地址
+- `discountCode` - 使用的折扣码
+- `customer` - 客户信息（自动从会话填充）
+- `metadata` - 附加元数据（自动包含用户 ID 作为 `referenceId`）
+- `requestId` - 防止重复请求的幂等性 key
 
-### Customer Portal
+### 客户门户
 
-Redirect users to manage their subscriptions:
+重定向用户管理其订阅：
 
 ```typescript
 const handlePortal = async () => {
-  // No need to redirect, the portal will be opened in the same tab
+  // 无需跳转，门户将在同一标签页打开
   const { data, error } = await authClient.creem.createPortal();
 };
 ```
 
-### Subscription Management
+### 订阅管理
 
-### Cancel Subscription
+### 取消订阅
 
-When database persistence is enabled, the subscription is found automatically for the authenticated user:
+启用数据库持久化时，将自动根据已认证用户查找订阅：
 
 ```typescript
 const handleCancel = async () => {
@@ -287,7 +287,7 @@ const handleCancel = async () => {
 };
 ```
 
-If database persistence is disabled, provide the subscription ID:
+禁用数据库持久化时，需提供订阅 ID：
 
 ```typescript
 const { data } = await authClient.creem.cancelSubscription({
@@ -295,46 +295,46 @@ const { data } = await authClient.creem.cancelSubscription({
 });
 ```
 
-### Retrieve Subscription
+### 获取订阅详情
 
-Get subscription details for the authenticated user:
+获取已认证用户的订阅详情：
 
 ```typescript
 const getSubscription = async () => {
   const { data } = await authClient.creem.retrieveSubscription();
 
   if (data) {
-    console.log(`Status: ${data.status}`);
-    console.log(`Product: ${data.product.name}`);
-    console.log(`Price: ${data.product.price} ${data.product.currency}`);
+    console.log(`状态: ${data.status}`);
+    console.log(`产品: ${data.product.name}`);
+    console.log(`价格: ${data.product.price} ${data.product.currency}`);
   }
 };
 ```
 
-### Check Access
+### 检查访问权限
 
-Verify if the user has an active subscription (requires database mode):
+确认用户是否有有效订阅（需数据库模式）：
 
 ```typescript
 const { data } = await authClient.creem.hasAccessGranted();
 
 if (data?.hasAccess) {
-  // User has active subscription access
-  console.log(`Expires: ${data.expiresAt}`);
+  // 用户拥有有效订阅权限
+  console.log(`过期时间: ${data.expiresAt}`);
 }
 ```
 
 <Callout type="info">
-  This function checks if the user has access for the current billing period. For example, if a user purchases a yearly plan and cancels after one month, they still have access until the year ends.
+  此函数判断用户是否在当前账期内享有访问权限。例如，用户购买了一年制订阅，取消后仍可访问直到年期结束。
 </Callout>
 
-### Transaction History
+### 交易历史
 
-Search transaction records for the authenticated user:
+搜索已认证用户的交易记录：
 
 ```typescript
 const { data } = await authClient.creem.searchTransactions({
-  productId: "prod_xyz789", // Optional filter
+  productId: "prod_xyz789", // 可选筛选
   pageNumber: 1,
   pageSize: 50,
 });
@@ -346,27 +346,27 @@ if (data?.transactions) {
 }
 ```
 
-## Webhook Handling
+## Webhook 处理
 
-The plugin provides flexible webhook handling with both granular event handlers and high-level access control handlers.
+插件提供灵活的 webhook 处理方案，支持细粒度事件处理及高阶访问控制处理器。
 
-### High-Level Access Control Handlers (Recommended)
+### 高阶访问控制处理器（推荐）
 
-These handlers provide the simplest and most powerful way to manage user access. They automatically handle all payment scenarios and subscription states, so you don't need to manage individual subscription events.
+这些处理器提供最简单且强大的用户访问管理方式。它们自动处理所有支付场景及订阅状态，无需单独管理每个订阅事件。
 
-  <strong> Database Persistence Required:</strong> These handlers require the database persistence option to be enabled in your plugin configuration.
+  <strong>需要数据库持久化：</strong>此类处理器需在插件配置中启用数据库持久化选项。
 
-  | Handler Name           | Data Parameter Type        | Description                                                                                              |
-  |------------------------|----------------------------|----------------------------------------------------------------------------------------------------------|
-  | **`onGrantAccess`**    | **`GrantAccessContext`**   | **Called when a user should be granted access.** Handles successful payments, active subscriptions, and trial periods. Use this to enable features, add user to groups, or update permissions. |
-  | **`onRevokeAccess`**   | **`RevokeAccessContext`**  | **Called when a user's access should be revoked.** Handles cancellations, expirations, refunds, and failed payments. Use this to disable features, remove from groups, or revoke permissions. |
+  | 处理器名称           | 数据参数类型              | 描述                                                                                      |
+  |----------------------|--------------------------|------------------------------------------------------------------------------------------|
+  | **`onGrantAccess`**  | **`GrantAccessContext`** | **当应授予用户访问权限时调用。**自动处理支付成功、活动订阅及试用期。可用于启用功能、加入用户组或更新权限。 |
+  | **`onRevokeAccess`** | **`RevokeAccessContext`**| **当应撤销用户访问权限时调用。**自动处理取消、过期、退款及支付失败等情况。可用于禁用功能、移除用户组或撤销权限。   |
 
-**Why use these handlers?**
--  Single source of truth for access control
--  Handles all payment scenarios automatically
--  Reduces code complexity and potential bugs
--  Works for both one-time purchases and subscriptions
--  Takes current billing period and access expiration dates into consideration
+**为何选择这些处理器？**
+- 访问控制的单一真相来源
+- 自动处理所有支付及订阅场景
+- 降低代码复杂度及潜在错误
+- 适用于一次性购买及订阅
+- 考虑当前账期及访问过期时间
 
 ```typescript
 // lib/auth.ts
@@ -375,7 +375,7 @@ import { creem } from "@creem_io/better-auth";
 
 export const auth = betterAuth({
   database: {
-    // your database config
+    // 您的数据库配置
   },
   plugins:[ 
     creem({
@@ -385,7 +385,7 @@ export const auth = betterAuth({
       onGrantAccess: async ({ reason, product, customer, metadata }) => {
         const userId = metadata?.referenceId as string;
 
-        // Update your database specific logic
+        // 根据您的数据库逻辑更新
         await db.user.update({
           where: { id: userId },
           data: { 
@@ -395,13 +395,13 @@ export const auth = betterAuth({
           },
         });
 
-        console.log(`Granted ${reason} access to ${customer.email}`);
+        console.log(`已授予 ${customer.email} ${reason} 访问权限`);
       },
 
       onRevokeAccess: async ({ reason, product, customer, metadata }) => {
         const userId = metadata?.referenceId as string;
 
-        // Update your database specific logic
+        // 根据您的数据库逻辑更新
         await db.user.update({
           where: { id: userId },
           data: { 
@@ -410,50 +410,49 @@ export const auth = betterAuth({
           },
         });
 
-        console.log(`Revoked access (${reason}) from ${customer.email}`);
+        console.log(`已撤销 ${customer.email} 访问权限（原因：${reason}）`);
       },
     }),
   ],
 })
 ```
 
-### Grant Access Reasons
+### 授权访问的原因
 
-- `subscription_active` - Subscription is active
-- `subscription_trialing` - Subscription is in trial period
-- `subscription_paid` - Subscription payment received
+- `subscription_active` - 订阅处于激活状态
+- `subscription_trialing` - 订阅处于试用期
+- `subscription_paid` - 收到订阅付款
 
-### Revoke Access Reasons
+### 收回访问的原因
 
-- `subscription_paused` - Subscription paused by user or admin
-- `subscription_expired` - Subscription expired without renewal
-- `subscription_period_end` - Current subscription period ended without renewal
-
+- `subscription_paused` - 用户或管理员暂停订阅
+- `subscription_expired` - 订阅到期未续费
+- `subscription_period_end` - 当前订阅周期结束未续订
 
 ---
 
-### Granular Event Handlers
+### 细粒度事件处理器
 
-For advanced use cases where you need fine-grained control over specific events, use these handlers:
+高级用例需要对特定事件进行精细控制时，使用以下处理器：
 
-  | Handler Name                | Data Parameter Type            | Description                                                  |
-  |-----------------------------|-------------------------------|--------------------------------------------------------------|
-  | `onCheckoutCompleted`       | `FlatCheckoutCompleted`       | Called when a checkout is completed successfully.            |
-  | `onRefundCreated`           | `FlatRefundCreated`           | Triggered when a refund is issued for a payment.             |
-  | `onDisputeCreated`          | `FlatDisputeCreated`          | Invoked when a payment dispute/chargeback is created.        |
-  | `onSubscriptionActive`      | `FlatSubscriptionEvent`       | Fired when a subscription becomes active.                    |
-  | `onSubscriptionTrialing`    | `FlatSubscriptionEvent`       | Subscription enters a trial period.                          |
-  | `onSubscriptionCanceled`    | `FlatSubscriptionEvent`       | Called when a subscription is canceled.                      |
-  | `onSubscriptionPaid`        | `FlatSubscriptionEvent`       | Subscription payment is received.                            |
-  | `onSubscriptionExpired`     | `FlatSubscriptionEvent`       | Subscription has expired (no renewal/payment).               |
-  | `onSubscriptionUnpaid`      | `FlatSubscriptionEvent`       | Payment for a subscription failed or remains unpaid.         |
-  | `onSubscriptionUpdate`      | `FlatSubscriptionEvent`       | Subscription settings/details updated.                       |
-  | `onSubscriptionPastDue`     | `FlatSubscriptionEvent`       | Subscription payment is late or overdue.                     |
-  | `onSubscriptionPaused`      | `FlatSubscriptionEvent`       | Subscription has been paused (by user or admin).             |
+  | 处理器名称                | 数据参数类型             | 描述                                     |
+  |--------------------------|-------------------------|------------------------------------------|
+  | `onCheckoutCompleted`    | `FlatCheckoutCompleted` | 结账成功完成时调用。                      |
+  | `onRefundCreated`        | `FlatRefundCreated`     | 退款操作发生时触发。                      |
+  | `onDisputeCreated`       | `FlatDisputeCreated`    | 支付争议或退单创建时触发。                |
+  | `onSubscriptionActive`   | `FlatSubscriptionEvent` | 订阅激活时触发。                          |
+  | `onSubscriptionTrialing` | `FlatSubscriptionEvent` | 订阅进入试用期时触发。                    |
+  | `onSubscriptionCanceled` | `FlatSubscriptionEvent` | 订阅取消时触发。                          |
+  | `onSubscriptionPaid`     | `FlatSubscriptionEvent` | 收到订阅付款时触发。                      |
+  | `onSubscriptionExpired`  | `FlatSubscriptionEvent` | 订阅到期(无续费/付款)时触发。             |
+  | `onSubscriptionUnpaid`   | `FlatSubscriptionEvent` | 订阅付款失败或欠费时触发。                 |
+  | `onSubscriptionUpdate`   | `FlatSubscriptionEvent` | 订阅设置或详情更新时触发。                 |
+  | `onSubscriptionPastDue`  | `FlatSubscriptionEvent` | 订阅付款逾期时触发。                      |
+  | `onSubscriptionPaused`   | `FlatSubscriptionEvent` | 订阅被暂停（用户或管理员）时触发。         |
 
-### How to use a Webhook Handler
+### 如何使用 Webhook 处理器
 
-Handle individual webhook events with all properties flattened for easy access:
+以展平成易访问的形式处理单个 webhook 事件：
 
 ```typescript
 // lib/auth.ts
@@ -462,7 +461,7 @@ import { creem } from "@creem_io/better-auth";
 
 export const auth = betterAuth({
   database: {
-    // your database config
+    // 您的数据库配置
   },
   plugins: [
     creem({
@@ -471,35 +470,35 @@ export const auth = betterAuth({
 
       onCheckoutCompleted: async (data) => {
         const { customer, product, order, webhookEventType } = data;
-        console.log(`${customer.email} purchased ${product.name}`);
+        console.log(`${customer.email} 购买了 ${product.name}`);
         
-        // Perfect for one-time payments
+        // 适合一次性支付场景
         await sendThankYouEmail(customer.email);
       },
 
       onSubscriptionActive: async (data) => {
         const { customer, product, status } = data;
-        // Handle active subscription
+        // 处理激活订阅逻辑
       },
 
       onSubscriptionTrialing: async (data) => {
-        // Handle trial period
+        // 处理试用期逻辑
       },
 
       onSubscriptionCanceled: async (data) => {
-        // Handle cancellation
+        // 处理取消逻辑
       },
 
       onSubscriptionExpired: async (data) => {
-        // Handle expiration
+        // 处理过期逻辑
       },
 
       onRefundCreated: async (data) => {
-        // Handle refunds
+        // 处理退款逻辑
       },
 
       onDisputeCreated: async (data) => {
-        // Handle disputes
+        // 处理争议逻辑
       },
     }),
   ],
@@ -507,9 +506,9 @@ export const auth = betterAuth({
 ```
 
 
-### Custom Webhook Handler
+### 自定义 Webhook 处理器
 
-Create your own webhook endpoint with signature verification:
+自行创建具备签名验证的 webhook 端点：
 
 ```typescript
 // app/api/webhooks/custom/route.ts
@@ -526,21 +525,21 @@ export async function POST(req: Request) {
       process.env.CREEM_WEBHOOK_SECRET!
     )
   ) {
-    return new Response("Invalid signature", { status: 401 });
+    return new Response("签名无效", { status: 401 });
   }
 
   const event = JSON.parse(payload);
-  // Your custom webhook handling logic
+  // 您的自定义 webhook 处理逻辑
 
   return Response.json({ received: true });
 }
 ```
 
-## Server-Side Functions
+## 服务端函数
 
-Use these utilities directly in Server Components, Server Actions, or API routes without going through Better Auth endpoints.
+可以直接在服务器组件、服务端动作或 API 路由中调用这些工具函数，无需通过 Better Auth 端点。
 
-### Import Server Utilities
+### 导入服务端工具
 
 ```typescript
 import {
@@ -557,7 +556,7 @@ import {
 } from "@creem_io/better-auth/server";
 ```
 
-### Server Component Example
+### 服务端组件示例
 
 ```typescript
 import { checkSubscriptionAccess } from "@creem_io/better-auth/server";
@@ -589,17 +588,17 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1>Welcome to Dashboard</h1>
-      <p>Subscription Status: {status.status}</p>
+      <h1>欢迎来到仪表盘</h1>
+      <p>订阅状态: {status.status}</p>
       {status.expiresAt && (
-        <p>Renews: {status.expiresAt.toLocaleDateString()}</p>
+        <p>续订日期: {status.expiresAt.toLocaleDateString()}</p>
       )}
     </div>
   );
 }
 ```
 
-### Server Action Example
+### 服务端动作示例
 
 ```typescript
 "use server";
@@ -613,7 +612,7 @@ export async function startCheckout(productId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session?.user) {
-    throw new Error("Not authenticated");
+    throw new Error("未认证");
   }
 
   const { url } = await createCheckout(
@@ -633,9 +632,9 @@ export async function startCheckout(productId: string) {
 }
 ```
 
-### Middleware Example
+### 中间件示例
 
-Protect routes based on subscription status:
+基于订阅状态保护路由：
 
 ```typescript
 import { checkSubscriptionAccess } from "@creem_io/better-auth/server";
@@ -674,7 +673,7 @@ export const config = {
 };
 ```
 
-### Utility Functions
+### 工具函数示例
 
 ```typescript
 import {
@@ -683,59 +682,59 @@ import {
   getDaysUntilRenewal,
 } from "@creem_io/better-auth/server";
 
-// Check if status grants access
+// 检查状态是否允许访问
 if (isActiveSubscription(subscription.status)) {
-  // User has access
+  // 用户有访问权限
 }
 
-// Format Creem timestamps
+// 格式化 Creem 时间戳
 const renewalDate = formatCreemDate(subscription.next_billing_date);
 console.log(renewalDate.toLocaleDateString());
 
-// Calculate days until renewal
+// 计算距离续订还有多少天
 const days = getDaysUntilRenewal(subscription.current_period_end_date);
-console.log(`Renews in ${days} days`);
+console.log(`距离续订还有 ${days} 天`);
 ```
 
 
-### Database Mode vs API Mode
+### 数据库模式与 API 模式
 
-The plugin supports two operational modes:
+插件支持两种运行模式：
 
-### Database Mode (Recommended)
+### 数据库模式（推荐）
 
-When `persistSubscriptions: true` (default), subscription data is stored in your database.
+当 `persistSubscriptions: true`（默认）时，订阅数据存储在您的数据库中。
 
-**Benefits:**
-- Fast access checks without API calls
-- Offline access to subscription data
-- Query subscriptions with SQL
-- Automatic synchronization via webhooks
-- Trial abuse prevention
+**优势:**
+- 检查访问权限时无需调用 API，响应更快
+- 离线访问订阅数据
+- 使用 SQL 进行订阅查询
+- 通过 webhook 自动同步数据
+- 防止试用滥用
 
-**Usage:**
+**用法:**
 
 ```typescript
 creem({
   apiKey: process.env.CREEM_API_KEY!,
-  persistSubscriptions: true, // Default
+  persistSubscriptions: true, // 默认开启
 })
 ```
 
-### API Mode
+### API 模式
 
-When `persistSubscriptions: false`, all data comes directly from the Creem API.
+当 `persistSubscriptions: false`，所有数据均直接来自 Creem API。
 
-**Benefits:**
-- No database schema required
-- Simpler initial setup
+**优势:**
+- 无需数据库模式定义
+- 初次设置更简单
 
-**Limitations:**
-- Requires API call for each access check
-- Some features require custom implementation
-- No built-in trial abuse prevention
+**限制:**
+- 每次访问检查都需 API 调用
+- 部分功能需自行实现
+- 无内置试用滥用防范
 
-**Usage:**
+**用法:**
 
 ```typescript
 creem({
@@ -745,109 +744,109 @@ creem({
 ```
 
 <Callout type="warn">
-  In API mode, functions like `checkSubscriptionAccess` and `hasAccessGranted` have limited functionality and may require custom implementation using the Creem SDK directly.
+  API 模式下，`checkSubscriptionAccess` 和 `hasAccessGranted` 等函数功能受限，可能需直接使用 Creem SDK 实现自定义逻辑。
 </Callout>
 
-## Type Exports
+## 类型导出说明
 
-### Server-Side Types
+### 服务端类型
 
-| Type Name               | Description                                                                                       | Typical Usage                                      |
-|-------------------------|---------------------------------------------------------------------------------------------------|----------------------------------------------------|
-| `CreemOptions`          | Configuration options for the Creem plugin, such as API keys and persistence settings.            | Used to configure the plugin on the server.         |
-| `GrantAccessContext`    | Context passed to custom access control hooks when granting access to a user.                      | Used in custom access logic.                        |
-| `RevokeAccessContext`   | Context passed to hooks when revoking user access due to subscription status changes.              | Used in custom access logic.                        |
-| `GrantAccessReason`     | Enum or type describing reasons for granting access (e.g., payment received, trial activated).     | Returned in access-related hooks and events.        |
-| `RevokeAccessReason`    | Enum or type describing reasons for revoking access (e.g., canceled, payment failed).              | Returned in access-related hooks and events.        |
-| `FlatCheckoutCompleted` | Event object type for webhook payload when a checkout completes successfully.                      | Used in webhook handlers and event listeners.       |
-| `FlatRefundCreated`     | Event object type for webhook payload when a refund is created.                                   | Used in webhook handlers and event listeners.       |
-| `FlatDisputeCreated`    | Event object type for webhook payload when a dispute is created.                                  | Used in webhook handlers and event listeners.       |
-| `FlatSubscriptionEvent` | Event object type for generic subscription events (created, updated, canceled, etc).              | Used in webhook handlers and event listeners.       |
+| 类型名称                 | 描述                                                                                       | 典型用法                                      |
+|-------------------------|--------------------------------------------------------------------------------------------|------------------------------------------------|
+| `CreemOptions`          | Creem 插件的配置选项，如 API Key 和持久化设置。                                         | 用于服务器端插件配置。                          |
+| `GrantAccessContext`    | 授予用户访问权限时传递给自定义访问钩子的上下文。                                        | 用于自定义访问逻辑。                            |
+| `RevokeAccessContext`   | 撤销用户访问权限时钩子传递的上下文。                                                     | 用于自定义访问逻辑。                            |
+| `GrantAccessReason`     | 表示授予访问权限原因的枚举或类型（例如支付成功、试用激活）。                           | 访问相关钩子和事件返回。                        |
+| `RevokeAccessReason`    | 表示撤销访问权限原因的枚举或类型（例如取消、支付失败）。                               | 访问相关钩子和事件返回。                        |
+| `FlatCheckoutCompleted` | 结账完成 webhook 负载的事件对象类型。                                                  | 用于 webhook 处理器和事件监听。                 |
+| `FlatRefundCreated`     | 退款创建 webhook 负载事件对象类型。                                                   | 用于 webhook 处理器和事件监听。                 |
+| `FlatDisputeCreated`    | 支付争议创建 webhook 负载事件对象类型。                                               | 用于 webhook 处理器和事件监听。                 |
+| `FlatSubscriptionEvent` | 通用订阅事件（创建、更新、取消等）的事件对象类型。                                    | 用于 webhook 处理器和事件监听。                 |
 
-### Client-Side Types
+### 客户端类型
 
-| Type Name                    | Description                                                                                           |
-|------------------------------|-------------------------------------------------------------------------------------------------------|
-| `CreateCheckoutInput`        | Input parameters for creating a checkout session.                                                     |
-| `CreateCheckoutResponse`     | Response shape for a checkout session creation request.                                               |
-| `CheckoutCustomer`           | Customer information type used in a checkout session.                                                 |
-| `CreatePortalInput`          | Input parameters for creating a customer portal session.                                              |
-| `CreatePortalResponse`       | Response data for a request to create a customer portal.                                              |
-| `CancelSubscriptionInput`    | Input parameters when cancelling a subscription.                                                      |
-| `CancelSubscriptionResponse` | Response data for a subscription cancellation request.                                                |
-| `RetrieveSubscriptionInput`  | Input for retrieving a specific subscription's details.                                               |
-| `SubscriptionData`           | Subscription information structure as returned by the API.                                            |
-| `SearchTransactionsInput`    | Filters and parameters for searching transactions.                                                    |
-| `SearchTransactionsResponse` | Response structure for a transaction search query.                                                    |
-| `TransactionData`            | Data relating to individual transactions (e.g., payment, refund, etc).                                |
-| `HasAccessGrantedResponse`   | The shape of the response indicating whether a user has access based on subscription status/rules.    |
+| 类型名称                     | 描述                                                                                   |
+|------------------------------|----------------------------------------------------------------------------------------|
+| `CreateCheckoutInput`        | 创建结账会话时的输入参数类型。                                                        |
+| `CreateCheckoutResponse`     | 创建结账会话请求的响应数据类型。                                                      |
+| `CheckoutCustomer`           | 结账会话中客户信息类型。                                                              |
+| `CreatePortalInput`          | 创建客户门户会话时的输入参数类型。                                                   |
+| `CreatePortalResponse`       | 创建客户门户请求的响应数据类型。                                                     |
+| `CancelSubscriptionInput`    | 取消订阅时的输入参数类型。                                                           |
+| `CancelSubscriptionResponse` | 取消订阅请求的响应数据类型。                                                         |
+| `RetrieveSubscriptionInput`  | 获取特定订阅详情的输入类型。                                                         |
+| `SubscriptionData`           | API 返回的订阅信息类型。                                                              |
+| `SearchTransactionsInput`    | 搜索交易时的筛选条件及参数类型。                                                     |
+| `SearchTransactionsResponse` | 交易搜索查询的响应结构类型。                                                         |
+| `TransactionData`            | 单笔交易（支付、退款等）相关数据类型。                                               |
+| `HasAccessGrantedResponse`   | 指示用户基于订阅状态/规则是否拥有访问权限的响应数据结构。                            |
 
-## Trial Abuse Prevention
+## 试用滥用防护
 
-When using database mode (`persistSubscriptions: true`), the plugin automatically prevents trial abuse. Users can only receive one trial across all subscription plans.
+启用数据库模式（`persistSubscriptions: true`）时，插件将自动防止试用滥用。用户整个账户内所有订阅计划仅能获得一次试用机会。
 
-**Example Scenario:**
-1. User subscribes to "Starter" plan with 7-day trial
-2. User cancels subscription during the trial period
-3. User attempts to subscribe to "Premium" plan
-4. No trial is offered - user is charged immediately
+**示例场景：**
+1. 用户订阅 “Starter” 计划并享受 7 天试用
+2. 试用期间用户取消订阅
+3. 用户尝试订阅 “Premium” 计划
+4. 不再提供试用，立即收费
 
-This protection is automatic and requires no configuration. Trial eligibility is determined when the subscription is created and cannot be overridden.
+该防护为自动且不可配置，试用资格在创建订阅时判断，无法覆盖。
 
-## Troubleshooting
+## 常见问题排查
 
-### Webhook Issues
+### Webhook 问题
 
-If webhooks aren't being processed correctly:
+Webhook 无法正确处理时：
 
-1. Verify the webhook URL is correct in your Creem dashboard
-2. Check that the webhook signing secret matches
-3. Ensure all necessary events are selected in the Creem dashboard
-4. Review server logs for webhook processing errors
-5. Test webhook delivery using Creem's webhook testing tool
+1. 确认 Creem 控制面板中 webhook URL 是否正确
+2. 检查 webhook 签名密钥是否匹配
+3. 确保在 Creem 控制面板中选中所有必要事件
+4. 查看服务器日志中 webhook 处理错误
+5. 用 Creem 的 webhook 测试工具测试发送
 
-### Subscription Status Issues
+### 订阅状态异常
 
-If subscription statuses aren't updating:
+订阅状态未更新时：
 
-1. Confirm webhooks are being received and processed
-2. Verify `creemCustomerId` and `creemSubscriptionId` fields are populated
-3. Check that reference IDs match between your application and Creem
-4. Review webhook handler logs for errors
+1. 确认 webhook 是否有正确接收和处理
+2. 确认 `creemCustomerId` 和 `creemSubscriptionId` 字段已填充
+3. 检查您应用和 Creem 之间的引用 ID 是否一致
+4. 查看 webhook 处理器日志中是否有错误
 
-### Database Mode Not Working
+### 数据库模式无效
 
-If database persistence isn't functioning:
+数据库持久化不生效时：
 
-1. Ensure `persistSubscriptions: true` is set (it's the default)
-2. Run migrations: `npx auth migrate`
-3. Verify database connection is working
-4. Check that schema tables were created successfully
-5. Review database adapter configuration
+1. 确认启用了 `persistSubscriptions: true`（默认开启）
+2. 运行迁移命令：`npx auth migrate`
+3. 检查数据库连接是否正常
+4. 确认数据库表模式是否成功创建
+5. 检查数据库适配器配置
 
-### API Mode Limitations
+### API 模式限制
 
-Some functionalities are only available in database mode or require extra parameters to be passed:
+部分功能仅数据库模式支持或者需额外参数：
 
-- `checkSubscriptionAccess` requires passing the `userId` parameter
-- `getActiveSubscriptions` requires passing the `userId` parameter  
-- No automatic trial abuse prevention
-- No access to `hasAccessGranted` client method
+- `checkSubscriptionAccess` 需传入 `userId`
+- `getActiveSubscriptions` 需传入 `userId`
+- 无自动试用滥用防护
+- 无客户端 `hasAccessGranted` 方法
 
-To use these features, either enable database mode or implement custom logic using the Creem SDK directly.
+使用时建议启用数据库模式，或自行用 Creem SDK 实现自定义逻辑。
 
-## Additional Resources
+## 额外资源
 
-- [Creem Documentation](https://docs.creem.io)
-- [Creem Dashboard](https://creem.io/dashboard)
-- [Better Auth Documentation](https://better-auth.com)
-- [Plugin GitHub Repository Additional Documentation](https://github.com/armitage-labs/creem-betterauth)
+- [Creem 文档](https://docs.creem.io)
+- [Creem 控制面板](https://creem.io/dashboard)
+- [Better Auth 文档](https://better-auth.com)
+- [插件 GitHub 额外文档](https://github.com/armitage-labs/creem-betterauth)
 
-## Support
+## 支持
 
-For issues or questions:
+遇到问题或有疑问：
 
-- Open an issue on [GitHub](https://github.com/armitage-labs/creem-betterauth/issues)
-- Contact Creem support at [support@creem.io](mailto:support@creem.io)
-- Join our [Discord community](https://discord.gg/q3GKZs92Av) for real-time support and discussion.
-- Chat with us directly using the in-app live chat on the [Creem dashboard](https://creem.io/dashboard).
+- 在 [GitHub](https://github.com/armitage-labs/creem-betterauth/issues) 提交 issue
+- 发送邮件至 Creem 支持：[support@creem.io](mailto:support@creem.io)
+- 加入我们的 [Discord 社区](https://discord.gg/q3GKZs92Av) 获得实时支持与讨论
+- 在 [Creem 控制面板](https://creem.io/dashboard) 使用应用内实时聊天与我们交流

@@ -1,31 +1,31 @@
 ---
-title: Rate Limit
-description: How to limit the number of requests a user can make to the server in a given time period.
+title: 速率限制
+description: 如何限制用户在给定时间段内对服务器发起的请求次数。
 ---
 
-Better Auth includes a built-in rate limiter to help manage traffic and prevent abuse. By default, in production mode, the rate limiter is set to:
+Better Auth 包含内置的速率限制器，以帮助管理流量和防止滥用。默认情况下，在生产模式下，速率限制器设置为：
 
-- Window: 60 seconds
-- Max Requests: 100 requests
+- 时间窗口：60 秒
+- 最大请求数：100 次请求
 
 <Callout type="warning">
-Server-side requests made using `auth.api` aren't affected by rate limiting. Rate limits only apply to client-initiated requests.
+使用 `auth.api` 发起的服务器端请求不受速率限制影响。速率限制只适用于客户端发起的请求。
 </Callout>
 
-You can easily customize these settings by passing the rateLimit object to the betterAuth function.
+您可以通过将 `rateLimit` 对象传递给 `betterAuth` 函数轻松自定义这些设置。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
     rateLimit: {
-        window: 10, // time window in seconds
-        max: 100, // max requests in the window
+        window: 10, // 时间窗口，单位秒
+        max: 100, // 窗口内最大请求数
     },
 })
 ```
 
-Rate limiting is disabled in development mode by default. In order to enable it, set `enabled` to `true`:
+开发模式下默认禁用速率限制。若想启用，请将 `enabled` 设置为 `true`：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -33,63 +33,61 @@ import { betterAuth } from "better-auth";
 export const auth = betterAuth({
     rateLimit: {
         enabled: true,
-        //...other options
+        //...其他选项
     },
 })
 ```
 
-In addition to the default settings, Better Auth provides custom rules for specific paths. For example:
-- `/sign-in/email`: Is limited to 3 requests within 10 seconds.
+除默认设置外，Better Auth 还为特定路径提供了自定义规则。例如：
+- `/sign-in/email`：在 10 秒内限制最多 3 次请求。
 
-In addition, plugins also define custom rules for specific paths. For example, `twoFactor` plugin has custom rules:
-- `/two-factor/verify`: Is limited to 3 requests within 10 seconds.
+此外，插件也为特定路径定义了自定义规则。例如，`twoFactor` 插件有如下规则：
+- `/two-factor/verify`：在 10 秒内限制最多 3 次请求。
 
-These custom rules ensure that sensitive operations are protected with stricter limits.
+这些自定义规则确保敏感操作受到更严格的限制保护。
 
-## Configuring Rate Limit
+## 配置速率限制
 
-### Connecting IP Address
+### 连接 IP 地址
 
-Rate limiting uses the connecting IP address to track the number of requests made by a user. The
-default header checked is `x-forwarded-for`, which is commonly used in production environments. If
-you are using a different header to track the user's IP address, you'll need to specify it.
+速率限制通过连接的 IP 地址来跟踪用户发起的请求数量。默认检查的请求头为 `x-forwarded-for`，这在生产环境中常用。如果您使用其他请求头来跟踪用户的 IP 地址，则需要指定它。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    //...other options
+    //...其他选项
     advanced: {
         ipAddress: {
-          ipAddressHeaders: ["cf-connecting-ip"], // Cloudflare specific header example
+          ipAddressHeaders: ["cf-connecting-ip"], // Cloudflare 特定请求头示例
       },
     },
     rateLimit: {
         enabled: true,
-        window: 60, // time window in seconds
-        max: 100, // max requests in the window
+        window: 60, // 时间窗口，单位秒
+        max: 100, // 窗口内最大请求数
     },
 })
 ```
 
-#### IPv6 Address Support
+#### IPv6 地址支持
 
-Better Auth automatically normalizes IPv6 addresses to prevent bypass attacks where attackers use different representations of the same IPv6 address (e.g., `2001:db8::1` vs `2001:0db8:0000:0000:0000:0000:0000:0001`). This ensures that all representations of the same IPv6 address are treated as the same for rate limiting purposes.
+Better Auth 会自动规范 IPv6 地址，以防止攻击者通过使用同一 IPv6 地址的不同表示形式绕过限制（例如 `2001:db8::1` 与 `2001:0db8:0000:0000:0000:0000:0000:0001`）。这样可以确保对于速率限制来说，所有同一 IPv6 地址的表现形式都被视为相同。
 
-Additionally, IPv4-mapped IPv6 addresses (e.g., `::ffff:192.0.2.1`) are automatically converted to their IPv4 form (`192.0.2.1`) to prevent attackers from bypassing rate limits by switching between IPv4 and IPv6 representations.
+此外，IPv4 映射的 IPv6 地址（例如 `::ffff:192.0.2.1`）会自动转换为它们的 IPv4 形式（`192.0.2.1`），防止攻击者通过在 IPv4 和 IPv6 表示之间切换绕过速率限制。
 
-#### IPv6 Subnet Rate Limiting
+#### IPv6 子网速率限制
 
-By default, IPv6 addresses are rate limited individually (using the full /128 address). However, since IPv6 typically allocates large address blocks to single users, attackers could potentially bypass rate limits by rotating through multiple IPv6 addresses from their allocation.
+默认情况下，IPv6 地址以单个地址（/128）为单位进行速率限制。但由于 IPv6 通常会分配给单个用户较大的地址块，攻击者可以在其分配的多个 IPv6 地址间轮换，从而绕过速度限制。
 
-To prevent this, you can configure rate limiting to apply to IPv6 subnets instead of individual addresses:
+为防止这种情况，您可以配置速率限制应用于 IPv6 子网，而不是单个地址：
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
-    //...other options
+    //...其他选项
     advanced: {
         ipAddress: {
-            ipv6Subnet: 64, // Rate limit by /64 subnet instead of individual addresses
+            ipv6Subnet: 64, // 按 /64 子网而非单个地址进行速率限制
         },
     },
     rateLimit: {
@@ -100,47 +98,47 @@ export const auth = betterAuth({
 })
 ```
 
-Common IPv6 subnet prefix lengths:
-- `128` (default): Individual IPv6 address - most restrictive
-- `64`: /64 subnet - typical home/business allocation
-- `48`: /48 subnet - larger network allocation
-- `32`: /32 subnet - ISP-level allocation
+常见 IPv6 子网前缀长度：
+- `128`（默认）：单个 IPv6 地址 - 最严格
+- `64`：/64 子网 - 典型家庭/企业分配
+- `48`：/48 子网 - 较大网络分配
+- `32`：/32 子网 - ISP 级分配
 
 <Callout type="info">
-IPv6 subnet configuration only affects IPv6 addresses. IPv4 addresses are always rate limited individually.
+IPv6 子网配置仅影响 IPv6 地址。IPv4 地址始终以单个地址进行速率限制。
 </Callout>
 
-### Rate Limit Window
+### 速率限制时间窗口
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    //...other options
+    //...其他选项
     rateLimit: {
-        window: 60, // time window in seconds
-        max: 100, // max requests in the window
+        window: 60, // 时间窗口，单位秒
+        max: 100, // 窗口内最大请求数
     },
 })
 ```
 
-You can also pass custom rules for specific paths.
+您也可以为特定路径传递自定义规则。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    //...other options
+    //...其他选项
     rateLimit: {
-        window: 60, // time window in seconds
-        max: 100, // max requests in the window
+        window: 60, // 时间窗口，单位秒
+        max: 100, // 窗口内最大请求数
         customRules: {
             "/sign-in/email": {
                 window: 10,
                 max: 3,
             },
             "/two-factor/*": async (request)=> {
-                // custom function to return rate limit window and max
+                // 自定义函数用于返回速率限制窗口和最大请求数
                 return {
                     window: 10,
                     max: 3,
@@ -151,13 +149,13 @@ export const auth = betterAuth({
 })
 ```
 
-If you like to disable rate limiting for a specific path, you can set it to `false` or return `false` from the custom rule function.
+如果想要禁用特定路径的速率限制，可以设置为 `false`，或者自定义规则函数返回 `false`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    //...other options
+    //...其他选项
     rateLimit: {
         customRules: {
             "/get-session": false,
@@ -166,80 +164,80 @@ export const auth = betterAuth({
 })
 ```
 
-### Storage
+### 存储
 
-By default, rate limit data is stored in memory, which may not be suitable for many use cases, particularly in serverless environments. To address this, you can use a database, secondary storage, or custom storage for storing rate limit data.
+默认情况下，速率限制数据存储在内存中，这可能不适合许多用例，尤其是在无服务器环境中。为此，您可以使用数据库、二级存储或自定义存储来存储速率限制数据。
 
-**Using Database**
+**使用数据库**
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    //...other options
+    //...其他选项
     rateLimit: {
         storage: "database",
-        modelName: "rateLimit", //optional by default "rateLimit" is used
+        modelName: "rateLimit", // 可选，默认使用 "rateLimit"
     },
 })
 ```
 
-Make sure to run `migrate` to create the rate limit table in your database:
+请确保运行 `migrate` 命令在数据库中创建速率限制表：
 
 ```package-install
 npx auth@latest migrate
 ```
 
 <Callout type="info">
-  The `migrate` command only works if you're using the built-in Kysely adapter. If you're using Prisma, Drizzle, or another ORM, run `npx auth@latest generate` first, then apply the schema using your ORM's migration tool. For more info, see the [Better Auth CLI](/docs/concepts/cli).
+`migrate` 命令仅在使用内置的 Kysely 适配器时有效。如果您使用 Prisma、Drizzle 或其他 ORM，请先执行 `npx auth@latest generate`，然后通过您使用的 ORM 迁移工具应用 schema。详情请参阅 [Better Auth CLI](/docs/concepts/cli)。
 </Callout>
 
-**Using Secondary Storage**
+**使用二级存储**
 
-If a [Secondary Storage](/docs/concepts/database#secondary-storage) has been configured you can use that to store rate limit data.
+如果已经配置了[二级存储](/docs/concepts/database#secondary-storage)，您可以使用它来存储速率限制数据。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    //...other options
+    //...其他选项
     rateLimit: {
 		storage: "secondary-storage"
     },
 })
 ```
 
-**Custom Storage**
+**自定义存储**
 
-If none of the above solutions suits your use case you can implement a `customStorage`.
+如果上述方式都不适合您的用例，您可以实现一个 `customStorage`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    //...other options
+    //...其他选项
     rateLimit: {
         customStorage: {
             get: async (key) => {
-                // get rate limit data
+                // 获取速率限制数据
             },
             set: async (key, value) => {
-                // set rate limit data
+                // 设置速率限制数据
             },
         },
     },
 })
 ```
 
-## Handling Rate Limit Errors
+## 处理速率限制错误
 
-When a request exceeds the rate limit, Better Auth returns the following header:
+当请求超过速率限制时，Better Auth 会返回以下响应头：
 
-- `X-Retry-After`: The number of seconds until the user can make another request.
+- `X-Retry-After`：距离用户可再次发起请求的秒数。
 
-To handle rate limit errors on the client side, you can manage them either globally or on a per-request basis. Since Better Auth clients wrap over Better Fetch, you can pass `fetchOptions` to handle rate limit errors
+在客户端处理速率限制错误时，您可以全局处理或者针对单个请求分别处理。因为 Better Auth 客户端封装了 Better Fetch，您可以传递 `fetchOptions` 来处理速率限制错误。
 
-**Global Handling**
+**全局处理**
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client";
@@ -250,15 +248,14 @@ export const authClient = createAuthClient({
             const { response } = context;
             if (response.status === 429) {
                 const retryAfter = response.headers.get("X-Retry-After");
-                console.log(`Rate limit exceeded. Retry after ${retryAfter} seconds`);
+                console.log(`超过速率限制。请在 ${retryAfter} 秒后重试`);
             }
         },
     }
 })
 ```
 
-
-**Per Request Handling**
+**单请求处理**
 
 ```ts title="auth-client.ts"
 import { authClient } from "./auth-client";
@@ -269,40 +266,40 @@ await authClient.signIn.email({
             const { response } = context;
             if (response.status === 429) {
                 const retryAfter = response.headers.get("X-Retry-After");
-                console.log(`Rate limit exceeded. Retry after ${retryAfter} seconds`);
+                console.log(`超过速率限制。请在 ${retryAfter} 秒后重试`);
             }
         },
     }
 })
 ```
 
-### Schema
+### 数据库表结构
 
-If you are using a database to store rate limit data you need this schema:
+如果您使用数据库存储速率限制数据，需要以下表结构：
 
-Table Name: `rateLimit`
+表名：`rateLimit`
 
 <DatabaseTable
     fields={[
         { 
         name: "id", 
         type: "string", 
-        description: "Database ID",
+        description: "数据库 ID",
         isPrimaryKey: true
         },
         { 
         name: "key", 
         type: "string", 
-        description: "Unique identifier for each rate limit key",
+        description: "每个速率限制键的唯一标识",
         },
         { 
         name: "count", 
         type: "integer", 
-        description: "Time window in seconds" 
+        description: "时间窗口（单位秒）" 
         },
         { 
         name: "lastRequest", 
         type: "bigint", 
-        description: "Max requests in the window" 
+        description: "窗口内最大请求数" 
         }]}
     />

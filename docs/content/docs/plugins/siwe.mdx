@@ -1,17 +1,17 @@
 ---
-title: Sign In With Ethereum (SIWE)
-description: Sign in with Ethereum plugin for Better Auth
+title: 以太坊登录（SIWE）
+description: Better Auth 的以太坊登录插件
 ---
 
-The Sign in with Ethereum (SIWE) plugin allows users to authenticate using their Ethereum wallets following the [ERC-4361 standard](https://eips.ethereum.org/EIPS/eip-4361). This plugin provides flexibility by allowing you to implement your own message verification and nonce generation logic.
+以太坊登录（Sign in with Ethereum，SIWE）插件允许用户使用其以太坊钱包按照 [ERC-4361 标准](https://eips.ethereum.org/EIPS/eip-4361)进行身份验证。此插件提供灵活性，支持你自行实现消息验证与 nonce 生成逻辑。
 
-## Installation
+## 安装
 
 <Steps>
     <Step>
-        ### Add the Server Plugin
+        ### 添加服务器插件
 
-        Add the SIWE plugin to your auth configuration:
+        将 SIWE 插件添加到你的认证配置中：
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth";
@@ -21,19 +21,19 @@ The Sign in with Ethereum (SIWE) plugin allows users to authenticate using their
             plugins: [
                 siwe({
                     domain: "example.com",
-                    emailDomainName: "example.com", // optional
-                    anonymous: false, // optional, default is true
+                    emailDomainName: "example.com", // 可选
+                    anonymous: false, // 可选，默认值为 true
                     getNonce: async () => {
-                        // Implement your nonce generation logic here
+                        // 在此实现你的 nonce 生成逻辑
                         return "your-secure-random-nonce";
                     },
                     verifyMessage: async (args) => {
-                        // Implement your SIWE message verification logic here
-                        // This should verify the signature against the message
-                        return true; // return true if signature is valid
+                        // 在此实现你的 SIWE 消息验证逻辑
+                        // 应对消息的签名进行验证
+                        return true; // 签名有效时返回 true
                     },
                     ensLookup: async (args) => {
-                        // Optional: Implement ENS lookup for user names and avatars
+                        // 可选：实现 ENS 名称和头像查询
                         return {
                             name: "user.eth",
                             avatar: "https://example.com/avatar.png"
@@ -46,9 +46,9 @@ The Sign in with Ethereum (SIWE) plugin allows users to authenticate using their
     </Step>
 
     <Step>
-        ### Migrate the database
+        ### 数据库迁移
 
-        Run the migration or generate the schema to add the necessary fields and tables to the database.
+        运行迁移或生成 schema，以向数据库中添加必要的字段和表。
 
         <Tabs items={["migrate", "generate"]}>
             <Tab value="migrate">
@@ -62,11 +62,11 @@ The Sign in with Ethereum (SIWE) plugin allows users to authenticate using their
             ```
             </Tab>
         </Tabs>
-        See the [Schema](#schema) section to add the fields manually.
+        请参考 [Schema](#schema) 部分，手动添加字段。
     </Step>
 
     <Step>
-        ### Add the Client Plugin
+        ### 添加客户端插件
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client";
@@ -82,18 +82,18 @@ The Sign in with Ethereum (SIWE) plugin allows users to authenticate using their
 
 </Steps>
 
-## Usage
+## 使用方法
 
-### Generate a Nonce
+### 生成 Nonce
 
-Before signing a SIWE message, you need to generate a nonce for the wallet address:
+在签署 SIWE 消息之前，需要为钱包地址生成一个 nonce：
 
 ```ts
 import { authClient } from "@/lib/auth-client";
 
 const { data, error } = await authClient.siwe.nonce({
   walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
-  chainId: 1, // optional for Ethereum mainnet, required for other chains. Defaults to 1
+  chainId: 1, // Ethereum 主网可选，其他链必填。默认值为 1
 });
 
 if (data) {
@@ -101,98 +101,98 @@ if (data) {
 }
 ```
 
-### Sign In with Ethereum
+### 以太坊登录
 
-After generating a nonce and creating a SIWE message, verify the signature to authenticate:
+生成 nonce 并创建 SIWE 消息后，验证签名以完成身份认证：
 
 ```ts
 import { authClient } from "@/lib/auth-client";
 
 const { data, error } = await authClient.siwe.verify({
   message: "Your SIWE message string",
-  signature: "0x...", // The signature from the user's wallet
+  signature: "0x...", // 用户钱包签名
   walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
-  chainId: 1, // optional for Ethereum mainnet, required for other chains. Must match Chain ID in SIWE message
-  email: "user@example.com", // optional, required if anonymous is false
+  chainId: 1, // Ethereum 主网可选，其他链必填，必须与 SIWE 消息中的链 ID 保持一致
+  email: "user@example.com", // 可选，anonymous 为 false 时必填
 });
 
 if (data) {
-  console.log("Authentication successful:", data.user);
+  console.log("认证成功:", data.user);
 }
 ```
 
-### Chain-Specific Examples
+### 链上示例
 
-Here are examples for different blockchain networks:
+以下为不同区块链网络的示例：
 
 ```ts
-// Ethereum Mainnet (chainId can be omitted, defaults to 1)
+// 以太坊主网（chainId 可省略，默认为 1）
 import { authClient } from "@/lib/auth-client";
 
 const { data, error } = await authClient.siwe.verify({
   message,
   signature,
   walletAddress,
-  // chainId: 1 (default)
+  // chainId: 1 (默认)
 });
 ```
 
 ```ts
-// Polygon (chainId REQUIRED)
+// Polygon (chainId 必填)
 import { authClient } from "@/lib/auth-client";
 
 const { data, error } = await authClient.siwe.verify({
   message,
   signature,
   walletAddress,
-  chainId: 137, // Required for Polygon
+  chainId: 137, // Polygon 必填
 });
 ```
 
 ```ts
-// Arbitrum (chainId REQUIRED)
+// Arbitrum (chainId 必填)
 import { authClient } from "@/lib/auth-client";
 
 const { data, error } = await authClient.siwe.verify({
   message,
   signature,
   walletAddress,
-  chainId: 42161, // Required for Arbitrum
+  chainId: 42161, // Arbitrum 必填
 });
 ```
 
 ```ts
-// Base (chainId REQUIRED)
+// Base (chainId 必填)
 import { authClient } from "@/lib/auth-client";
 
 const { data, error } = await authClient.siwe.verify({
   message,
   signature,
   walletAddress,
-  chainId: 8453, // Required for Base
+  chainId: 8453, // Base 必填
 });
 ```
 
 <Callout type="warning">
-  The `chainId` must match the Chain ID specified in your SIWE message. Verification will fail with a 401 error if there's a mismatch between the message's Chain ID and the `chainId` parameter.
+  `chainId` 必须与 SIWE 消息中指定的链 ID 匹配。如果消息中的链 ID 与 `chainId` 参数不一致，则验证会失败，并返回 401 错误。
 </Callout>
 
-## Configuration Options
+## 配置选项
 
-### Server Options
+### 服务器配置
 
-The SIWE plugin accepts the following configuration options:
+SIWE 插件接受以下配置选项：
 
-- **domain**: The domain name of your application (required for SIWE message generation)
-- **emailDomainName**: The email domain name for creating user accounts when not using anonymous mode. Defaults to the domain from your base URL
-- **anonymous**: Whether to allow anonymous sign-ins without requiring an email. Default is `true`
-- **getNonce**: Function to generate a unique nonce for each sign-in attempt. You must implement this function to return a cryptographically secure random string. Must return a `Promise<string>`
-- **verifyMessage**: Function to verify the signed SIWE message. Receives message details and should return `Promise<boolean>`
-- **ensLookup**: Optional function to lookup ENS names and avatars for Ethereum addresses
+- **domain**：你的应用域名（SIWE 消息生成时必填）
+- **emailDomainName**：创建用户账户时的邮箱域名（非匿名模式时使用）。默认取基地址域名
+- **anonymous**：是否允许匿名登录（无需邮箱）。默认值为 `true`
+- **getNonce**：生成每次登录唯一 nonce 的函数。必须返回加密安全的随机字符串，返回类型为 `Promise<string>`
+- **verifyMessage**：验证签署的 SIWE 消息的函数。接收消息详情，需返回 `Promise<boolean>`
+- **ensLookup**：可选，查询以太坊地址对应的 ENS 名称和头像的函数
 
-### Client Options
+### 客户端配置
 
-The SIWE client plugin doesn't require any configuration options, but you can pass them if needed for future extensibility:
+SIWE 客户端插件目前不需要任何配置选项，但如果需要，可以传入配置以便未来扩展：
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client";
@@ -201,28 +201,28 @@ import { siweClient } from "better-auth/client/plugins";
 export const authClient = createAuthClient({
   plugins: [
     siweClient({
-      // Optional client configuration can go here
+      // 可选的客户端配置项
     }),
   ],
 });
 ```
 
-## Schema
+## 数据表结构
 
-The SIWE plugin adds a `walletAddress` table to store user wallet associations:
+SIWE 插件新增了一个 `walletAddress` 表，用于存储用户钱包关联信息：
 
-| Field     | Type    | Description                               |
+| 字段       | 类型    | 描述                                    |
 | --------- | ------- | ----------------------------------------- |
-| id        | string  | Primary key                               |
-| userId    | string  | Reference to user.id                      |
-| address   | string  | Ethereum wallet address                   |
-| chainId   | number  | Chain ID (e.g., 1 for Ethereum mainnet)   |
-| isPrimary | boolean | Whether this is the user's primary wallet |
-| createdAt | date    | Creation timestamp                        |
+| id        | string  | 主键                                    |
+| userId    | string  | 关联用户的 user.id                       |
+| address   | string  | 以太坊钱包地址                          |
+| chainId   | number  | 链 ID（例如以太坊主网为 1）              |
+| isPrimary | boolean | 是否为用户的主钱包                      |
+| createdAt | date    | 创建时间戳                              |
 
-## Example Implementation
+## 示例实现
 
-Here's a complete example showing how to implement SIWE authentication:
+下面是一个完整示例，展示如何实现 SIWE 认证：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -233,7 +233,7 @@ import { mainnet } from "viem/chains";
 
 export const auth = betterAuth({
   database: {
-    // your database configuration
+    // 你的数据库配置
   },
   plugins: [
     siwe({
@@ -241,12 +241,12 @@ export const auth = betterAuth({
       emailDomainName: "myapp.com",
       anonymous: false,
       getNonce: async () => {
-        // Generate a cryptographically secure random nonce
+        // 生成加密安全的随机 nonce
         return generateRandomString(32, "a-z", "A-Z", "0-9");
       },
       verifyMessage: async ({ message, signature, address }) => {
         try {
-          // Verify the signature using viem (recommended)
+          // 使用 viem 库验证签名（推荐）
           const isValid = await verifyMessage({
             address: address as `0x${string}`,
             message,
@@ -254,14 +254,13 @@ export const auth = betterAuth({
           });
           return isValid;
         } catch (error) {
-          console.error("SIWE verification failed:", error);
+          console.error("SIWE 验证失败:", error);
           return false;
         }
       },
       ensLookup: async ({ walletAddress }) => {
         try {
-          // Optional: lookup ENS name and avatar using viem
-          // You can use viem's ENS utilities here
+          // 可选：使用 viem 查询 ENS 名称和头像
           const client = createPublicClient({
             chain: mainnet,
             transport: http(),

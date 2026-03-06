@@ -1,19 +1,19 @@
 ---
 title: Twitch
-description: Twitch provider setup and usage.
+description: Twitch 提供者设置和使用。
 ---
 
 <Steps>
     <Step> 
-        ### Get your Twitch Credentials
-        To use Twitch sign in, you need a client ID and client secret. You can get them from the [Twitch Developer Portal](https://dev.twitch.tv/console/apps).
+        ### 获取您的 Twitch 凭据
+        要使用 Twitch 登录，您需要客户端 ID 和客户端密钥。您可以从 [Twitch 开发者门户](https://dev.twitch.tv/console/apps) 获取它们。
 
-        Make sure to set the redirect URL to `http://localhost:3000/api/auth/callback/twitch` for local development. For production, you should set it to the URL of your application. If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/twitch` 以进行本地开发。对于生产环境，您应将其设置为您的应用程序的 URL。如果您更改了身份验证路由的基础路径，也应相应更新重定向 URL。
     </Step>
 
   <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供者
+        要配置提供者，您需要导入该提供者并将其传递给认证实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts"  
         import { betterAuth } from "better-auth"
@@ -29,11 +29,11 @@ description: Twitch provider setup and usage.
         ```
     </Step>
        <Step>
-        ### Sign In with Twitch 
-        To sign in with Twitch, you can use the `signIn.social` function provided by the client.
-        The `signIn` function takes an object with the following properties:
+        ### 使用 Twitch 登录
+        要使用 Twitch 登录，您可以使用客户端提供的 `signIn.social` 函数。
+        `signIn` 函数接收一个包含以下属性的对象：
 
-        - `provider`: The provider to use. It should be set to `twitch`.
+        - `provider`: 要使用的提供者。应设置为 `twitch`。
 
         ```ts title="auth-client.ts"  
         import { createAuthClient } from "better-auth/client"
@@ -47,7 +47,7 @@ description: Twitch provider setup and usage.
         ```
 
         <Callout type="warn">
-            Twitch users who do not have an email address will not be able to sign in.
+            没有电子邮件地址的 Twitch 用户将无法登录。
         </Callout>
     </Step>
 </Steps>

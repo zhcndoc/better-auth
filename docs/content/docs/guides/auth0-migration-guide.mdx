@@ -1,29 +1,29 @@
 ---
-title: Migrating from Auth0 to Better Auth
-description: A step-by-step guide to transitioning from Auth0 to Better Auth.
+title: 从 Auth0 迁移到 Better Auth
+description: 从 Auth0 迁移到 Better Auth 的逐步指南。
 ---
 
-In this guide, we'll walk through the steps to migrate a project from Auth0 to Better Auth — including email/password with proper hashing, social/external accounts, two-factor authentication, and more.
+在本指南中，我们将介绍如何将项目从 Auth0 迁移到 Better Auth —— 包括支持适当哈希的邮箱/密码、社交/外部账户、双因素认证等。
 
 <Callout type="warn">
-This migration will invalidate all active sessions. This guide doesn't currently show you how to migrate Organizations but it should be possible with additional steps and the [Organization](/docs/plugins/organization) Plugin.
+此迁移将使所有活动会话失效。当前本指南未展示如何迁移组织（Organizations），但通过额外步骤和 [Organization](/docs/plugins/organization) 插件应可实现。
 </Callout>
 
-## Before You Begin
+## 迁移前准备
 
-Before starting the migration process, set up Better Auth in your project. Follow the [installation guide](/docs/installation) to get started.
+开始迁移流程前，请先在项目中设置 Better Auth。请参照[安装指南](/docs/installation)开始。
 
 <Steps>
 <Step>
-### Connect to your database
+### 连接数据库
 
-You'll need to connect to your database to migrate the users and accounts. You can use any database you want, but for this example, we'll use PostgreSQL.
+你需要连接数据库以迁移用户和账户。你可以使用任何数据库，但本示例使用 PostgreSQL。
 
 ```package-install
 npm install pg
 ```
 
-And then you can use the following code to connect to your database.
+然后你可以使用以下代码连接数据库。
 
 ```ts title="auth.ts"
 import { Pool } from "pg";
@@ -36,9 +36,9 @@ export const auth = betterAuth({
 ```
 </Step>
 <Step>
-### Enable Email and Password (Optional)
+### 启用邮箱和密码（可选）
 
-Enable the email and password in your auth config and implement your own logic for sending verification emails, reset password emails, etc.
+在你的认证配置中启用邮箱和密码，并实现发送验证邮件、重置密码邮件等自定义逻辑。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -52,18 +52,18 @@ export const auth = betterAuth({
     }, // [!code highlight]
     emailVerification: {
       sendVerificationEmail: async({ user, url })=>{
-        // implement your logic here to send email verification
+        // 在此实现发送邮箱验证的逻辑
       }
     },
 })
 ```
 
-See [Email and Password](/docs/authentication/email-password) for more configuration options.
+更多配置选项请查看[邮箱和密码](/docs/authentication/email-password)。
 </Step>
 <Step>
-### Setup Social Providers (Optional)
+### 设置社交登录提供者（可选）
 
-Add social providers you have enabled in your Auth0 project in your auth config.
+在你的认证配置中添加你在 Auth0 项目中启用的社交提供者。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -89,15 +89,15 @@ export const auth = betterAuth({
 ```
 </Step>
 <Step>
-### Add Plugins (Optional)
+### 添加插件（可选）
 
-You can add the following plugins to your auth config based on your needs.
+根据需要，你可以在认证配置中添加以下插件。
 
-[Admin](/docs/plugins/admin) Plugin will allow you to manage users, user impersonations and app level roles and permissions.
+[Admin](/docs/plugins/admin) 插件允许你管理用户、用户模拟及应用级角色和权限。
 
-[Two Factor](/docs/plugins/2fa) Plugin will allow you to add two-factor authentication to your application.
+[Two Factor](/docs/plugins/2fa) 插件允许你为应用添加双因素认证。
 
-[Username](/docs/plugins/username) Plugin will allow you to add username authentication to your application.
+[Username](/docs/plugins/username) 插件允许你为应用添加用户名认证。
 
 ```ts title="auth.ts"
 import { Pool } from "pg";
@@ -112,7 +112,7 @@ export const auth = betterAuth({
         enabled: true,
         password: {
             verify: (data) => {
-                // this for an edgecase that you might run in to on verifying the password
+                // 处理密码验证时可能遇到的特殊情况
             }
         }
     },
@@ -131,54 +131,54 @@ export const auth = betterAuth({
 ```
 </Step>
 <Step>
-### Generate Schema
+### 生成 Schema
 
-If you're using a custom database adapter, generate the schema:
+如果你使用自定义数据库适配器，生成 schema：
 
 ```sh
 npx auth generate
 ```
 
-or if you're using the default adapter, you can use the following command:
+如果使用默认适配器，可以执行：
 
 ```sh
 npx auth migrate
 ```
 </Step>
 <Step>
-### Install Dependencies
+### 安装依赖
 
-Install the required dependencies for the migration:
+安装迁移所需的依赖：
 
 ```bash
 npm install auth0
 ```
 </Step>
 <Step>
-### Create the migration script
+### 创建迁移脚本
 
-Create a new file called `migrate-auth0.ts` in the `scripts` folder and add the following code:
+在 `scripts` 文件夹下创建新文件 `migrate-auth0.ts`，添加以下代码：
 
 <Callout type="info">
-Instead of using the Management API, you can use Auth0's bulk user export functionality and pass the exported JSON data directly to the `auth0Users` array. This is especially useful if you need to migrate password hashes and complete user data, which are not available through the Management API.
+你可以不使用 Management API，而是利用 Auth0 的批量用户导出功能，直接将导出的 JSON 数据赋值给 `auth0Users` 数组。这在需要迁移密码哈希和完整用户数据时非常有用，这些数据 Management API 无法获取。
 
-**Important Notes:**
-- Password hashes export is only available for Auth0 Enterprise users
-- Free plan users cannot export password hashes and will need to request a support ticket
-- For detailed information about bulk user exports, see the [Auth0 Bulk User Export Documentation](https://auth0.com/docs/manage-users/user-migration/bulk-user-exports)
-- For password hash export details, refer to [Exporting Password Hashes](https://auth0.com/docs/troubleshoot/customer-support/manage-subscriptions/export-data#user-passwords)
+**重要说明：**
+- 密码哈希导出仅对 Auth0 企业用户开放
+- 免费计划用户无法导出密码哈希，需提交支持工单
+- 详细信息请参阅 [Auth0 批量用户导出文档](https://auth0.com/docs/manage-users/user-migration/bulk-user-exports)
+- 密码哈希导出详情请参考 [导出密码哈希](https://auth0.com/docs/troubleshoot/customer-support/manage-subscriptions/export-data#user-passwords)
 
-Example:
+示例：
 ```ts
-// Replace this with your exported users JSON data
+// 用你的导出用户 JSON 数据替换此处
 const auth0Users = [
   {
     "email": "helloworld@gmail.com",
     "email_verified": false,
     "name": "Hello world",
-    // Note: password_hash is only available for Enterprise users
+    // 注意：密码哈希仅企业用户可见
     "password_hash": "$2b$10$w4kfaZVjrcQ6ZOMiG.M8JeNvnVQkPKZV03pbDUHbxy9Ug0h/McDXi",
-    // ... other user data
+    // ... 其他用户数据
   }
 ];
 ```
@@ -195,8 +195,6 @@ const auth0Client = new ManagementClient({
     clientSecret: process.env.AUTH0_SECRET!,
 });
 
-
-
 function safeDateConversion(timestamp?: string | number): Date {
     if (!timestamp) return new Date();
 
@@ -207,21 +205,21 @@ function safeDateConversion(timestamp?: string | number): Date {
     const date = new Date(milliseconds);
 
     if (isNaN(date.getTime())) {
-        console.warn(`Invalid timestamp: ${timestamp}, falling back to current date`);
+        console.warn(`无效时间戳: ${timestamp}，回退到当前日期`);
         return new Date();
     }
 
-    // Check for unreasonable dates (before 2000 or after 2100)
+    // 检查不合理的日期（2000 年前或 2100 年后）
     const year = date.getFullYear();
     if (year < 2000 || year > 2100) {
-        console.warn(`Suspicious date year: ${year}, falling back to current date`);
+        console.warn(`可疑年份: ${year}，回退到当前日期`);
         return new Date();
     }
 
     return date;
 }
 
-// Helper function to generate backup codes for 2FA
+// 生成双因素认证备份码的辅助函数
 async function generateBackupCodes(secret: string) {
     const key = secret;
     const backupCodes = Array.from({ length: 10 })
@@ -240,7 +238,7 @@ function mapAuth0RoleToBetterAuthRole(auth0Roles: string[]) {
     if (typeof auth0Roles === 'string') return auth0Roles;
     if (Array.isArray(auth0Roles)) return auth0Roles.join(',');
 }
-// helper function to migrate password from auth0 to better auth for custom hashes and algs
+// 迁移密码的辅助函数，支持自定义哈希和算法
 async function migratePassword(auth0User: any) {
     if (auth0User.password_hash) {
         if (auth0User.password_hash.startsWith('$2a$') || auth0User.password_hash.startsWith('$2b$')) {
@@ -313,7 +311,7 @@ async function migrateMFAFactors(auth0User: any, userId: string | undefined, ctx
                 });
             }
         } catch (error) {
-            console.error(`Failed to migrate MFA factor for user ${userId}:`, error);
+            console.error(`迁移用户 ${userId} 的 MFA 因子失败:`, error);
         }
     }
 }
@@ -338,7 +336,7 @@ async function migrateOAuthAccounts(auth0User: any, userId: string | undefined, 
                     tokenType: identity.token_type,
                     refreshToken: identity.refresh_token,
                     accessTokenExpiresAt: identity.expires_in ? new Date(Date.now() + identity.expires_in * 1000) : undefined,
-                    // if you are enterprise user, you can get the refresh tokens or all the tokensets - auth0Client.users.getAllTokensets 
+                    // 企业用户可以获取刷新令牌或所有令牌集 - auth0Client.users.getAllTokensets 
                     refreshTokenExpiresAt: identity.refresh_token_expires_in ? new Date(Date.now() + identity.refresh_token_expires_in * 1000) : undefined,
 
                     scope: identity.scope,
@@ -348,9 +346,9 @@ async function migrateOAuthAccounts(auth0User: any, userId: string | undefined, 
                 },
                 forceAllowId: true
             }).catch((error: Error) => {
-                console.error(`Failed to create OAuth account for user ${userId} with provider ${providerId}:`, error);
+                console.error(`为用户 ${userId} 使用提供者 ${providerId} 创建 OAuth 账户失败:`, error);
                 return ctx.adapter.create({
-                    // Try creating without optional fields if the first attempt failed
+                    // 如果第一次尝试失败，则尝试不带可选字段创建
                     model: "account",
                     data: {
                         id: `${auth0User.user_id}|${identity.provider}|${identity.user_id}`,
@@ -372,9 +370,9 @@ async function migrateOAuthAccounts(auth0User: any, userId: string | undefined, 
                 });
             });
 
-            console.log(`Successfully migrated OAuth account for user ${userId} with provider ${providerId}`);
+            console.log(`成功迁移用户 ${userId} 的 OAuth 账户，提供者: ${providerId}`);
         } catch (error) {
-            console.error(`Failed to migrate OAuth account for user ${userId}:`, error);
+            console.error(`迁移用户 ${userId} 的 OAuth 账户失败:`, error);
         }
     }
 }
@@ -416,20 +414,20 @@ async function migrateOrganizations(ctx: any) {
                             forceAllowId: true
                         });
 
-                        console.log(`Successfully migrated member ${member.user_id} for organization ${org.display_name || org.id}`);
+                        console.log(`成功迁移成员 ${member.user_id}，所属组织 ${org.display_name || org.id}`);
                     } catch (error) {
-                        console.error(`Failed to migrate member ${member.user_id} for organization ${org.display_name || org.id}:`, error);
+                        console.error(`迁移成员 ${member.user_id}（组织 ${org.display_name || org.id}）失败:`, error);
                     }
                 }
 
-                console.log(`Successfully migrated organization: ${org.display_name || org.id}`);
+                console.log(`成功迁移组织：${org.display_name || org.id}`);
             } catch (error) {
-                console.error(`Failed to migrate organization ${org.display_name || org.id}:`, error);
+                console.error(`迁移组织 ${org.display_name || org.id} 失败:`, error);
             }
         }
-        console.log('Organization migration completed');
+        console.log('组织迁移完成');
     } catch (error) {
-        console.error('Failed to migrate organizations:', error);
+        console.error('迁移组织失败:', error);
     }
 }
 
@@ -458,19 +456,19 @@ async function migrateFromAuth0() {
 
                 if (users.length < perPage) break;
             } catch (error) {
-                console.error('Error fetching users:', error);
+                console.error('获取用户时出错:', error);
                 break;
             }
         }
 
 
-        console.log(`Found ${auth0Users.length} users to migrate`);
+        console.log(`找到 ${auth0Users.length} 个用户待迁移`);
 
         for (const auth0User of auth0Users) {
             try {
-                // Determine if this is a password-based or OAuth user
+                // 判断是否为基于密码或 OAuth 用户
                 const isOAuthUser = auth0User.identities?.some((identity: any) => identity.provider !== 'auth0');
-                // Base user data that's common for both types
+                // 两类用户共有的基础数据
                 const baseUserData = {
                     id: auth0User.user_id,
                     email: auth0User.email,
@@ -499,110 +497,110 @@ async function migrateFromAuth0() {
                 });
 
                 if (!createdUser?.id) {
-                    throw new Error('Failed to create user');
+                    throw new Error('用户创建失败');
                 }
 
 
                 await migrateOAuthAccounts(auth0User, createdUser.id, ctx)
-                console.log(`Successfully migrated user: ${auth0User.email}`);
+                console.log(`成功迁移用户: ${auth0User.email}`);
             } catch (error) {
-                console.error(`Failed to migrate user ${auth0User.email}:`, error);
+                console.error(`迁移用户 ${auth0User.email} 失败:`, error);
             }
         }
         if (isOrganizationEnabled) {
             await migrateOrganizations(ctx);
         }
-        // the reset of migration will be here.
-        console.log('Migration completed successfully');
+        // 其余迁移逻辑待补充。
+        console.log('迁移成功完成');
     } catch (error) {
-        console.error('Migration failed:', error);
+        console.error('迁移失败:', error);
         throw error;
     }
 }
 
 migrateFromAuth0()
     .then(() => {
-        console.log('Migration completed');
+        console.log('迁移完成');
         process.exit(0);
     })
     .catch((error) => {
-        console.error('Migration failed:', error);
+        console.error('迁移失败:', error);
         process.exit(1);
     }); 
 ```
 
-Make sure to replace the Auth0 environment variables with your own values:
+请确保用你自己的环境变量替换 Auth0 配置：
 - `AUTH0_DOMAIN`
 - `AUTH0_CLIENT_ID`
 - `AUTH0_SECRET`
 </Step>
 
 <Step>
-### Run the migration
+### 运行迁移
 
-Run the migration script:
+运行迁移脚本：
 
 ```sh
-bun run scripts/migrate-auth0.ts # or use your preferred runtime
+bun run scripts/migrate-auth0.ts # 或使用你喜欢的运行时
 ```
 
 <Callout type="warning">
-Important considerations:
-1. Test the migration in a development environment first
-2. Monitor the migration process for any errors
-3. Verify the migrated data in Better Auth before proceeding
-4. Keep Auth0 installed and configured until the migration is complete
-5. The script handles bcrypt password hashes by default. For custom password hashing algorithms, you'll need to modify the `migratePassword` function
+重要事项：
+1. 先在开发环境测试迁移
+2. 监控迁移过程中的错误
+3. 迁移后验证 Better Auth 中数据的正确性
+4. 迁移完成前保持 Auth0 已安装和配置
+5. 脚本默认处理 bcrypt 密码哈希。对自定义哈希算法，需要修改 `migratePassword` 函数
 </Callout>
 
 </Step>
 
 <Step>
- ### Change password hashing algorithm
+### 更改密码哈希算法
 
- By default, Better Auth uses the `scrypt` algorithm to hash passwords. Since Auth0 uses `bcrypt`, you'll need to configure Better Auth to use bcrypt for password verification.
+Better Auth 默认使用 `scrypt` 算法进行密码哈希。由于 Auth0 使用 `bcrypt`，你需要配置 Better Auth 使用 bcrypt 进行密码验证。
 
- First, install bcrypt:
+先安装 bcrypt：
 
- ```bash
- npm install bcrypt
- npm install -D @types/bcrypt
- ```
+```bash
+npm install bcrypt
+npm install -D @types/bcrypt
+```
 
- Then update your auth configuration:
+然后更新你的认证配置：
 
- ```ts title="auth.ts"
- import { betterAuth } from "better-auth";
- import bcrypt from "bcrypt";
- 
- export const auth = betterAuth({
-    emailAndPassword: {
-        password: {
-            hash: async (password) => {
-                return await bcrypt.hash(password, 10);
-            },
-            verify: async ({ hash, password }) => {
-                return await bcrypt.compare(password, hash);
-            }
-        }
-    }
- })
- ```
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import bcrypt from "bcrypt";
+
+export const auth = betterAuth({
+   emailAndPassword: {
+       password: {
+           hash: async (password) => {
+               return await bcrypt.hash(password, 10);
+           },
+           verify: async ({ hash, password }) => {
+               return await bcrypt.compare(password, hash);
+           }
+       }
+   }
+})
+```
 </Step>
 <Step>
-### Verify the migration
+### 验证迁移
 
-After running the migration, verify that:
-1. All users have been properly migrated
-2. Social connections are working
-3. Password-based authentication is working
-4. Two-factor authentication settings are preserved (if enabled)
-5. User roles and permissions are correctly mapped
+迁移完成后，请确认：
+1. 所有用户均已正确迁移
+2. 社交登录连接正常
+3. 基于密码的认证功能可用
+4. 双因素认证设置保持不变（如已启用）
+5. 用户角色与权限映射正确
 </Step>
 <Step>
-### Update your components
+### 更新组件
 
-Now that the data is migrated, update your components to use Better Auth. Here's an example for the sign-in component:
+数据迁移完毕后，更新你的组件以使用 Better Auth。以下是登录组件示例：
 
 ```tsx title="components/auth/sign-in.tsx"
 import { authClient } from "better-auth/client";
@@ -618,21 +616,21 @@ export const SignIn = () => {
       console.error(error);
       return;
     }
-    // Handle successful sign in
+    // 处理登录成功
   };
 
   return (
     <form onSubmit={handleSignIn}>
-      <button type="submit">Sign in</button>
+      <button type="submit">登录</button>
     </form>
   );
 };
 ```
 </Step>
 <Step>
-### Update the middleware
+### 更新中间件
 
-Replace your Auth0 middleware with Better Auth's middleware:
+将你的 Auth0 中间件替换为 Better Auth 中间件：
 
 ```ts title="middleware.ts"
 import { NextRequest, NextResponse } from "next/server";
@@ -659,9 +657,9 @@ export const config = {
 ```
 </Step>
 <Step>
-### Remove Auth0 Dependencies
+### 移除 Auth0 依赖
 
-Once you've verified everything is working correctly with Better Auth, remove Auth0:
+确认 Better Auth 一切正常后，移除 Auth0 相关依赖：
 
 ```bash
 npm remove @auth0/auth0-react @auth0/auth0-spa-js @auth0/nextjs-auth0
@@ -669,19 +667,19 @@ npm remove @auth0/auth0-react @auth0/auth0-spa-js @auth0/nextjs-auth0
 </Step>
 </Steps>
 
-## Additional Considerations
+## 额外注意事项
 
-### Password Migration
-The migration script handles bcrypt password hashes by default. If you're using custom password hashing algorithms in Auth0, you'll need to modify the `migratePassword` function in the migration script to handle your specific case.
+### 密码迁移
+迁移脚本默认处理 bcrypt 密码哈希。如果你在 Auth0 中使用了自定义密码哈希算法，请根据实际情况修改迁移脚本中的 `migratePassword` 函数。
 
-### Role Mapping
-The script includes a basic role mapping function (`mapAuth0RoleToBetterAuthRole`). Customize this function based on your Auth0 roles and Better Auth role requirements.
+### 角色映射
+脚本包含了基础的角色映射函数（`mapAuth0RoleToBetterAuthRole`）。请根据你的 Auth0 角色定义和 Better Auth 角色需求自定义此函数。
 
-### Rate Limiting
-The migration script includes pagination to handle large numbers of users. Adjust the `perPage` value based on your needs and Auth0's rate limits.
+### 速率限制
+迁移脚本支持分页以处理大量用户。你可以根据需要和 Auth0 的速率限制调整 `perPage` 参数。
 
-## Wrapping Up
+## 总结
 
-Now! You've successfully migrated from Auth0 to Better Auth.
+现在！你已成功从 Auth0 迁移到了 Better Auth。
 
-Better Auth offers greater flexibility and more features—be sure to explore the [documentation](/docs) to unlock its full potential. 
+Better Auth 提供了更灵活和丰富的功能 —— 记得深入阅读[文档](/docs)，充分发挥它的潜力。

@@ -1,31 +1,31 @@
 ---
 title: Cognito
-description: Amazon Cognito provider setup and usage.
+description: Amazon Cognito 提供者的设置与使用。
 ---
 
 <Steps>
   <Step>
-    ### Get your Cognito Credentials
-    To integrate with Cognito, you need to set up a **User Pool** and an **App client** in the [Amazon Cognito Console](https://console.aws.amazon.com/cognito/).
+    ### 获取你的 Cognito 凭证
+    要集成 Cognito，你需要在 [Amazon Cognito 控制台](https://console.aws.amazon.com/cognito/) 中设置一个 **用户池（User Pool）** 和一个 **应用客户端（App client）**。
 
-    Follow these steps:
-    1. Go to the **Cognito Console** and create a **User Pool**.
-    2. Under **App clients**, create a new **App client** (note the Client ID and Client Secret if enabled).
-    3. Go to **Domain** and set a Cognito Hosted UI domain (e.g., `your-app.auth.us-east-1.amazoncognito.com`).
-    4. In **App client settings**, enable:
-       - Allowed OAuth flows: `Authorization code grant`
-       - Allowed OAuth scopes: `openid`, `profile`, `email`
-    5. Add your callback URL (e.g., `http://localhost:3000/api/auth/callback/cognito`).
+    按照以下步骤操作：
+    1. 打开 **Cognito 控制台** 并创建一个 **用户池**。
+    2. 在 **应用客户端** 中，创建一个新的 **应用客户端** （如果启用，请记录客户端 ID 和客户端密钥）。
+    3. 进入 **域名** 页面，设置一个 Cognito 托管 UI 域名（例如：`your-app.auth.us-east-1.amazoncognito.com`）。
+    4. 在 **应用客户端设置** 中，启用：
+       - 允许的 OAuth 流程：`Authorization code grant`
+       - 允许的 OAuth 作用域：`openid`、`profile`、`email`
+    5. 添加你的回调 URL（例如，`http://localhost:3000/api/auth/callback/cognito`）。
 
     <Callout type="info">
-      - **User Pool is required** for Cognito authentication.  
-      - Make sure the callback URL matches exactly what you configure in Cognito.   
+      - **用户池是 Cognito 认证的必备条件**。  
+      - 确保回调 URL 与你在 Cognito 中配置的完全一致。  
     </Callout>
   </Step>
 
   <Step>
-    ### Configure the provider
-    Configure the `cognito` key in `socialProviders` key of your `auth` instance.
+    ### 配置提供者
+    在你的 `auth` 实例中，配置 `socialProviders` 的 `cognito` 键。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";
@@ -35,8 +35,8 @@ description: Amazon Cognito provider setup and usage.
         cognito: {
           clientId: process.env.COGNITO_CLIENT_ID as string, // [!code highlight]
           clientSecret: process.env.COGNITO_CLIENT_SECRET as string, // [!code highlight]
-          domain: process.env.COGNITO_DOMAIN as string, // e.g. "your-app.auth.us-east-1.amazoncognito.com" [!code highlight]
-          region: process.env.COGNITO_REGION as string, // e.g. "us-east-1" [!code highlight]
+          domain: process.env.COGNITO_DOMAIN as string, // 例如 "your-app.auth.us-east-1.amazoncognito.com" [!code highlight]
+          region: process.env.COGNITO_REGION as string, // 例如 "us-east-1" [!code highlight]
           userPoolId: process.env.COGNITO_USERPOOL_ID as string, // [!code highlight]
         },
       },
@@ -45,8 +45,8 @@ description: Amazon Cognito provider setup and usage.
   </Step>
 
   <Step>
-    ### Sign In with Cognito
-    To sign in with Cognito, use the `signIn.social` function from the client.  
+    ### 使用 Cognito 登录
+    要使用 Cognito 登录，请从客户端调用 `signIn.social` 函数。  
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -60,19 +60,19 @@ description: Amazon Cognito provider setup and usage.
     }
     ```
     
-      ### Additional Options:
-        - `scope`: Additional OAuth2 scopes to request (combined with default permissions).
-            - Default: `"openid" "profile" "email"`
-            - Common Cognito scopes:
-              - `openid`: Required for OpenID Connect authentication
-              - `profile`: Access to basic profile info
-              - `email`: Access to user’s email
-              - `phone`: Access to user’s phone number
-              - `aws.cognito.signin.user.admin`: Grants access to Cognito-specific APIs
-        - Note: You must configure the scopes in your Cognito App Client settings. [available scopes](https://docs.aws.amazon.com/cognito/latest/developerguide/token-endpoint.html#token-endpoint-userinfo)
-        - `getUserInfo`: Custom function to retrieve user information from the Cognito UserInfo endpoint.  
+      ### 额外选项：
+        - `scope`：需要请求的额外 OAuth2 作用域（与默认权限合并）。
+            - 默认值：`"openid" "profile" "email"`
+            - 常见的 Cognito 作用域：
+              - `openid`：OpenID Connect 认证必需
+              - `profile`：访问基本的个人资料信息
+              - `email`：访问用户的邮箱
+              - `phone`：访问用户的电话号码
+              - `aws.cognito.signin.user.admin`：允许访问 Cognito 特定的 API
+        - 注意：你必须在 Cognito 应用客户端设置中配置这些作用域。[可用作用域](https://docs.aws.amazon.com/cognito/latest/developerguide/token-endpoint.html#token-endpoint-userinfo)
+        - `getUserInfo`：自定义函数，用于从 Cognito 的 UserInfo 端点获取用户信息。  
        <Callout type="info">
-        For more information about Amazon Cognito's scopes and API capabilities, refer to the [official documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-define-resource-servers.html?utm_source).
+        有关 Amazon Cognito 作用域和 API 功能的更多信息，请参阅 [官方文档](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-define-resource-servers.html?utm_source)。
         </Callout>
   </Step>
 </Steps>

@@ -1,61 +1,61 @@
 ---
-title: Lynx Integration
-description: Integrate Better Auth with Lynx cross-platform framework.
+title: Lynx 集成
+description: 将 Better Auth 集成到 Lynx 跨平台框架中。
 ---
 
-This integration guide is for using Better Auth with [Lynx](https://lynxjs.org), a cross-platform rendering framework that enables developers to build applications for Android, iOS, and Web platforms with native rendering performance.
+本集成指南适用于将 Better Auth 与 [Lynx](https://lynxjs.org) 一起使用。Lynx 是一个跨平台渲染框架，使开发者能够构建针对 Android、iOS 和 Web 平台的应用程序，同时获得原生渲染性能。
 
-Before you start, make sure you have a Better Auth instance configured. If you haven't done that yet, check out the [installation](/docs/installation).
+开始之前，请确保您已经配置好一个 Better Auth 实例。如果还没有，请查看 [安装指南](/docs/installation)。
 
-## Installation
+## 安装
 
-Install Better Auth and the Lynx React dependency:
+安装 Better Auth 和 Lynx 的 React 依赖：
 
 ```package-install
 better-auth @lynx-js/react
 ```
 
-## Create Client Instance
+## 创建客户端实例
 
-Import `createAuthClient` from `better-auth/lynx` to create your client instance:
+从 `better-auth/lynx` 导入 `createAuthClient` 来创建客户端实例：
 
 ```ts title="lib/auth-client.ts"
 import { createAuthClient } from "better-auth/lynx"
 
 export const authClient = createAuthClient({
-    baseURL: "http://localhost:3000" // The base URL of your auth server
+    baseURL: "http://localhost:3000" // 你的认证服务器的基础 URL
 })
 ```
 
-## Usage
+## 使用方法
 
-The Lynx client provides the same API as other Better Auth clients, with optimized integration for Lynx's reactive system.
+Lynx 客户端提供与其他 Better Auth 客户端相同的 API，同时针对 Lynx 的响应式系统进行了优化集成。
 
-### Authentication Methods
+### 认证方法
 
 ```ts
 import { authClient } from "./lib/auth-client"
 
-// Sign in with email and password
+// 使用邮箱和密码登录
 await authClient.signIn.email({
     email: "test@user.com",
     password: "password1234"
 })
 
-// Sign up
+// 注册
 await authClient.signUp.email({
     email: "test@user.com", 
     password: "password1234",
     name: "John Doe"
 })
 
-// Sign out
+// 登出
 await authClient.signOut()
 ```
 
 ### Hooks
 
-The Lynx client includes reactive hooks that integrate seamlessly with Lynx's component system:
+Lynx 客户端内置了与 Lynx 组件系统无缝集成的响应式 hooks：
 
 #### useSession
 
@@ -65,27 +65,27 @@ import { authClient } from "../lib/auth-client"
 export function User() {
     const {
         data: session,
-        isPending, // loading state
-        error // error object 
+        isPending, // 加载状态
+        error // 错误对象
     } = authClient.useSession()
 
-    if (isPending) return <div>Loading...</div>
-    if (error) return <div>Error: {error.message}</div>
+    if (isPending) return <div>加载中...</div>
+    if (error) return <div>错误: {error.message}</div>
 
     return (
         <div>
             {session ? (
                 <div>
-                    <p>Welcome, {session.user.name}!</p>
+                    <p>欢迎, {session.user.name}!</p>
                     <button onClick={() => authClient.signOut()}>
-                        Sign Out
+                        登出
                     </button>
                 </div>
             ) : (
                 <button onClick={() => authClient.signIn.social({
                     provider: 'github'
                 })}>
-                    Sign In with GitHub
+                    使用 GitHub 登录
                 </button>
             )}
         </div>
@@ -93,16 +93,16 @@ export function User() {
 }
 ```
 
-### Store Integration
+### 状态管理集成
 
-The Lynx client uses [nanostores](https://github.com/nanostores/nanostores) for state management and provides a `useStore` hook for accessing reactive state:
+Lynx 客户端使用 [nanostores](https://github.com/nanostores/nanostores) 进行状态管理，并提供 `useStore` hook 来访问响应式状态：
 
 ```tsx title="components/session-info.tsx"
 import { useStore } from "better-auth/lynx"
 import { authClient } from "../lib/auth-client"
 
 export function SessionInfo() {
-    // Access the session store directly
+    // 直接访问 session store
     const session = useStore(authClient.$store.session)
     
     return (
@@ -115,18 +115,18 @@ export function SessionInfo() {
 }
 ```
 
-### Advanced Store Usage
+### 高级状态管理用法
 
-You can use the store with selective key watching for optimized re-renders:
+你可以结合选择性键监听来优化组件重新渲染：
 
 ```tsx title="components/optimized-user.tsx"
 import { useStore } from "better-auth/lynx"
 import { authClient } from "../lib/auth-client"
 
 export function OptimizedUser() {
-    // Only re-render when specific keys change
+    // 仅在指定键发生变化时重新渲染
     const session = useStore(authClient.$store.session, {
-        keys: ['user.name', 'user.email'] // Only watch these specific keys
+        keys: ['user.name', 'user.email'] // 只监听这几个具体字段
     })
     
     return (
@@ -142,9 +142,9 @@ export function OptimizedUser() {
 }
 ```
 
-## Plugin Support
+## 插件支持
 
-The Lynx client supports all Better Auth plugins:
+Lynx 客户端支持所有 Better Auth 插件：
 
 ```ts title="lib/auth-client.ts"
 import { createAuthClient } from "better-auth/lynx"
@@ -156,15 +156,15 @@ const authClient = createAuthClient({
     ]
 })
 
-// Use plugin methods
+// 使用插件方法
 await authClient.signIn.magicLink({
     email: "test@email.com"
 })
 ```
 
-## Error Handling
+## 错误处理
 
-Error handling works the same as other Better Auth clients:
+错误处理方式与其他 Better Auth 客户端相同：
 
 ```tsx title="components/login-form.tsx"
 import { authClient } from "../lib/auth-client"
@@ -177,11 +177,11 @@ export function LoginForm() {
         })
         
         if (error) {
-            console.error('Login failed:', error.message)
+            console.error('登录失败:', error.message)
             return
         }
         
-        console.log('Login successful:', data)
+        console.log('登录成功:', data)
     }
     
     return (
@@ -190,23 +190,23 @@ export function LoginForm() {
             const formData = new FormData(e.target)
             signIn(formData.get('email'), formData.get('password'))
         }}>
-            <input name="email" type="email" placeholder="Email" />
-            <input name="password" type="password" placeholder="Password" />
-            <button type="submit">Sign In</button>
+            <input name="email" type="email" placeholder="邮箱" />
+            <input name="password" type="password" placeholder="密码" />
+            <button type="submit">登录</button>
         </form>
     )
 }
 ```
 
-## Features
+## 功能特性
 
-The Lynx client provides:
+Lynx 客户端提供：
 
-- **Cross-Platform Support**: Works across Android, iOS, and Web platforms
-- **Optimized Performance**: Built specifically for Lynx's reactive system
-- **Nanostores Integration**: Uses nanostores for efficient state management  
-- **Selective Re-rendering**: Watch specific store keys to minimize unnecessary updates
-- **Full API Compatibility**: All Better Auth methods and plugins work seamlessly
-- **TypeScript Support**: Full type safety with TypeScript inference
+- **跨平台支持**：兼容 Android、iOS 和 Web 平台  
+- **优化性能**：专为 Lynx 的响应式系统构建  
+- **Nanostores 集成**：使用 nanostores 实现高效状态管理  
+- **选择性重新渲染**：监听指定的状态键以减少不必要的更新  
+- **完整 API 兼容**：所有 Better Auth 方法和插件均可无缝使用  
+- **TypeScript 支持**：完全的 TypeScript 类型推断和安全保障
 
-The Lynx integration maintains all the features and benefits of Better Auth while providing optimal performance and developer experience within Lynx's cross-platform ecosystem.
+Lynx 集成保持了 Better Auth 的所有功能和优势，同时在 Lynx 跨平台生态内提供了最佳的性能和开发体验。

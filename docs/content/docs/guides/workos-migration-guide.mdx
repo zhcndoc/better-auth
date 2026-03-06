@@ -1,59 +1,59 @@
 ---
-title: Migrating from WorkOS to Better Auth
-description: A step-by-step guide to transitioning from WorkOS to Better Auth.
+title: 从 WorkOS 迁移到 Better Auth
+description: 一步步指导如何从 WorkOS 迁移到 Better Auth。
 ---
 
-In this guide, we’ll walk through how to migrate a project from WorkOS to Better Auth, covering how to move a basic WorkOS setup integrated with a Next.js app and the key considerations to keep in mind.
+本指南将带您了解如何将项目从 WorkOS 迁移到 Better Auth，涵盖如何迁移一个与 Next.js 应用集成的基础 WorkOS 设置及关键注意事项。
 
-## Before we begin
+## 开始前
 
-Before getting started, let’s review which WorkOS authentication features are fully or partially supported in Better Auth. If a feature you use in WorkOS is available via a plugin, you’ll need to configure it in the next step.
+开始之前，让我们回顾一下哪些 WorkOS 认证功能在 Better Auth 中得到了完全或部分支持。如果您在 WorkOS 中使用的某个功能是通过插件提供的，您需要在下一步进行配置。
 
 <Accordions type="multiple">
-<Accordion title="🟢 Supported">
+<Accordion title="🟢 支持的功能">
 <>
-| from WorkOS | to Better Auth |
+| WorkOS 功能 | Better Auth 功能 |
 |---------|-------------|
-| Single Sign-On | Use the [SSO Plugin](/docs/plugins/sso). |
-| Email + Password | Built-in support. |
-| Passkeys | Use the [Passkey Plugin](/docs/plugins/passkey). |
-| Social Login | Built-in support with even more providers. |
-| Multi-Factor Auth | Use the [Two Factor Plugin](/docs/plugins/2fa). |
-| Magic Auth | Use the [Magic Link Plugin](/docs/plugins/magic-link). |
-| CLI Auth | Use the [Device Authorization Plugin](/docs/plugins/device-authorization). |
-| API Keys | Use the [API Key Plugin](/docs/plugins/api-key). |
-| Custom Emails | Fully customizable. |
-| Directory Provisioning | Use the [SCIM Plugin](/docs/plugins/scim). |
-| Domain Verification | Use the [SSO Plugin](/docs/plugins/sso). |
-| Email Verification | Built-in support. |
-| Identity Linking | Built-in support. |
-| Impersonation | Use the [Admin Plugin](/docs/plugins/admin). |
-| JWT Templates | Use the [JWT Plugin](/docs/plugins/jwt). |
-| Metadata External IDs | Can be freely added by [extending the core schema](/docs/concepts/database#extending-core-schema). |
-| Roles and Permissions | Use the [Organization Plugin](/docs/plugins/organization). |
+| 单点登录 (Single Sign-On) | 使用 [SSO 插件](/docs/plugins/sso)。 |
+| 邮箱 + 密码 | 内置支持。 |
+| 通行密钥 (Passkeys) | 使用 [Passkey 插件](/docs/plugins/passkey)。 |
+| 社交登录 | 内置支持，且支持更多提供商。 |
+| 多因素认证 (Multi-Factor Auth) | 使用 [双因素插件](/docs/plugins/2fa)。 |
+| 魔法认证 (Magic Auth) | 使用 [Magic Link 插件](/docs/plugins/magic-link)。 |
+| CLI 认证 | 使用 [设备授权插件](/docs/plugins/device-authorization)。 |
+| API 密钥 | 使用 [API Key 插件](/docs/plugins/api-key)。 |
+| 自定义邮件 | 完全可定制。 |
+| 目录配置 (Directory Provisioning) | 使用 [SCIM 插件](/docs/plugins/scim)。 |
+| 域名验证 (Domain Verification) | 使用 [SSO 插件](/docs/plugins/sso)。 |
+| 邮箱验证 | 内置支持。 |
+| 身份链接 (Identity Linking) | 内置支持。 |
+| 模拟用户 (Impersonation) | 使用 [管理员插件](/docs/plugins/admin)。 |
+| JWT 模板 | 使用 [JWT 插件](/docs/plugins/jwt)。 |
+| 元数据外部 ID | 可通过[扩展核心架构](/docs/concepts/database#extending-core-schema)自由添加。 |
+| 角色与权限 | 使用 [组织插件](/docs/plugins/organization)。 |
 </>
 </Accordion>
 
-<Accordion title="🟡 Partially supported">
+<Accordion title="🟡 部分支持的功能">
 <>
-| from WorkOS | to Better Auth |
+| WorkOS 功能 | Better Auth 功能 |
 |---------|-------------|
-| JIT Provisioning | Partially supported via the [SSO Plugin](/docs/plugins/sso). |
-| Invitations | No ready-to-use dashboard is provided, but can be implemented using the [Admin Plugin](/docs/plugins/admin) + [Organization Plugin](/docs/plugins/organization). |
-| Organization Policies | Partially supported, but can be fully implemented using [SSO Plugin](/docs/plugins/sso) + [Organization Plugin](/docs/plugins/organization) hooks. |
+| JIT 配置 (JIT Provisioning) | 通过 [SSO 插件](/docs/plugins/sso) 部分支持。 |
+| 邀请功能 (Invitations) | 无现成仪表盘，但可使用 [管理员插件](/docs/plugins/admin) + [组织插件](/docs/plugins/organization) 实现。 |
+| 组织策略 (Organization Policies) | 部分支持，可通过 [SSO 插件](/docs/plugins/sso) + [组织插件](/docs/plugins/organization) 的钩子完整实现。 |
 </>
 </Accordion>
 </Accordions>
 
 <Steps>
 <Step>
-## Create Better Auth Instance
+## 创建 Better Auth 实例
 
-First, set up Better Auth in your project. Follow the [installation guide](/docs/installation) to get started.
+首先，在项目中设置 Better Auth。可参考[安装指南](/docs/installation)开始。
 
-### Database
+### 数据库
 
-Better Auth supports various databases. Set up your preferred database. In this guide, we’ll use PostgreSQL with the default database adapter.
+Better Auth 支持多种数据库，设置您偏好的数据库。在本指南中，我们将使用 PostgreSQL 及默认数据库适配器。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -66,9 +66,9 @@ export const auth = betterAuth({
 });
 ```
 
-### Email & Password
+### 邮箱 & 密码
 
-Enable Email & Password authentication as shown below. Since WorkOS verifies each user’s email by default, this setup is similar to the default behavior. You can adjust it if needed. For more information, see [here](/docs/authentication/email-password).
+启用邮箱 + 密码认证，示例如下。由于 WorkOS 默认验证每个用户邮箱，此设置与默认行为相似，您可视需求调整。详情见[这里](/docs/authentication/email-password)。
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -83,34 +83,34 @@ export const auth = betterAuth({
     requireEmailVerification: true, // [!code highlight]
     minPasswordLength: 10, // [!code highlight]
     sendResetPassword: async ({ user, url, token }, request) => { // [!code highlight]
-      // Implement your email sending logic // [!code highlight]
+      // 实现您的邮件发送逻辑 // [!code highlight]
     }, // [!code highlight]
   }, // [!code highlight]
   emailVerification: { // [!code highlight]
     sendVerificationEmail: async ({ user, url, token }, request) => { // [!code highlight]
-      // Implement your email sending logic // [!code highlight]
+      // 实现您的邮件发送逻辑 // [!code highlight]
     }, // [!code highlight]
   }, // [!code highlight]
 });
 ```
 
-### Social Providers (optional)
+### 社交提供商（可选）
 
-Set up the social providers you used in WorkOS as follows. Better Auth supports a wider range of providers, so you can add more if needed. Since WorkOS ensures emails are unique, configure `account.accountLinking` in Better Auth to ensure the same behavior.
+按以下配置您在 WorkOS 中使用的社交提供商。Better Auth 支持更多提供商，您也可以添加更多。由于 WorkOS 确保邮箱唯一，请在 Better Auth 中配置 `account.accountLinking` 以保证同样行为。
 
 ```ts
 import { betterAuth } from "better-auth";
 import { Pool } from "pg";
 
 export const auth = betterAuth({
-  // ... other options
+  // ... 其他选项
 
   socialProviders: { // [!code highlight]
     github: { // [!code highlight]
       clientId: process.env.GITHUB_CLIENT_ID!, // [!code highlight]
       clientSecret: process.env.GITHUB_CLIENT_SECRET!, // [!code highlight]
     }, // [!code highlight]
-    // ... other providers // [!code highlight]
+    // ... 其他提供商 // [!code highlight]
   }, // [!code highlight]
   account: { // [!code highlight]
     accountLinking: { // [!code highlight]
@@ -121,17 +121,17 @@ export const auth = betterAuth({
 });
 ```
 
-### Additional Fields
+### 额外字段
 
 {/* cspell:disable-next-line */}
-You probably used metadata in WorkOS. To preserve that metadata and the user id from WorkOS (e.g., user_01KBT4BMFF7ASGRDD0WZ6W63FF), extend the `user` schema as shown below. Better Auth provides a more flexible way to store user data. For more information, see [here](/docs/concepts/database#extending-core-schema).
+您或许在 WorkOS 中使用过元数据。为了保留这些元数据及 WorkOS 的用户 ID（例如 user_01KBT4BMFF7ASGRDD0WZ6W63FF），请按下述方式扩展 `user` 模式。Better Auth 提供更灵活的用户数据存储方案。详情参见[这里](/docs/concepts/database#extending-core-schema)。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 import { Pool } from "pg";
 
 export const auth = betterAuth({
-  // ... other options
+  // ... 其他选项
   
   user: { // [!code highlight]
     additionalFields: { // [!code highlight]
@@ -145,9 +145,9 @@ export const auth = betterAuth({
 });
 ```
 
-### Plugins
+### 插件
 
-Refer to the [section](#before-we-begin) mapping WorkOS features to Better Auth. If a feature you used in WorkOS is available as a Better Auth plugin, add it to the plugin options. Better Auth provides a wider range of out-of-the-box features through plugins. For more information, see [here](/docs/concepts/plugins).
+请参阅[映射部分](#开始前)中 WorkOS 功能到 Better Auth 的对应关系。如果您在 WorkOS 中使用的功能在 Better Auth 中有对应插件，需将其添加到插件选项中。Better Auth 通过插件提供了更多开箱即用的功能。详情见[这里](/docs/concepts/plugins)。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -155,36 +155,36 @@ import { haveIBeenPwned } from "better-auth/plugins/haveibeenpwned";
 import { Pool } from "pg";
 
 export const auth = betterAuth({
-  // ... other options
+  // ... 其他选项
   
   plugins: [ // [!code highlight]
-    haveIBeenPwned() // [!code highlight]
-    // ... other plugins // [!code highlight]
+    haveIBeenPwned(), // [!code highlight]
+    // ... 其他插件 // [!code highlight]
   ], // [!code highlight]
 });
 ```
 
 <Callout type="info">
-If you rely on advanced WorkOS features beyond basic email+password and social login, refer to the feature mapping above to configure the appropriate plugins.
+如果您依赖于 WorkOS 的高级特性（超出基础邮箱+密码和社交登录），请参考上方功能映射配置合适的插件。
 </Callout>
 </Step>
 
 <Step>
-## Generate Schema
+## 生成数据库模式
 
-Better Auth allows you to control your own database, and you can easily generate the appropriate schema for your auth instance using the CLI. For more information, see [here](/docs/concepts/cli).
+Better Auth 允许您完全控制数据库，且可以通过 CLI 轻松生成认证实例的数据库模式。详情见[这里](/docs/concepts/cli)。
 
-### Default database adapter
+### 默认数据库适配器
 
-Run the `migrate` command to create the schema for your Better Auth instance in the database.
+运行 `migrate` 命令，在数据库中创建 Better Auth 实例所需的模式。
 
 ```package-install
 npx auth migrate
 ```
 
-### Other database adapters
+### 其他数据库适配器
 
-If you’re using a database adapter like Prisma or Drizzle, use the `generate` command to create the schema for your ORM. After that, run the migration with an external tool such as Drizzle Kit.
+如果您使用 Prisma、Drizzle 等数据库适配器，可使用 `generate` 命令生成 ORM 的模式文件。然后通过外部工具（如 Drizzle Kit）执行迁移。
 
 ```package-install
 npx auth generate
@@ -192,41 +192,41 @@ npx auth generate
 </Step>
 
 <Step>
-## Migration Script
+## 迁移脚本
 
-### Create Migration Script
+### 创建迁移脚本
 
-Create a migration script to import your user data from WorkOS into your database.
+编写迁移脚本，将您的用户数据从 WorkOS 导入到数据库。
 
 ```ts title="scripts/migration.ts"
-import { auth } from "@/lib/auth"; // Your auth instance path
+import { auth } from "@/lib/auth"; // 您的 auth 实例路径
 import { WorkOS } from "@workos-inc/node";
 
 //==============================================================================
 
 /*
-  Rate limiting configuration
+  速率限制配置
 
-  WorkOS Read APIs: 1,000 requests per 10 seconds
-  Default setting: Use 80% of limit to avoid edge cases
+  WorkOS 读取 API：每 10 秒最多 1,000 次请求
+  默认设置：使用限制的 80% 避免极端情况
 
-  Reference: https://workos.com/docs/reference/rate-limits
+  参考：https://workos.com/docs/reference/rate-limits
 */
-const TIME_WINDOW_MS = 10 * 1000; // Time window in ms (10 seconds)
-const MAX_REQUESTS_PER_WINDOW = 800; // Maximum API calls per time window
-const USERS_PER_REQUEST = 100; // How many users to fetch per API call
+const TIME_WINDOW_MS = 10 * 1000; // 时间窗口，单位毫秒（10 秒）
+const MAX_REQUESTS_PER_WINDOW = 800; // 时间窗口内最大 API 调用次数
+const USERS_PER_REQUEST = 100; // 每次 API 调用获取的用户数
 
 //==============================================================================
 
 if (!process.env.WORKOS_API_KEY || !process.env.WORKOS_CLIENT_ID) {
   throw new Error(
-    "Missing required environment variables WORKOS_API_KEY and/or WORKOS_CLIENT_ID",
+    "缺少必需的环境变量 WORKOS_API_KEY 及/或 WORKOS_CLIENT_ID",
   );
 }
 const workos = new WorkOS(process.env.WORKOS_API_KEY);
 
 /**
- * Create a rate limiter to track and control request rate
+ * 创建速率限制器来跟踪并控制请求速率
  */
 const createRateLimiter = (maxRequests: number, windowMs: number) => {
   let requestTimestamps: number[] = [];
@@ -234,29 +234,29 @@ const createRateLimiter = (maxRequests: number, windowMs: number) => {
   const waitIfNeeded = async (): Promise<void> => {
     const now = Date.now();
 
-    // Remove timestamps outside the current window
+    // 删除当前窗口之外的时间戳
     requestTimestamps = requestTimestamps.filter(
       (timestamp) => now - timestamp < windowMs,
     );
 
-    // If we've hit the limit, calculate wait time
+    // 达到限制时计算等待时间
     if (requestTimestamps.length >= maxRequests) {
       const oldestTimestamp = requestTimestamps[0]!;
-      const waitTime = windowMs - (now - oldestTimestamp) + 1000; // 1 sec buffer
+      const waitTime = windowMs - (now - oldestTimestamp) + 1000; // 留 1 秒缓冲
 
       console.log(
-        `⏳ Throttling (${requestTimestamps.length}/${maxRequests} calls used). Waiting ${Math.ceil(waitTime / 1000)}s...`,
+        `⏳ 速率限制中 (${requestTimestamps.length}/${maxRequests} 调用已用)，等待 ${Math.ceil(waitTime / 1000)} 秒...`,
       );
       await new Promise((resolve) => setTimeout(resolve, waitTime));
 
-      // Clean up old timestamps after waiting
+      // 等待后清理旧时间戳
       const newNow = Date.now();
       requestTimestamps = requestTimestamps.filter(
         (timestamp) => newNow - timestamp < windowMs,
       );
     }
 
-    // Record this request
+    // 记录此次请求
     requestTimestamps.push(Date.now());
   };
 
@@ -281,8 +281,8 @@ const createRateLimiter = (maxRequests: number, windowMs: number) => {
 };
 
 /**
- * Safely converts various date formats to Date object.
- * Returns current date if conversion fails (safe for createdAt/updatedAt).
+ * 安全地将各种日期格式转换为 Date 对象。
+ * 转换失败时返回当前日期（适用于 createdAt/updatedAt）。
  */
 const safeDateConversion = (date?: string | number | Date | null): Date => {
   if (date == null) return new Date();
@@ -306,8 +306,8 @@ const safeDateConversion = (date?: string | number | Date | null): Date => {
 };
 
 /**
- * Safely converts firstName and lastName to a full name string.
- * Returns "Username" if both names are empty.
+ * 安全地将 firstName 和 lastName 转换为全名字符串。
+ * 若两者均为空，返回 "Username"。
  */
 const safeNameConversion = (
   firstName?: string | null,
@@ -344,13 +344,13 @@ async function migrateFromWorkOS() {
 
   console.log("");
   console.log("=".repeat(40));
-  console.log("🚀 Starting migration");
+  console.log("🚀 开始迁移");
   console.log("");
-  console.log(`Settings:`);
+  console.log(`设置：`);
   console.log(
-    ` - Max API calls: ${MAX_REQUESTS_PER_WINDOW} per ${TIME_WINDOW_MS / 1000}s`,
+    ` - 最大 API 调用：${MAX_REQUESTS_PER_WINDOW} 次 / ${TIME_WINDOW_MS / 1000} 秒`,
   );
-  console.log(` - Users per call: ${USERS_PER_REQUEST}`);
+  console.log(` - 每次调用用户数：${USERS_PER_REQUEST}`);
   console.log("=".repeat(40));
   console.log("");
 
@@ -365,7 +365,7 @@ async function migrateFromWorkOS() {
 
       batchCount++;
       console.log(
-        `📦 Batch ${batchCount}: Fetched ${workosUserList.data.length} users from WorkOS`,
+        `📦 批次 ${batchCount}：从 WorkOS 获取了 ${workosUserList.data.length} 个用户`,
       );
 
       after = workosUserList.listMetadata.after || undefined;
@@ -374,10 +374,10 @@ async function migrateFromWorkOS() {
 
       for (const workosUser of workosUserList.data) {
         try {
-          console.log(`\nProcessing user: ${workosUser.email}`);
+          console.log(`\n处理用户：${workosUser.email}`);
 
-          // Check if user already exists by email
-          // WorkOS ensures all user emails are unique via an email verification process
+          // 通过邮箱检查用户是否已存在
+          // WorkOS 通过邮箱验证流程保证邮箱唯一
           const existingUser = await ctx.adapter.findOne<
             typeof auth.$Infer.Session.user
           >({
@@ -392,13 +392,13 @@ async function migrateFromWorkOS() {
 
           if (existingUser) {
             console.log(
-              `🟡 User already exists, skipping: ${workosUser.email}`,
+              `🟡 用户已存在，跳过：${workosUser.email}`,
             );
             skippedUsers++;
             continue;
           }
 
-          // Create the user
+          // 创建新用户
           await ctx.adapter.create<typeof auth.$Infer.Session.user>({
             model: "user",
             data: {
@@ -418,11 +418,11 @@ async function migrateFromWorkOS() {
             },
           });
 
-          console.log(`🟢 Migrated user ${workosUser.email}`);
+          console.log(`🟢 迁移用户成功 ${workosUser.email}`);
           migratedUsers++;
         } catch (error) {
           console.error(
-            `🔴 Failed to migrate user ${workosUser.email}\n`,
+            `🔴 迁移用户失败 ${workosUser.email}\n`,
             error,
           );
           failedUsers++;
@@ -431,19 +431,19 @@ async function migrateFromWorkOS() {
 
       console.log("");
     } catch (error) {
-      console.error("🚨 Error fetching batch:", error);
+      console.error("🚨 获取批次数据时出错:", error);
       throw error;
     }
   }
 
   console.log("");
   console.log("=".repeat(40));
-  console.log("📝 Migration Summary");
-  console.log(`Total users processed: ${totalUsers}`);
+  console.log("📝 迁移总结");
+  console.log(`处理用户总数：${totalUsers}`);
   console.log("");
-  console.log(`🔴 Failed: ${failedUsers}`);
-  console.log(`🟡 Skipped: ${skippedUsers}`);
-  console.log(`🟢 Successfully migrated: ${migratedUsers}`);
+  console.log(`🔴 失败数：${failedUsers}`);
+  console.log(`🟡 跳过数：${skippedUsers}`);
+  console.log(`🟢 成功迁移数：${migratedUsers}`);
   console.log("=".repeat(40));
 }
 
@@ -452,7 +452,7 @@ async function main() {
     await migrateFromWorkOS();
     process.exit(0);
   } catch (error) {
-    console.error("\nMigration failed:", error);
+    console.error("\n迁移失败:", error);
     process.exit(1);
   }
 }
@@ -460,41 +460,41 @@ main();
 ```
 
 <Callout type="info">
-**Notes**
+**注意**
 
-- When retrieving user data from WorkOS, you need to use their API, which is subject to rate limits. The example script includes a basic configuration, so adjust it as needed for your environment.
-- This migration script covers the common cases of managing users with email+password and social login. For features like SSO or CLI Auth, which are provided as plugins in Better Auth, be sure to update the script based on the examples.
+- 从 WorkOS 获取用户数据需要调用其 API，API 有速率限制。示例脚本包含基础配置，请根据您的环境调整。
+- 本迁移脚本涵盖了邮箱+密码和社交登录常见用户管理情况。对于 SSO 或 CLI 认证等 Better Auth 插件功能，请根据示例调整脚本。
 </Callout>
 
 
-### Run Migration Script
+### 运行迁移脚本
 
-```bash title="Terminal"
-bun scripts/migration.ts # or use node, ts-node, etc.
+```bash title="终端"
+bun scripts/migration.ts # 或使用 node、ts-node 等工具
 ```
 
-🎉 Now that you’ve migrated your user data into your database, let’s look at how to update your application logic.
+🎉 现在您已将用户数据迁移至数据库，接下来我们看如何更新应用逻辑。
 </Step>
 <Step>
-## Create Client Instance
+## 创建客户端实例
 
-This client instance includes a set of functions for interacting with the Better Auth server instance. For more information, see [here](/docs/concepts/client).
+此客户端实例包含与 Better Auth 服务器实例交互的函数集。详情见[这里](/docs/concepts/client)。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
     plugins: [
-        // Add plugins that require a client, if needed
+        // 根据需要添加客户端插件
     ]
 });
 ```
 </Step>
 
 <Step>
-## Create API Route
+## 创建 API 路由
 
-In WorkOS, the auth API was provided as a managed service. With Better Auth, the auth API now lives directly within your application.
+在 WorkOS 中，认证 API 由托管服务提供。Better Auth 则将认证 API 直接集成在您的应用中。
 
 ```ts title="/app/api/auth/[...all]/route.ts"
 import { auth } from "@/lib/auth";
@@ -505,26 +505,26 @@ export const { POST, GET } = toNextJsHandler(auth)
 </Step>
 
 <Step>
-## Sign-in/Sign-up Page
+## 登录/注册页面
 
-In WorkOS, you probably fetched and used the URL like this.
+在 WorkOS 中，您可能通过如下方式获取并使用 URL。
 
 ```ts
 const signInUrl = await getSignInUrl();
 const signUpUrl = await getSignUpUrl();
 ```
 
-In Better Auth, instead of fetching these values via an API, you can create the pages at your desired paths and use them directly.
+在 Better Auth 中，您无需通过 API 获取这些值，只需在期望路径下创建页面，并直接使用即可。
 </Step>
 
 <Step>
-## Protecting Resources
+## 资源保护
 
-> Proxy (Middleware) is not intended for slow data fetching. While Proxy can be helpful for optimistic checks such as permission-based redirects, it should not be used as a full session management or authorization solution. - [Next.js docs](https://nextjs.org/docs/app/getting-started/proxy#use-cases)
+> Proxy（中间件）不适合慢速数据获取。虽然 Proxy 可以用于权限跳转等乐观检查，但不应作为完整会话管理或授权方案。 - [Next.js 文档](https://nextjs.org/docs/app/getting-started/proxy#use-cases)
 
-### Middleware auth
+### 中间件认证
 
-WorkOS provides Proxy (Middleware) authentication. Better Auth doesn’t recommend protecting resources directly in middleware, so we don't provide dedicated helpers for that.
+WorkOS 提供 Proxy（中间件）认证。Better Auth 不推荐直接在中间件中保护资源，因此不提供专用辅助函数。
 
 ```ts title="proxy.ts / middleware.ts"
 import { authkitMiddleware } from '@workos-inc/authkit-nextjs';
@@ -539,7 +539,7 @@ export default authkitMiddleware({
 export const config = { matcher: ['/', '/account/:page*'] };
 ```
 
-In Better Auth, for convenience rather than resource protection, the proxy (middleware) can be used as follows. This is supported in Next.js 15+ with the Node.js runtime.
+在 Better Auth 中，为了方便而非资源保护，中间件代理可按以下方式使用。该方案支持 Next.js 15+ 及 Node.js 运行时。
 
 ```ts title="proxy.ts"
 import { NextRequest, NextResponse } from "next/server";
@@ -551,8 +551,8 @@ export async function proxy(request: NextRequest) {
         headers: await headers()
     })
 
-    // This is the recommended approach to optimistically redirect users
-    // We recommend handling auth checks in each page/route
+    // 推荐乐观跳转用户的处理方案
+    // 建议在每个页面/路由中处理认证检查
     if(!session) {
         return NextResponse.redirect(new URL("/sign-in", request.url));
     }
@@ -561,15 +561,15 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard"], // Specify the routes the middleware applies to
+  matcher: ["/dashboard"], // 指定中间件应用的路由
 };
 ```
 
-### Page based auth
+### 基于页面的认证
 
-In WorkOS, if resources were protected on each page, you can update the logic in Better Auth as follows.
+在 WorkOS 中，如果您在每个页面保护资源，可按以下方式在 Better Auth 中更新逻辑。
 
-#### Server-side
+#### 服务器端
 
 <Tabs items={["WorkOS", "Better Auth"]}>
 <Tab value="WorkOS">
@@ -615,7 +615,7 @@ export default DashboardPage;
 </Tab>
 </Tabs>
 
-#### Client-side
+#### 客户端
 
 <Tabs items={["WorkOS", "Better Auth"]}>
 <Tab value="WorkOS">
@@ -671,15 +671,15 @@ export default DashboardPage;
 </Tabs>
 
 <Callout type="info">
-If options like `ensureSignedIn` were convenient in WorkOS, you can create a reusable helper like `ensureSession()` in Better Auth.
+如果您觉得 WorkOS 中的 `ensureSignedIn` 选项便捷，也可以在 Better Auth 中创建类似 `ensureSession()` 的复用辅助函数。
 </Callout>
 
 </Step>
 
 <Step>
-## Remove WorkOS Dependencies
+## 移除 WorkOS 依赖
 
-After verifying everything works, remove WorkOS dependencies:
+确认一切正常后，卸载 WorkOS 相关依赖：
 
 ```package-install
 npm uninstall @workos-inc/node @workos-inc/authkit-nextjs
@@ -688,26 +688,26 @@ npm uninstall @workos-inc/node @workos-inc/authkit-nextjs
 </Step>
 </Steps>
 
-## Considerations
+## 注意事项
 
-<strong className='underline italic'>Password hashes</strong>
+<strong className='underline italic'>密码哈希</strong>
 
-If you’ve been managing users with an email + password system, WorkOS does not provide an export of password hashes at this time. After migration, users will need to reset their passwords within your authentication system. Make sure to notify them of this change with sufficient lead time both before and after the migration.
+如果您管理的用户使用邮箱 + 密码系统，则 WorkOS 目前不支持导出密码哈希。迁移后，用户需要在您的认证系统中重置密码。请务必在迁移前后充足时间内通知用户此变更。
 
-<strong className='underline italic'>Data syncing</strong>
+<strong className='underline italic'>数据同步</strong>
 
-WorkOS is a managed service and keeps your data in sync with your server through APIs or Webhooks. With Better Auth, you fully own your authentication system and can manage data freely through the API. However, if you previously relied on Webhooks for synchronization, additional adjustments will be needed.
+WorkOS 作为托管服务，通过 API 或 Webhook 与您的服务器保持数据同步。Better Auth 则由您自行完全掌控认证系统，通过 API 自由管理数据。但如果之前依赖 Webhook 实现同步，则需要额外调整。
 
-<strong className='underline italic'>Downtime</strong>
+<strong className='underline italic'>停机时间</strong>
 
-WorkOS exposes data through its API, but with limitations such as the inability to export password hashes. Because of these constraints, performing a migration with zero downtime is challenging. Plan the migration carefully, allow enough buffer time, and communicate the expected impact to your users.
+WorkOS 通过其 API 暴露数据，但有限制，如不支持导出密码哈希。基于这些限制，实现零停机迁移较为困难。请规划好迁移流程，预留足够缓冲时间，并告知用户预期影响。
 
-<strong className='underline italic'>Active sessions</strong>
+<strong className='underline italic'>活跃会话</strong>
 
-Existing active sessions will not be migrated. After the migration, users will need to sign in again, so be sure to notify them in advance.
+现有活跃会话不会被迁移。迁移后用户需重新登录，务必提前通知用户。
 
-## Wrapping Up
+## 总结
 
-Congratulations! You've successfully migrated from WorkOS to Better Auth. Better Auth offers greater flexibility and more features, so be sure to explore the [documentation](/docs) to unlock its full potential.
+恭喜！您已成功完成从 WorkOS 迁移至 Better Auth。Better Auth 提供了更高的灵活性和更多功能，务必深入探索[文档](/docs)以发挥其全部潜力。
 
-If you need help with migration, join our [community](/community) or reach out for Enterprise support [here](/enterprise).
+如需迁移帮助，欢迎加入我们的[社区](/community)，或通过[这里](/enterprise)联系企业支持。

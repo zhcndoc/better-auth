@@ -1,13 +1,13 @@
 ---
-title: SvelteKit Integration
-description: Integrate Better Auth with SvelteKit.
+title: SvelteKit 集成
+description: 将 Better Auth 集成到 SvelteKit 中。
 ---
 
-Before you start, make sure you have a Better Auth instance configured. If you haven't done that yet, check out the [installation](/docs/installation).
+在开始之前，确保你已经配置好了一个 Better Auth 实例。如果还没有，请查看 [安装说明](/docs/installation)。
 
-### Mount the handler
+### 挂载处理器
 
-We need to mount the handler to SvelteKit server hook.
+我们需要将处理器挂载到 SvelteKit 的服务器钩子中。
 
 ```ts title="hooks.server.ts"
 import { auth } from "$lib/auth";
@@ -19,9 +19,9 @@ export async function handle({ event, resolve }) {
 }
 ```
 
-### Populate session data in the event (`event.locals`)
+### 在事件中填充会话数据（`event.locals`）
 
-The `svelteKitHandler` does not automatically populate `event.locals.user` or `event.locals.session`. If you want to access the current session in your server code (e.g., in `+layout.server.ts`, actions, or endpoints), populate `event.locals` in your `handle` hook:
+`svelteKitHandler` 不会自动填充 `event.locals.user` 或 `event.locals.session`。如果你想在服务器端代码中访问当前会话（例如在 `+layout.server.ts`、actions 或 endpoints 中），需要在 `handle` 钩子中手动填充 `event.locals`：
 
 ```ts title="hooks.server.ts"
 import { auth } from "$lib/auth";
@@ -29,12 +29,12 @@ import { svelteKitHandler } from "better-auth/svelte-kit";
 import { building } from "$app/environment";
 
 export async function handle({ event, resolve }) {
-  // Fetch current session from Better Auth
+  // 从 Better Auth 获取当前会话
   const session = await auth.api.getSession({
     headers: event.request.headers,
   });
 
-  // Make session and user available on server
+  // 将会话和用户信息挂载到服务器端
   if (session) {
     event.locals.session = session.session;
     event.locals.user = session.user;
@@ -44,15 +44,15 @@ export async function handle({ event, resolve }) {
 }
 ```
 
-### Server Action Cookies
+### 服务器 Action 的 Cookies
 
-To ensure cookies are properly set when you call functions like `signInEmail` or `signUpEmail` in a server action, you should use the `sveltekitCookies` plugin. This plugin will automatically handle setting cookies for you in SvelteKit.
+为了确保在服务器 Action 中调用诸如 `signInEmail` 或 `signUpEmail` 等函数时能正确设置 Cookies，你需要使用 `sveltekitCookies` 插件。该插件会自动帮你在 SvelteKit 中设置 Cookies。
 
-You need to add it as a plugin to your Better Auth instance.
+你需要将它作为插件添加到你的 Better Auth 实例中。
 
 <Callout>
-  The `getRequestEvent` function is available in SvelteKit `2.20.0` and later.
-  Make sure you are using a compatible version.
+  `getRequestEvent` 函数在 SvelteKit `2.20.0` 及之后的版本中可用。
+  请确保你使用的版本兼容。
 </Callout>
 
 ```ts title="lib/auth.ts"
@@ -61,27 +61,27 @@ import { sveltekitCookies } from "better-auth/svelte-kit";
 import { getRequestEvent } from "$app/server";
 
 export const auth = betterAuth({
-  // ... your config
-  plugins: [sveltekitCookies(getRequestEvent)], // make sure this is the last plugin in the array
+  // ... 你的配置
+  plugins: [sveltekitCookies(getRequestEvent)], // 确保这是数组中的最后一个插件
 });
 ```
 
-## Create a client
+## 创建客户端
 
-Create a client instance. You can name the file anything you want. Here we are creating `client.ts` file inside the `lib/` directory.
+创建一个客户端实例。你可以任意命名该文件。这里示例是在 `lib/` 目录下创建了 `client.ts` 文件。
 
 ```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/svelte"; // make sure to import from better-auth/svelte
+import { createAuthClient } from "better-auth/svelte"; // 确保导入自 better-auth/svelte
 
 export const authClient = createAuthClient({
-  // you can pass client configuration here
+  // 你可以传入客户端配置
 });
 ```
 
-Once you have created the client, you can use it to sign up, sign in, and perform other actions.
-Some of the actions are reactive. The client use [nano-store](https://github.com/nanostores/nanostores) to store the state and reflect changes when there is a change like a user signing in or out affecting the session state.
+创建完客户端后，你可以用它进行注册、登录等操作。
+其中一些操作是响应式的。客户端使用 [nano-store](https://github.com/nanostores/nanostores) 来存储状态，并在用户登录或登出等情况改变会话状态时自动反映变化。
 
-### Example usage
+### 示例用法
 
 ```svelte
 <script lang="ts">
@@ -99,7 +99,7 @@ Some of the actions are reactive. The client use [nano-store](https://github.com
               await authClient.signOut();
             }}
           >
-            Sign Out
+            登出
           </button>
         </div>
       {:else}
@@ -110,7 +110,7 @@ Some of the actions are reactive. The client use [nano-store](https://github.com
             });
           }}
         >
-          Continue with GitHub
+          使用 GitHub 继续
         </button>
       {/if}
     </div>

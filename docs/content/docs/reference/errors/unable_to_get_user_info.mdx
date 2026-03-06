@@ -1,31 +1,28 @@
 ---
-title: unable_to_get_user_info
-description: The user info was not found in the request.
+title: 无法获取用户信息
+description: 请求中未找到用户信息。
 ---
 
-## What is it?
+## 这是什么？
 
-This error occurs only on the `/api/auth/callback` endpoint during an OAuth flow. After exchanging
-the authorization code for tokens, Better Auth fetches the user's profile from the provider. If the
-provider response is incorrect, empty, or missing required fields (like id or email when needed),
-no usable user info can be derived and the request is rejected.
+此错误仅在 OAuth 流程中的 `/api/auth/callback` 端点发生。在通过授权码兑换令牌后，Better Auth 会从提供者那里获取用户资料。如果提供者响应不正确、为空或缺少必需字段（如必要时的 id 或电子邮件），则无法获取可用的用户信息，请求会被拒绝。
 
-## Common Causes
+## 常见原因
 
-* Missing or insufficient scopes, so the provider does not return profile data.
-* The provider returned an error or an empty profile object for the user info request.
-* Token exchange succeeded, but the user info request failed (network error, 401/403, invalid token).
-* Provider configuration or environment mismatch (wrong client/tenant), causing unexpected or minimal claims.
-* Temporary provider outage or rate limiting.
+* 缺少或权限范围不足，导致提供者不返回个人资料数据。
+* 提供者返回了错误或用户信息请求的个人资料对象为空。
+* 令牌兑换成功，但用户信息请求失败（网络错误、401/403、令牌无效）。
+* 提供者配置或环境不匹配（错误的客户端/租户），导致意外或最少的声明。
+* 提供者临时故障或被限流。
 
-## How to resolve
+## 如何解决
 
-### Request the right data
+### 请求正确的数据
 
-* Start the OAuth flow using Better Auth methods so the correct scopes and parameters are used.
-* Ensure your provider app is configured to return basic profile details needed by your app.
+* 使用 Better Auth 方法启动 OAuth 流程，以便使用正确的权限范围和参数。
+* 确保你的提供者应用被配置为返回应用所需的基本个人资料信息。
 
-### Verify configuration and environment
+### 核实配置和环境
 
-* Confirm the client credentials and callback URL match the environment you are testing (dev/staging/prod).
-* If the provider supports different response modes or endpoints, ensure they align with the integration you use.
+* 确认客户端凭据和回调 URL 与你测试的环境（开发/预发布/生产）匹配。
+* 如果提供者支持不同的响应模式或端点，确保它们与你使用的集成方式一致。

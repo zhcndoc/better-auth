@@ -1,15 +1,15 @@
 ---
 title: API
-description: Better Auth API.
+description: 更佳认证 API。
 ---
 
-When you create a new Better Auth instance, it provides you with an `api` object. This object exposes every endpoint that exists in your Better Auth instance. And you can use this to interact with Better Auth server side.
+当你创建一个新的更佳认证（Better Auth）实例时，它会为你提供一个 `api` 对象。该对象暴露了你更佳认证实例中存在的每一个端点。你可以使用它在服务器端与更佳认证进行交互。
 
-Any endpoint added to Better Auth, whether from plugins or the core, will be accessible through the `api` object.
+无论是来自插件还是核心添加到更佳认证的任何端点，都可以通过 `api` 对象访问。
 
-## Calling API Endpoints on the Server
+## 在服务器上调用 API 端点
 
-To call an API endpoint on the server, import your `auth` instance and call the endpoint using the `api` object.
+要在服务器上调用 API 端点，导入你的 `auth` 实例并使用 `api` 对象调用端点。
 
 ```ts title="server.ts"
 import { betterAuth } from "better-auth";
@@ -19,21 +19,21 @@ export const auth = betterAuth({
     //...
 })
 
-// calling get session on the server
+// 在服务器上调用获取会话接口
 await auth.api.getSession({
-    headers: await headers() // some endpoints might require headers
+    headers: await headers() // 某些端点可能需要 headers
 })
 ```
 
-### Body, Headers, Query
+### Body、Headers、Query
 
-Unlike the client, the server needs the values to be passed as an object with the key `body` for the body, `headers` for the headers, and `query` for query parameters.
+与客户端不同，服务器需要将值作为包含键的对象传递，`body` 对应请求体，`headers` 对应请求头，`query` 对应查询参数。
 
 ```ts title="server.ts"
 import { auth } from "@/lib/auth"
 
 await auth.api.getSession({
-    headers: await headers() // headers containing the user's session token
+    headers: await headers() // 包含用户会话令牌的 headers
 })
 
 await auth.api.signInEmail({
@@ -41,7 +41,7 @@ await auth.api.signInEmail({
         email: "john@doe.com",
         password: "password"
     },
-    headers: await headers() // optional but would be useful to get the user IP, user agent, etc.
+    headers: await headers() // 可选，但有助于获取用户 IP、用户代理等信息
 })
 
 await auth.api.verifyEmail({
@@ -52,18 +52,18 @@ await auth.api.verifyEmail({
 ```
 
 <Callout>
-Better Auth API endpoints are built on top of [better-call](https://github.com/bekacru/better-call), a tiny web framework that lets you call REST API endpoints as if they were regular functions and allows us to easily infer client types from the server.
+更佳认证 API 端点构建于 [better-call](https://github.com/bekacru/better-call) 之上，这是一个轻量级 web 框架，允许你像调用普通函数一样调用 REST API 端点，并且让我们能轻松从服务器推断客户端类型。
 </Callout>
 
-### Getting `headers` and `Response` Object
+### 获取 `headers` 和 `Response` 对象
 
-When you invoke an API endpoint on the server, it will return a standard JavaScript object or array directly as it's just a regular function call.
+当你在服务器上调用 API 端点时，它会直接返回标准的 JavaScript 对象或数组，因为这只是一个普通函数调用。
 
-But there are times when you might want to get the `headers` or the `Response` object instead. For example, if you need to get the cookies or the headers.
+但有时你可能想获取 `headers` 或 `Response` 对象，例如你需要获取 cookies 或 headers。
 
-#### Getting `headers`
+#### 获取 `headers`
 
-To get the `headers`, you can pass the `returnHeaders` option to the endpoint.
+要获取 `headers`，你可以向端点传入 `returnHeaders` 选项。
 
 ```ts title="server.ts"
 import { auth } from "@/lib/auth"
@@ -78,16 +78,16 @@ const { headers, response } = await auth.api.signUpEmail({
 });
 ```
 
-The `headers` will be a `Headers` object, which you can use to get the cookies or the headers.
+`headers` 是一个 `Headers` 对象，你可以用它来获取 cookies 或 headers。
 
 ```ts
 const cookies = headers.get("set-cookie");
 const headers = headers.get("x-custom-header");
 ```
 
-#### Getting `Response` Object
+#### 获取 `Response` 对象
 
-To get the `Response` object, you can pass the `asResponse` option to the endpoint.
+要获取 `Response` 对象，你可以向端点传入 `asResponse` 选项。
 
 ```ts title="server.ts"
 import { auth } from "@/lib/auth"
@@ -101,9 +101,9 @@ const response = await auth.api.signInEmail({
 })
 ```
 
-### Error Handling
+### 错误处理
 
-When you call an API endpoint on the server, it will throw an error if the request fails. You can catch the error and handle it as you see fit. The error instance is an instance of `APIError`.
+当你在服务器上调用 API 端点时，如果请求失败，它会抛出错误。你可以捕获该错误并按需处理。错误实例是 `APIError` 的一个实例。
 
 ```ts title="server.ts"
 import { auth } from "@/lib/auth"

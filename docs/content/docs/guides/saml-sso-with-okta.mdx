@@ -1,53 +1,53 @@
 ---
-title: SAML SSO with Okta
-description: A guide to integrating SAML Single Sign-On (SSO) with Better Auth, featuring Okta
+title: 使用 Okta 的 SAML 单点登录
+description: 一份使用 Okta 集成 SAML 单点登录（SSO）到 Better Auth 的指南
 ---
 
-This guide walks you through setting up SAML Single Sign-On (SSO) with your Identity Provider (IdP), using Okta as an example. For advanced configuration details and the full API reference, check out the [SSO Plugin Documentation](/docs/plugins/sso).
+本指南将引导你使用身份提供商（IdP）设置 SAML 单点登录（SSO），以 Okta 为示例。有关高级配置细节及完整 API 参考，请查阅 [SSO 插件文档](/docs/plugins/sso)。
 
-## What is SAML?
+## 什么是 SAML？
 
-SAML (Security Assertion Markup Language) is an XML-based standard for exchanging authentication and authorization data between an Identity Provider (IdP) (e.g., Okta, Azure AD, OneLogin) and a Service Provider (SP) (in this case, Better Auth).
+SAML（安全断言标记语言）是一种基于 XML 的标准，用于在身份提供商（IdP）（例如 Okta、Azure AD、OneLogin）与服务提供商（SP）（此处为 Better Auth）之间交换身份验证和授权数据。
 
-In this setup:
+在该配置中：
 
-- **IdP (Okta)**: Authenticates users and sends assertions about their identity.
-- **SP (Better Auth)**: Validates assertions and logs the user in.up.
+- **IdP（Okta）**：验证用户身份并发送有关其身份的断言。
+- **SP（Better Auth）**：验证断言并将用户登录。
 
-### Step 1: Create a SAML Application in Okta
+### 第一步：在 Okta 中创建 SAML 应用
 
-1. Log in to your Okta Admin Console
-2. Navigate to Applications > Applications
-3. Click "Create App Integration"
-4. Select "SAML 2.0" as the Sign-in method
-5. Configure the following settings:
+1. 登录你的 Okta 管理控制台
+2. 导航到 Applications > Applications
+3. 点击“创建应用集成”
+4. 选择“ SAML 2.0 ”作为登录方式
+5. 配置以下设置：
 
-   - **Single Sign-on URL**: Your Better Auth callback endpoint (e.g., `http://localhost:3000/api/auth/sso/saml2/callback/sso`). Note: `sso` is your `providerId`
-   - **Audience URI (SP Entity ID)**: Your Better Auth metadata URL (e.g., `http://localhost:3000/api/auth/sso/saml2/sp/metadata`)
-   - **Name ID format**: Email Address or any of your choice.
+   - **单点登录 URL**：你的 Better Auth 回调端点（例如 `http://localhost:3000/api/auth/sso/saml2/callback/sso`）。注意：`sso` 是你的 `providerId`
+   - **受众 URI（SP 实体 ID）**：你的 Better Auth 元数据 URL（例如 `http://localhost:3000/api/auth/sso/saml2/sp/metadata`）
+   - **Name ID 格式**：电子邮件地址或你选择的任意格式。
 
-6. Download the IdP metadata XML file and certificate
+6. 下载 IdP 元数据 XML 文件和证书
 
 <Callout type="info">
-**IdP-Initiated SSO**: If you want users to access your app from the Okta dashboard, make sure the **Single Sign-on URL** points to the callback endpoint (`/api/auth/sso/saml2/callback/{providerId}`). Better Auth automatically handles both SP-initiated and IdP-initiated flows.
+**IdP 发起的 SSO**：如果你希望用户从 Okta 仪表盘访问你的应用，请确保 **单点登录 URL** 指向回调端点（`/api/auth/sso/saml2/callback/{providerId}`）。Better Auth 会自动处理 SP 发起和 IdP 发起的流程。
 </Callout>
 
-### Step 2: Configure Better Auth
+### 第二步：配置 Better Auth
 
-Here’s an example configuration for Okta in a dev environment:
+以下是在开发环境中为 Okta 配置的示例：
 
 ```typescript
 const ssoConfig = {
   defaultSSO: [{
-    domain: "localhost:3000", // Your domain
+    domain: "localhost:3000", // 你的域名
     providerId: "sso",
     samlConfig: {
-      // SP Configuration
+      // 服务提供商配置
       issuer: "http://localhost:3000/api/auth/sso/saml2/sp/metadata",
       entryPoint: "https://trial-1076874.okta.com/app/trial-1076874_samltest_1/exktofb0a62hqLAUL697/sso/saml",
-      callbackUrl: "/dashboard", // Redirect after successful authentication
+      callbackUrl: "/dashboard", // 成功认证后的重定向地址
       
-      // IdP Configuration
+      // 身份提供商配置
       idpMetadata: {
         entityID: "https://trial-1076874.okta.com/app/exktofb0a62hqLAUL697/sso/saml/metadata",
         singleSignOnService: [{
@@ -58,16 +58,16 @@ const ssoConfig = {
       cert: `-----BEGIN CERTIFICATE-----
 MIIDqjCCApKgAwIBAgIGAZhVGMeUMA0GCSqGSIb3DQEBCwUAMIGVMQswCQYDVQQGEwJVUzETMBEG
 ...
-[Your Okta Certificate]
+[你的 Okta 证书]
 ...
 -----END CERTIFICATE-----`,
       
-      // SP Metadata
+      // 服务提供商元数据
       spMetadata: {
         metadata: `<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" 
           entityID="http://localhost:3000/api/sso/saml2/sp/metadata">
           ...
-          [Your SP Metadata XML]
+          [你的 SP 元数据 XML]
           ...
         </md:EntityDescriptor>`
       }
@@ -76,9 +76,9 @@ MIIDqjCCApKgAwIBAgIGAZhVGMeUMA0GCSqGSIb3DQEBCwUAMIGVMQswCQYDVQQGEwJVUzETMBEG
 }
 ```
 
-### Step 3: Multiple Default Providers (Optional)
+### 第三步：多个默认提供商（可选）
 
-You can configure multiple SAML providers for different domains:
+你可以为不同域配置多个 SAML 提供商：
 
 ```typescript
 const ssoConfig = {
@@ -87,21 +87,21 @@ const ssoConfig = {
       domain: "company.com",
       providerId: "company-okta",
       samlConfig: {
-        // Okta SAML configuration for company.com
+        // company.com 的 Okta SAML 配置
       }
     },
     {
       domain: "partner.com", 
       providerId: "partner-adfs",
       samlConfig: {
-        // ADFS SAML configuration for partner.com
+        // partner.com 的 ADFS SAML 配置
       }
     },
     {
       domain: "contractor.org",
       providerId: "contractor-azure",
       samlConfig: {
-        // Azure AD SAML configuration for contractor.org
+        // contractor.org 的 Azure AD SAML 配置
       }
     }
   ]
@@ -109,57 +109,56 @@ const ssoConfig = {
 ```
 
 <Callout type="info">
-**Explicit**: Pass providerId directly when signing in.
-**Domain fallback:** Matches based on the user’s email domain. e.g. user@company.com → matches `company-okta` provider.
+**显式**：登录时直接传递 providerId。
+**域名回退**：基于用户邮箱域名匹配。例如 user@company.com → 匹配 `company-okta` 提供商。
 </Callout>
 
+### 第四步：启动登录
 
-### Step 4: Initiating Sign-In
+你可以通过三种方式启动 SSO 流程：
 
-You can start an SSO flow in three ways:
-
-**1. Explicitly by `providerId` (recommended):**
+**1. 通过 `providerId` 显式指定（推荐）：**
 
 ```typescript
-// Explicitly specify which provider to use
+// 显式指定使用哪个提供商
 await authClient.signIn.sso({
   providerId: "company-okta",
   callbackURL: "/dashboard"
 });
 ```
 
-**2. By email domain matching:**
+**2. 根据邮箱域名匹配：**
 
 ```typescript
-// Automatically matches provider based on email domain
+// 根据邮箱域名自动匹配提供商
 await authClient.signIn.sso({
   email: "user@company.com",
   callbackURL: "/dashboard"
 });
 ```
 
-**3. By specifying domain:**
+**3. 指定域名进行匹配：**
 
 ```typescript
-// Explicitly specify domain for matching
+// 显式指定域名进行匹配
 await authClient.signIn.sso({
   domain: "partner.com",
   callbackURL: "/dashboard"
 });
 ```
 
-**Important Notes**:
- - DummyIDP should ONLY be used for development and testing
- - Never use these certificates in production
- - The example uses `localhost:3000` - adjust URLs for your environment
- - For production, always use proper IdP providers like Okta, Azure AD, or OneLogin
- - The `callbackUrl` in your SAML config should point to your app's destination (e.g., `/dashboard`), not the callback route itself
+**重要说明**：
+ - DummyIDP 只应在开发和测试环境使用
+ - 请勿在生产环境中使用示例证书
+ - 示例中使用了 `localhost:3000`，请根据环境调整 URL
+ - 生产环境应始终使用正式的 IdP 提供商，如 Okta、Azure AD 或 OneLogin
+ - SAML 配置中的 `callbackUrl` 应指向你应用的目标地址（如 `/dashboard`），而非回调路由本身
 
-### Step 5: Dynamically Registering SAML Providers
+### 第五步：动态注册 SAML 提供商
 
-For dynamic registration, you should register SAML providers using the API. See the [SSO Plugin Documentation](/docs/plugins/sso#register-a-saml-provider) for detailed registration instructions.
+要实现动态注册，请通过 API 注册 SAML 提供商。详细注册说明请参阅 [SSO 插件文档](/docs/plugins/sso#register-a-saml-provider)。
 
-Example registration:
+注册示例：
 
 ```typescript
 await authClient.sso.register({
@@ -167,13 +166,13 @@ await authClient.sso.register({
   issuer: "https://your-domain.com",
   domain: "your-domain.com",
   samlConfig: {
-    // Your production SAML configuration
+    // 你的生产环境 SAML 配置
   }
 });
 ```
 
-## Additional Resources
+## 额外资源
 
-- [SSO Plugin Documentation](/docs/plugins/sso)
-- [Okta SAML Documentation](https://developer.okta.com/docs/concepts/saml/)
-- [SAML 2.0 Specification](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf)
+- [SSO 插件文档](/docs/plugins/sso)
+- [Okta SAML 文档](https://developer.okta.com/docs/concepts/saml/)
+- [SAML 2.0 规范](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf)

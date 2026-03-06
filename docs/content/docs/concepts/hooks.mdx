@@ -1,21 +1,21 @@
 ---
-title: Hooks
-description: Better Auth Hooks let you customize BetterAuth's behavior
+title: 钩子（Hooks）
+description: Better Auth 钩子让你可以定制 BetterAuth 的行为
 ---
 
-Hooks in Better Auth let you "hook into" the lifecycle and execute custom logic. They provide a way to customize Better Auth's behavior without writing a full plugin. 
+Better Auth 中的钩子允许你“钩入”生命周期并执行自定义逻辑。它们提供了一种无需编写完整插件即可定制 Better Auth 行为的方式。
 
 <Callout>
-We highly recommend using hooks if you need to make custom adjustments to an endpoint rather than making another endpoint outside of Better Auth.
+我们强烈建议如果你需要对某个端点进行自定义调整时，使用钩子，而不是在 Better Auth 之外创建另一个端点。
 </Callout>
 
-## Before Hooks
+## 前置钩子（Before Hooks）
 
-**Before hooks** run *before* an endpoint is executed. Use them to modify requests, pre validate data, or return early.
+**前置钩子**在端点执行*之前*运行。可以用来修改请求、预先验证数据或提前返回。
 
-### Example: Enforce Email Domain Restriction
+### 示例：强制邮箱域名限制
 
-This hook ensures that users can only sign up if their email ends with `@example.com`:
+此钩子确保用户只有当邮箱后缀为 `@example.com` 时才能注册：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -29,7 +29,7 @@ export const auth = betterAuth({
             }
             if (!ctx.body?.email.endsWith("@example.com")) {
                 throw new APIError("BAD_REQUEST", {
-                    message: "Email must end with @example.com",
+                    message: "邮箱必须以 @example.com 结尾",
                 });
             }
         }),
@@ -37,9 +37,9 @@ export const auth = betterAuth({
 });
 ```
 
-### Example: Modify Request Context
+### 示例：修改请求上下文
 
-To adjust the request context before proceeding:
+在继续前调整请求上下文：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -64,11 +64,11 @@ export const auth = betterAuth({
 });
 ```
 
-## After Hooks
+## 后置钩子（After Hooks）
 
-**After hooks** run *after* an endpoint is executed. Use them to modify responses.
+**后置钩子**在端点执行*之后*运行。可以用来修改响应。
 
-### Example: Send a notification to your channel when a new user is registered
+### 示例：新用户注册时向你的频道发送通知
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -94,24 +94,24 @@ export const auth = betterAuth({
 
 ## Ctx
 
-When you call `createAuthMiddleware` a `ctx` object is passed that provides a lot of useful properties. Including:
+调用 `createAuthMiddleware` 时会传入一个 `ctx` 对象，提供了许多有用的属性，包括：
 
-- **Path:** `ctx.path` to get the current endpoint path.
-- **Body:** `ctx.body` for parsed request body (available for POST requests).
-- **Headers:** `ctx.headers` to access request headers.
-- **Request:** `ctx.request` to access the request object (may not exist in server-only endpoints).
-- **Query Parameters:** `ctx.query` to access query parameters.
-- **Context**: `ctx.context` auth related context, useful for accessing new session, auth cookies configuration, password hashing, config...
+- **路径（Path）:** 通过 `ctx.path` 获取当前端点路径。
+- **请求体（Body）:** 通过 `ctx.body` 访问已解析的请求体（POST 请求可用）。
+- **请求头（Headers）:** 通过 `ctx.headers` 访问请求头。
+- **请求对象（Request）:** 通过 `ctx.request` 访问请求对象（仅在非纯服务器端点存在）。
+- **查询参数（Query Parameters）:** 通过 `ctx.query` 访问查询参数。
+- **上下文（Context）:** `ctx.context` 包含与认证相关的上下文，方便访问新会话、认证 Cookie 配置、密码哈希、配置等。
 
-and more.
+以及更多信息。
 
-### Request Response
+### 请求响应
 
-This utilities allows you to get request information and to send response from a hook. 
+该工具允许你从钩子中获取请求信息和发送响应。
 
-#### JSON Responses
+#### JSON 响应
 
-Use `ctx.json` to send JSON responses:
+使用 `ctx.json` 发送 JSON 响应：
 
 ```ts
 import { createAuthMiddleware } from "better-auth/api";
@@ -123,9 +123,9 @@ const hook = createAuthMiddleware(async (ctx) => {
 });
 ```
 
-#### Redirects
+#### 重定向
 
-Use `ctx.redirect` to redirect users:
+使用 `ctx.redirect` 重定向用户：
 
 ```ts
 import { createAuthMiddleware } from "better-auth/api";
@@ -135,12 +135,12 @@ const hook = createAuthMiddleware(async (ctx) => {
 });
 ```
 
-#### Cookies
+#### Cookie
 
-- Set cookies: `ctx.setCookies` or `ctx.setSignedCookie`.
-- Get cookies: `ctx.getCookies` or `ctx.getSignedCookie`.
+- 设置 Cookie：`ctx.setCookies` 或 `ctx.setSignedCookie`。
+- 获取 Cookie：`ctx.getCookies` 或 `ctx.getSignedCookie`。
 
-Example:
+示例：
 
 ```ts
 import { createAuthMiddleware } from "better-auth/api";
@@ -156,29 +156,27 @@ const hook = createAuthMiddleware(async (ctx) => {
 });
 ```
 
-#### Errors
+#### 错误处理
 
-Throw errors with `APIError` for a specific status code and message:
+使用 `APIError` 抛出特定状态码和消息的错误：
 
 ```ts
 import { createAuthMiddleware, APIError } from "better-auth/api";
 
 const hook = createAuthMiddleware(async (ctx) => {
     throw new APIError("BAD_REQUEST", {
-        message: "Invalid request",
+        message: "无效请求",
     });
 });
 ```
 
+### 上下文（Context）
 
+`ctx` 对象中包含另一个专门用于认证的 `context` 对象。它包括后置钩子中新创建的会话、Cookie 配置、密码哈希工具等内容。
 
-### Context
+#### 新会话
 
-The `ctx` object contains another `context` object inside that's meant to hold contexts related to auth. Including a newly created session on after hook, cookies configuration, password hasher and so on. 
-
-#### New Session
-
-The newly created session after an endpoint is run. This only exist in after hook.
+端点执行后新生成的会话。仅存在于后置钩子中。
 
 ```ts title="auth.ts"
 import { createAuthMiddleware } from "better-auth/api";
@@ -188,21 +186,21 @@ createAuthMiddleware(async (ctx) => {
 });
 ```
 
-#### Returned
+#### 返回值
 
-The returned value from the hook is passed to the next hook in the chain.
+钩子的返回值会传递给链中的下一个钩子。
 
 ```ts title="auth.ts"
 import { createAuthMiddleware } from "better-auth/api";
 
 createAuthMiddleware(async (ctx) => {
-    const returned = ctx.context.returned; //this could be a successful response or an APIError
+    const returned = ctx.context.returned; // 这可能是成功响应或 APIError
 });
 ```
 
-#### Response Headers
+#### 响应头
 
-The response headers added by endpoints and hooks that run before this hook.
+由端点和在该钩子之前运行的钩子添加的响应头。
 
 ```ts title="auth.ts"
 import { createAuthMiddleware } from "better-auth/api";
@@ -212,9 +210,9 @@ createAuthMiddleware(async (ctx) => {
 });
 ```
 
-#### Predefined Auth Cookies
+#### 预定义认证 Cookie
 
-Access BetterAuth’s predefined cookie properties:
+访问 BetterAuth 的预定义 Cookie 属性：
 
 ```ts title="auth.ts"
 import { createAuthMiddleware } from "better-auth/api";
@@ -226,33 +224,32 @@ createAuthMiddleware(async (ctx) => {
 
 #### Secret
 
-You can access the `secret` for your auth instance on `ctx.context.secret`
+可通过 `ctx.context.secret` 访问你的认证实例的 `secret`。
 
-#### Password
+#### 密码
 
-The password object provider `hash` and `verify`
+密码对象提供了 `hash` 和 `verify` 方法：
 
-- `ctx.context.password.hash`: let's you hash a given password.
-- `ctx.context.password.verify`: let's you verify given `password` and a `hash`.
+- `ctx.context.password.hash`: 用于对给定密码进行哈希。
+- `ctx.context.password.verify`: 用于验证给定的 `password` 与 `hash` 是否匹配。
 
-#### Adapter
+#### 适配器（Adapter）
 
-Adapter exposes the adapter methods used by Better Auth. Including `findOne`, `findMany`, `create`, `delete`, `update` and `updateMany`. You generally should use your actually `db` instance from your orm rather than this adapter.
+适配器暴露了 Better Auth 使用的适配器方法，包括 `findOne`、`findMany`、`create`、`delete`、`update` 和 `updateMany`。通常推荐使用你的 ORM 中的实际 `db` 实例，而非该适配器。
 
+#### 内部适配器
 
-#### Internal Adapter
+这些是对数据库执行特定操作的调用，如 `createUser`、`createSession`、`updateSession` 等。
 
-These are calls to your db that perform specific actions. `createUser`, `createSession`, `updateSession`...
+如果你想使用数据库查询，并获得 `databaseHooks`、恰当的 `secondaryStorage` 支持等功能，使用这些内部适配器调用会很有帮助。如果你正在执行类似内部适配器操作的查询，建议考虑使用它们。
 
-This may be useful to use instead of using your db directly to get access to `databaseHooks`, proper `secondaryStorage` support and so on. If you're make a query similar to what exist in this internal adapter actions it's worth a look.
+#### 生成 ID
 
-#### generateId
-
-You can use `ctx.context.generateId` to generate Id for various reasons.
+你可以使用 `ctx.context.generateId` 来生成各种用途的 ID。
 
 #### runInBackground
 
-Schedules a task to run after the response is sent. Use for fire-and-forget operations (cleanup, analytics, rate limit counter updates). Configure the handler in [advanced.backgroundTasks](/docs/reference/options#backgroundtasks).
+安排任务在响应发送后执行。适用于“触发即忘”的操作（如清理、分析、速率限制计数更新等）。你可以在 [advanced.backgroundTasks](/docs/reference/options#backgroundtasks) 中配置处理器。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -274,7 +271,7 @@ export const auth = betterAuth({
 
 #### runInBackgroundOrAwait
 
-Defers the task when a handler is configured, otherwise awaits it. Use for operations that must complete (e.g. sending emails) but benefit from not blocking when a handler exists. Configure the handler in [advanced.backgroundTasks](/docs/reference/options#backgroundtasks).
+如果配置了处理器，则延迟执行任务，否则等待其完成。适用于必须完成但有处理器时不阻塞的操作（例如发送邮件）。处理器配置见 [advanced.backgroundTasks](/docs/reference/options#backgroundtasks)。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -296,6 +293,6 @@ export const auth = betterAuth({
 });
 ```
 
-## Reusable Hooks
+## 可复用钩子
 
-If you need to reuse a hook across multiple endpoints, consider creating a plugin. Learn more in the [Plugins Documentation](/docs/concepts/plugins).
+如果你需要在多个端点之间复用钩子，建议考虑创建插件。更多内容请参见 [插件文档](/docs/concepts/plugins)。

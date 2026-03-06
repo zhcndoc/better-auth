@@ -1,19 +1,19 @@
 ---
-title: Optimizing for Performance
-description: A guide to optimizing your Better Auth application for performance.
+title: 性能优化
+description: 优化您的 Better Auth 应用性能的指南。
 ---
 
-In this guide, we’ll go over some of the ways you can optimize your application for a more performant Better Auth app.
+在本指南中，我们将介绍一些优化应用性能的方法，以构建更高效的 Better Auth 应用。
 
-## Caching
+## 缓存
 
-Caching is a powerful technique that can significantly improve the performance of your Better Auth application by reducing the number of database queries and speeding up response times.
+缓存是一种强大的技术，能够显著提升 Better Auth 应用的性能，减少数据库查询次数并加快响应速度。
 
-### Cookie Cache
+### Cookie 缓存
 
-Calling your database every time `useSession` or `getSession` is invoked isn’t ideal, especially if sessions don’t change frequently. Cookie caching handles this by storing session data in a short-lived, signed cookie similar to how JWT access tokens are used with refresh tokens.
+每次调用 `useSession` 或 `getSession` 都访问数据库并不理想，尤其是在会话不经常变化的情况下。Cookie 缓存通过将会话数据存储在短期有效且签名过的 Cookie 中来解决此问题，这类似于使用刷新令牌的 JWT 访问令牌。
 
-To turn on cookie caching, just set `session.cookieCache` in your auth config:
+要开启 Cookie 缓存，只需在认证配置中设置 `session.cookieCache`：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -22,21 +22,21 @@ export const auth = betterAuth({
   session: {
     cookieCache: {
       enabled: true,
-      maxAge: 5 * 60, // Cache duration in seconds
+      maxAge: 5 * 60, // 缓存时长，单位秒
     },
   },
 });
 ```
 
-Read more about [cookie caching](/docs/concepts/session-management#cookie-cache).
+阅读更多关于[Cookie 缓存](/docs/concepts/session-management#cookie-cache)的内容。
 
-### Framework Caching
+### 框架缓存
 
-Here are examples of how you can do caching in different frameworks and environments:
+以下是如何在不同框架和环境中实现缓存的示例：
 
 <Tabs items={["Next", "react-router", "SolidStart", "TanStack Query"]}>
   <Tab value="Next">
-    Since Next v15, we can use the `"use cache"` directive to cache the response of a server function.
+    从 Next v15 起，我们可以使用 `"use cache"` 指令缓存服务器函数的响应。
 
     ```ts
     export async function getUsers() {
@@ -46,11 +46,11 @@ Here are examples of how you can do caching in different frameworks and environm
     }
     ```
 
-    Learn more about NextJS use cache directive <Link href="https://nextjs.org/docs/app/api-reference/directives/use-cache">here</Link>.
+    了解更多 NextJS use cache 指令请访问 <Link href="https://nextjs.org/docs/app/api-reference/directives/use-cache">这里</Link>。
 
   </Tab>
-    <Tab value="react-router">
-    In React Router v7, you use HTTP `Cache-Control` headers in the loader function to cache responses. You must also export a headers function to send these headers. Here's an example:
+  <Tab value="react-router">
+    在 React Router v7 中，你可以在 loader 函数中使用 HTTP `Cache-Control` 头来缓存响应。你还必须导出 headers 函数以发送这些头信息。示例如下：
 
     ```ts
     import { data } from 'react-router';
@@ -61,7 +61,7 @@ Here are examples of how you can do caching in different frameworks and environm
       
       return data(users, {
         headers: {
-          'Cache-Control': 'max-age=3600', // Cache for 1 hour
+          'Cache-Control': 'max-age=3600', // 缓存 1 小时
         },
       });
     };
@@ -71,12 +71,10 @@ Here are examples of how you can do caching in different frameworks and environm
     }
     ```
 
-
-
   </Tab>
 
   <Tab value="SolidStart">
-    In SolidStart, you can use the `query` function to cache data. Here’s an example:
+    在 SolidStart 中，你可以使用 `query` 函数来缓存数据。示例如下：
 
     ```tsx
     const getUsers = query(
@@ -85,11 +83,11 @@ Here are examples of how you can do caching in different frameworks and environm
     );
     ```
 
-    Learn more about SolidStart `query` function <Link href="https://docs.solidjs.com/solid-router/reference/data-apis/query">here</Link>.
+    了解更多关于 SolidStart `query` 函数的信息请访问 <Link href="https://docs.solidjs.com/solid-router/reference/data-apis/query">这里</Link>。
 
   </Tab>
   <Tab value="TanStack Query">
-    With TanStack Query you can use the `useQuery` hook to cache data. Here’s an example:
+    使用 TanStack Query 你可以通过 `useQuery` 钩子缓存数据。示例如下：
 
     ```ts
     import { useQuery } from '@tanstack/react-query';
@@ -101,10 +99,10 @@ Here are examples of how you can do caching in different frameworks and environm
 
     export default function Users() {
         const { data: users, isLoading } = useQuery('users', fetchUsers, {
-            staleTime: 1000 * 60 * 15, // Cache for 15 minutes
+            staleTime: 1000 * 60 * 15, // 缓存 15 分钟
         });
 
-        if (isLoading) return <div>Loading...</div>;
+        if (isLoading) return <div>加载中...</div>;
 
         return (
             <ul>
@@ -116,14 +114,14 @@ Here are examples of how you can do caching in different frameworks and environm
     }
     ```
 
-    Learn more about TanStack Query <Link href="https://tanstack.com/query">here</Link>.
+    了解更多关于 TanStack Query 请访问 <Link href="https://tanstack.com/query">这里</Link>。
 
   </Tab>
 </Tabs>
 
-## Background Tasks
+## 后台任务
 
-On serverless platforms (Vercel, Cloudflare Workers), you can improve response times by deferring non-critical work—cleanup, analytics, rate limit updates, email sending—to run after the response is sent. Configure [`advanced.backgroundTasks`](/docs/reference/options#backgroundtasks) and use `ctx.context.runInBackground` or `ctx.context.runInBackgroundOrAwait` in hooks.
+在无服务器平台（如 Vercel、Cloudflare Workers）上，你可以通过将非关键工作（清理、分析、速率限制更新、邮件发送）延迟到响应发送后执行，来提升响应速度。配置 [`advanced.backgroundTasks`](/docs/reference/options#backgroundtasks) 并在钩子中使用 `ctx.context.runInBackground` 或 `ctx.context.runInBackgroundOrAwait`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -144,48 +142,48 @@ export const auth = betterAuth({
 });
 ```
 
-See the [Context documentation](/docs/concepts/hooks#runinbackground) for more examples.
+有关更多示例，请参阅[上下文文档](/docs/concepts/hooks#runinbackground)。
 
-## SSR Optimizations
+## SSR 优化
 
-If you're using a framework that supports server-side rendering, it's usually best to pre-fetch the user session on the server and use it as a fallback on the client.
+如果你使用支持服务器端渲染的框架，通常建议在服务器上预取用户会话，并将其作为客户端的回退。
 
 ```ts
 const session = await auth.api.getSession({
   headers: await headers(),
 });
-//then pass the session to the client
+// 然后将 session 传递给客户端
 ```
 
-## Database optimizations
+## 数据库优化
 
-Optimizing database performance is essential to get the best out of Better Auth.
+优化数据库性能对于充分发挥 Better Auth 的性能至关重要。
 
-#### Recommended fields to index
+#### 推荐索引字段
 
-| Table         | Fields                     | Plugin       |
-| ------------- | -------------------------- | ------------ |
-| users         | `email`                    |              |
-| accounts      | `userId`                   |              |
-| sessions      | `userId`, `token`          |              |
-| verifications | `identifier`               |              |
-| invitations   | `email`, `organizationId`  | organization |
-| members       | `userId`, `organizationId` | organization |
-| organizations | `slug`                     | organization |
-| passkey       | `userId`                   | passkey      |
-| twoFactor     | `secret`                   | twoFactor    |
+| 表名           | 字段                         | 插件         |
+| ------------- | ---------------------------- | ------------ |
+| users         | `email`                      |              |
+| accounts      | `userId`                     |              |
+| sessions      | `userId`, `token`            |              |
+| verifications | `identifier`                 |              |
+| invitations   | `email`, `organizationId`    | organization |
+| members       | `userId`, `organizationId`   | organization |
+| organizations | `slug`                       | organization |
+| passkey       | `userId`                     | passkey      |
+| twoFactor     | `secret`                     | twoFactor    |
 
 <Callout>
-  We intend to add indexing support in our schema generation tool in the future.
+  我们计划在未来的模式生成工具中添加索引支持。
 </Callout>
 
-## Bundle Size Optimization
+## 打包体积优化
 
-If you're using custom adapters (like Prisma, Drizzle, or MongoDB), you can reduce your bundle size by using `better-auth/minimal` instead of `better-auth`. This version excludes Kysely, which is only needed when using direct database connections.
+如果你使用自定义适配器（如 Prisma、Drizzle 或 MongoDB），可以通过使用 `better-auth/minimal` 替代 `better-auth` 来减小打包体积。该版本排除了仅在直接数据库连接时才需要的 Kysely。
 
-### Usage
+### 使用方法
 
-Simply import from `better-auth/minimal` instead of `better-auth`:
+只需从 `better-auth/minimal` 而非 `better-auth` 导入即可：
 
 <Tabs items={["Prisma", "Drizzle", "MongoDB"]}>
   <Tab value="Prisma">
@@ -198,7 +196,7 @@ Simply import from `better-auth/minimal` instead of `better-auth`:
 
     export const auth = betterAuth({
       database: prismaAdapter(prisma, {
-        provider: "postgresql", // or "mysql", "sqlite"
+        provider: "postgresql", // 或 "mysql", "sqlite"
       }),
     });
     ```
@@ -212,7 +210,7 @@ Simply import from `better-auth/minimal` instead of `better-auth`:
 
     export const auth = betterAuth({
       database: drizzleAdapter(db, {
-        provider: "pg", // or "mysql", "sqlite"
+        provider: "pg", // 或 "mysql", "sqlite"
       }),
     });
     ```
@@ -235,7 +233,7 @@ Simply import from `better-auth/minimal` instead of `better-auth`:
 </Tabs>
 
 <Callout type="warning">
-  **Limitations:**
-  - Direct database connections are not supported (you must use an adapter)
-  - Built-in migrations are not supported. Use external migration tools (or use `better-auth` if you need built-in migration support)
+  **限制：**
+  - 不支持直接数据库连接（必须使用适配器）
+  - 不支持内置迁移。请使用外部迁移工具（如果需要内置迁移支持请使用 `better-auth`）
 </Callout>

@@ -1,34 +1,34 @@
 ---
-title: Email OTP
-description: Email OTP plugin for Better Auth.
+title: 电子邮件 OTP
+description: 用于 Better Auth 的电子邮件 OTP 插件。
 ---
 
-The Email OTP plugin allows user to sign in, verify their email, or reset their password using a one-time password (OTP) sent to their email address.
+电子邮件 OTP 插件允许用户通过发送到其电子邮件地址的一次性密码（OTP）进行登录、验证电子邮件或重置密码。
 
 
-## Installation
+## 安装
 
 <Steps>
   <Step>
-    ### Add the plugin to your auth config
+    ### 将插件添加到您的身份验证配置中
 
-    Add the `emailOTP` plugin to your auth config and implement the `sendVerificationOTP()` method.
+    将 `emailOTP` 插件添加到您的身份验证配置，并实现 `sendVerificationOTP()` 方法。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
     import { emailOTP } from "better-auth/plugins" // [!code highlight]
     
     export const auth = betterAuth({
-        // ... other config options
+        // ... 其他配置选项
         plugins: [
             emailOTP({ // [!code highlight]
                 async sendVerificationOTP({ email, otp, type }) { // [!code highlight]
                     if (type === "sign-in") { // [!code highlight]
-                        // Send the OTP for sign in // [!code highlight]
+                        // 发送登录的 OTP // [!code highlight]
                     } else if (type === "email-verification") { // [!code highlight]
-                        // Send the OTP for email verification // [!code highlight]
+                        // 发送电子邮件验证的 OTP // [!code highlight]
                     } else { // [!code highlight]
-                        // Send the OTP for password reset // [!code highlight]
+                        // 发送密码重置的 OTP // [!code highlight]
                     } // [!code highlight]
                 }, // [!code highlight]
             }) // [!code highlight]
@@ -37,7 +37,7 @@ The Email OTP plugin allows user to sign in, verify their email, or reset their 
     ```
     </Step>
     <Step>
-    ### Add the client plugin
+    ### 添加客户端插件
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -52,88 +52,88 @@ The Email OTP plugin allows user to sign in, verify their email, or reset their 
   </Step>
 </Steps>
 
-## Usage
+## 使用方法
 
-### Send an OTP
+### 发送 OTP
 
-Use the `sendVerificationOtp()` method to send an OTP to the user's email address.
+使用 `sendVerificationOtp()` 方法向用户的电子邮件地址发送 OTP。
 
 <APIMethod path="/email-otp/send-verification-otp" method="POST">
 ```ts
 type sendVerificationOTP = {
     /**
-     * Email address to send the OTP. 
+     * 发送 OTP 的电子邮件地址。
      */
     email: string = "user@example.com"
     /**
-     * Type of the OTP. `sign-in`, `email-verification`, or `forget-password`. 
+     * OTP 类型。`sign-in`、`email-verification` 或 `forget-password`。
      */
     type: "email-verification" | "sign-in" | "forget-password" = "sign-in"
 }
 ```
 </APIMethod>
 
-### Check an OTP (optional)
+### 校验 OTP（可选）
 
-Use the `checkVerificationOtp()` method to check if an OTP is valid.
+使用 `checkVerificationOtp()` 方法验证 OTP 是否有效。
 
 <APIMethod path="/email-otp/check-verification-otp" method="POST">
 ```ts
 type checkVerificationOTP = {
     /**
-     * Email address to send the OTP. 
+     * 发送 OTP 的电子邮件地址。
      */
     email: string = "user@example.com"
     /**
-     * Type of the OTP. `sign-in`, `email-verification`, or `forget-password`. 
+     * OTP 类型。`sign-in`、`email-verification` 或 `forget-password`。
      */
     type: "email-verification" | "sign-in" | "forget-password" = "sign-in"
     /**
-     * OTP sent to the email. 
+     * 发送到电子邮件的 OTP。
      */
     otp: string = "123456"
 }
 ```
 </APIMethod>
 
-### Sign In with OTP
+### 使用 OTP 登录
 
-To sign in with OTP, use the `sendVerificationOtp()` method to send a "sign-in" OTP to the user's email address.
+使用 OTP 登录时，先通过 `sendVerificationOtp()` 方法向用户电子邮件发送类型为 `"sign-in"` 的 OTP。
 
 <APIMethod path="/email-otp/send-verification-otp" method="POST">
 ```ts
 type sendVerificationOTP = {
     /**
-     * Email address to send the OTP. 
+     * 发送 OTP 的电子邮件地址。
      */
     email: string = "user@example.com"
     /**
-     * Type of the OTP.
+     * OTP 类型。
      */
     type: "sign-in" = "sign-in"
 }
 ```
 </APIMethod>
 
-Once the user provides the OTP, you can sign in the user using the `signIn.emailOtp()` method.
+用户提供 OTP 后，可使用 `signIn.emailOtp()` 方法登录用户。
 
 <APIMethod path="/sign-in/email-otp" method="POST">
 ```ts
 type signInEmailOTP = {
     /**
-     * Email address to sign in.
+     * 登录的电子邮件地址。
      */
     email: string = "user@example.com"
     /**
-     * OTP sent to the email.
+     * 发送到电子邮件的 OTP。
      */
     otp: string = "123456"
     /**
-     * User display name. Only used when the user is registering for the first time.
+     * 用户显示名称，仅在用户首次注册时使用。
      */
     name?: string = "John Doe"
     /**
-     * User profile image URL. Only used when the user is registering for the first time.
+     * 用户头像 URL，仅在用户首次注册时使用。
      */
     image?: string = "https://example.com/image.png"
 }
@@ -141,54 +141,54 @@ type signInEmailOTP = {
 </APIMethod>
 
 <Callout>
-If the user is not registered, they'll be automatically registered. Configured [additional fields](/docs/concepts/typescript#additional-fields) are also accepted for new users. To prevent automatic sign-up, pass `disableSignUp` as `true` in the [options](#options).
+如果用户未注册，将自动完成注册。已配置的[额外字段](/docs/concepts/typescript#additional-fields) 也会被接受用于新用户。若想禁止自动注册，可在[选项](#options)中传入 `disableSignUp` 为 `true`。
 </Callout>
 
-### Verify Email with OTP
+### 使用 OTP 验证电子邮件
 
-To verify the user's email address with OTP, use the `sendVerificationOtp()` method to send an "email-verification" OTP to the user's email address.
+使用 OTP 验证用户邮箱时，先通过 `sendVerificationOtp()` 方法向用户邮箱发送类型为 `"email-verification"` 的 OTP。
 
 <APIMethod path="/email-otp/send-verification-otp" method="POST">
 ```ts
 type sendVerificationOTP = {
     /**
-     * Email address to send the OTP. 
+     * 发送 OTP 的电子邮件地址。
      */
     email: string = "user@example.com"
     /**
-     * Type of the OTP.
+     * OTP 类型。
      */
     type: "email-verification" = "email-verification"
 }
 ```
 </APIMethod>
 
-Once the user provides the OTP, use the `verifyEmail()` method to complete email verification.
+用户输入 OTP 后，使用 `verifyEmail()` 方法完成邮箱验证。
 
 <APIMethod path="/email-otp/verify-email" method="POST">
 ```ts
 type verifyEmailOTP = {
     /**
-     * Email address to verify. 
+     * 需要验证的电子邮件地址。
      */
     email: string = "user@example.com"
     /**
-     * OTP to verify. 
+     * 需要验证的 OTP。
      */
     otp: string = "123456"
 }
 ```
 </APIMethod>
 
-### Reset Password with OTP
+### 使用 OTP 重置密码
 
-To reset the user's password with OTP, use the `emailOtp.requestPasswordReset()` method to send a "forget-password" OTP to the user's email address.
+使用 OTP 重置密码时，使用 `emailOtp.requestPasswordReset()` 方法向用户邮箱发送类型为 `"forget-password"` 的 OTP。
 
 <APIMethod path="/email-otp/request-password-reset" method="POST">
 ```ts
 type requestPasswordResetEmailOTP = {
     /**
-     * Email address to send the OTP.
+     * 发送 OTP 的电子邮件地址。
      */
     email: string = "user@example.com"
 }
@@ -196,54 +196,54 @@ type requestPasswordResetEmailOTP = {
 </APIMethod>
 
 <Callout type="warn">
-The `/forget-password/email-otp` endpoint is deprecated. Please use `/email-otp/request-password-reset` instead.
+`/forget-password/email-otp` 端点已被弃用，请改为使用 `/email-otp/request-password-reset`。
 </Callout>
 
-Once the user provides the OTP, use the `checkVerificationOtp()` method to check if it's valid (optional).
+用户提供 OTP 后，可以选择使用 `checkVerificationOtp()` 方法验证 OTP 是否有效。
 
 <APIMethod path="/email-otp/check-verification-otp" method="POST">
 ```ts
 type checkVerificationOTP = {
     /**
-     * Email address to send the OTP. 
+     * 发送 OTP 的电子邮件地址。
      */
     email: string = "user@example.com"
     /**
-     * Type of the OTP.
+     * OTP 类型。
      */
     type: "forget-password" = "forget-password"
     /**
-     * OTP sent to the email. 
+     * 发送到电子邮件的 OTP。
      */
     otp: string = "123456"
 }
 ```
 </APIMethod>
 
-Then, use the `resetPassword()` method to reset the user's password.
+然后，使用 `resetPassword()` 方法重置用户密码。
 
 <APIMethod path="/email-otp/reset-password" method="POST">
 ```ts
 type resetPasswordEmailOTP = {
     /**
-     * Email address to reset the password. 
+     * 需要重置密码的电子邮件地址。
      */
     email: string = "user@example.com"
     /**
-     * OTP sent to the email. 
+     * 发送到电子邮件的 OTP。
      */
     otp: string = "123456"
     /**
-     * New password. 
+     * 新密码。
      */
     password: string = "new-secure-password"
 }
 ```
 </APIMethod>
 
-### Change Email with OTP
+### 使用 OTP 更改电子邮件
 
-To allow users to change their email with OTP, first enable the `changeEmail` feature, which is disabled by default. Set `changeEmail.enabled` to `true`:
+要允许用户使用 OTP 更改电子邮件，需先启用 `changeEmail` 功能，该功能默认关闭。将 `changeEmail.enabled` 设置为 `true`：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -259,49 +259,47 @@ export const auth = betterAuth({
 })
 ```
 
-By default, when a user requests to change their email, an OTP is sent to the **new** email address.
-The email is only updated after the user verifies the new email.
+默认情况下，当用户请求更改电子邮件时，OTP 会发送到**新的**电子邮件地址。只有用户验证了新邮箱后，邮箱才会被更新。
 
-#### Usage
+#### 使用方法
 
-To change the user's email address with OTP, use the `emailOtp.requestEmailChange()` method to send a "change-email" OTP to the user's new email address.
+要更改用户电子邮件地址，使用 `emailOtp.requestEmailChange()` 方法向用户新的电子邮件地址发送类型为 `"change-email"` 的 OTP。
 
 <APIMethod path="/email-otp/request-email-change" method="POST" requireSession>
 ```ts
 type requestEmailChangeEmailOTP = {
     /**
-     * New email address to send the OTP.
+     * 新的电子邮件地址，用于接收 OTP。
      */
     newEmail: string = "user@example.com"
     /**
-     * OTP sent to the current email. This is required when the `changeEmail.verifyCurrentEmail` option is set to `true`.
+     * 发送到当前邮箱的 OTP。当 `changeEmail.verifyCurrentEmail` 选项设置为 `true` 时，此项必填。
      */
     otp?: string = "123456"
 }
 ```
 </APIMethod>
 
-Once the user provides the OTP, use the `changeEmail()` method to change the user's email address.
+用户提供 OTP 后，使用 `changeEmail()` 方法更改用户邮箱地址。
 
 <APIMethod path="/email-otp/change-email" method="POST" requireSession>
 ```ts
 type changeEmailEmailOTP = {
     /**
-     * New email address to change to. 
+     * 要更改为的新邮箱地址。
      */
     newEmail: string = "user@example.com"
     /**
-     * OTP sent to the new email. 
+     * 发送到新邮箱的 OTP。
      */
     otp: string = "123456"
 }
 ```
 </APIMethod>
 
-#### Confirming with Current Email
+#### 使用当前邮箱确认
 
-For added security, you can require users to confirm the change with an OTP sent to their **current** email before
-sending an OTP to the new email address. To enable this, set `changeEmail.verifyCurrentEmail` to `true` in the plugin options.
+为了增加安全性，您可以要求用户先通过发送到**当前**邮箱的 OTP 进行确认，再发送 OTP 到新邮箱。要启用此功能，请在插件选项中将 `changeEmail.verifyCurrentEmail` 设置为 `true`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -318,28 +316,28 @@ export const auth = betterAuth({
 })
 ```
 
-Before requesting the email change, use the `sendVerificationOtp()` method with type `email-verification` to send an OTP to the user's email address.
+在请求邮箱更改前，使用类型为 `email-verification` 的 `sendVerificationOtp()` 方法向用户邮箱发送 OTP。
 
 <APIMethod path="/email-otp/send-verification-otp" method="POST">
 ```ts
 type sendVerificationOTP = {
     /**
-     * Email address to send the OTP. 
+     * 发送 OTP 的电子邮件地址。
      */
     email: string = "user@example.com"
     /**
-     * Type of the OTP. Must be `email-verification` for confirming email change.
+     * OTP 类型。确认邮箱更改时必须为 `email-verification`。
      */
     type: string = "email-verification"
 }
 ```
 </APIMethod>
 
-Then, the user can provide the OTP when calling `requestEmailChange()`. The system will first verify the OTP sent to the current email before sending an OTP to the new email.
+然后，用户调用 `requestEmailChange()` 时提供该 OTP。系统会先验证发送到当前邮箱的 OTP，然后再发送 OTP 到新邮箱。
 
-### Override Default Email Verification
+### 重写默认的电子邮件验证
 
-To override the default email verification, pass `overrideDefaultEmailVerification: true` in the options. This will make the system use an email OTP instead of the default verification link whenever email verification is triggered. In other words, the user will verify their email using an OTP rather than clicking a link.
+要重写默认的电子邮件验证，可在选项中传入 `overrideDefaultEmailVerification: true`。此设置会让系统改用邮件 OTP 代替默认的验证链接来完成电子邮件验证。换言之，用户将通过输入 OTP 来验证邮箱，而不是点击链接。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -350,7 +348,7 @@ export const auth = betterAuth({
     emailOTP({
       overrideDefaultEmailVerification: true, // [!code highlight]
       async sendVerificationOTP({ email, otp, type }) {
-        // Implement the sendVerificationOTP method to send the OTP to the user's email address
+        // 实现 sendVerificationOTP 方法，向用户电子邮件发送 OTP
       },
     }),
   ],
@@ -358,20 +356,20 @@ export const auth = betterAuth({
 ```
 
 
-## Options
+## 选项
 
-- `sendVerificationOTP`: A function that sends the OTP to the user's email address. The function receives an object with the following properties:
-  - `email`: The user's email address.
-  - `otp`: The OTP to send.
-  - `type`: The type of OTP to send. Can be "sign-in", "email-verification", or "forget-password".
+- `sendVerificationOTP`：向用户邮箱发送 OTP 的函数。该函数接收包含以下属性的对象：
+  - `email`：用户电子邮件地址。
+  - `otp`：生成的 OTP。
+  - `type`：OTP 类型，可为 "sign-in"、"email-verification" 或 "forget-password"。
 
   <Callout type="warn">
-  It is recommended to not await the email sending to avoid timing attacks. On serverless platforms, use `waitUntil` or similar to ensure the email is sent.
+  建议不要等待邮件发送完成以避免时序攻击。在无服务器平台上，使用 `waitUntil` 或类似方式确保邮件已发送。
   </Callout>
 
-- `otpLength`: The length of the OTP. Defaults to `6`.
+- `otpLength`：OTP 的长度。默认值为 `6`。
 
-- `expiresIn`: The expiry time of the OTP in seconds. Defaults to `300` seconds.
+- `expiresIn`：OTP 过期时间（秒）。默认值为 `300` 秒。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -387,13 +385,13 @@ export const auth = betterAuth({
 })
 ```
 
-- `sendVerificationOnSignUp`: A boolean value that determines whether to send the OTP when a user signs up. Defaults to `false`.
+- `sendVerificationOnSignUp`：布尔值，决定用户注册时是否发送 OTP。默认值为 `false`。
 
-- `disableSignUp`: A boolean value that determines whether to prevent automatic sign-up when the user is not registered. Defaults to `false`.
+- `disableSignUp`：布尔值，决定当用户未注册时是否禁止自动注册。默认值为 `false`。
 
-- `generateOTP`: A function that generates the OTP. Defaults to a random 6-digit number.
+- `generateOTP`：生成 OTP 的函数。默认生成一个随机 6 位数字。
 
-- `allowedAttempts`: The maximum number of attempts allowed for verifying an OTP. Defaults to `3`. After exceeding this limit, the OTP becomes invalid and the user needs to request a new one.
+- `allowedAttempts`：允许验证 OTP 的最大尝试次数。默认值为 `3`。超过该次数后，OTP 失效，用户需重新请求。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -402,24 +400,24 @@ import { emailOTP } from "better-auth/plugins"
 export const auth = betterAuth({
     plugins: [
         emailOTP({
-            allowedAttempts: 5, // Allow 5 attempts before invalidating the OTP
+            allowedAttempts: 5, // 允许 5 次尝试后使 OTP 失效
             expiresIn: 300
         })
     ]
 })
 ```
 
-When the maximum attempts are exceeded, the `verifyOTP`, `signIn.emailOtp`, `verifyEmail`, and `resetPassword` methods will return an error with code `TOO_MANY_ATTEMPTS`.
+当超过最大尝试次数时，`verifyOTP`、`signIn.emailOtp`、`verifyEmail` 和 `resetPassword` 方法将返回错误，错误码为 `TOO_MANY_ATTEMPTS`。
 
-- `storeOTP`: The method to store the OTP in your database, whether `encrypted`, `hashed` or `plain` text. Default is `plain` text.
+- `storeOTP`：在数据库中存储 OTP 的方式，可选 `encrypted`、`hashed` 或 `plain` 文本。默认为明文存储。
 
 <Callout>
-Note: This will not affect the OTP sent to the user, it will only affect the OTP stored in your database.
+注意：这不会影响发送给用户的 OTP，只影响数据库中存储的 OTP。
 </Callout>
 
-Alternatively, you can pass a custom encryptor or hasher to store the OTP in your database.
+您也可以传入自定义的加密器或哈希器来存储 OTP。
 
-**Custom encryptor**
+**自定义加密器**
 
 ```ts title="auth.ts"
 emailOTP({
@@ -434,7 +432,7 @@ emailOTP({
 })
 ```
 
-**Custom hasher**
+**自定义哈希器**
 
 ```ts title="auth.ts"
 emailOTP({

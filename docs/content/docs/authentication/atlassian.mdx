@@ -1,27 +1,27 @@
 ---
 title: Atlassian
-description: Atlassian provider setup and usage.
+description: Atlassian 提供者的设置和使用。
 ---
 
 <Steps>
     <Step>
-        ### Get your Credentials
-        1. Sign in to your Atlassian account and go to the [Atlassian Developer Console](https://developer.atlassian.com/console/myapps/)
-        2. Click "Create new app"
-        3. Fill out the app details
-        4. Configure your redirect URI (e.g., `https://yourdomain.com/api/auth/callback/atlassian`)
-        5. Note your Client ID and Client Secret
+        ### 获取您的凭据
+        1. 登录到您的 Atlassian 账户并访问 [Atlassian 开发者控制台](https://developer.atlassian.com/console/myapps/)
+        2. 点击“创建新应用”
+        3. 填写应用详情
+        4. 配置您的重定向 URI（例如，`https://yourdomain.com/api/auth/callback/atlassian`）
+        5. 记录您的客户端 ID 和客户端密钥
 
         <Callout type="info">
-            - The default scope is `read:jira-user` and `offline_access`. For additional scopes, refer to the [Atlassian OAuth documentation](https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/).
+            - 默认的权限范围是 `read:jira-user` 和 `offline_access`。若需额外权限，请参考 [Atlassian OAuth 文档](https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/)。
         </Callout>
 
-        Make sure to set the redirect URI to match your application's callback URL. If you change the base path of the auth routes, you should update the redirect URI accordingly.
+        请确保将重定向 URI 设置为与您的应用回调 URL 相匹配。如果您更改了身份验证路由的基础路径，也需要相应更新重定向 URI。
     </Step>
 
   <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供者
+        要配置提供者，您需要导入该提供者并将其传递给身份认证实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -37,9 +37,9 @@ description: Atlassian provider setup and usage.
         ```
     </Step>
        <Step>
-        ### Sign In with Atlassian
-        To sign in with Atlassian, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-        - `provider`: The provider to use. It should be set to `atlassian`.
+        ### 使用 Atlassian 登录
+        要使用 Atlassian 登录，可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+        - `provider`：使用的提供者，应设置为 `atlassian`。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
@@ -52,7 +52,7 @@ description: Atlassian provider setup and usage.
         }
         ```
         <Callout type="info">
-        For more information about Atlassian's OAuth scopes and API capabilities, refer to the [official Atlassian OAuth 2.0 (3LO) apps documentation](https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/).
+        关于 Atlassian OAuth 权限和 API 功能的更多信息，请参考 [官方 Atlassian OAuth 2.0 (3LO) 应用文档](https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/)。
         </Callout>
     </Step>
 

@@ -1,24 +1,24 @@
 ---
-title: Client
-description: Better Auth client library for authentication.
+title: 客户端
+description: 用于身份验证的 Better Auth 客户端库。
 ---
 
-Better Auth offers a client library compatible with popular frontend frameworks like React, Vue, Svelte, and more. This client library includes a set of functions for interacting with the Better Auth server. Each framework's client library is built on top of a core client library that is framework-agnostic, so that all methods and hooks are consistently available across all client libraries.
+Better Auth 提供了一个与流行前端框架（如 React、Vue、Svelte 等）兼容的客户端库。该客户端库包含一组用于与 Better Auth 服务器交互的函数。每个框架的客户端库都建立在一个与框架无关的核心客户端库之上，因此所有方法和钩子在所有客户端库中均保持一致。
 
-## Installation
+## 安装
 
-If you haven't already, install better-auth.
+如果尚未安装，请先安装 better-auth。
 
 ```package-install 
 npm i better-auth
 ```
 
-## Create Client Instance
+## 创建客户端实例
 
-Import `createAuthClient` from the package for your framework (e.g., "better-auth/react" for React). Call the function to create your client. Pass the base URL of your auth server. If the auth server is running on the same domain as your client, you can skip this step.
+从你所用的框架的包中导入 `createAuthClient`（例如 React 框架使用 "better-auth/react"）。调用该函数创建你的客户端。传入你身份验证服务器的基础 URL。如果身份验证服务器与客户端运行在同一域上，则可以跳过此步骤。
 
 <Callout type="info">
-If you're using a different base path other than `/api/auth`, make sure to pass the whole URL, including the path. (e.g., `http://localhost:3000/custom-path/auth`)
+如果你使用的基础路径不是 `/api/auth`，请确保传入包含路径的完整 URL。（例如，`http://localhost:3000/custom-path/auth`）
 </Callout>
 
 
@@ -28,7 +28,7 @@ If you're using a different base path other than `/api/auth`, make sure to pass 
             ```ts  title="lib/auth-client.ts" 
             import { createAuthClient } from "better-auth/client" // [!code highlight]
             export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+                baseURL: "http://localhost:3000" // 你的身份验证服务器的基础URL // [!code highlight]
             })
             ```
     </Tab>
@@ -36,7 +36,7 @@ If you're using a different base path other than `/api/auth`, make sure to pass 
             ```ts  title="lib/auth-client.ts"  
             import { createAuthClient } from "better-auth/react" // [!code highlight]
             export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+                baseURL: "http://localhost:3000" // 你的身份验证服务器的基础URL // [!code highlight]
             })
             ```
     </Tab>
@@ -44,7 +44,7 @@ If you're using a different base path other than `/api/auth`, make sure to pass 
             ```ts  title="lib/auth-client.ts" 
             import { createAuthClient } from "better-auth/vue" // [!code highlight]
             export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+                baseURL: "http://localhost:3000" // 你的身份验证服务器的基础URL // [!code highlight]
             })
             ```
     </Tab>
@@ -52,7 +52,7 @@ If you're using a different base path other than `/api/auth`, make sure to pass 
             ```ts  title="lib/auth-client.ts" 
             import { createAuthClient } from "better-auth/svelte" // [!code highlight]
             export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+                baseURL: "http://localhost:3000" // 你的身份验证服务器的基础URL // [!code highlight]
             })
             ```
     </Tab>
@@ -60,17 +60,17 @@ If you're using a different base path other than `/api/auth`, make sure to pass 
             ```ts title="lib/auth-client.ts" 
             import { createAuthClient } from "better-auth/solid" // [!code highlight]
             export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+                baseURL: "http://localhost:3000" // 你的身份验证服务器的基础URL // [!code highlight]
             })
             ```
     </Tab>
 </Tabs>
 
-## Usage
+## 使用方法
 
-Once you've created your client instance, you can use the client to interact with the Better Auth server. The client provides a set of functions by default and they can be extended with plugins.
+创建客户端实例后，你可以使用该客户端与 Better Auth 服务器交互。客户端默认提供一组函数，也可以使用插件进行扩展。
 
-**Example: Sign In**
+**示例：登录**
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -82,26 +82,26 @@ await authClient.signIn.email({
 })
 ```
 
-### Hooks
+### 钩子
 
-In addition to the standard methods, the client provides hooks to easily access different reactive data. Every hook is available in the root object of the client and they all start with `use`.
+除了标准方法外，客户端还提供钩子以便轻松访问不同的响应式数据。每个钩子都在客户端根对象中可用，且名称都以 `use` 开头。
 
-**Example: useSession**
+**示例：useSession**
 
 
 <Tabs items={["React", "Vue","Svelte", "Solid"]} defaultValue="react">
     <Tab value="React">
         ```tsx title="user.tsx"
-        //make sure you're using the react client
+        //确保你使用的是 react 客户端
         import { createAuthClient } from "better-auth/react"
         const { useSession } = createAuthClient() // [!code highlight]
     
         export function User() {
             const {
                 data: session,
-                isPending, //loading state
-                error, //error object 
-                refetch //refetch the session
+                isPending, //加载状态
+                error, //错误对象 
+                refetch //重新获取 session
             } = useSession()
             return (
                 //...
@@ -121,12 +121,12 @@ In addition to the standard methods, the client provides hooks to easily access 
                 <button v-if="!session.data" @click="() => authClient.signIn.social({
                     provider: 'github'
                 })">
-                    Continue with GitHub
+                    使用 GitHub 继续
                 </button>
                 <div>
                     <pre>{{ session.data }}</pre>
                     <button v-if="session.data" @click="authClient.signOut()">
-                        Sign out
+                        登出
                     </button>
                 </div>
             </div>
@@ -158,7 +158,7 @@ In addition to the standard methods, the client provides hooks to easily access 
                         await authClient.signOut();
                         }}
                     >
-                        Signout
+                        登出
                     </button>
                     </div>
                 {:else}
@@ -169,7 +169,7 @@ In addition to the standard methods, the client provides hooks to easily access 
                         });
                     }}
                     >
-                    Continue with GitHub
+                    使用 GitHub 继续
                     </button>
                 {/if}
                 </div>
@@ -187,9 +187,9 @@ In addition to the standard methods, the client provides hooks to easily access 
                 return (
                     <Show
                         when={session()}
-                        fallback={<button onClick={toggle}>Log in</button>}
+                        fallback={<button onClick={toggle}>登录</button>}
                     >
-                        <button onClick={toggle}>Log out</button>
+                        <button onClick={toggle}>登出</button>
                     </Show>
                 ); 
             }
@@ -197,27 +197,27 @@ In addition to the standard methods, the client provides hooks to easily access 
             </Tab>
 </Tabs>
 
-### Fetch Options
+### 请求选项
 
-The client uses a library called [better fetch](https://better-fetch.vercel.app) to make requests to the server. 
+客户端使用一个名为 [better fetch](https://better-fetch.vercel.app) 的库来向服务器发起请求。
 
-Better fetch is a wrapper around the native fetch API that provides a more convenient way to make requests. It's created by the same team behind Better Auth and is designed to work seamlessly with it.
+Better fetch 是对原生 fetch API 的封装，提供了更方便的请求方式。它由 Better Auth 团队创建，设计上与 Better Auth 无缝配合。
 
-You can pass any default fetch options to the client by passing `fetchOptions` object to the `createAuthClient`.
+你可以通过传递 `fetchOptions` 对象给 `createAuthClient`，为客户端设置默认的 fetch 选项。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
 
 const authClient = createAuthClient({
     fetchOptions: {
-        //any better-fetch options
+        // 任何 better-fetch 的选项
     },
 })
 ```
 
-### Disabling Default Fetch Plugins
+### 禁用默认的 Fetch 插件
 
-The auth client includes default fetch plugins that handle browser-specific behaviors like automatic redirects. For non-browser environments (e.g., React Native/Expo), you can disable these by setting `disableDefaultFetchPlugins` to `true`:
+身份验证客户端包含默认的 fetch 插件，用于处理浏览器特有的行为，比如自动重定向。对于非浏览器环境（例如 React Native/Expo），你可以通过设置 `disableDefaultFetchPlugins` 为 `true` 来禁用这些插件：
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -227,7 +227,7 @@ const authClient = createAuthClient({
 })
 ```         
 
-You can also pass fetch options to most of the client functions. Either as the second argument or as a property in the object.
+你也可以将 fetch 选项传递给大多数客户端函数，作为第二个参数，或者作为对象中的属性。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -241,7 +241,7 @@ await authClient.signIn.email({
     }
 })
 
-//or
+//或
 
 await authClient.signIn.email({
     email: "email@email.com",
@@ -254,27 +254,27 @@ await authClient.signIn.email({
 })
 ```
 
-### Disabling Hook Rerenders
+### 禁用钩子重新渲染
 
-Certain endpoints, upon successful response, will trigger atom signals and cause hooks like `useSession` to rerender.
-This is useful for keeping your UI in sync with authentication state changes.
+某些端点在成功响应后，会触发 atom 信号，导致像 `useSession` 的钩子重新渲染。
+这对于让你的 UI 与身份验证状态保持同步非常有用。
 
-However, there are cases where you might want to make an endpoint call without triggering hook rerenders.
-For example, when updating user preferences that don't affect the session, or when you want to manually control when hooks update.
+但是，有时你可能想要调用端点而不触发钩子重新渲染。
+例如，更新不会影响 session 的用户偏好时，或者你想手动控制钩子何时更新。
 
-You can disable hook rerenders for a specific endpoint call by setting `disableSignal: true` in the fetch options:
+你可以通过在 fetch 选项中设置 `disableSignal: true`，禁用特定端点调用的钩子重新渲染：
 
 ```ts
 import { authClient } from "@/lib/auth-client"
 
-// As the second argument
+// 作为第二个参数
 await authClient.updateUser({
     name: "New Name"
 }, {
     disableSignal: true
 })
 
-// Or within fetchOptions
+// 或者在 fetchOptions 中
 await authClient.updateUser({
     name: "New Name",
     fetchOptions: {
@@ -283,8 +283,8 @@ await authClient.updateUser({
 })
 ```
 
-When `disableSignal` is set to `true`, the endpoint call will complete successfully,
-but hooks like `useSession` won't automatically rerender. You can manually trigger a refetch if needed:
+当 `disableSignal` 设置为 `true` 时，端点调用会成功完成，
+但像 `useSession` 这样的钩子不会自动重新渲染。你可以根据需要手动触发重新获取：
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -296,22 +296,22 @@ await authClient.updateUser({
 }, {
     disableSignal: true,
     onSuccess() {
-        // Manually refetch session if needed
+        // 如果需要，手动重新获取 session
         refetch()
     }
 })
 ```
 
-### Handling Errors
+### 错误处理
 
-Most of the client functions return a response object with the following properties:
-- `data`: The response data.
-- `error`: The error object if there was an error.
+大多数客户端函数会返回一个响应对象，包含以下属性：
+- `data`：响应数据。
+- `error`：如果出错则包含错误对象。
 
-The error object contains the following properties:
-- `message`: The error message. (e.g., "Invalid email or password")
-- `status`: The HTTP status code.
-- `statusText`: The HTTP status text.
+错误对象包含以下属性：
+- `message`：错误信息。（例如："Invalid email or password"）
+- `status`：HTTP 状态码。
+- `statusText`：HTTP 状态文本。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -321,11 +321,11 @@ const { data, error } = await authClient.signIn.email({
     password: "password1234"
 })
 if (error) {
-    //handle error
+    // 处理错误
 }
 ```
 
-If the action accepts a `fetchOptions` option, you can pass an `onError` callback to handle errors.
+如果动作支持 `fetchOptions` 选项，你可以传入 `onError` 回调来处理错误。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -335,36 +335,36 @@ await authClient.signIn.email({
     password: "password1234",
 }, {
     onError(ctx) {
-        //handle error
+        // 处理错误
     }
 })
 
-//or
+// 或者
 await authClient.signIn.email({
     email: "email@email.com",
     password: "password1234",
     fetchOptions: {
         onError(ctx) {
-            //handle error
+            // 处理错误
         }
     }
 })
 ```
 
-Hooks like `useSession` also return an error object if there was an error fetching the session. On top of that, they also return an `isPending` property to indicate if the request is still pending.
+像 `useSession` 这样的钩子也会返回错误对象（如果获取 session 失败），此外还返回 `isPending` 属性以指示请求是否仍在进行中。
 
 ```ts
 import { useSession } from "@/lib/auth-client"
 
 const { data, error, isPending } = useSession()
 if (error) {
-    //handle error
+    // 处理错误
 }
 ```
 
-#### Error Codes
+#### 错误代码
 
-The client instance contains $ERROR_CODES object that contains all the error codes returned by the server. You can use this to handle error translations or custom error messages.
+客户端实例包含一个 `$ERROR_CODES` 对象，包含服务器返回的所有错误代码。你可以用它来处理错误翻译或自定义错误信息。
 
 ```ts title="auth-client.ts"
 const authClient = createAuthClient();
@@ -404,11 +404,11 @@ if(error?.code){
 }
 ```
 
-### Plugins
+### 插件
 
-You can extend the client with plugins to add more functionality. Plugins can add new functions to the client or modify existing ones. 
+你可以通过插件扩展客户端，增加更多功能。插件可以添加新函数或修改现有函数。
 
-**Example: Magic Link Plugin**
+**示例：Magic Link 插件**
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
 import { magicLinkClient } from "better-auth/client/plugins"
@@ -420,7 +420,7 @@ const authClient = createAuthClient({
 })
 ```
 
-once you've added the plugin, you can use the new functions provided by the plugin.
+添加插件后，你可以使用插件提供的新函数。
 
 ```ts
 import { authClient } from "@/lib/auth-client"

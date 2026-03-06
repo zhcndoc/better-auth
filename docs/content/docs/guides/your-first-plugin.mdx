@@ -1,42 +1,41 @@
 ---
-title: Create your first plugin
-description: A step-by-step guide to creating your first Better Auth plugin.
+title: 创建你的第一个插件
+description: 创建你的第一个 Better Auth 插件的逐步指南。
 ---
 
-In this guide, we’ll walk you through the steps of creating your first Better Auth plugin.
+在本指南中，我们将带你一步步创建你的第一个 Better Auth 插件。
 
 
 <Callout type="warn">
-This guide assumes you have <Link href="/docs/installation">setup the basics</Link> of Better Auth and are ready to create your first plugin.
+本指南假设你已经完成了 <Link href="/docs/installation">Better Auth 的基础设置</Link>，并准备好创建你的第一个插件。
 </Callout>
 
 <Steps>
 <Step>
-## Plan your idea
-Before beginning, you must know what plugin you intend to create.
+## 规划你的想法
+开始之前，你必须知道你打算创建什么插件。
 
-In this guide, we’ll create a **birthday plugin** to keep track of user birth dates.
+在本指南中，我们将创建一个 **生日插件** 来记录用户的生日。
 </Step>
 
 <Step>
-## Server plugin first
-Better Auth plugins operate as a pair: a <Link href="/docs/concepts/plugins#create-a-server-plugin">server plugin</Link> and a <Link href="/docs/concepts/plugins#creating-a-client-plugin">client plugin</Link>.
-The server plugin forms the foundation of your authentication system, while the client plugin provides convenient frontend APIs to interact with your server implementation.
-
+## 先创建服务器插件
+Better Auth 插件是成对工作的：一个 <Link href="/docs/concepts/plugins#create-a-server-plugin">服务器插件</Link> 和一个 <Link href="/docs/concepts/plugins#creating-a-client-plugin">客户端插件</Link>。
+服务器插件构成你的认证系统的基础，而客户端插件则提供方便的前端 API 来与服务器实现交互。
 
 <Callout>
-You can read more about server/client plugins in our <Link href="/docs/concepts/plugins#creating-a-plugin">documentation</Link>.
+你可以在我们的 <Link href="/docs/concepts/plugins#creating-a-plugin">文档</Link> 中阅读更多关于服务器/客户端插件的内容。
 </Callout>
 
-### Creating the server plugin
-Go ahead and find a suitable location to create your birthday plugin folder, with an `index.ts` file within.
+### 创建服务器插件
+找到一个合适的位置创建你的生日插件文件夹，并在其中创建一个 `index.ts` 文件。
 <Files>
   <Folder name="birthday-plugin" defaultOpen>
     <File name="index.ts" />
   </Folder>
 </Files>
-In the `index.ts` file, we’ll export a function that represents our server plugin.
-This will be what we will later add to our plugin list in the `auth.ts` file.
+在 `index.ts` 文件中，我们将导出一个函数，代表我们的服务器插件。
+稍后我们会将它添加到 `auth.ts` 文件中的插件列表里。
 
 ```ts title="index.ts"
 import { createAuthClient } from "better-auth/client";
@@ -48,18 +47,18 @@ export const birthdayPlugin = () =>
   } satisfies BetterAuthPlugin);
 
 ```
-Although this does nothing, you have technically just made yourself your first plugin, congratulations! 🎉
+虽然这段代码目前并没有实际功能，但你已经技术上完成了你的第一个插件，恭喜！🎉
 
 </Step>
 
 <Step>
-### Defining a schema
-In order to save each user’s birthday data, we must create a schema on top of the `user` model.
+### 定义 schema
+为了保存每个用户的生日数据，我们必须在 `user` 模型上创建 schema。
 
-By creating a schema here, this also allows <Link href="/docs/concepts/cli">Better Auth’s CLI</Link> to generate the schemas required to update your database.
+在这里创建 schema，也允许 <Link href="/docs/concepts/cli">Better Auth 的 CLI</Link> 自动生成更新数据库所需的 schema。
 
 <Callout type="info">
-You can learn more about <Link href="/docs/concepts/plugins#schema">plugin schemas here</Link>.
+你可以在 <Link href="/docs/concepts/plugins#schema">这里了解更多关于插件 schema</Link> 的内容。
 </Callout>
 
 ```ts title="index.ts"
@@ -72,8 +71,8 @@ export const birthdayPlugin = () =>
         fields: {// [!code highlight]
           birthday: {// [!code highlight]
             type: "date", // string, number, boolean, date // [!code highlight]
-            required: true, // if the field should be required on a new record. (default: false) // [!code highlight]
-            unique: false, // if the field should be unique. (default: false) // [!code highlight]
+            required: true, // 新记录时此字段是否必填（默认：false） // [!code highlight]
+            unique: false, // 此字段是否唯一（默认：false） // [!code highlight]
           },// [!code highlight]
         },// [!code highlight]
       },// [!code highlight]
@@ -84,17 +83,17 @@ export const birthdayPlugin = () =>
 </Step>
 
 <Step>
-### Authorization logic
-For this example guide, we’ll set up authentication logic to check and ensure that the user who signs-up is older than 5.
-But the same concept could be applied for something like verifying users agreeing to the TOS or anything alike.
+### 授权逻辑
+在本示例中，我们将设置认证逻辑，检查并确保注册的用户年龄大于 5 岁。
+同样的概念也可用于验证用户同意服务条款（TOS）等场景。
 
-To do this, we’ll utilize <Link href="/docs/concepts/plugins#hooks">Hooks</Link>, which allows us to run code `before` or `after` an action is performed.
+为此，我们将使用 <Link href="/docs/concepts/plugins#hooks">Hooks</Link>，它允许我们在操作执行前或执行后运行代码。
 
 ```ts title="index.ts"
 export const birthdayPlugin = () => ({
     //...
-    // In our case, we want to write authorization logic,
-    // meaning we want to intercept it `before` hand.
+    // 在我们的例子中，我们要写授权逻辑，
+    // 也就是说，我们希望在操作执行“之前”拦截。
     hooks: {
       before: [
         {
@@ -108,7 +107,7 @@ export const birthdayPlugin = () => ({
 } satisfies BetterAuthPlugin)
 ```
 
-In our case we want to match any requests going to the signup path:
+这里我们想匹配所有访问注册路径的请求：
 ```ts title="Before hook"
 {
   matcher: (context) => context.path.startsWith("/sign-up/email"),
@@ -116,7 +115,7 @@ In our case we want to match any requests going to the signup path:
 }
 ```
 
-And for our logic, we’ll write the following code to check the if user’s birthday makes them above 5 years old.
+接着针对逻辑，我们写以下代码检查用户生日是否满足年龄大于 5 岁：
 ```ts title="Imports"
 import { APIError } from "better-auth/api";
 import { createAuthMiddleware } from "better-auth/plugins";
@@ -127,14 +126,14 @@ import { createAuthMiddleware } from "better-auth/plugins";
   handler: createAuthMiddleware(async (ctx) => {
     const { birthday } = ctx.body;
     if(!(birthday instanceof Date)) {
-      throw new APIError("BAD_REQUEST", { message: "Birthday must be of type Date." });
+      throw new APIError("BAD_REQUEST", { message: "生日必须是 Date 类型。" });
     }
 
     const today = new Date();
     const fiveYearsAgo = new Date(today.setFullYear(today.getFullYear() - 5));
 
     if(birthday >= fiveYearsAgo) {
-      throw new APIError("BAD_REQUEST", { message: "User must be above 5 years old." });
+      throw new APIError("BAD_REQUEST", { message: "用户必须年满 5 岁以上。" });
     }
 
     return { context: ctx };
@@ -142,30 +141,30 @@ import { createAuthMiddleware } from "better-auth/plugins";
 }
 ```
 
-**Authorized!** 🔒
+**授权通过！** 🔒
 
-We’ve now successfully written code to ensure authorization for users above 5!
+我们现在成功编写了确保用户年龄大于 5 岁的授权逻辑！
 
 </Step>
 
 <Step>
-## Client Plugin
-We’re close to the finish line! 🏁
+## 客户端插件
+我们已经接近完成了！🏁
 
-Now that we have created our server plugin, the next step is to develop our client plugin.
-Since there isn’t much frontend APIs going on for this plugin, there isn’t much to do!
+现在服务器插件已经创建完成，下一步是开发客户端插件。
+由于这个插件没有太多前端 API，所以工作量不大！
 
-First, let’s create our `client.ts` file first:
+首先，创建 `client.ts` 文件：
 <Files>
   <Folder name="birthday-plugin" defaultOpen>
     <File name="index.ts" />
     <File name="client.ts" />
   </Folder>
 </Files>
-Then, add the following code:
+然后，添加以下代码：
 ```ts title="client.ts"
 import type { BetterAuthClientPlugin } from "better-auth/client";
-import type { birthdayPlugin } from "./index"; // make sure to import the server plugin as a type // [!code highlight]
+import type { birthdayPlugin } from "./index"; // 确保以类型方式导入服务器插件 // [!code highlight]
 
 type BirthdayPlugin = typeof birthdayPlugin;
 
@@ -176,17 +175,17 @@ export const birthdayClientPlugin = () => {
   } satisfies BetterAuthClientPlugin;
 };
 ```
-What we’ve done is allow the client plugin to infer the types defined by our schema from the server plugin.
+我们做的是让客户端插件推断服务器插件中 schema 定义的类型。
 
-And that’s it!  This is all it takes for the birthday client plugin. 🎂
+就是这样！这就是生日客户端插件的全部内容。🎂
 
 </Step>
 
 <Step>
-## Initiate your plugin!
-Both the `client` and `server` plugins are now ready, the last step is to import them to both your `auth-client.ts` and your `server.ts` files respectively to initiate the plugin.
+## 启动你的插件！
+客户端和服务器插件都已准备好，最后一步是分别将它们导入到 `auth-client.ts` 和 `server.ts` 中以启动插件。
 
-### Server initiation
+### 服务器启动
 ```ts title="server.ts"
 import { betterAuth } from "better-auth";
 import { birthdayPlugin } from "./birthday-plugin";// [!code highlight]
@@ -198,7 +197,7 @@ export const auth = betterAuth({
 });
 ```
 
-### Client initiation
+### 客户端启动
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client";
 import { birthdayClientPlugin } from "./birthday-plugin/client";// [!code highlight]
@@ -210,10 +209,10 @@ const authClient = createAuthClient({
 });
 ```
 
-### Oh yeah, the schemas! 
-Don’t forget to add your `birthday` field to your `user` table model! 
+### 哦对，还有 schemas！
+别忘了将 `birthday` 字段添加到你的 `user` 表模型中！
 
-Or, use the `generate` <Link href="/docs/concepts/cli#generate">CLI command</Link>:
+或者，使用 `generate` <Link href="/docs/concepts/cli#generate">CLI 命令</Link>：
 ```bash
 npx auth@latest generate
 ```
@@ -221,12 +220,11 @@ npx auth@latest generate
 </Step>
 </Steps>
 
-## Wrapping Up
+## 总结
 
-Congratulations! You’ve successfully created your first ever Better Auth plugin.
-We highly recommend you visit our <Link href="/docs/concepts/plugins">plugins documentation</Link> to learn more information.
+恭喜！你已成功创建了你的第一个 Better Auth 插件。
+我们强烈建议你访问我们的 <Link href="/docs/concepts/plugins">插件文档</Link> 以了解更多信息。
 
-If you have a plugin you’d like to share with the community, feel free to let us know through 
-our <Link href="https://discord.gg/better-auth">Discord server</Link>,
-or through a <Link href="https://github.com/better-auth/better-auth/pulls">pull-request</Link>
-and we may add it to the <Link href="/docs/plugins/community-plugins">community-plugins</Link> list!
+如果你有插件想与社区分享，欢迎通过我们的 <Link href="https://discord.gg/better-auth">Discord 服务器</Link>，
+或通过 <Link href="https://github.com/better-auth/better-auth/pulls">拉取请求</Link> 告诉我们，
+我们可能会将其添加到 <Link href="/docs/plugins/community-plugins">社区插件</Link> 列表中！

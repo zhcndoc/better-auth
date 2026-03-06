@@ -1,17 +1,17 @@
 ---
-title: One-Time Token Plugin
-description: Generate and verify single-use token
+title: 一次性令牌插件
+description: 生成和验证一次性令牌
 ---
 
-The One-Time Token (OTT) plugin provides functionality to generate and verify secure, single-use session tokens. These are commonly used for across domains authentication.
+一次性令牌（OTT）插件提供生成和验证安全的一次性会话令牌的功能。这些令牌通常用于跨域身份验证。
 
-## Installation
+## 安装
 
 <Steps>
   <Step>
-    ### Add the plugin to your auth config
+    ### 将插件添加到您的认证配置中
 
-    To use the One-Time Token plugin, add it to your auth config.
+    要使用一次性令牌插件，请将其添加到您的认证配置中。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";
@@ -21,15 +21,15 @@ The One-Time Token (OTT) plugin provides functionality to generate and verify se
         plugins: [
           oneTimeToken() // [!code highlight]
         ]
-        // ... other auth config
+        // ... 其他认证配置
     });
     ```
   </Step>
 
   <Step>
-    ### Add the client plugin
+    ### 添加客户端插件
 
-    Next, include the one-time-token client plugin in your authentication client instance.
+    接下来，在您的认证客户端实例中包含 one-time-token 客户端插件。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -44,11 +44,11 @@ The One-Time Token (OTT) plugin provides functionality to generate and verify se
   </Step>
 </Steps>
 
-## Usage
+## 用法
 
-### 1. Generate a Token
+### 1. 生成令牌
 
-Generate a token using `auth.api.generateOneTimeToken` or `authClient.oneTimeToken.generate`
+使用 `auth.api.generateOneTimeToken` 或 `authClient.oneTimeToken.generate` 方法生成令牌。
 
 <APIMethod
   path="/one-time-token/generate"
@@ -61,62 +61,62 @@ type generateOneTimeToken = {
 ```
 </APIMethod>
 
-This will return a `token` that is attached to the current session which can be used to verify the one-time token. By default, the token will expire in 3 minutes.
+这将返回一个附加到当前会话的 `token`，可用于验证一次性令牌。默认情况下，令牌将在 3 分钟后过期。
 
-### 2. Verify the Token
+### 2. 验证令牌
 
-When the user clicks the link or submits the token, use the `auth.api.verifyOneTimeToken` or `authClient.oneTimeToken.verify` method in another API route to validate it.
+当用户点击链接或提交令牌时，在另一个 API 路由中使用 `auth.api.verifyOneTimeToken` 或 `authClient.oneTimeToken.verify` 方法进行验证。
 
 <APIMethod path="/one-time-token/verify" method="POST">
 ```ts
 type verifyOneTimeToken = {
     /**
-     * The token to verify. 
+     * 要验证的令牌。
      */
     token: string = "some-token"
 }
 ```
 </APIMethod>
 
-This will return the session that was attached to the token.
+这将返回附加到该令牌的会话。
 
-## Options
+## 选项
 
-These options can be configured when adding the `oneTimeToken` plugin:
+添加 `oneTimeToken` 插件时可以配置以下选项：
 
-*   **`disableClientRequest`** (boolean): Optional. If `true`, the token will only be generated on the server side. Default: `false`.
-*   **`expiresIn`** (number): Optional. The duration for which the token is valid in minutes. Default: `3`.
+*   **`disableClientRequest`**（布尔值）：可选。如果设为 `true`，则令牌仅在服务器端生成。默认值：`false`。
+*   **`expiresIn`**（数字）：可选。令牌有效的时长，单位为分钟。默认值：`3`。
 
 ```ts
 oneTimeToken({
-    expiresIn: 10 // 10 minutes
+    expiresIn: 10 // 10 分钟
 })
 ```
-* **`generateToken`**: A custom token generator function that takes `session` object and a `ctx` as parameters.
+* **`generateToken`**：一个自定义令牌生成函数，参数为 `session` 对象和 `ctx`。
 
-* **`storeToken`**: Optional. This option allows you to configure how the token is stored in your database.
+* **`storeToken`**：可选。此选项允许您配置如何将令牌存储在数据库中。
 
-    * **`plain`**: The token is stored in plain text. (Default)
-    * **`hashed`**: The token is hashed using the default hasher.
-    * **`custom-hasher`**: A custom hasher function that takes a token and returns a hashed token.
+    * **`plain`**：明文存储令牌。（默认）
+    * **`hashed`**：使用默认哈希算法对令牌进行哈希存储。
+    * **`custom-hasher`**：自定义哈希函数，接收令牌并返回哈希后的令牌。
 
 <Callout type="info">
-    Note: It will not affect the token that's sent, it will only affect the token stored in your database.
+    注意：这不会影响发送的令牌，仅影响您数据库中存储的令牌。
 </Callout>
 
-Examples:
+示例：
 
-```ts title="No hashing (default)"
+```ts title="无哈希（默认）"
 oneTimeToken({
     storeToken: "plain"
 })
 ```
-```ts title="built-in hasher"
+```ts title="内置哈希"
 oneTimeToken({
     storeToken: "hashed"
 })
 ```
-```ts title="custom hasher"
+```ts title="自定义哈希"
 oneTimeToken({
     storeToken: {
         type: "custom-hasher",

@@ -1,51 +1,51 @@
 ---
-title: Autumn Billing
-description: Better Auth Plugin for Autumn Billing
+title: 秋季计费
+description: 秋季计费的更佳认证插件
 ---
 
 import { HomeIcon } from "lucide-react";
 import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
 
-[Autumn](https://useautumn.com) is open source infrastructure to run SaaS pricing plans. It sits between your app and Stripe, and acts as the database for your customers' subscription status, usage metering and feature permissions.
+[Autumn](https://useautumn.com) 是用于运行 SaaS 定价计划的开源基础设施。它位于您的应用程序和 Stripe 之间，作为客户订阅状态、用量计量和功能权限的数据库。
 
 <Callout>
-  This plugin is maintained by the Autumn team. For bugs, issues or feature requests,
-  please visit the [Autumn GitHub repo](https://github.com/useautumn/autumn).
+  该插件由 Autumn 团队维护。如有错误、问题或功能请求，
+  请访问 [Autumn GitHub 仓库](https://github.com/useautumn/autumn)。
 </Callout>
 
-<Card href="https://discord.gg/STqxY92zuS" title="Get help on Autumn's Discord">
-  We're online to help you with any questions you have.
+<Card href="https://discord.gg/STqxY92zuS" title="在 Autumn 的 Discord 上寻求帮助">
+  我们在线随时为您解答任何问题。
 </Card>
 
-## Features
+## 功能
 
-- One function for all checkout, subscription and payment flows
-- No webhooks required: query Autumn for the data you need
-- Manages your application's free and paid plans
-- Usage tracking for usage billing and periodic limits
-- Custom plans and pricing changes through Autumn's dashboard
+- 一函数处理所有结账、订阅和支付流程
+- 无需 Webhook：直接查询 Autumn 获取所需数据
+- 管理您应用的免费和付费计划
+- 用于用量计费和定期限制的使用跟踪
+- 通过 Autumn 仪表盘自定义计划和价格变更
 
 
 <Steps>
   <Step>
-    ### Setup Autumn Account
-    First, create your pricing plans in Autumn's [dashboard](https://app.useautumn.com), where you define what each plan and product gets access to and how it should be billed. In this example, we're handling the free and pro plans for an AI chatbot, which comes with a number of `messages` per month.
+    ### 设置 Autumn 账户
+    首先，在 Autumn 的[仪表盘](https://app.useautumn.com)中创建您的定价计划，定义每个计划和产品的访问权限及计费方式。此示例中，我们处理 AI 聊天机器人免费和专业版计划，每月包含一定数量的 `消息`。
   </Step>
   <Step>
-    ### Install Autumn SDK
+    ### 安装 Autumn SDK
 
     ```package-install
     autumn-js
     ```
     <Callout>
-      If you're using a separate client and server setup, make sure to install the plugin in both parts of your project.
+      如果您使用的是分离的客户端和服务器结构，请确保在项目的两个部分都安装该插件。
     </Callout>
   </Step>
 
   <Step>
-    ### Add `AUTUMN_SECRET_KEY` to your environment variables
+    ### 将 `AUTUMN_SECRET_KEY` 添加到环境变量
 
-    You can find it in Autumn's dashboard under "[Developer](https://app.useautumn.com/sandbox/onboarding)".
+    您可以在 Autumn 仪表盘的“[开发者](https://app.useautumn.com/sandbox/onboarding)”中找到它。
 
     ```bash title=".env"
     AUTUMN_SECRET_KEY=am_sk_xxxxxxxxxx
@@ -53,10 +53,10 @@ import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
   </Step>
 
   <Step>
-    ### Add the Autumn plugin to your `auth` config
+    ### 将 Autumn 插件添加到您的 `auth` 配置中
 
-    <Tabs items={["User", "Organization", "User & Organization", "Custom"]}>
-    <Tab value="User">
+    <Tabs items={["用户", "组织", "用户 & 组织", "自定义"]}>
+    <Tab value="用户">
 
     ```ts title="auth.ts"
     import { autumn } from "autumn-js/better-auth";
@@ -68,7 +68,7 @@ import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
     ```
 
     </Tab>
-    <Tab value="Organization">
+    <Tab value="组织">
 
     ```ts title="auth.ts"
     import { autumn } from "autumn-js/better-auth";
@@ -81,7 +81,7 @@ import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
     ```
 
     </Tab>
-    <Tab value="User & Organization">
+    <Tab value="用户 & 组织">
 
     ```ts title="auth.ts"
     import { autumn } from "autumn-js/better-auth";
@@ -97,7 +97,7 @@ import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
     ```
 
     </Tab>
-    <Tab value="Custom">
+    <Tab value="自定义">
 
     ```ts title="auth.ts"
     import { autumn } from "autumn-js/better-auth";
@@ -112,7 +112,7 @@ import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
             return {
               customerId: "your_customer_id",
               customerData: {
-                name: "Customer Name",
+                name: "客户名称",
                 email: "customer@gmail.com",
               },
             };
@@ -126,15 +126,14 @@ import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
     </Tabs>
 
   <Callout>
-    Autumn will auto-create your customers when they sign up, and assign them any
-    default plans you created (eg your Free plan). You can choose who becomes a customer: individual users, organizations, both, or something custom like workspaces.
+    当客户注册时，Autumn 会自动创建客户帐户，并分配您创建的任何默认计划（例如您的免费计划）。您可以选择成为客户的对象：个人用户、组织、两者皆可，或像工作区这样的自定义对象。
   </Callout>
   </Step>
 
   <Step>
-      ### Add `<AutumnProvider />`
+      ### 添加 `<AutumnProvider />`
 
-      Client side, wrap your application with the AutumnProvider component, and pass in the `baseUrl` that you define within better-auth's `authClient`.
+      在客户端，用 AutumnProvider 组件包裹您的应用， 并传入您在 better-auth 的 `authClient` 中定义的 `baseUrl`。
 
       ```tsx title="app/layout.tsx"
       import { AutumnProvider } from "autumn-js/react";
@@ -147,7 +146,7 @@ import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
         return (
           <html>
             <body>
-              {/* or meta.env.BETTER_AUTH_URL for vite */}
+              {/* 或者 vite 可用 meta.env.BETTER_AUTH_URL */}
               <AutumnProvider betterAuthUrl={process.env.NEXT_PUBLIC_BETTER_AUTH_URL}>
                 {children}
               </AutumnProvider>
@@ -159,19 +158,16 @@ import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
   </Step>  
 </Steps>
 
-## Usage
+## 使用方法
 
-### Handle payments
+### 处理支付
 
-Call `attach` to redirect the customer to a Stripe checkout page when they want to purchase the Pro plan.
+当客户想购买专业版时，调用 `attach` 函数重定向客户到 Stripe 结账页面。
 
-If their payment method is already on file, `AttachDialog` will open instead to let the customer confirm their new subscription or purchase, and handle the payment.
+如果客户已有支付方式，`AttachDialog` 会打开，方便客户确认订阅或购买，并处理支付。
 
 <Callout type="warn">
-  {" "}
-  Make sure you've pasted in your [Stripe test secret
-  key](https://dashboard.stripe.com/test/apikeys) in the [Autumn
-  dashboard](https://app.useautumn.com/integrations/stripe).
+  请确保您已在 [Autumn 仪表盘](https://app.useautumn.com/integrations/stripe) 中粘贴了您的 [Stripe 测试密钥](https://dashboard.stripe.com/test/apikeys)。
 </Callout>
 
 ```tsx
@@ -189,27 +185,26 @@ export default function PurchaseButton() {
         });
       }}
     >
-      Upgrade to Pro
+      升级到专业版
     </button>
   );
 }
 ```
 
-The AttachDialog component can be used directly from the `autumn-js/react`
-library (as shown in the example above), or downloaded as a [shadcn/ui component](https://docs.useautumn.com/quickstart/shadcn) to customize.
+AttachDialog 组件可以直接从 `autumn-js/react` 库中使用（如上例所示），也可以下载作为 [shadcn/ui 组件](https://docs.useautumn.com/quickstart/shadcn) 进行自定义。
 
-### Integrate Pricing Logic
+### 集成定价逻辑
 
-Integrate your client and server pricing tiers logic with the following functions:
+通过以下函数集成您的客户端和服务器端定价层逻辑：
 
-- `check` to see if the customer is `allowed` to send a message.
-- `track` a usage event in Autumn (typically done server-side)
-- `customer` to display any relevant billing data in your UI (subscriptions, feature balances)
+- `check` 用于检测客户是否被允许发送消息。
+- `track` 向 Autumn 记录使用事件（通常在服务器端执行）
+- `customer` 在 UI 中显示相关计费数据（订阅、功能余额）
 
-Server-side, you can access Autumn's functions through the `auth` object.
+服务器端，您可以通过 `auth` 对象访问 Autumn 的函数。
 
-<Tabs items={["Client", "Server"]}>
-<Tab value="Client">
+<Tabs items={["客户端", "服务器"]}>
+<Tab value="客户端">
 
 ```jsx
 import { useCustomer } from "autumn-js/react";
@@ -222,17 +217,17 @@ export default function SendChatMessage() {
       <button
         onClick={async () => {
           if (allowed({ featureId: "messages" })) {
-            //... send chatbot message server-side, then
-            await refetch(); // refetch customer usage data
+            //... 服务器端发送聊天消息，然后
+            await refetch(); // 重新获取客户使用数据
             alert(
-              "Remaining messages: " + customer?.features.messages?.balance
+              "剩余消息数: " + customer?.features.messages?.balance
             );
           } else {
-            alert("You're out of messages");
+            alert("消息已用完");
           }
         }}
       >
-        Send Message
+        发送消息
       </button>
     </>
   );
@@ -240,22 +235,22 @@ export default function SendChatMessage() {
 ```
 
 </Tab>
-<Tab value="Server">
+<Tab value="服务器">
 
 ```typescript Server
 import { auth } from "@/lib/auth";
 
-// check on the backend if the customer can send a message
+// 在服务器端检查客户是否能发送消息
 const { allowed } = await auth.api.check({
-  headers: await headers(), // pass the request headers
+  headers: await headers(), // 传递请求头
   body: {
     featureId: "messages",
   },
 });
 
-// server-side function to send the message
+// 服务器端发送消息函数
 
-// then track the usage
+// 然后记录用量
 await auth.api.track({
   headers: await headers(),
   body: {
@@ -268,11 +263,11 @@ await auth.api.track({
 </Tab>
 </Tabs>
 
-### Additional Functions
+### 其他功能
 
 #### openBillingPortal()
 
-Opens a billing portal where the customer can update their payment method or cancel their plan.
+打开计费门户，客户可更新支付方式或取消计划。
 
 ```tsx
 import { useCustomer } from "autumn-js/react";
@@ -288,7 +283,7 @@ export default function BillingSettings() {
         });
       }}
     >
-      Manage Billing
+      管理计费
     </button>
   );
 }
@@ -296,7 +291,7 @@ export default function BillingSettings() {
 
 #### cancel()
 
-Cancel a product or subscription.
+取消产品或订阅。
 
 ```tsx
 import { useCustomer } from "autumn-js/react";
@@ -310,15 +305,15 @@ export default function CancelSubscription() {
         await cancel({ productId: "pro" });
       }}
     >
-      Cancel Subscription
+      取消订阅
     </button>
   );
 }
 ```
 
-#### Get invoice history
+#### 获取发票历史记录
 
-Pass in an `expand` param into `useCustomer` to get additional information. You can expand `invoices`, `trials_used`, `payment_method`, or `rewards`.
+向 `useCustomer` 传入 `expand` 参数以获取更多信息。您可以展开 `invoices`、`trials_used`、`payment_method` 或 `rewards`。
 
 ```tsx
 import { useCustomer } from "autumn-js/react";
@@ -328,10 +323,10 @@ export default function CustomerProfile() {
 
   return (
     <div>
-      <h2>Customer Profile</h2>
-      <p>Name: {customer?.name}</p>
-      <p>Email: {customer?.email}</p>
-      <p>Balance: {customer?.features.chat_messages?.balance}</p>
+      <h2>客户档案</h2>
+      <p>姓名: {customer?.name}</p>
+      <p>邮箱: {customer?.email}</p>
+      <p>余额: {customer?.features.chat_messages?.balance}</p>
     </div>
   );
 }

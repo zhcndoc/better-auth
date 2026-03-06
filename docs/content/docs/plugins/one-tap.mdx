@@ -1,16 +1,15 @@
 ---
-title: One Tap
-description: One Tap plugin for Better Auth
+title: 一键登录
+description: 用于 Better Auth 的一键登录插件
 ---
 
-The One Tap plugin allows users to log in with a single tap using Google's One Tap API. The plugin
-provides a simple way to integrate One Tap into your application, handling the client-side and server-side logic for you.
+一键登录插件允许用户通过 Google 的 One Tap API 只需轻点一次即可登录。该插件为您提供一个简单的方式将 One Tap 集成到您的应用中，负责处理客户端和服务器端的逻辑。
 
-## Installation
+## 安装
 <Steps>
     <Step>
-### Add the Server Plugin
-Add the One Tap plugin to your auth configuration:
+### 添加服务器插件
+将一键登录插件添加到您的认证配置中：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -18,16 +17,15 @@ import { oneTap } from "better-auth/plugins"; // [!code highlight]
 
 export const auth = betterAuth({
     plugins: [
-        oneTap(), // Add the One Tap server plugin  // [!code highlight]
+        oneTap(), // 添加 One Tap 服务器插件  // [!code highlight]
     ]
 });
 ```
     </Step>
     
     <Step>
-### Add the Client Plugin
-Add the client plugin and specify where the user should be redirected after sign-in or if additional verification (like 2FA) is needed.
-
+### 添加客户端插件
+添加客户端插件并指定用户登录后或需要额外验证（如两步验证）时应重定向到的位置。
 
 ```ts
 import { createAuthClient } from "better-auth/client";
@@ -37,17 +35,17 @@ export const authClient = createAuthClient({
   plugins: [
     oneTapClient({
       clientId: "YOUR_CLIENT_ID",
-      // Optional client configuration:
+      // 可选的客户端配置：
       autoSelect: false,
       cancelOnTapOutside: true,
       context: "signin",
       additionalOptions: {
-        // Any extra options for the Google initialize method
+        // 传递给 Google 初始化方法的额外选项
       },
-      // Configure prompt behavior and exponential backoff:
+      // 配置提示行为和指数退避策略：
       promptOptions: {
-        baseDelay: 1000,   // Base delay in ms (default: 1000)
-        maxAttempts: 5     // Maximum number of attempts before triggering onPromptNotification (default: 5)
+        baseDelay: 1000,   // 基础延迟（毫秒）（默认：1000）
+        maxAttempts: 5     // 触发 onPromptNotification 之前的最大尝试次数（默认：5）
       }
     })
   ]
@@ -56,11 +54,11 @@ export const authClient = createAuthClient({
     </Step>
 </Steps>
 
-### Usage
+### 用法
 
-#### Prompt Mode (Default)
+#### 提示模式（默认）
 
-To display the One Tap popup, simply call the oneTap method on your auth client:
+要显示 One Tap 弹窗，只需在您的认证客户端调用 oneTap 方法：
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -68,20 +66,20 @@ import { authClient } from "@/lib/auth-client";
 await authClient.oneTap(); // [!code highlight]
 ```
 
-#### Button Mode
+#### 按钮模式
 
-To render a "Sign In with Google" button instead of showing the automatic prompt, use the `button` option:
+如果想展示“使用 Google 登录”按钮而不是自动弹出提示，可使用 `button` 选项：
 
 <Tabs items={["Vanilla JS", "React Ref"]}>
   <Tab value="Vanilla JS">
     ```tsx
-    // In your component
+    // 在您的组件内
     <div id="google-signin-button"></div>
 
-    // Call oneTap with button configuration
+    // 使用按钮配置调用 oneTap
     await authClient.oneTap({
       button: {
-        container: "#google-signin-button", // CSS selector or HTMLElement
+        container: "#google-signin-button", // CSS 选择器或 HTMLElement
         config: {
           theme: "outline",
           size: "large",
@@ -119,13 +117,13 @@ To render a "Sign In with Google" button instead of showing the automatic prompt
   </Tab>
 </Tabs>
 
-### Customizing Redirect Behavior
+### 自定义重定向行为
 
-By default, after a successful login the plugin will hard redirect the user to `/`. You can customize this behavior as follows:
+默认情况下，登录成功后插件会硬跳转到 `/`。您可以按以下方法自定义该行为：
 
-#### Avoiding a Hard Redirect
+#### 避免硬跳转
 
-Pass fetchOptions with an onSuccess callback to handle the login response without a page reload:
+传递带有 onSuccess 回调的 fetchOptions，用于在不重新加载页面的情况下处理登录响应：
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -133,16 +131,16 @@ import { authClient } from "@/lib/auth-client";
 await authClient.oneTap({
   fetchOptions: {
     onSuccess: () => {
-      // For example, use a router to navigate without a full reload:
+      // 例如，使用路由器导航而不完整重载页面：
       router.push("/dashboard");
     }
   }
 });
 ```
 
-#### Specifying a Custom Callback URL
+#### 指定自定义回调 URL
 
-To perform a hard redirect to a different page after login, use the callbackURL option:
+如果登录后想进行硬跳转至不同页面，使用 callbackURL 选项：
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -152,55 +150,55 @@ await authClient.oneTap({
 });
 ```
 
-#### Handling Prompt Dismissals with Exponential Backoff
+#### 使用指数退避处理提示被关闭
 
-If the user dismisses or skips the prompt, the plugin will retry showing the One Tap prompt using exponential backoff based on your configured promptOptions.
+若用户关闭或跳过提示，插件将根据您配置的 promptOptions 使用指数退避重试显示 One Tap 提示。
 
-If the maximum number of attempts is reached without a successful sign-in, you can use the onPromptNotification callback to be notified—allowing you to render an alternative UI (e.g., a traditional Google Sign-In button) so users can restart the process manually:
+如果达到最大尝试次数仍未成功登录，您可以使用 onPromptNotification 回调得到通知，允许您渲染替代的用户界面（例如传统的 Google 登录按钮），以便用户手动重新开始流程：
 
 ```ts
 import { authClient } from "@/lib/auth-client";
 
 await authClient.oneTap({
   onPromptNotification: (notification) => {
-    console.warn("Prompt was dismissed or skipped. Consider displaying an alternative sign-in option.", notification);
-    // Render your alternative UI here
+    console.warn("提示已被关闭或跳过。请考虑显示替代的登录选项。", notification);
+    // 在这里渲染您的替代 UI
   }
 });
 ```
 
-### Client Options
+### 客户端选项
 
-- `clientId`: The client ID for your Google One Tap API.
-- `autoSelect`: Automatically select the account if the user is already signed in. Default is false.
-- `cancelOnTapOutside`: Cancel the One Tap popup when the user taps outside it. Note that this option may not have an effect when FedCM is active, as the browser manages the dismiss behavior. Default is true.
-- `uxMode`: The mode to use for the Google One Tap flow. Can be "popup" or "redirect". Default is "popup".
-- `context`: The context in which the One Tap API should be used. Can be "signin", "signup", or "use". Default is "signin".
-- `additionalOptions`: Extra options to pass to Google's initialize method as per the [Google Identity Services docs](https://developers.google.com/identity/gsi/web/reference/js-reference#google.accounts.id.prompt).
-- `promptOptions`: Configuration for the prompt behavior and exponential backoff:
-  - `baseDelay`: Base delay in milliseconds for retries. Default is 1000.
-  - `maxAttempts`: Maximum number of prompt attempts before invoking the `onPromptNotification` callback. Default is 5.
-  - `fedCM`: When enabled, calls [`navigator.credentials.preventSilentAccess()`](https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/preventSilentAccess) on sign-out to clear the browser's FedCM credential state. FedCM itself is managed by the Google Identity Services library and cannot be disabled. Default is true.
+- `clientId`: 您的 Google One Tap API 客户端 ID。
+- `autoSelect`: 如果用户已登录，是否自动选择帐户。默认值为 false。
+- `cancelOnTapOutside`: 当用户点击弹窗外部时，是否取消 One Tap 弹窗。启用 FedCM 时此选项可能无效，因为浏览器会管理关闭行为。默认值为 true。
+- `uxMode`: Google One Tap 流程使用的模式，可选 `"popup"`（弹窗）或 `"redirect"`（重定向）。默认值为 `"popup"`。
+- `context`: One Tap API 所使用的上下文，可选 `"signin"`、`"signup"` 或 `"use"`。默认值为 `"signin"`。
+- `additionalOptions`: 传递给 Google 初始化方法的额外选项，详见 [Google Identity Services 文档](https://developers.google.com/identity/gsi/web/reference/js-reference#google.accounts.id.prompt)。
+- `promptOptions`: 用于配置提示行为和指数退避策略：
+  - `baseDelay`: 重试的基础延迟，单位毫秒。默认值为 1000。
+  - `maxAttempts`: 触发 `onPromptNotification` 回调前的提示尝试最大次数。默认值为 5。
+  - `fedCM`: 启用后在登出时调用 [`navigator.credentials.preventSilentAccess()`](https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/preventSilentAccess) 清除浏览器的 FedCM 凭据状态。FedCM 由 Google Identity Services 库管理，无法禁用。默认值为 true。
 
-### Button Mode Options
+### 按钮模式选项
 
-When using button mode, pass a `button` object to the `oneTap` action with the following properties:
+使用按钮模式时，向 `oneTap` 方法传递 `button` 对象，包含以下属性：
 
-- `container`: The HTML element or CSS selector where the button should be rendered (required)
-- `config`: Button configuration options (optional):
-  - `type`: Button type - `"standard"` (default) or `"icon"` (icon-only)
-  - `theme`: Button theme - `"outline"` (default), `"filled_blue"`, or `"filled_black"`
-  - `size`: Button size - `"large"` (default), `"medium"`, or `"small"`
-  - `text`: Button text - `"signin_with"` (default), `"signup_with"`, `"continue_with"`, or `"signin"`
-  - `shape`: Button shape - `"rectangular"` (default), `"pill"`, `"circle"`, or `"square"`
-  - `logo_alignment`: Google logo alignment - `"left"` (default) or `"center"` (for standard button only)
-  - `width`: Minimum button width in pixels (max 400)
-  - `locale`: Display button using specified language code (e.g., `"zh_CN"`)
+- `container`: 必填，按钮要渲染到的 HTML 元素或 CSS 选择器。
+- `config`: 可选，按钮配置选项：
+  - `type`: 按钮类型 — `"standard"`（默认）或 `"icon"`（仅图标）
+  - `theme`: 按钮主题 — `"outline"`（默认）、`"filled_blue"`、或 `"filled_black"`
+  - `size`: 按钮尺寸 — `"large"`（默认）、`"medium"` 或 `"small"`
+  - `text`: 按钮文字 — `"signin_with"`（默认）、`"signup_with"`、`"continue_with"`、或 `"signin"`
+  - `shape`: 按钮形状 — `"rectangular"`（默认）、`"pill"`、`"circle"`、或 `"square"`
+  - `logo_alignment`: Google 标志对齐方式 — `"left"`（默认）或 `"center"`（仅限标准按钮）
+  - `width`: 按钮最小宽度（像素），最大 400
+  - `locale`: 以指定语言代码显示按钮（例如 `"zh_CN"`）
 
-### Server Options
+### 服务器端选项
 
-- `disableSignUp`: Disable the sign-up option, allowing only existing users to sign in. Default is false.
-- `clientId`: Optionally, pass a client ID here if it is not provided in your social provider configuration.
+- `disableSignUp`: 禁用注册选项，仅允许已有用户登录。默认值为 false。
+- `clientId`: 如果您的社交提供商配置中未提供客户端 ID，可以在这里传入。
 
-### Authorized JavaScript origins
-Ensure you have configured the Authorized JavaScript origins (e.g., http://localhost:3000, https://example.com) for your Client ID in the Google Cloud Console. This is a required step for the Google One Tap API, and it will not function correctly unless your origins are correctly set.
+### 授权的 JavaScript 来源
+请确保您已在 Google Cloud 控制台中为您的客户端 ID 配置了授权的 JavaScript 来源（例如 http://localhost:3000，https://example.com）。这是 Google One Tap API 的必需步骤，如未正确设置来源，该功能将无法正常工作。

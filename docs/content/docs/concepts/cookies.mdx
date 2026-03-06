@@ -1,13 +1,13 @@
 ---
-title: Cookies
-description: Learn how cookies are used in Better Auth.
+title: Cookies（Cookie）
+description: 了解 Better Auth 中 Cookies 的使用。
 ---
 
-Cookies are used to store data such as session tokens, session data, OAuth state, and more. All cookies are signed using the `secret` key provided in the auth options or the `BETTER_AUTH_SECRET` environment variable. If you use [versioned secrets](/docs/reference/options#secrets) for rotation, encrypted cookie data (such as JWE session caches) will automatically use the current key and remain decryptable with previous keys.
+Cookies 用于存储诸如会话令牌、会话数据、OAuth 状态等信息。所有 Cookies 都使用认证选项中提供的 `secret` 密钥或环境变量 `BETTER_AUTH_SECRET` 进行签名。如果您使用 [版本化密钥](/docs/reference/options#secrets) 来进行密钥轮换，加密的 Cookie 数据（例如 JWE 会话缓存）将自动使用当前密钥，并且仍然可以用之前的密钥解密。
 
-### Cookie Prefix
+### Cookie 前缀
 
-By default, Better Auth cookies follow the format `${prefix}.${cookie_name}`. The default prefix is "better-auth". You can change the prefix by setting `cookiePrefix` in the `advanced` object of the auth options.
+默认情况下，Better Auth 的 Cookies 格式为 `${prefix}.${cookie_name}`。默认前缀是 "better-auth"。您可以通过在认证选项的 `advanced` 对象中设置 `cookiePrefix` 来更改前缀。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -19,19 +19,19 @@ export const auth = betterAuth({
 })
 ```
 
-### Custom Cookies
+### 自定义 Cookies
 
-All cookies are `httpOnly` and `secure` when the server is running in production mode.
+在服务器运行于生产模式时，所有 Cookies 都是 `httpOnly` 和 `secure` 的。
 
-If you want to set custom cookie names and attributes, you can do so by setting `cookieOptions` in the `advanced` object of the auth options.
+如果您想设置自定义的 Cookie 名称和属性，可以通过在认证选项的 `advanced` 对象中设置 `cookieOptions` 来实现。
 
-By default, Better Auth uses the following cookies:
+默认情况下，Better Auth 使用以下 Cookies：
 
-- `session_token` to store the session token
-- `session_data` to store the session data if cookie cache is enabled
-- `dont_remember` to store the flag when `rememberMe` is disabled
+- `session_token` 用于存储会话令牌
+- `session_data` 用于在启用 Cookie 缓存时存储会话数据
+- `dont_remember` 用于存储当 `rememberMe` 被禁用时的标志
 
-Plugins may also use cookies to store data. For example, the Two Factor Authentication plugin uses the `two_factor` cookie to store the two-factor authentication state.
+插件也可能使用 Cookies 来存储数据。例如，双因素认证插件使用 `two_factor` Cookie 来存储双因素认证状态。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -42,7 +42,7 @@ export const auth = betterAuth({
             session_token: {
                 name: "custom_session_token",
                 attributes: {
-                    // Set custom cookie attributes
+                    // 设置自定义的 Cookie 属性
                 }
             },
         }
@@ -50,18 +50,18 @@ export const auth = betterAuth({
 })
 ```
 
-### Cross Subdomain Cookies
+### 跨子域 Cookies
 
-Sometimes you may need to share cookies across subdomains. 
-For example, if you authenticate on `auth.example.com`, you may also want to access the same session on `app.example.com`.
+有时您可能需要在子域间共享 Cookies。
+例如，如果您在 `auth.example.com` 进行身份验证，您可能也想在 `app.example.com` 访问相同的会话。
 
 <Callout type="warn">
-The `domain` attribute controls which domains can access the cookie. Setting it to your root domain (e.g. `example.com`) makes the cookie accessible across all subdomains. For security, follow these guidelines:
+`domain` 属性控制哪些域可以访问该 Cookie。将其设置为根域（例如 `example.com`）将使 Cookie 在所有子域间可访问。为了安全，请遵循以下指南：
 
-1. Only enable cross-subdomain cookies if it's necessary
-2. Set the domain to the most specific scope needed (e.g. `app.example.com` instead of `.example.com`)
-3. Be cautious of untrusted subdomains that could potentially access these cookies
-4. Consider using separate domains for untrusted services (e.g. `status.company.com` vs `app.company.com`)
+1. 仅当必要时启用跨子域 Cookies
+2. 将域设置为所需的最具体范围（例如，使用 `app.example.com` 而非 `.example.com`）
+3. 警惕可能访问这些 Cookies 的不受信任的子域
+4. 考虑为不受信任的服务使用不同的域（例如 `status.company.com` 与 `app.company.com`）
 </Callout>
 
 ```ts title="auth.ts"
@@ -71,7 +71,7 @@ export const auth = betterAuth({
     advanced: {
         crossSubDomainCookies: {
             enabled: true,
-            domain: "app.example.com", // your domain
+            domain: "app.example.com", // 您的域名
         },
     },
     trustedOrigins: [
@@ -81,9 +81,9 @@ export const auth = betterAuth({
     ],
 })
 ```
-### Secure Cookies
+### 安全 Cookies
 
-By default, cookies are secure only when the server is running in production mode. You can force cookies to be always secure by setting `useSecureCookies` to `true` in the `advanced` object in the auth options.
+默认情况下，只有在服务器运行于生产环境时，Cookies 才是安全的。您可以通过在认证选项的 `advanced` 对象中设置 `useSecureCookies` 为 `true`，强制 Cookies 始终使用安全模式。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -95,20 +95,20 @@ export const auth = betterAuth({
 })
 ```
 
-## Safari, ITP, and Cross-Domain Setups
+## Safari、ITP 与跨域设置
 
-Safari includes a privacy feature called Intelligent Tracking Prevention (ITP) that blocks third-party cookies.
+Safari 内建了一个隐私功能，称为智能追踪防护（Intelligent Tracking Prevention，简称 ITP），会阻止第三方 Cookies。
 
-If your Better Auth API is hosted on a different domain than your frontend, Safari may block authentication cookies entirely.
+如果您的 Better Auth API 托管在与前端不同的域名下，Safari 可能完全阻止身份验证 Cookies。
 
-Example that breaks in Safari:
+以下示例在 Safari 中会失败：
 
 ```
-Frontend: https://app.domainB.com
-API:      https://domainA.com
+前端: https://app.domainB.com
+API:   https://domainA.com
 ```
 
-If your frontend makes a request like:
+如果您的前端发起类似以下请求：
 
 ```ts
 fetch("https://domainA.com/api/auth/get-session", {
@@ -116,32 +116,32 @@ fetch("https://domainA.com/api/auth/get-session", {
 })
 ```
 
-Safari treats `domainA.com` as a third-party and blocks its cookies. Which can result in sessions not persisting,
-`Set-Cookie` being ignored, users appearing logged out after login or auth working in Chrome but failing in Safari.
+Safari 会将 `domainA.com` 视为第三方，阻止其 Cookies。这可能导致会话无法持久化，
+`Set-Cookie` 头被忽略，用户在登录后依然显示未登录状态，或是在 Chrome 中工作正常但 Safari 中失败。
 
-To solve this, there are two solutions:
-1. Using a reverse proxy to proxy the request to the API.
-2. Using a shared parent domain.
+为解决此问题，有两种方案：
+1. 使用反向代理将请求代理到 API。
+2. 使用共享的父域名。
 
-### Using a Reverse Proxy
+### 使用反向代理
 
-Instead of calling your API directly, you can proxy it through the same domain as your frontend.
+您可以通过与前端相同域名的反向代理来访问 API，而不是直接调用它。
 
-For example, instead of calling:
+例如，不调用：
 ```
 https://domainA.com/api/auth/*
 ```
 
-you can call:
+而调用：
 ```
 https://app.domainA.com/api/auth/*
 ```
 
-Then configure your hosting provider to proxy the request to your actual API server.
+然后配置您的托管服务，将请求代理到实际的 API 服务器。
 
-This makes the request appear first-party to Safari, allowing cookies to function correctly.
+这样请求在 Safari 中被视作为同源请求，从而允许 Cookies 正常工作。
 
-#### Example with Netlify
+#### Netlify 示例
 
 ```toml title="netlify.toml"
 [[redirects]]
@@ -151,7 +151,7 @@ This makes the request appear first-party to Safari, allowing cookies to functio
   force = true
 ```
 
-#### Example with Vercel
+#### Vercel 示例
 
 ```ts title="vercel.json"
 {
@@ -164,16 +164,16 @@ This makes the request appear first-party to Safari, allowing cookies to functio
 }
 ```
 
-### Using a Shared Parent Domain
+### 使用共享父域名
 
-You can also use a shared parent domain to allow cookies to be shared across subdomains:
+您也可以使用共享的父域名来允许 Cookies 跨子域共享：
 
 ```
 https://app.example.com
 https://api.example.com
 ```
 
-Then, enable cross-subdomain cookies with the domain:
+然后启用跨子域 Cookies 并设置域为：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -188,6 +188,6 @@ export const auth = betterAuth({
 })
 ```
 
-Learn more about cross-subdomain cookies in the [documentation above](#cross-subdomain-cookies).
+更多关于跨子域 Cookies 的内容，请参见 [上述文档](#cross-subdomain-cookies)。
 
-This avoids Safari treating the API as third-party.
+这样可以避免 Safari 将 API 识别为第三方。

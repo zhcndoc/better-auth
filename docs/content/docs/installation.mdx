@@ -1,32 +1,32 @@
 ---
-title: Installation
-description: Learn how to configure Better Auth in your project.
+title: 安装
+description: 学习如何在你的项目中配置 Better Auth。
 ---
 
 <Steps>
 
 <Step>
-### Install the Package
+### 安装包
 
-Let's start by adding Better Auth to your project:
+让我们先将 Better Auth 添加到你的项目中：
 
 ```package-install
 better-auth
 ```
 
 <Callout type="info">
-If you're using a separate client and server setup, make sure to install Better Auth in both parts of your project.
+如果你使用的是分开的客户端和服务器架构，确保在项目的客户端和服务器部分都安装 Better Auth。
 </Callout>
 </Step>
 
 <Step>
-### Set Environment Variables
+### 设置环境变量
 
-Create a `.env` file in the root of your project and add the following environment variables:
+在项目根目录创建一个 `.env` 文件，并添加以下环境变量：
 
-1. **Secret Key**
+1. **密钥**
 
-A secret value used for encryption and hashing. It must be at least 32 characters and generated with high entropy. Click the button below to generate one. You can also use `openssl rand -base64 32` to generate one.
+用于加密和哈希的密钥值。必须至少 32 个字符且需要高熵生成。点击下方按钮生成一个。你也可以用 `openssl rand -base64 32` 来生成。
 
 ```txt title=".env"
 BETTER_AUTH_SECRET=
@@ -35,29 +35,29 @@ BETTER_AUTH_SECRET=
 <GenerateSecret />
 
 <Callout type="info">
-Need to rotate your secret later? You can use `BETTER_AUTH_SECRETS` (plural) to roll over to a new secret without invalidating existing data. See the [`secrets` option](/docs/reference/options#secrets) for details.
+以后需要更换密钥？你可以使用复数形式的 `BETTER_AUTH_SECRETS` 来平滑切换新密钥，而不使现有数据失效。详情见 [`secrets` 选项](/docs/reference/options#secrets)。
 </Callout>
 
-2. **Set Base URL**
+2. **设置基础 URL**
 
 ```txt title=".env"
-BETTER_AUTH_URL=http://localhost:3000 # Base URL of your app
+BETTER_AUTH_URL=http://localhost:3000 # 你的应用基础 URL
 ```
 
 </Step>
 
 <Step>
-### Create A Better Auth Instance
+### 创建 Better Auth 实例
 
-Create a file named `auth.ts` in one of these locations:
+在以下位置之一创建一个名为 `auth.ts` 的文件：
 
-- Project root
-- `lib/` folder
-- `utils/` folder
+- 项目根目录
+- `lib/` 文件夹
+- `utils/` 文件夹
 
-You can also nest any of these folders under `src/`, `app/` or `server/` folder. (e.g. `src/lib/auth.ts`, `app/lib/auth.ts`).
+你也可以将这些文件夹放在 `src/`、`app/` 或 `server/` 文件夹下（例如 `src/lib/auth.ts`，`app/lib/auth.ts`）。
 
-And in this file, import Better Auth and create your auth instance. Make sure to export the auth instance with the variable name `auth` or as a `default` export.
+在该文件中，导入 Better Auth 并创建你的 auth 实例。确保导出的实例变量名为 `auth` 或作为默认导出。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -70,13 +70,13 @@ export const auth = betterAuth({
 </Step>
 
 <Step>
-### Configure Database
+### 配置数据库
 
-Better Auth requires a database to store user data.
-You can easily configure Better Auth to use SQLite, PostgreSQL, or MySQL, and more!
+Better Auth 需要数据库来存储用户数据。
+你可以轻松配置 Better Auth 使用 SQLite、PostgreSQL、MySQL 等！
 
 <Callout>
-    You can also configure Better Auth to work in a stateless mode if you don't configure a database. See [Stateless Session Management](/docs/concepts/session-management#stateless-session-management) for more information. Note that most plugins will require a database.
+    如果不配置数据库，也可以让 Better Auth 运行在无状态模式，详见[无状态会话管理](/docs/concepts/session-management#stateless-session-management)。注意，大多数插件需要数据库支持。
 </Callout>
 
 <Tabs items={["sqlite", "postgres", "mysql"]}>
@@ -97,7 +97,7 @@ You can easily configure Better Auth to use SQLite, PostgreSQL, or MySQL, and mo
 
     export const auth = betterAuth({
         database: new Pool({
-            // connection options
+            // 连接选项
         }),
     })
     ```
@@ -109,7 +109,7 @@ You can easily configure Better Auth to use SQLite, PostgreSQL, or MySQL, and mo
 
     export const auth = betterAuth({
         database: createPool({
-            // connection options
+            // 连接选项
         }),
     })
     ```
@@ -117,7 +117,7 @@ You can easily configure Better Auth to use SQLite, PostgreSQL, or MySQL, and mo
 
 </Tabs>
 
-Alternatively, if you prefer to use an ORM, you can use one of the built-in adapters.
+或者，如果你更喜欢使用 ORM，可以使用内置的适配器之一。
 
 <Tabs items={["drizzle", "prisma", "mongodb"]}>
 
@@ -125,11 +125,11 @@ Alternatively, if you prefer to use an ORM, you can use one of the built-in adap
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";
     import { drizzleAdapter } from "better-auth/adapters/drizzle";
-    import { db } from "@/db"; // your drizzle instance
+    import { db } from "@/db"; // 你的 drizzle 实例
 
     export const auth = betterAuth({
         database: drizzleAdapter(db, {
-            provider: "pg", // or "mysql", "sqlite"
+            provider: "pg", // 或 "mysql"、"sqlite"
         }),
     });
     ```
@@ -138,13 +138,13 @@ Alternatively, if you prefer to use an ORM, you can use one of the built-in adap
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth";
         import { prismaAdapter } from "better-auth/adapters/prisma";
-        // If your Prisma file is located elsewhere, you can change the path
+        // 如果你的 Prisma 文件路径不同，可以调整导入路径
         import { PrismaClient } from "@/generated/prisma/client";
 
         const prisma = new PrismaClient();
         export const auth = betterAuth({
             database: prismaAdapter(prisma, {
-                provider: "sqlite", // or "mysql", "postgresql", ...etc
+                provider: "sqlite", // 或 "mysql"、"postgresql" 等
             }),
         });
     ```
@@ -154,7 +154,7 @@ Alternatively, if you prefer to use an ORM, you can use one of the built-in adap
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";
     import { mongodbAdapter } from "better-auth/adapters/mongodb";
-    import { client } from "@/db"; // your mongodb client
+    import { client } from "@/db"; // 你的 mongodb 客户端
 
     export const auth = betterAuth({
         database: mongodbAdapter(client),
@@ -165,52 +165,52 @@ Alternatively, if you prefer to use an ORM, you can use one of the built-in adap
 </Tabs>
 
 <Callout>
-  If your database is not listed above, check out our other supported
-  [databases](/docs/adapters/other-relational-databases) for more information,
-  or use one of the supported ORMs.
+  如果你的数据库不在上述列表中，请查看我们支持的其他
+  [数据库](/docs/adapters/other-relational-databases) 获取更多信息，
+  或使用支持的 ORM。
 </Callout>
 
 </Step>
 
 <Step>
-    ### Create Database Tables
-    Better Auth includes a CLI tool to help manage the schema required by the library.
+    ### 创建数据库表
+    Better Auth 包含一个 CLI 工具，帮助管理库所需的数据库模式。
 
-    - **Generate**: This command generates an ORM schema or SQL migration file.
+    - **生成**：该命令生成 ORM 模式或 SQL 迁移文件。
 
     <Callout>
-    If you're using Kysely, you can apply the migration directly with `migrate` command below. Use `generate` only if you plan to apply the migration manually.
+    如果你使用的是 Kysely，可以直接使用下面的 `migrate` 命令应用迁移。只有计划手动应用迁移时，才用 `generate` 命令。
     </Callout>
 
       ```package-install
       npx auth@latest generate
       ```
 
-    - **Migrate**: This command creates the required tables directly in the database. (Available only for the built-in Kysely adapter)
+    - **迁移**：该命令直接在数据库中创建所需表。（仅支持内置的 Kysely 适配器）
 
       ```package-install
       npx auth@latest migrate
       ```
 
-    see the [CLI documentation](/docs/concepts/cli) for more information.
+    查看 [CLI 文档](/docs/concepts/cli) 获取更多信息。
 
     <Callout>
-     If you instead want to create the schema manually, you can find the core schema required in the [database section](/docs/concepts/database#core-schema).
+     如果你想手动创建模式，可以在[数据库部分](/docs/concepts/database#core-schema)找到核心模式。
     </Callout>
 
 </Step>
 
 <Step>
 
-### Authentication Methods
+### 认证方式
 
-Configure the authentication methods you want to use. Better Auth comes with built-in support for email/password, and social sign-on providers.
+配置你想使用的认证方式。Better Auth 内置支持邮箱密码和社交登录提供商。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-  //...other options // [!code highlight]
+  //...其他配置 // [!code highlight]
   emailAndPassword: { // [!code highlight]
     enabled: true, // [!code highlight]
   }, // [!code highlight]
@@ -224,25 +224,24 @@ export const auth = betterAuth({
 ```
 
 <Callout type="info">
-You can use even more authentication methods like [passkey](/docs/plugins/passkey), [username](/docs/plugins/username), [magic link](/docs/plugins/magic-link) and more through plugins.
+你还可以通过插件使用更多认证方式，如 [passkey](/docs/plugins/passkey), [用户名](/docs/plugins/username), [神奇链接](/docs/plugins/magic-link) 等。
 </Callout>
 </Step>
 
 <Step>
-### Mount Handler
-To handle API requests, you need to set up a route handler on your server.
+### 挂载处理器
+为了处理 API 请求，需要在服务器上设置路由处理器。
 
-Create a new file or route in your framework's designated catch-all route handler. This route should handle requests for the path `/api/auth/*` (unless you've configured a different base path).
+在你的框架指定的全匹配路由处理文件中创建一个新文件或路由，该路由应负责处理 `/api/auth/*` 路径的请求（除非你配置了其他基础路径）。
 
 <Callout>
-  Better Auth supports any backend framework with standard Request and Response
-  objects and offers helper functions for popular frameworks.
+  Better Auth 支持任何带有标准 Request 和 Response 对象的后端框架，并为流行框架提供帮助函数。
 </Callout>
 
 <Tabs items={["next-js-app-router", "next-js-pages-router", "nuxt", "svelte-kit", "react-router", "solid-start", "hono", "cloudflare-workers", "express", "elysia", "tanstack-start", "expo"]} defaultValue="next-js-app-router">
     <Tab value="next-js-app-router">
         ```ts title="/app/api/auth/[...all]/route.ts"
-        import { auth } from "@/lib/auth"; // path to your auth file
+        import { auth } from "@/lib/auth"; // 你的 auth 文件路径
         import { toNextJsHandler } from "better-auth/next-js";
 
         export const { POST, GET } = toNextJsHandler(auth);
@@ -250,17 +249,17 @@ Create a new file or route in your framework's designated catch-all route handle
     </Tab>
     <Tab value="next-js-pages-router">
         ```ts title="/pages/api/auth/[...all].ts"
-        import { auth } from "@/lib/auth"; // path to your auth file
+        import { auth } from "@/lib/auth"; // 你的 auth 文件路径
         import { toNodeHandler } from "better-auth/node";
 
-        // Disallow body parsing, we will parse it manually
+        // 不允许自动解析请求体，手动解析
         export const config = { api: { bodyParser: false } };
         export default toNodeHandler(auth.handler);
         ```
     </Tab>
     <Tab value="nuxt">
     ```ts title="/server/api/auth/[...all].ts"
-    import { auth } from "~/utils/auth"; // path to your auth file
+    import { auth } from "~/utils/auth"; // 你的 auth 文件路径
 
     export default defineEventHandler((event) => {
         return auth.handler(toWebRequest(event));
@@ -269,7 +268,7 @@ Create a new file or route in your framework's designated catch-all route handle
     </Tab>
     <Tab value="svelte-kit">
     ```ts title="hooks.server.ts"
-    import { auth } from "$lib/auth"; // path to your auth file
+    import { auth } from "$lib/auth"; // 你的 auth 文件路径
     import { svelteKitHandler } from "better-auth/svelte-kit";
     import { building } from '$app/environment'
 
@@ -280,8 +279,8 @@ Create a new file or route in your framework's designated catch-all route handle
     </Tab>
     <Tab value="react-router">
     ```ts title="/app/routes/api.auth.$.ts"
-    import { auth } from '~/lib/auth.server' // Adjust the path as necessary
-    import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router" // or "@remix-run/node"
+    import { auth } from '~/lib/auth.server' // 根据情况调整路径
+    import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router" // 或 "@remix-run/node"
 
     export async function loader({ request }: LoaderFunctionArgs) {
         return auth.handler(request)
@@ -294,7 +293,7 @@ Create a new file or route in your framework's designated catch-all route handle
     </Tab>
     <Tab value="solid-start">
     ```ts title="/routes/api/auth/*all.ts"
-    import { auth } from "~/lib/auth"; // path to your auth file
+    import { auth } from "~/lib/auth"; // 你的 auth 文件路径
     import { toSolidStartHandler } from "better-auth/solid-start";
 
     export const { GET, POST } = toSolidStartHandler(auth);
@@ -303,7 +302,7 @@ Create a new file or route in your framework's designated catch-all route handle
     <Tab value="hono">
     ```ts title="src/index.ts"
     import { Hono } from "hono";
-    import { auth } from "./auth"; // path to your auth file
+    import { auth } from "./auth"; // 你的 auth 文件路径
     import { serve } from "@hono/node-server";
     import { cors } from "hono/cors";
 
@@ -316,51 +315,50 @@ Create a new file or route in your framework's designated catch-all route handle
     </Tab>
     <Tab value="cloudflare-workers">
     ```ts title="src/index.ts"
-    import { auth } from "./auth"; // path to your auth file
+    import { auth } from "./auth"; // 你的 auth 文件路径
 
     export default {
         async fetch(request: Request) {
             const url = new URL(request.url);
 
-            // Handle auth routes
+            // 处理 auth 路由
             if (url.pathname.startsWith("/api/auth")) {
                 return auth.handler(request);
             }
 
-            // Handle other routes
+            // 处理其他路由
             return new Response("Not found", { status: 404 });
         },
     };
     ```
 
     <Callout type="info">
-    **Node.js AsyncLocalStorage Support**: Better Auth uses AsyncLocalStorage for async context tracking. To enable this in Cloudflare Workers, add the `nodejs_compat` flag to your `wrangler.toml`:
+    **Node.js AsyncLocalStorage 支持**：Better Auth 使用 AsyncLocalStorage 跟踪异步上下文。要在 Cloudflare Workers 启用此功能，请在 `wrangler.toml` 中添加 `nodejs_compat` 标志：
 
     ```toml title="wrangler.toml"
     compatibility_flags = ["nodejs_compat"]
     compatibility_date = "2024-09-23"
     ```
 
-    Alternatively, if you only need AsyncLocalStorage support:
+    如果只需要 AsyncLocalStorage 支持：
     ```toml title="wrangler.toml"
     compatibility_flags = ["nodejs_als"]
     ```
 
-    In the next major release, we will assume AsyncLocalStorage support by default, so this configuration will be necessary.
+    下一个重大版本中，我们默认假设支持 AsyncLocalStorage，因此需要此配置。
     </Callout>
     </Tab>
 
     <Tab value="express">
     <Callout type="warn">
-        ExpressJS v5 introduced breaking changes to route path matching by switching to `path-to-regexp@6`. Wildcard routes like `*` should now be written using the new named syntax, e.g. `/{*any}`, to properly capture catch-all patterns. This ensures compatibility and predictable behavior across routing scenarios.
-        See the [Express v5 migration guide](https://expressjs.com/en/guide/migrating-5.html) for details.
+        ExpressJS v5 对路由路径匹配做了破坏性更改，改用 `path-to-regexp@6`。通配符路由 `*` 应改成命名语法，比如 `/{*any}`，以正确捕获全匹配模式。详见[Express v5 迁移指南](https://expressjs.com/en/guide/migrating-5.html)。
 
-        As a result, the implementation in ExpressJS v5 should look like this:
+        因此，ExpressJS v5 中应如下实现：
 
         ```ts
         app.all('/api/auth/{*any}', toNodeHandler(auth));
         ```
-        *The name any is arbitrary and can be replaced with any identifier you prefer.*
+        *`any` 是任意命名，可以替换为其他标识符。*
     </Callout>
 
     ```ts title="server.ts"
@@ -373,20 +371,20 @@ Create a new file or route in your framework's designated catch-all route handle
 
     app.all("/api/auth/*", toNodeHandler(auth));
 
-    // Mount express json middleware after Better Auth handler
-    // or only apply it to routes that don't interact with Better Auth
+    // 将 express json 中间件挂载在 Better Auth 处理器之后
+    // 或仅对不涉及 Better Auth 的路由使用
     app.use(express.json());
 
     app.listen(port, () => {
-        console.log(`Better Auth app listening on port ${port}`);
+        console.log(`Better Auth 应用已在端口 ${port} 启动`);
     });
     ```
-    This will also work for any other node server framework like express, fastify, hapi, etc., but may require some modifications. See [fastify guide](/docs/integrations/fastify). Note that CommonJS (cjs) isn't supported.
+    这也适用于其他 node 服务框架如 express、fastify、hapi 等，但可能需要一些修改。详见 [fastify 指南](/docs/integrations/fastify)。注意不支持 CommonJS (cjs)。
     </Tab>
     <Tab value="astro">
     ```ts title="/pages/api/auth/[...all].ts"
     import type { APIRoute } from "astro";
-    import { auth } from "@/auth"; // path to your auth file
+    import { auth } from "@/auth"; // 你的 auth 文件路径
 
     export const GET: APIRoute = async (ctx) => {
         return auth.handler(ctx.request);
@@ -404,7 +402,7 @@ Create a new file or route in your framework's designated catch-all route handle
 
     const betterAuthView = (context: Context) => {
         const BETTER_AUTH_ACCEPT_METHODS = ["POST", "GET"]
-        // validate request method
+        // 验证请求方法
         if(BETTER_AUTH_ACCEPT_METHODS.includes(context.request.method)) {
             return auth.handler(context.request);
         } else {
@@ -415,7 +413,7 @@ Create a new file or route in your framework's designated catch-all route handle
     const app = new Elysia().all("/api/auth/*", betterAuthView).listen(3000);
 
     console.log(
-    `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+    `🦊 Elysia 已在 ${app.server?.hostname}:${app.server?.port} 运行`
     );
     ```
     </Tab>
@@ -439,38 +437,38 @@ Create a new file or route in your framework's designated catch-all route handle
     ```
 
     <Callout type="info">
-    When you call functions that need to set cookies (like `signInEmail` or `signUpEmail`), you'll need to handle cookie setting for TanStack Start. Better Auth provides a `tanstackStartCookies` plugin to automatically handle this for you.
+    当你调用需要设置 cookie 的函数（如 `signInEmail` 或 `signUpEmail`）时，TanStack Start 需要你处理 cookie 设置。Better Auth 提供 `tanstackStartCookies` 插件自动处理。
 
-    For React (TanStack Start with React):
+    React 版 (TanStack Start + React):
 
     ```ts title="src/lib/auth.ts"
     import { betterAuth } from "better-auth";
     import { tanstackStartCookies } from "better-auth/tanstack-start";
 
     export const auth = betterAuth({
-        //...your config
-        plugins: [tanstackStartCookies()] // make sure this is the last plugin in the array
+        //...你的配置
+        plugins: [tanstackStartCookies()] // 确保是插件数组中的最后一个
     })
     ```
 
-    For Solid.js (TanStack Start with Solid):
+    Solid.js 版 (TanStack Start + Solid):
 
     ```ts title="src/lib/auth.ts"
     import { betterAuth } from "better-auth";
     import { tanstackStartCookies } from "better-auth/tanstack-start/solid";
 
     export const auth = betterAuth({
-        //...your config
-        plugins: [tanstackStartCookies()] // make sure this is the last plugin in the array
+        //...你的配置
+        plugins: [tanstackStartCookies()] // 确保是插件数组中的最后一个
     })
     ```
 
-    Now, when you call functions that set cookies, they will be automatically set using TanStack Start's cookie handling system.
+    这样调用需要设置 cookie 的函数时，将自动通过 TanStack Start 的 cookie 系统完成。
     </Callout>
     </Tab>
     <Tab value="expo">
     ```ts title="app/api/auth/[...all]+api.ts"
-    import { auth } from '@/lib/server/auth'; // path to your auth file
+    import { auth } from '@/lib/server/auth'; // 你的 auth 文件路径
 
     const handler = auth.handler;
     export { handler as GET, handler as POST };
@@ -481,18 +479,17 @@ Create a new file or route in your framework's designated catch-all route handle
 </Step>
 
 <Step>
-### Create Client Instance
+### 创建客户端实例
 
-The client-side library helps you interact with the auth server. Better Auth comes with a client for all the popular web frameworks, including vanilla JavaScript.
+客户端库帮助你与认证服务器交互。Better Auth 为所有主流 Web 框架及原生 JavaScript 提供客户端。
 
-1. Import `createAuthClient` from the package for your framework (e.g., "better-auth/react" for React).
-2. Call the function to create your client.
-3. Pass the base URL of your auth server. (If the auth server is running on the same domain as your client, you can skip this step.)
+1. 从对应框架的包中导入 `createAuthClient`（例如 React 用 "better-auth/react"）。
+2. 调用该函数创建客户端实例。
+3. 传入认证服务器的基础 URL。（如果服务器和客户端运行在同一域名，可跳过）
 
 <Callout type="info">
-  If you're using a different base path other than `/api/auth` make sure to pass
-  the whole URL including the path. (e.g.
-  `http://localhost:3000/custom-path/auth`)
+  如果你使用了除 `/api/auth` 之外的自定义基础路径，请务必传入包含路径的完整 URL。（例如：
+  `http://localhost:3000/custom-path/auth`）
 </Callout>
 
 <Tabs items={["react", "vue", "svelte", "solid",
@@ -501,7 +498,7 @@ The client-side library helps you interact with the auth server. Better Auth com
             ```ts  title="lib/auth-client.ts"
             import { createAuthClient } from "better-auth/client"
             export const authClient = createAuthClient({
-                /** The base URL of the server (optional if you're using the same domain) */ // [!code highlight]
+                /** 服务器基础 URL（如果和客户端同域， 可选） */ // [!code highlight]
                 baseURL: "http://localhost:3000" // [!code highlight]
             })
             ```
@@ -510,7 +507,7 @@ The client-side library helps you interact with the auth server. Better Auth com
             ```ts  title="lib/auth-client.ts"
             import { createAuthClient } from "better-auth/react"
             export const authClient = createAuthClient({
-                /** The base URL of the server (optional if you're using the same domain) */ // [!code highlight]
+                /** 服务器基础 URL（如果和客户端同域， 可选） */ // [!code highlight]
                 baseURL: "http://localhost:3000" // [!code highlight]
             })
             ```
@@ -519,7 +516,7 @@ The client-side library helps you interact with the auth server. Better Auth com
             ```ts  title="lib/auth-client.ts"
             import { createAuthClient } from "better-auth/vue"
             export const authClient = createAuthClient({
-                /** The base URL of the server (optional if you're using the same domain) */ // [!code highlight]
+                /** 服务器基础 URL（如果和客户端同域， 可选） */ // [!code highlight]
                 baseURL: "http://localhost:3000" // [!code highlight]
             })
             ```
@@ -528,7 +525,7 @@ The client-side library helps you interact with the auth server. Better Auth com
             ```ts  title="lib/auth-client.ts"
             import { createAuthClient } from "better-auth/svelte"
             export const authClient = createAuthClient({
-                /** The base URL of the server (optional if you're using the same domain) */ // [!code highlight]
+                /** 服务器基础 URL（如果和客户端同域， 可选） */ // [!code highlight]
                 baseURL: "http://localhost:3000" // [!code highlight]
             })
             ```
@@ -537,7 +534,7 @@ The client-side library helps you interact with the auth server. Better Auth com
             ```ts title="lib/auth-client.ts"
             import { createAuthClient } from "better-auth/solid"
             export const authClient = createAuthClient({
-                /** The base URL of the server (optional if you're using the same domain) */ // [!code highlight]
+                /** 服务器基础 URL（如果和客户端同域， 可选） */ // [!code highlight]
                 baseURL: "http://localhost:3000" // [!code highlight]
             })
             ```
@@ -545,7 +542,7 @@ The client-side library helps you interact with the auth server. Better Auth com
 </Tabs>
 
 <Callout type="info">
-Tip: You can also export specific methods if you prefer:
+提示：你也可以导出具体方法，若你喜欢这样做：
 </Callout>
 ```ts
 export const { signIn, signUp, useSession } = createAuthClient()
@@ -553,7 +550,7 @@ export const { signIn, signUp, useSession } = createAuthClient()
 </Step>
 
 <Step>
-### 🎉 That's it!
-That's it! You're now ready to use better-auth in your application. Continue to [basic usage](/docs/basic-usage) to learn how to use the auth instance to sign in users.
+### 🎉 就这么简单！
+完成了！你现在可以在应用中使用 better-auth 了。继续阅读[基础用法](/docs/basic-usage)了解如何使用 auth 实例进行用户登录。
 </Step>
 </Steps>

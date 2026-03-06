@@ -1,34 +1,30 @@
 ---
 title: email_doesn't_match
-description: The email doesn't match the email of the account.
+description: 电子邮件与账户的电子邮件不匹配。
 ---
 
-## What is it?
+## 它是什么？
 
-This error appears only during OAuth account linking. It happens when a signed-in user tries to
-link an OAuth provider account, but the email returned by the provider does not match the email
-on the currently authenticated user (or the email you expect for that user). To prevent
-accidental cross-account linking or account takeover, Better Auth blocks the link when emails do
-not align.
+此错误仅在 OAuth 账号关联过程中出现。当已登录用户尝试关联一个 OAuth 提供商账号时，如果提供商返回的电子邮件与当前认证用户的电子邮件（或您预期的该用户电子邮件）不匹配，就会发生此错误。为了防止意外的跨账号关联或账号被盗用，当电子邮件不匹配时，Better Auth 会阻止关联。
 
-This does not occur during normal OAuth sign-in; it is specific to the linking flow.
+此错误不会在正常的 OAuth 登录时出现，仅限关联流程中。
 
-## Common Causes
+## 常见原因
 
-* The user is logged into the provider with a different email (e.g., work vs personal).
-* The provider returns an unverified or secondary email that differs from the app account email.
-* Email normalization differences (case sensitivity, dots/aliases on Gmail) cause a mismatch.
-* The user's email changed in your app or at the provider since the original account was created.
+* 用户在提供商端登录了不同的电子邮件（例如，工作邮箱与个人邮箱）。
+* 提供商返回了未验证或次级的电子邮件，且与应用账号的电子邮件不同。
+* 电子邮件标准化差异（大小写敏感性、Gmail 上的点/别名）导致不匹配。
+* 用户在应用或提供商处的电子邮件自账号创建以来发生了更改。
 
-## How to resolve
+## 如何解决
 
-### Ask the user to align identities
+### 让用户对齐身份信息
 
-* Have the user switch to the correct provider account that uses the same email as their app account.
-* Alternatively, update the app account email to the intended email (if your product allows it) and retry linking.
+* 让用户切换到使用与其应用账号相同电子邮件的正确提供商账号。
+* 或者，更新应用账号的电子邮件为预期的电子邮件（如果您的产品支持），然后重新尝试关联。
 
-### Debug locally
+### 本地调试
 
-* Log the current user's email in your app and the email returned by the provider profile.
-* Inspect whether the provider email is verified/primary and whether any normalization is applied.
-* Confirm which provider credentials (dev/staging/prod) are in use and that the returned identity is the expected one.
+* 在您的应用中记录当前用户的电子邮件和提供商返回的电子邮件。
+* 检查提供商电子邮件是否已验证/是否为主邮箱，以及是否进行了任何标准化处理。
+* 确认所用的提供商凭据（开发/预发布/生产环境）以及返回的身份是否为预期的那个。

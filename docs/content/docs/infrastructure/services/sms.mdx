@@ -1,33 +1,33 @@
 ---
-title: SMS Service
-description: Better Auth Infrastructure provides a managed SMS service for sending OTP codes for phone verification and two-factor authentication. Send verification codes without managing SMS providers.
+title: 短信服务
+description: Better Auth Infrastructure 提供托管的短信服务，用于发送用于手机号验证和双因素认证的一次性验证码。发送验证码无需管理短信供应商。
 ---
 
-## Overview
+## 概述
 
-The SMS service offers:
+短信服务提供：
 
-- Pre-built SMS templates for common auth flows
-- E.164 phone number format support
-- Type-safe template variables
-- No infrastructure to manage
-- Global delivery support
+- 常用认证流程的预建短信模板
+- 支持 E.164 电话号码格式
+- 类型安全的模板变量
+- 无需管理基础设施
+- 支持全球投递
 
 <Callout type="warn">
-  Note that SMS delivery is intended to only be used for authentication flows.
+  请注意，短信投递仅限于认证流程使用。
 </Callout>
 
-## Installation
+## 安装
 
-The SMS service is included in the `@better-auth/infra` package:
+短信服务包含在 `@better-auth/infra` 包中：
 
 ```ts
 import { sendSMS, createSMSSender } from "@better-auth/infra";
 ```
 
-## Quick Start
+## 快速开始
 
-### Send a Single SMS
+### 发送单条短信
 
 ```ts
 import { sendSMS } from "@better-auth/infra";
@@ -39,7 +39,7 @@ await sendSMS({
 });
 ```
 
-### Create a Reusable Sender
+### 创建可复用发送器
 
 ```ts
 import { createSMSSender } from "@better-auth/infra";
@@ -49,7 +49,7 @@ const smsSender = createSMSSender({
   apiUrl: process.env.BETTER_AUTH_API_URL,
 });
 
-// Send multiple SMS messages
+// 发送多条短信
 await smsSender.send({
   to: "+1234567890",
   code: "123456",
@@ -57,11 +57,11 @@ await smsSender.send({
 });
 ```
 
-## Available Templates
+## 可用模板
 
 ### phone-verification
 
-Sends a verification code for phone number verification.
+发送手机号验证的一次性验证码。
 
 ```ts
 await sendSMS({
@@ -71,12 +71,12 @@ await sendSMS({
 });
 ```
 
-**Example message:**
-> Your verification code is 123456. It expires in 10 minutes.
+**示例短信内容：**
+> 您的验证码是 123456。该码10分钟内有效。
 
 ### two-factor
 
-Sends a two-factor authentication code.
+发送双因素认证验证码。
 
 ```ts
 await sendSMS({
@@ -86,12 +86,12 @@ await sendSMS({
 });
 ```
 
-**Example message:**
-> Your two-factor authentication code is 123456. Do not share this code with anyone.
+**示例短信内容：**
+> 您的双因素认证码是 123456。请勿将此码告知任何人。
 
 ### sign-in-otp
 
-Sends a one-time password for passwordless sign-in.
+发送免密码登录的一次性密码。
 
 ```ts
 await sendSMS({
@@ -101,12 +101,12 @@ await sendSMS({
 });
 ```
 
-**Example message:**
-> Your sign-in code is 123456. It expires in 10 minutes.
+**示例短信内容：**
+> 您的登录验证码是 123456。该码10分钟内有效。
 
-### Default (No Template)
+### 默认（无模板）
 
-If you don't specify a template, a generic verification message is sent:
+如果未指定模板，则发送通用验证码短信：
 
 ```ts
 await sendSMS({
@@ -115,54 +115,54 @@ await sendSMS({
 });
 ```
 
-**Example message:**
-> Your verification code is 123456.
+**示例短信内容：**
+> 您的验证码是 123456。
 
-## Phone Number Format
+## 电话号码格式
 
-Phone numbers must be in E.164 format:
+电话号码必须采用 E.164 格式：
 
 ```
-+[country code][number]
++[国家码][号码]
 ```
 
-**Examples:**
-- US: `+14155551234`
-- UK: `+447911123456`
-- Germany: `+4915112345678`
-- Japan: `+819012345678`
+**示例：**
+- 美国: `+14155551234`
+- 英国: `+447911123456`
+- 德国: `+4915112345678`
+- 日本: `+819012345678`
 
-**Common mistakes:**
-- Missing `+` prefix: `14155551234` ❌
-- Including spaces: `+1 415 555 1234` ❌
-- Including dashes: `+1-415-555-1234` ❌
-- Including parentheses: `+1 (415) 555-1234` ❌
+**常见错误：**
+- 缺少 `+` 前缀：`14155551234` ❌
+- 包含空格：`+1 415 555 1234` ❌
+- 包含短横线：`+1-415-555-1234` ❌
+- 包含括号：`+1 (415) 555-1234` ❌
 
-## Configuration
+## 配置
 
 ### SMSConfig
 
 ```ts
 interface SMSConfig {
-  apiKey?: string;   // Your Better Auth Infrastructure API key
-  apiUrl?: string;   // Custom API URL (optional)
+  apiKey?: string;   // 您的 Better Auth Infrastructure API 密钥
+  apiUrl?: string;   // 自定义 API URL（可选）
 }
 ```
 
-### Environment Variables
+### 环境变量
 
-The SMS service automatically reads from environment variables:
+短信服务自动读取以下环境变量：
 
 ```dotenv
 BETTER_AUTH_API_KEY=your_api_key_here
-BETTER_AUTH_API_URL=https://api.betterauth.com  # Optional
+BETTER_AUTH_API_URL=https://api.betterauth.com  # 可选
 ```
 
-## API Reference
+## API 参考
 
 ### sendSMS
 
-Send a single SMS message.
+发送单条短信。
 
 ```ts
 async function sendSMS(
@@ -173,36 +173,36 @@ async function sendSMS(
 
 ### SendSMSOptions
 
-| Property | Type | Required | Description |
+| 属性 | 类型 | 必填 | 说明 |
 |----------|------|----------|-------------|
-| `to` | `string` | Yes | Phone number in E.164 format |
-| `code` | `string` | Yes | The OTP code to send |
-| `template` | `SMSTemplateId` | No | Template to use (defaults to generic) |
+| `to` | `string` | 是 | E.164 格式的电话号码 |
+| `code` | `string` | 是 | 要发送的一次性验证码 |
+| `template` | `SMSTemplateId` | 否 | 使用的模板（默认为通用模板） |
 
 ### createSMSSender
 
-Create a reusable SMS sender instance.
+创建可复用的短信发送实例。
 
 ```ts
 const sender = createSMSSender(config?: SMSConfig);
 
-// Use the sender
+// 使用发送器
 await sender.send(options: SendSMSOptions);
 ```
 
-## Response Format
+## 响应格式
 
 ### SendSMSResult
 
 ```ts
 interface SendSMSResult {
   success: boolean;
-  messageId?: string;  // SMS provider message ID
-  error?: string;      // Error message if failed
+  messageId?: string;  // 短信供应商消息 ID
+  error?: string;      // 失败时的错误信息
 }
 ```
 
-### Example Usage
+### 使用示例
 
 ```ts
 const result = await sendSMS({
@@ -212,15 +212,15 @@ const result = await sendSMS({
 });
 
 if (result.success) {
-  console.log("SMS sent:", result.messageId);
+  console.log("短信发送成功:", result.messageId);
 } else {
-  console.error("Failed to send SMS:", result.error);
+  console.error("短信发送失败:", result.error);
 }
 ```
 
-## Error Handling
+## 错误处理
 
-Common error scenarios:
+常见错误场景：
 
 ```ts
 const result = await sendSMS({
@@ -231,29 +231,29 @@ const result = await sendSMS({
 if (!result.success) {
   switch (result.error) {
     case "API key not configured":
-      // Missing BETTER_AUTH_API_KEY
+      // 缺少 BETTER_AUTH_API_KEY
       break;
     case "Invalid phone number":
-      // Phone number not in E.164 format
+      // 电话号码非 E.164 格式
       break;
     default:
-      // Other delivery error
-      console.error("SMS error:", result.error);
+      // 其他投递错误
+      console.error("短信错误:", result.error);
   }
 }
 ```
 
-## Integration with Better Auth
+## 与 Better Auth 集成
 
-When using the `dash()` or `sentinel()` plugins with Better Auth's phone authentication, SMS messages are automatically sent for:
+使用 Better Auth 的 `dash()` 或 `sentinel()` 插件进行手机认证时，短信会自动发送用于：
 
-- Phone number verification
-- Phone-based two-factor authentication
-- Phone OTP sign-in
+- 手机号验证
+- 手机双因素认证
+- 手机 OTP 登录
 
-You don't need to call `sendSMS()` manually for these flows - the plugins handle it automatically.
+这些流程无需手动调用 `sendSMS()`，插件会自动处理。
 
-### Better Auth Phone Plugin Integration
+### Better Auth 手机插件集成示例
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -264,8 +264,8 @@ export const auth = betterAuth({
   plugins: [
     phoneNumber({
       sendOTP: async ({ phoneNumber, code }) => {
-        // This is handled automatically when dash() is configured
-        // But you can customize if needed:
+        // 配置了 dash() 时此处自动处理
+        // 如需自定义，可以这样写：
         await sendSMS({
           to: phoneNumber,
           code,
@@ -280,10 +280,10 @@ export const auth = betterAuth({
 });
 ```
 
-## Plan Requirements
+## 计划要求
 
-| Feature | Starter | Pro | Business | Enterprise |
+| 功能 | Starter | Pro | Business | Enterprise |
 |---------|---------|-----|----------|------------|
-| Transactional SMS | - | Yes | Yes | Yes |
+| 事务型短信 | - | 有 | 有 | 有 |
 
-Transactional SMS is available on Pro plans and above.
+事务型短信仅在 Pro 及以上计划提供。

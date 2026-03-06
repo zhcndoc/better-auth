@@ -1,22 +1,22 @@
 ---
 title: Kakao
-description: Kakao provider setup and usage.
+description: Kakao 提供者的设置与使用。
 ---
 
 <Steps>
     <Step> 
-        ### Get your Kakao Credentials
-        To use Kakao sign in, you need a client ID and client secret. You can get them from the [Kakao Developer Portal](https://developers.kakao.com).
+        ### 获取您的 Kakao 凭据
+        要使用 Kakao 登录，您需要客户端 ID 和客户端密钥。您可以从 [Kakao 开发者门户](https://developers.kakao.com) 获取它们。
 
-        Make sure to set the redirect URL to `http://localhost:3000/api/auth/callback/kakao` for local development. For production, you should set it to the URL of your application. If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/kakao` 用于本地开发。生产环境下，您应将其设置为您应用程序的 URL。如果您更改了认证路由的基础路径，您应相应更新重定向 URL。
     </Step>
     <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供者
+        要配置提供者，您需要导入提供者并传递给认证实例的 `socialProviders` 选项。
 
         <Callout type="info">
-            - The default scopes are `account_email`, `profile_image`, and `profile_nickname`. 
-            - Note that retrieving `account_email` requires the app to be a **Biz App** (an app that has completed business verification). For more details, refer to the [Kakao Login scopes documentation](https://developers.kakao.com/docs/latest/kakaologin/utilize#scope-user).
+            - 默认的权限范围（scopes）为 `account_email`、`profile_image` 和 `profile_nickname`。
+            - 请注意，获取 `account_email` 需要应用为 **Biz App**（已完成企业验证的应用）。更多详情请参阅 [Kakao 登录权限文档](https://developers.kakao.com/docs/latest/kakaologin/utilize#scope-user)。
         </Callout>
 
         ```ts title="auth.ts"
@@ -33,9 +33,9 @@ description: Kakao provider setup and usage.
         ```
     </Step>
     <Step>
-        ### Sign In with Kakao
-        To sign in with Kakao, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-        - `provider`: The provider to use. It should be set to `kakao`.
+        ### 使用 Kakao 登录
+        要使用 Kakao 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含如下属性的对象：
+        - `provider`：要使用的提供者，应设置为 `kakao`。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"

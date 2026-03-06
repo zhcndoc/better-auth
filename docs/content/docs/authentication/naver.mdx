@@ -1,18 +1,18 @@
 ---
 title: Naver
-description: Naver provider setup and usage.
+description: Naver 提供者的设置和使用。
 ---
 
 <Steps>
     <Step> 
-        ### Get your Naver Credentials
-        To use Naver sign in, you need a client ID and client secret. You can get them from the [Naver Developers](https://developers.naver.com/).
+        ### 获取你的 Naver 凭证
+        要使用 Naver 登录，你需要客户端 ID 和客户端密钥。你可以从 [Naver Developers](https://developers.naver.com/) 获取它们。
 
-        Make sure to set the redirect URL to `http://localhost:3000/api/auth/callback/naver` for local development. For production, you should set it to the URL of your application. If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/naver`，以便进行本地开发。对于生产环境，你应该将其设置为你的应用程序的 URL。如果你更改了认证路由的基础路径，也需要相应更新重定向 URL。
     </Step>
     <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供者
+        要配置该提供者，你需要导入该提供者并将其传递给认证实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -28,9 +28,9 @@ description: Naver provider setup and usage.
         ```
     </Step>
     <Step>
-        ### Sign In with Naver
-        To sign in with Naver, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-        - `provider`: The provider to use. It should be set to `naver`.
+        ### 使用 Naver 登录
+        要使用 Naver 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
+        - `provider`：要使用的提供者，应设置为 `naver`。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"

@@ -1,18 +1,18 @@
 ---
-title: Dynamic Base URL
-description: Configure Better Auth to work with multiple domains and preview deployments.
+title: 动态基础 URL
+description: 配置 Better Auth 以支持多个域名和预览部署。
 ---
 
-When deploying to platforms like Vercel, your application can run on multiple URLs simultaneously:
-- Custom domains (e.g., `myapp.com`, `www.myapp.com`)
-- Preview deployments (e.g., `my-app-abc123.vercel.app`)
-- Branch previews (e.g., `feature-branch.myapp.com`)
+在部署到如 Vercel 等平台时，您的应用可能会同时运行在多个 URL 上：
+- 自定义域名（例如，`myapp.com`，`www.myapp.com`）
+- 预览部署（例如，`my-app-abc123.vercel.app`）
+- 分支预览（例如，`feature-branch.myapp.com`）
 
-Better Auth supports dynamic base URL resolution using an **allowlist-based approach** that determines the correct URL from each incoming request.
+Better Auth 支持使用**允许列表（allowlist）方法**动态解析基础 URL，从每个传入请求中确定正确的 URL。
 
-## Basic Usage
+## 基本用法
 
-Configure `baseURL` as an object with an `allowedHosts` array:
+将 `baseURL` 配置为一个对象，包含 `allowedHosts` 数组：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -28,35 +28,35 @@ export const auth = betterAuth({
 })
 ```
 
-When a request comes in, Better Auth extracts the host from the `x-forwarded-host` or `host` header and validates it against your allowlist. If the host matches, that URL is used as the base URL for the request.
+当请求到来时，Better Auth 会从 `x-forwarded-host` 或 `host` 头中提取主机，并将其与允许列表校验。如果匹配，该 URL 将用作请求的基础 URL。
 
-## Wildcard Patterns
+## 通配符模式
 
-The `allowedHosts` array supports wildcard patterns:
+`allowedHosts` 数组支持通配符模式：
 
-| Pattern | Matches |
+| 模式 | 匹配 |
 |---------|---------|
-| `myapp.com` | Exact match only |
-| `*.vercel.app` | Any subdomain of vercel.app |
-| `preview-*.myapp.com` | Subdomains starting with `preview-` |
-| `localhost:*` | localhost on any port |
+| `myapp.com` | 仅完全匹配 |
+| `*.vercel.app` | vercel.app 的任意子域 |
+| `preview-*.myapp.com` | 以 `preview-` 开头的子域 |
+| `localhost:*` | 任何端口的 localhost |
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
     baseURL: {
         allowedHosts: [
-            "myapp.com",           // Production
-            "*.vercel.app",        // All Vercel previews
-            "preview-*.myapp.com", // Custom preview subdomains
-            "localhost:3000",      // Local development
+            "myapp.com",           // 生产环境
+            "*.vercel.app",        // 所有 Vercel 预览
+            "preview-*.myapp.com", // 自定义预览子域
+            "localhost:3000",      // 本地开发
         ],
     },
 })
 ```
 
-## Fallback URL
+## 备用 URL
 
-By default, if the incoming host doesn't match any pattern in `allowedHosts`, Better Auth throws an error. You can provide a fallback URL instead:
+默认情况下，如果传入的主机不匹配任何 `allowedHosts` 中的模式，Better Auth 会抛出错误。你可以提供备用 URL：
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -67,39 +67,39 @@ export const auth = betterAuth({
 })
 ```
 
-With a fallback configured:
-- Matching hosts use the derived URL
-- Non-matching hosts use the fallback URL (no error thrown)
+配置备用 URL 后：
+- 匹配的主机使用派生的 URL
+- 不匹配的主机使用备用 URL（不会抛出错误）
 
 <Callout type="warn">
-Use fallbacks carefully. Silent fallbacks can mask misconfigurations. Consider whether throwing an error (the default) is more appropriate for your use case.
+请谨慎使用备用 URL。 Silent fallback 可能掩盖配置错误。请考虑是否对您的用例更适合采用抛出错误（默认）。
 </Callout>
 
-## Protocol Configuration
+## 协议配置
 
-Control the protocol used when constructing URLs:
+控制构建 URL 时使用的协议：
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
     baseURL: {
         allowedHosts: ["myapp.com", "localhost:3000"],
-        protocol: "https", // Always use HTTPS
+        protocol: "https", // 始终使用 HTTPS
     },
 })
 ```
 
-| Value | Behavior |
+| 值 | 行为 |
 |-------|----------|
-| `"https"` | Always use HTTPS |
-| `"http"` | Always use HTTP |
-| `"auto"` | Derive from `x-forwarded-proto` header, then request URL; defaults to HTTPS if neither is available |
-| Not set | Same as `"auto"` |
+| `"https"` | 始终使用 HTTPS |
+| `"http"` | 始终使用 HTTP |
+| `"auto"` | 从 `x-forwarded-proto` 头部推断，然后是请求 URL；若两者均不可用，则默认为 HTTPS |
+| 不设置 | 同 `"auto"` |
 
 <Callout type="info">
-The `protocol` setting controls how the **URL is constructed** for each request. For the cookie `Secure` flag, Better Auth uses `protocol: "https"` → secure, `protocol: "http"` → not secure, and for `"auto"` or unset → falls back to `NODE_ENV === "production"`. You can always override this with `advanced.useSecureCookies`.
+`protocol` 设置控制每个请求**构建 URL 的方式**。对于 Cookie 的 `Secure` 标志，Better Auth 使用 `protocol: "https"` → 安全，`protocol: "http"` → 不安全，对于 `"auto"` 或未设置 → 退回到 `NODE_ENV === "production"`。你也可以通过 `advanced.useSecureCookies` 进行覆盖。
 </Callout>
 
-For mixed environments (local dev + production), you can use environment variables:
+对于混合环境（本地开发 + 生产），你可以使用环境变量：
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -110,9 +110,9 @@ export const auth = betterAuth({
 })
 ```
 
-## Trusted Origins Integration
+## 可信来源集成
 
-When you configure `allowedHosts`, Better Auth automatically adds them to `trustedOrigins`. This means:
+配置 `allowedHosts` 时，Better Auth 会自动将它们添加到 `trustedOrigins` 中，意味着：
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -121,16 +121,16 @@ export const auth = betterAuth({
     },
 })
 
-// Automatically adds to trustedOrigins:
+// 自动添加到 trustedOrigins：
 // - "https://myapp.com"
 // - "https://*.vercel.app"
 ```
 
-You don't need to duplicate your allowed hosts in both configurations.
+你无需在两个配置中重复允许的主机。
 
-## Static Base URL (Backwards Compatible)
+## 静态基础 URL（向后兼容）
 
-The traditional static string configuration still works:
+传统的静态字符串配置仍然有效：
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -138,25 +138,25 @@ export const auth = betterAuth({
 })
 ```
 
-This is recommended when your application runs on a single, known URL.
+当你的应用仅运行在单一确定的 URL 上时，推荐使用此方式。
 
-## Common Patterns
+## 常见模式
 
-### Vercel Deployment
+### Vercel 部署
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
     baseURL: {
         allowedHosts: [
-            "myapp.com",        // Production custom domain
-            "www.myapp.com",    // WWW variant
-            "*.vercel.app",     // All preview deployments
+            "myapp.com",        // 生产自定义域
+            "www.myapp.com",    // WWW 变体
+            "*.vercel.app",     // 所有预览部署
         ],
     },
 })
 ```
 
-### Development + Production
+### 开发 + 生产
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -172,7 +172,7 @@ export const auth = betterAuth({
 })
 ```
 
-### Multiple Production Domains
+### 多生产域名
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -186,9 +186,9 @@ export const auth = betterAuth({
 })
 ```
 
-## Cross-Subdomain Cookies
+## 跨子域 Cookie
 
-If you need to share cookies across subdomains, you can enable `crossSubDomainCookies` without specifying a static `domain`. Better Auth automatically derives the cookie domain from the resolved host of each request.
+如果需要在子域间共享 Cookie，可以开启 `crossSubDomainCookies`，且不指定静态 `domain`。Better Auth 会自动从每个请求解析的主机推断 Cookie 域。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -209,11 +209,11 @@ export const auth = betterAuth({
 })
 ```
 
-With this configuration:
-- A request to `auth.example1.com` sets cookies with `Domain=auth.example1.com`
-- A request to `auth.example2.com` sets cookies with `Domain=auth.example2.com`
+配置后：
+- 对 `auth.example1.com` 的请求，其 Cookie 带 `Domain=auth.example1.com`
+- 对 `auth.example2.com` 的请求，其 Cookie 带 `Domain=auth.example2.com`
 
-If you want to use the same domain for all hosts, you can set `domain` explicitly:
+如需对所有主机使用相同的域名，可以显式设置 `domain`：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -226,33 +226,33 @@ export const auth = betterAuth({
     advanced: {
         crossSubDomainCookies: {
             enabled: true,
-            domain: ".example.com", // always use this domain regardless of host
+            domain: ".example.com", // 不论主机均使用此域
         },
     },
 })
 ```
 
 <Callout type="info">
-With a static `baseURL` string, `crossSubDomainCookies` derives the domain from that string at init time. With dynamic base URL, the domain is computed per-request from the resolved host. Learn more about cross-subdomain cookies in the [Cookies](/docs/concepts/cookies#cross-subdomain-cookies) documentation.
+使用静态 `baseURL` 字符串时，`crossSubDomainCookies` 在初始化时从该字符串派生域名。使用动态基础 URL 时，域名根据每个请求解析的主机动态计算。更多跨子域 Cookie 详情见 [Cookies](/docs/concepts/cookies#cross-subdomain-cookies) 文档。
 </Callout>
 
-## Security Considerations
+## 安全注意事项
 
 <Callout type="info">
-Dynamic base URL uses an **allowlist-based approach** for security. Only hosts explicitly listed in `allowedHosts` are accepted.
+动态基础 URL 采用**允许列表（allowlist）策略**确保安全。仅接受 `allowedHosts` 中明确定义的主机。
 </Callout>
 
-1. **Allowlist is mandatory** - You cannot accept arbitrary hosts
-2. **Headers are validated** - The `x-forwarded-host` and `host` headers are sanitized before use
-3. **Explicit patterns only** - No automatic platform detection; you must add each pattern
-4. **Clear errors** - Unknown hosts throw descriptive errors (unless fallback is set)
+1. **允许列表为必填** — 不接受任意主机
+2. **头部验证** — 对 `x-forwarded-host` 和 `host` 头进行净化处理后使用
+3. **显式模式** — 无自动平台检测；须手动添加每个模式
+4. **明确错误** — 未知主机会抛出描述性错误（除非配置了 fallback）
 
-This differs from some other auth libraries that auto-trust platforms or accept any header value. Better Auth prioritizes security over convenience.
+这不同于一些自动信任平台或接受任意头部值的其他鉴权库。Better Auth 优先考虑安全。  
 
-## Configuration Reference
+## 配置参考
 
-| Property | Type | Default | Description |
+| 属性 | 类型 | 默认 | 描述 |
 |----------|------|---------|-------------|
-| `allowedHosts` | `string[]` | Required | List of allowed host patterns |
-| `fallback` | `string` | - | URL to use when host doesn't match |
-| `protocol` | `"http" \| "https" \| "auto"` | `"auto"` | Protocol for URL construction. `"auto"` derives from request headers, defaults to HTTPS |
+| `allowedHosts` | `string[]` | 必填 | 允许的主机模式列表 |
+| `fallback` | `string` | - | 主机不匹配时使用的 URL |
+| `protocol` | `"http" \| "https" \| "auto"` | `"auto"` | URL 构建使用的协议。`"auto"` 从请求头派生，默认 HTTPS |

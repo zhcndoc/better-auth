@@ -1,21 +1,21 @@
 ---
 title: Linear
-description: Linear provider setup and usage.
+description: Linear 提供者的设置和使用。
 ---
 
 <Steps>
     <Step> 
-        ### Get your Linear credentials
-        To use Linear sign in, you need a client ID and client secret. You can get them from the [Linear Developer Portal](https://linear.app/settings/api).
+        ### 获取你的 Linear 凭证
+        要使用 Linear 登录，你需要一个客户端 ID 和客户端密钥。你可以从 [Linear 开发者门户](https://linear.app/settings/api) 获取它们。
 
-        Make sure to set the redirect URL to `http://localhost:3000/api/auth/callback/linear` for local development. For production, you should set it to the URL of your application. If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/linear` 以便本地开发。对于生产环境，你应该将其设置为你应用程序的 URL。如果你更改了认证路由的基础路径，也应相应更新重定向 URL。
 
-        When creating your OAuth application in Linear, you'll need to specify the required scopes. The default scope is `read`, but you can also request additional scopes like `write` if needed.
+        在 Linear 创建 OAuth 应用时，你需要指定所需的权限范围。默认范围是 `read`，但如果需要，你也可以请求额外的权限，例如 `write`。
     </Step>
 
     <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供者
+        要配置提供者，你需要导入该提供者并将其传递给认证实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -32,9 +32,9 @@ description: Linear provider setup and usage.
     </Step>
 
     <Step>
-        ### Sign In with Linear
-        To sign in with Linear, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-        - `provider`: The provider to use. It should be set to `linear`.
+        ### 使用 Linear 登录
+        要使用 Linear 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
+        - `provider`：使用的提供者，应设置为 `linear`。
 
         ```ts title="auth-client.ts"  
         import { createAuthClient } from "better-auth/client"
@@ -49,16 +49,16 @@ description: Linear provider setup and usage.
     </Step>
 
     <Step>
-        ### Available scopes
-        Linear OAuth supports the following scopes:
-        - `read` (default): Read access for the user's account
-        - `write`: Write access for the user's account
-        - `issues:create`: Allows creating new issues and their attachments
-        - `comments:create`: Allows creating new issue comments
-        - `timeSchedule:write`: Allows creating and modifying time schedules
-        - `admin`: Full access to admin level endpoints (use with caution)
+        ### 可用权限范围
+        Linear OAuth 支持以下权限范围：
+        - `read`（默认）：用户账户的读取权限
+        - `write`：用户账户的写入权限
+        - `issues:create`：允许创建新问题及其附件
+        - `comments:create`：允许创建新的问题评论
+        - `timeSchedule:write`：允许创建和修改时间表
+        - `admin`：对管理员级别端点的完全访问权限（请谨慎使用）
 
-        You can specify additional scopes when configuring the provider:
+        你可以在配置提供者时指定额外的权限范围：
 
         ```ts title="auth.ts"
         export const auth = betterAuth({

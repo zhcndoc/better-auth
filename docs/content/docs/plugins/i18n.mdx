@@ -1,24 +1,24 @@
 ---
 title: i18n
-description: Internationalization plugin for translating error messages
+description: 用于翻译错误信息的国际化插件
 ---
 
-The i18n plugin allows you to translate error messages returned by Better Auth based on the user's locale. It supports multiple locale detection strategies including HTTP headers, cookies, session data, and custom callbacks.
+i18n 插件允许你根据用户的语言环境翻译 Better Auth 返回的错误信息。它支持多种语言环境检测策略，包括 HTTP 头部、Cookie、会话数据和自定义回调函数。
 
-Better Auth already provides English error messages by default, so you only need to provide translations for other languages.
+Better Auth 默认已经提供了英文错误信息，所以你只需要提供其他语言的翻译。
 
-## Installation
+## 安装
 
 <Steps>
 <Step>
-### Install the plugin
+### 安装插件
 
 ```package-install
 @better-auth/i18n
 ```
 </Step>
 <Step>
-### Add the plugin to your **auth** config
+### 将插件添加到你的 **auth** 配置中
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -46,13 +46,13 @@ export const auth = betterAuth({
 </Step>
 </Steps>
 
-## Usage
+## 使用说明
 
-The plugin automatically detects the user's locale and translates error messages accordingly. When an error is returned, the response will include both the translated message and the original message.
+插件会自动检测用户的语言环境并相应地翻译错误信息。当返回错误时，响应中会同时包含翻译后的信息和原始信息。
 
-### Error Response Format
+### 错误响应格式
 
-When an error occurs and a translation is available, the response will look like this:
+当发生错误且有可用的翻译时，响应内容如下：
 
 ```json
 {
@@ -62,49 +62,49 @@ When an error occurs and a translation is available, the response will look like
 }
 ```
 
-### Locale Detection
+### 语言环境检测
 
-By default, the plugin detects the locale from the `Accept-Language` HTTP header. You can configure multiple detection strategies that are checked in order:
+默认情况下，插件会从 `Accept-Language` HTTP 头部检测语言环境。你可以配置多种检测策略，按照顺序依次检测：
 
 ```ts title="auth.ts"
 i18n({
     translations: { /* ... */ },
-    detection: ["cookie", "header", "session"], // Priority order
+    detection: ["cookie", "header", "session"], // 检测优先级顺序
 })
 ```
 
-Available detection strategies:
+可用的检测策略有：
 
-- **`header`** - Uses the `Accept-Language` HTTP header (default)
-- **`cookie`** - Reads locale from a cookie
-- **`session`** - Reads locale from the authenticated user's stored preference
-- **`callback`** - Uses a custom function to determine locale
+- **`header`** - 使用 `Accept-Language` HTTP 头部（默认）
+- **`cookie`** - 从 Cookie 中读取语言环境
+- **`session`** - 从认证用户存储的偏好中读取语言环境
+- **`callback`** - 使用自定义函数确定语言环境
 
-### Header-Based Detection
+### 基于 Header 的检测
 
-The plugin automatically parses the `Accept-Language` header, including quality values:
+插件会自动解析 `Accept-Language` 头部，包括质量值：
 
 ```http
 Accept-Language: fr-CA, fr;q=0.9, en;q=0.8
 ```
 
-This would first try `fr-CA` (mapped to `fr`), then `fr`, then `en`.
+这将依次尝试 `fr-CA`（映射为 `fr`）、`fr`、然后 `en`。
 
-### Cookie-Based Detection
+### 基于 Cookie 的检测
 
-To use cookie-based detection, add `"cookie"` to the detection strategies and optionally configure the cookie name:
+要使用基于 Cookie 的检测，请在检测策略中添加 `"cookie"`，并可选配置 Cookie 名称：
 
 ```ts title="auth.ts"
 i18n({
     translations: { /* ... */ },
     detection: ["cookie", "header"],
-    localeCookie: "lang", // Default is "locale"
+    localeCookie: "lang", // 默认为 "locale"
 })
 ```
 
-### Session-Based Detection
+### 基于会话的检测
 
-If you store the user's locale preference in their profile, you can detect it from the session:
+如果你将用户的语言偏好存储在其资料中，可以通过会话检测：
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -117,22 +117,22 @@ export const auth = betterAuth({
         i18n({
             translations: { /* ... */ },
             detection: ["session", "header"],
-            userLocaleField: "locale", // Default is "locale"
+            userLocaleField: "locale", // 默认为 "locale"
         }),
     ],
 })
 ```
 
-### Custom Detection Callback
+### 自定义检测回调
 
-For advanced use cases, you can provide a custom locale detection function:
+对于高级用例，你可以提供自定义语言环境检测函数：
 
 ```ts title="auth.ts"
 i18n({
     translations: { /* ... */ },
     detection: ["callback", "header"],
     getLocale: (ctx) => {
-        // Custom logic: use query param, custom header, etc.
+        // 自定义逻辑：使用查询参数、自定义头部等
         if (!ctx.request) return null;
         const url = new URL(ctx.request.url);
         return url.searchParams.get("lang");
@@ -140,32 +140,32 @@ i18n({
 })
 ```
 
-The callback receives the full endpoint context. It should return the locale code or `null`.
+回调函数会接收完整的端点上下文。应返回语言代码或者 `null`。
 
-## Error Codes
+## 错误代码
 
-The plugin translates error messages based on error codes. You can find all available error codes in the [Error Codes Reference](/docs/reference/errors).
+插件基于错误代码来翻译错误信息。你可以在 [错误代码参考](/docs/reference/errors) 查找所有可用的错误代码。
 
-Common error codes include:
+常见错误代码包括：
 
-| Code | Default Message |
-|------|-----------------|
-| `USER_NOT_FOUND` | User not found |
-| `INVALID_EMAIL_OR_PASSWORD` | Invalid email or password |
-| `INVALID_PASSWORD` | Invalid password |
-| `CREDENTIAL_ACCOUNT_NOT_FOUND` | Credential account not found |
-| `EMAIL_NOT_VERIFIED` | Email not verified |
-| `SESSION_EXPIRED` | Session expired |
+| 代码 | 默认信息 |
+|------|----------|
+| `USER_NOT_FOUND` | 用户未找到 |
+| `INVALID_EMAIL_OR_PASSWORD` | 邮箱或密码无效 |
+| `INVALID_PASSWORD` | 密码无效 |
+| `CREDENTIAL_ACCOUNT_NOT_FOUND` | 凭据账户未找到 |
+| `EMAIL_NOT_VERIFIED` | 邮箱未验证 |
+| `SESSION_EXPIRED` | 会话过期 |
 
-## Options
+## 选项
 
 ### `translations`
 
-**Type:** `Record<string, Record<string, string>>`
+**类型:** `Record<string, Record<string, string>>`
 
-**Required:** Yes
+**必填:** 是
 
-A dictionary of translations keyed by locale code. Each locale contains a mapping of error codes to translated messages. Since Better Auth already provides English messages, you typically only need to provide translations for other languages.
+一个以语言代码为键的翻译字典。每个语言包含错误代码到翻译信息的映射。由于 Better Auth 已经提供英文信息，通常只需提供其他语言的翻译。
 
 ```ts
 translations: {
@@ -176,49 +176,49 @@ translations: {
 
 ### `defaultLocale`
 
-**Type:** `string`
+**类型:** `string`
 
-**Default:** `"en" when possible, otherwise the first locale in the translations dictionary`
+**默认:** `"en"`（如果可能），否则为翻译字典中的第一个语言
 
-The fallback locale to use when no locale can be detected or the detected locale is not in the translations.
+当无法检测到语言环境或检测到的语言环境不在翻译字典中时使用的回退语言。
 
 ### `detection`
 
-**Type:** `Array<"header" | "cookie" | "session" | "callback">`
+**类型:** `Array<"header" | "cookie" | "session" | "callback">`
 
-**Default:** `["header"]`
+**默认:** `["header"]`
 
-An array of detection strategies to use, in priority order. The first strategy that returns a valid locale will be used.
+语言环境检测策略数组，按优先级顺序。第一个返回有效语言的策略将被采用。
 
 ### `localeCookie`
 
-**Type:** `string`
+**类型:** `string`
 
-**Default:** `"locale"`
+**默认:** `"locale"`
 
-The name of the cookie to read when using the `"cookie"` detection strategy.
+使用 `"cookie"` 策略时读取的 Cookie 名称。
 
 ### `userLocaleField`
 
-**Type:** `string`
+**类型:** `string`
 
-**Default:** `"locale"`
+**默认:** `"locale"`
 
-The field name on the user object that stores their locale preference when using the `"session"` detection strategy.
+使用 `"session"` 策略时，存储用户语言环境偏好的用户字段名。
 
 ### `getLocale`
 
-**Type:** `(ctx: GenericEndpointContext) => string | null | Promise<string | null>`
+**类型:** `(ctx: GenericEndpointContext) => string | null | Promise<string | null>`
 
-A custom function to detect the locale when using the `"callback"` detection strategy. Receives the full endpoint context. Returns the locale code or `null`.
+使用 `"callback"` 策略时调用的自定义语言环境检测函数。接收完整端点上下文，返回语言代码或 `null`。
 
 <Callout type="info">
-`ctx.request` could be undefined for non-HTTP calls.
+`ctx.request` 在非 HTTP 调用时可能是 undefined。
 </Callout>
 
-## Fallback Behavior
+## 回退行为
 
-- If a translation is not found for a specific error code in the detected locale, the built-in English message is kept.
-- If the detected locale is not in the translations dictionary, the built-in English message is used.
-- If no locale can be detected from any strategy, the built-in English message is used.
-- Non-error responses are never modified by this plugin.
+- 如果在检测到的语言中找不到特定错误代码的翻译，则保留内置的英文信息。
+- 如果检测到的语言环境不在翻译字典中，则使用内置的英文信息。
+- 如果任何策略都无法检测到语言环境，则使用内置的英文信息。
+- 非错误响应不会被此插件修改。

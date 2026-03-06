@@ -1,23 +1,23 @@
 ---
 title: Notion
-description: Notion provider setup and usage.
+description: Notion 提供者的设置和使用。
 ---
 
 <Steps>
     <Step> 
-        ### Get your Notion credentials
-        To use Notion as a social provider, you need to get your Notion OAuth credentials. You can get them by creating a new integration in the [Notion Developers Portal](https://www.notion.so/my-integrations).
+        ### 获取你的 Notion 凭据
+        要使用 Notion 作为社交提供者，你需要获取 Notion 的 OAuth 凭据。你可以通过在 [Notion 开发者门户](https://www.notion.so/my-integrations) 创建一个新的集成来获得。
 
-        In the Notion integration settings > OAuth Domain & URIs, make sure to set the redirect URL to `http://localhost:3000/api/auth/callback/notion` for local development. For production, make sure to set the redirect URL as your application domain, e.g. `https://example.com/api/auth/callback/notion`. If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        在 Notion 集成设置 > OAuth 域名和 URI 中，确保为本地开发将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/notion`。在生产环境中，确保将重定向 URL 设置为你的应用域名，例如 `https://example.com/api/auth/callback/notion`。如果你更改了认证路由的基础路径，也请相应地更新重定向 URL。
 
         <Callout>
-        Make sure your Notion integration has the appropriate capabilities enabled. For user authentication, you'll need the "Read user information including email addresses" capability.
+        确保你的 Notion 集成启用了适当的权限。对于用户身份验证，你需要启用「读取用户信息，包括电子邮件地址」权限。
         </Callout>
     </Step>
 
   <Step>
-        ### Configure the provider
-        To configure the provider, you need to pass the `clientId` and `clientSecret` to `socialProviders.notion` in your auth configuration.
+        ### 配置提供者
+        要配置提供者，你需要在认证配置中将 `clientId` 和 `clientSecret` 传递给 `socialProviders.notion`。
 
         ```ts title="auth.ts"   
         import { betterAuth } from "better-auth"
@@ -34,12 +34,12 @@ description: Notion provider setup and usage.
     </Step>
 </Steps>
 
-## Usage
+## 使用说明
 
-### Sign In with Notion
+### 使用 Notion 登录
 
-To sign in with Notion, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-- `provider`: The provider to use. It should be set to `notion`.
+要使用 Notion 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+- `provider`：要使用的提供者，应设置为 `notion`。
 
 ```ts title="auth-client.ts"  
 import { createAuthClient } from "better-auth/client"
@@ -52,31 +52,31 @@ const signIn = async () => {
 }
 ```
 
-### Notion Integration Types
+### Notion 集成类型
 
-Notion supports different integration types. When creating your integration, you can choose between:
+Notion 支持不同类型的集成。创建集成时，你可以选择：
 
-- **Public integrations**: Can be installed by any Notion workspace
-- **Internal integrations**: Limited to your own workspace
+- **公开集成**：任何 Notion 工作区都可以安装
+- **内部集成**：仅限你自己的工作区
 
-For most authentication use cases, you'll want to create a public integration to allow users from different workspaces to sign in.
+大多数身份验证的场景中，你需要创建公开集成，以允许来自不同工作区的用户登录。
 
-### Requesting Additional Notion Scopes
+### 请求额外的 Notion 权限
 
-If your application needs additional Notion capabilities after the user has already signed up, you can request them using the `linkSocial` method with the same Notion provider and additional scopes.
+如果你的应用在用户已注册后需要额外的 Notion 权限，可以使用同一 Notion 提供者和额外作用域调用 `linkSocial` 方法请求。
 
 ```ts title="auth-client.ts"
 const requestNotionAccess = async () => {
     await authClient.linkSocial({
         provider: "notion",
-        // Notion automatically provides access based on integration capabilities
+        // Notion 会基于集成功能自动提供访问权限
     });
 };
 
-// Example usage in a React component
-return <button onClick={requestNotionAccess}>Connect Notion Workspace</button>;
+// 在 React 组件中的示例用法
+return <button onClick={requestNotionAccess}>连接 Notion 工作区</button>;
 ```
 
 <Callout>
-After authentication, you can use the access token to interact with the Notion API to read and write pages, databases, and other content that the user has granted access to.
+身份验证后，你可以使用访问令牌与 Notion API 交互，读取和写入页面、数据库及用户授权访问的其他内容。
 </Callout>

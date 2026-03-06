@@ -1,24 +1,24 @@
 ---
-title: Anonymous  
-description: Anonymous plugin for Better Auth.
+title: 匿名  
+description: 用于 Better Auth 的匿名插件。
 ---
 
-The Anonymous plugin allows users to have an authenticated experience without requiring them to provide an email address, password, OAuth provider, or any other Personally Identifiable Information (PII). Users can later link an authentication method to their account when ready.
+Anonymous 插件允许用户在无需提供电子邮件地址、密码、OAuth 提供商或任何其他个人身份信息（PII）的情况下获得身份验证体验。用户稍后可以在准备好时将认证方式链接到其账户。
 
-## Installation
+## 安装
 
 <Steps>
   <Step>
-    ### Add the plugin to your auth config
+    ### 将插件添加到您的身份验证配置中
 
-    To enable anonymous authentication, add the anonymous plugin to your authentication configuration.
+    要启用匿名身份验证，请将 anonymous 插件添加到您的身份验证配置中。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
     import { anonymous } from "better-auth/plugins" // [!code highlight]
     
     export const auth = betterAuth({
-        // ... other config options
+        // ... 其他配置选项
         plugins: [
             anonymous() // [!code highlight]
         ]
@@ -27,9 +27,9 @@ The Anonymous plugin allows users to have an authenticated experience without re
   </Step>
 
     <Step>
-        ### Migrate the database
+        ### 迁移数据库
 
-        Run the migration or generate the schema to add the necessary fields and tables to the database.
+        运行迁移或生成模式以向数据库添加必要的字段和表。
 
         <Tabs items={["migrate", "generate"]}>
             <Tab value="migrate">
@@ -43,13 +43,13 @@ The Anonymous plugin allows users to have an authenticated experience without re
             ```
             </Tab>
         </Tabs>
-        See the [Schema](#schema) section to add the fields manually.
+        请参阅[模式](#schema)部分以手动添加字段。
     </Step>
 
   <Step>
-    ### Add the client plugin
+    ### 添加客户端插件
 
-    Next, include the anonymous client plugin in your authentication client instance.
+    接下来，在您的身份验证客户端实例中包含匿名客户端插件。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -64,11 +64,11 @@ The Anonymous plugin allows users to have an authenticated experience without re
   </Step>
 </Steps>
 
-## Usage
+## 用法
 
-### Sign In
+### 登录
 
-To sign in a user anonymously, use the `signIn.anonymous()` method.
+要匿名登录用户，使用 `signIn.anonymous()` 方法。
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -76,12 +76,11 @@ import { authClient } from "@/lib/auth-client";
 const user = await authClient.signIn.anonymous()
 ```
 
-### Link Account
+### 关联账户
 
-If a user is already signed in anonymously and tries to `signIn` or `signUp` with another method,
-their anonymous activities can be linked to the new account.
+如果用户已匿名登录，并尝试使用其他方法 `signIn` 或 `signUp`，他们的匿名活动可以关联到新的账户。
 
-To do that you first need to provide `onLinkAccount` callback to the plugin.
+为此，您需要先向插件提供 `onLinkAccount` 回调。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -91,13 +90,13 @@ export const auth = betterAuth({
     plugins: [
         anonymous({
             onLinkAccount: async ({ anonymousUser, newUser }) => {
-               // perform actions like moving the cart items from anonymous user to the new user
+               // 执行操作，如将购物车商品从匿名用户转移到新用户
             }
         })
     ]
 ```
 
-Then when you call `signIn` or `signUp` with another method, the `onLinkAccount` callback will be called. And the `anonymousUser` will be deleted by default.
+然后，当您使用另一种方法调用 `signIn` 或 `signUp` 时，`onLinkAccount` 回调将被调用。默认情况下，`anonymousUser` 会被删除。
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -107,9 +106,9 @@ const user = await authClient.signIn.email({
 })
 ```
 
-### Delete Anonymous User
+### 删除匿名用户
 
-To delete an anonymous user, you can call the `/delete-anonymous-user` endpoint.
+要删除匿名用户，您可以调用 `/delete-anonymous-user` 端点。
 
 <APIMethod
   path="/delete-anonymous-user"
@@ -123,16 +122,16 @@ type deleteAnonymousUser = {
 </APIMethod>
 
 <Callout type="info">
-**Notes:**
-- The anonymous user is deleted by default when the account is linked to a new authentication method.
-- Setting `disableDeleteAnonymousUser` to `true` will prevent the anonymous user from being able to call the `/delete-anonymous-user` endpoint.
+**注意：**
+- 当账户链接到新的认证方法时，匿名用户默认会被删除。
+- 设置 `disableDeleteAnonymousUser` 为 `true` 会阻止匿名用户调用 `/delete-anonymous-user` 端点。
 </Callout>
 
-## Options
+## 选项
 
 ### `emailDomainName`
 
-The domain name to use when generating an email address for anonymous users. If not provided, the default format `temp@{id}.com` is used.
+用于为匿名用户生成电子邮件地址的域名。如果未提供，则使用默认格式 `temp@{id}.com`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -149,7 +148,7 @@ export const auth = betterAuth({
 
 ### `generateRandomEmail`
 
-A custom function to generate email addresses for anonymous users. This allows you to define your own email format. The function can be synchronous or asynchronous.
+用于为匿名用户生成电子邮件地址的自定义函数。允许您定义自己的邮箱格式。该函数可以是同步或异步的。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -168,33 +167,31 @@ export const auth = betterAuth({
 ```
 
 <Callout type="info">
-**Notes:**
-- If `generateRandomEmail` is provided, `emailDomainName` is ignored.
-- You are responsible for ensuring the email is unique to avoid conflicts. The returned email must be in a valid format.
+**注意：**
+- 提供了 `generateRandomEmail` 后，`emailDomainName` 会被忽略。
+- 您需要负责确保邮箱唯一以避免冲突。返回的邮箱必须符合有效格式。
 </Callout>
-
 
 ### `onLinkAccount`
 
-A callback function that is called when an anonymous user links their account to a new authentication method. The callback receives an object with the `anonymousUser` and the `newUser`.
+当匿名用户将账户关联到新的认证方法时调用的回调函数。回调接收一个包含 `anonymousUser` 和 `newUser` 的对象。
 
 ### `disableDeleteAnonymousUser`
 
-By default, when an anonymous user links their account to a new authentication method,
-the anonymous user record is automatically deleted.
-If you set this option to `true`, this automatic deletion will be disabled,
-and the `/delete-anonymous-user` endpoint will no longer be accessible to anonymous users.
+默认情况下，当匿名用户关联账户到新的认证方法时，会自动删除匿名用户记录。
+如果您设置此选项为 `true`，此自动删除将被禁用，
+并且匿名用户将无法访问 `/delete-anonymous-user` 端点。
 
 ### `generateName`
 
-A callback function that is called to generate a name for the anonymous user. Useful if you want to have random names for anonymous users, or if `name` is unique in your database.
+调用此回调函数以为匿名用户生成名称。如果您想为匿名用户生成随机名称，或数据库中 `name` 字段为唯一时，此选项非常有用。
 
-## Schema
+## 模式
 
-The anonymous plugin requires an additional field in the user table:
+Anonymous 插件需要在用户表中添加一个额外字段：
 
 <DatabaseTable
     fields={[
-        { name: "isAnonymous", type: "boolean", description: "Indicates whether the user is anonymous.", isOptional: true },
+        { name: "isAnonymous", type: "boolean", description: "指示用户是否为匿名用户。", isOptional: true },
     ]}
 />

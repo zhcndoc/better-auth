@@ -1,72 +1,71 @@
 ---
-title: Expo Integration
-description: Integrate Better Auth with Expo.
+title: Expo 集成
+description: 将 Better Auth 与 Expo 集成。
 ---
 
-Expo is a popular framework for building cross-platform apps with React Native. Better Auth supports both Expo native and web apps.
+Expo 是一个使用 React Native 构建跨平台应用的流行框架。Better Auth 支持 Expo 原生和 Web 应用。
 
 <Callout type="info">
-This guide is written for **Expo SDK 55** (React Native 0.83, React 19.2). SDK 55 requires the [New Architecture](https://docs.expo.dev/guides/new-architecture/) — the Legacy Architecture is no longer supported. If you're upgrading from an older SDK, see the [Expo SDK 55 upgrade guide](https://expo.dev/blog/upgrading-to-sdk-55).
+本指南适用于 **Expo SDK 55**（React Native 0.83，React 19.2）。SDK 55 需要使用 [新架构](https://docs.expo.dev/guides/new-architecture/) — 旧架构已不再支持。如果你正在从较旧的 SDK 升级，请参阅[Expo SDK 55 升级指南](https://expo.dev/blog/upgrading-to-sdk-55)。
 </Callout>
 
-## Installation
+## 安装
 
 <Steps>
     <Step>
-        ## Configure A Better Auth Backend
-        Before using Better Auth with Expo, make sure you have a Better Auth backend set up. You can either use a separate server or leverage Expo's new [API Routes](https://docs.expo.dev/router/reference/api-routes) feature to host your Better Auth instance.
+        ## 配置 Better Auth 后端
+        在将 Better Auth 与 Expo 一起使用之前，请确保你已设置好 Better Auth 后端。你可以使用独立服务器，或者利用 Expo 的新功能 [API Routes](https://docs.expo.dev/router/reference/api-routes) 来托管 Better Auth 实例。
 
-        To get started, check out our [installation](/docs/installation) guide for setting up Better Auth on your server. If you prefer to check out the full example, you can find it [here](https://github.com/better-auth/examples/tree/main/expo-example).
+        要开始使用，请查看我们的[安装指南](/docs/installation)，了解如何在你的服务器上设置 Better Auth。如果你想查看完整示例，可以点击[这里](https://github.com/better-auth/examples/tree/main/expo-example)。
 
-        To use the new API routes feature in Expo to host your Better Auth instance you can create a new API route in your Expo app and mount the Better Auth handler.
+        如果你想使用 Expo 中的 API Routes 功能托管 Better Auth 实例，可以在你的 Expo 应用中创建一个新的 API 路由，然后挂载 Better Auth 处理器。
 
         ```ts title="app/api/auth/[...auth]+api.ts"
-        import { auth } from "@/lib/auth"; // import Better Auth handler
+        import { auth } from "@/lib/auth"; // 导入 Better Auth 处理器
         
         const handler = auth.handler;
-        export { handler as GET, handler as POST }; // export handler for both GET and POST requests
+        export { handler as GET, handler as POST }; // 导出处理器以响应 GET 和 POST 请求
         ```
     </Step>
     <Step>
-        ## Install Server Dependencies
+        ## 安装服务器依赖
 
-        Install both the Better Auth package and Expo plugin into your server application.
+        在你的服务器应用中安装 Better Auth 包和 Expo 插件。
 
         ```package-install
         better-auth @better-auth/expo
         ```
         <Callout type="info">
-            If you're using Expo's API Routes, you can follow the step below instead.
+            如果你使用的是 Expo 的 API Routes，可以跳过此步骤，直接按照下面步骤操作。
         </Callout>
     </Step>
 
     <Step>
-        ## Install Client Dependencies
+        ## 安装客户端依赖
 
-        - You also need to install both the Better Auth package and Expo plugin into your Expo application.
+        - 你还需在 Expo 应用中安装 Better Auth 包和 Expo 插件。
 
         ```package-install
         better-auth @better-auth/expo
         ```
 
-        - And you need to install `expo-network` for network state detection.
+        - 并且需要安装 `expo-network` 用于网络状态检测。
 
         ```package-install
         expo-network
         ```
 
-        - <small className='text-xs'>(Optional)</small> If you're using the default Expo template, these dependencies are already included, so you can skip this step. Otherwise, if you plan to use our social providers (e.g. Google, Apple), your Expo app requires a few additional dependencies.
+        - <small className='text-xs'>(可选)</small> 如果你使用的是默认 Expo 模板，这些依赖已经包含，无需重复安装。否则，如果你计划使用我们的社交登录提供商（如 Google、Apple），则 Expo 应用还需额外安装以下依赖。
 
         ```package-install
         expo-linking expo-web-browser expo-constants
-        
         ```
     </Step>
     
     <Step>
-        ## Add the Expo Plugin on Your Server
+        ## 在服务器上添加 Expo 插件
 
-        Add the Expo plugin to your Better Auth server.
+        将 Expo 插件添加到你的 Better Auth 服务器配置中。
 
         ```ts title="lib/auth.ts"
         import { betterAuth } from "better-auth";
@@ -75,29 +74,29 @@ This guide is written for **Expo SDK 55** (React Native 0.83, React 19.2). SDK 5
         export const auth = betterAuth({
             plugins: [expo()],
             emailAndPassword: { 
-                enabled: true, // Enable authentication using email and password.
+                enabled: true, // 启用邮箱和密码认证。
               }, 
         });
         ```
     </Step>
 
     <Step>
-        ## Initialize Better Auth Client
+        ## 初始化 Better Auth 客户端
         
-        To initialize Better Auth in your Expo app, you need to call `createAuthClient` with the base URL of your Better Auth backend. Make sure to import the client from `/react`.
+        要在你的 Expo 应用中初始化 Better Auth，需要调用 `createAuthClient` 并传入你的 Better Auth 后端基地址。请确保从 `/react` 路径导入客户端。
 
-        Make sure you install the `expo-secure-store` package into your Expo app. This is used to store the session data and cookies securely.
+        同时确保你已经安装 `expo-secure-store`，用于安全存储会话数据和 Cookie。
 
         ```package-install
         expo-secure-store
         ```
 
-        You need to also import client plugin from `@better-auth/expo/client` and pass it to the `plugins` array when initializing the auth client.
+        你还需要从 `@better-auth/expo/client` 导入客户端插件，并在初始化客户端时传入 `plugins` 数组。
 
-        This is important because:
+        这一步非常重要，因为：
 
-        - **Social Authentication Support:** enables social auth flows by handling authorization URLs and callbacks within the Expo web browser.
-        - **Secure Cookie Management:** stores cookies securely and automatically adds them to the headers of your auth requests.
+        - **支持社交认证：** 该插件处理授权 URL 和回调，并在 Expo 浏览器中完成社交登录流程。
+        - **安全 Cookie 管理：** 安全地存储 Cookie，并自动将它们添加到身份验证请求头中。
 
         ```ts title="lib/auth-client.ts"
         import { createAuthClient } from "better-auth/react";
@@ -105,7 +104,7 @@ This guide is written for **Expo SDK 55** (React Native 0.83, React 19.2). SDK 5
         import * as SecureStore from "expo-secure-store";
 
         export const authClient = createAuthClient({
-            baseURL: "http://localhost:8081", // Base URL of your Better Auth backend.
+            baseURL: "http://localhost:8081", // Better Auth 后端基地址。
             plugins: [
                 expoClient({
                     scheme: "myapp",
@@ -116,16 +115,16 @@ This guide is written for **Expo SDK 55** (React Native 0.83, React 19.2). SDK 5
         });
         ```
         <Callout>
-         Be sure to include the full URL, including the path, if you've changed the default path from `/api/auth`.
+         如果你更改了默认路径 `/api/auth`，请确保传入完整 URL，包括路径部分。
         </Callout>
     </Step>
 
      <Step>
-        ## Scheme and Trusted Origins
+        ## Scheme 和 Trusted Origins 配置
 
-        Better Auth uses deep links to redirect users back to your app after authentication. To enable this, you need to add your app's scheme to the `trustedOrigins` list in your Better Auth config. 
+        Better Auth 使用深度链接（deep links）在认证后将用户重定向回你的应用。为此，你需要在 Better Auth 配置的 `trustedOrigins` 中添加你的应用 scheme。
 
-        First, make sure you have a scheme defined in your `app.json` file.
+        首先，确保在你的 `app.json` 文件中定义了 scheme。
 
         ```json title="app.json"
         {
@@ -135,7 +134,7 @@ This guide is written for **Expo SDK 55** (React Native 0.83, React 19.2). SDK 5
         }
         ```
 
-        Then, update your Better Auth config to include the scheme in the `trustedOrigins` list.
+        然后，在 Better Auth 配置中将该 scheme 添加到 `trustedOrigins` 列表中。
 
         ```ts title="auth.ts"
         export const auth = betterAuth({
@@ -143,69 +142,69 @@ This guide is written for **Expo SDK 55** (React Native 0.83, React 19.2). SDK 5
         })
         ```
 
-        If you have multiple schemes or need to support deep linking with various paths, you can use specific patterns or wildcards:
+        如果你有多个 scheme，或需要支持各种路径的深度链接，可以使用具体的模式或通配符：
 
         ```ts title="auth.ts"
         export const auth = betterAuth({
             trustedOrigins: [
-                // Basic scheme
+                // 基础 scheme
                 "myapp://", 
                 
-                // Production & staging schemes
+                // 生产和预发布环境的 scheme
                 "myapp-prod://",
                 "myapp-staging://",
                 
-                // Wildcard support for all paths following the scheme
+                // 支持该 scheme 下所有路径的通配符
                 "myapp://*"
             ]
         })
         ```
 
-        ### Development Mode
+        ### 开发模式
 
-        During development, Expo uses the `exp://` scheme with your device's local IP address. To support this, you can use wildcards to match common local IP ranges:
+        在开发时，Expo 使用带设备本地 IP 的 `exp://` scheme。为了支持此项，可以使用通配符匹配常见的本地 IP 范围：
 
         ```ts title="auth.ts"
         export const auth = betterAuth({
             trustedOrigins: [
                 "myapp://",
                 
-                // Development mode - Expo's exp:// scheme with local IP ranges
+                // 开发模式 - Expo 的 exp:// Scheme 和本地 IP 范围
                 ...(process.env.NODE_ENV === "development" ? [
-                    "exp://",                      // Trust all Expo URLs (prefix matching)
-                    "exp://**",                    // Trust all Expo URLs (wildcard matching)
-                    "exp://192.168.*.*:*/**",      // Trust 192.168.x.x IP range with any port and path
+                    "exp://",                      // 信任所有 Expo URL（前缀匹配）
+                    "exp://**",                    // 信任所有 Expo URL（通配符匹配）
+                    "exp://192.168.*.*:*/**",      // 信任 192.168.x.x 网段，任意端口和路径
                 ] : [])
             ]
         })
         ```
 
-        For more information about trusted origins, see [here](/docs/reference/options#trustedorigins).
+        详细可信来源配置可见[此处](/docs/reference/options#trustedorigins)。
 
         <Callout type="warn">
-          The wildcard patterns for `exp://` should only be used in development. In production, use your app's specific scheme (e.g., `myapp://`).
+          `exp://` 的通配符模式仅应在开发环境使用。生产环境请使用你的应用具体 scheme（例如 `myapp://`）。
         </Callout>
     </Step>
  
     <Step>
-        ## Configure Metro Bundler
+        ## 配置 Metro Bundler
 
-        Better Auth relies on `package.json` exports to resolve its modules. Starting with **Expo SDK 53+** (including SDK 55), package exports support is enabled by default in Metro, so **no extra Metro configuration is needed**.
+        Better Auth 依赖于 `package.json` 的 exports 来解析模块。从 **Expo SDK 53+**（含 SDK 55）开始，Metro 默认启用了包导出支持，因此 **无需额外配置 Metro**。
 
-        If you have a custom `metro.config.js`, make sure you're not disabling package exports:
+        如果你有自定义的 `metro.config.js`，请确保没有禁用 package exports：
 
         ```js title="metro.config.js"
         const { getDefaultConfig } = require("expo/metro-config");
 
         const config = getDefaultConfig(__dirname);
 
-        // Do NOT set this to false — Better Auth requires package exports
+        // 不要设置为 false — Better Auth 需要 package exports
         // config.resolver.unstable_enablePackageExports = false;
 
         module.exports = config;
         ```
 
-        Don't forget to clear the cache after making changes to your Metro config.
+        修改后不要忘记清缓存：
 
         ```bash
         npx expo start --clear
@@ -214,14 +213,13 @@ This guide is written for **Expo SDK 55** (React Native 0.83, React 19.2). SDK 5
     </Step>
 </Steps>
 
+## 使用
 
-## Usage
+### 用户认证
 
-### Authenticating Users
+Better Auth 初始化完成后，就可以使用 `authClient` 在 Expo 应用中认证用户。
 
-With Better Auth initialized, you can now use the `authClient` to authenticate users in your Expo app.
-
-<Tabs items={["sign-in", "sign-up"]}>
+<Tabs items={["登录", "注册"]}>
     <Tab value="sign-in">
         ```tsx title="app/sign-in.tsx"
         import { useState } from "react"; 
@@ -242,16 +240,16 @@ With Better Auth initialized, you can now use the `authClient` to authenticate u
             return (
                 <View>
                     <TextInput
-                        placeholder="Email"
+                        placeholder="邮箱"
                         value={email}
                         onChangeText={setEmail}
                     />
                     <TextInput
-                        placeholder="Password"
+                        placeholder="密码"
                         value={password}
                         onChangeText={setPassword}
                     />
-                    <Button title="Login" onPress={handleLogin} />
+                    <Button title="登录" onPress={handleLogin} />
                 </View>
             );
         }
@@ -279,21 +277,21 @@ With Better Auth initialized, you can now use the `authClient` to authenticate u
             return (
                 <View>
                     <TextInput
-                        placeholder="Name"
+                        placeholder="姓名"
                         value={name}
                         onChangeText={setName}
                     />
                     <TextInput
-                        placeholder="Email"
+                        placeholder="邮箱"
                         value={email}
                         onChangeText={setEmail}
                     />
                     <TextInput
-                        placeholder="Password"
+                        placeholder="密码"
                         value={password}
                         onChangeText={setPassword}
                     />
-                    <Button title="Login" onPress={handleLogin} />
+                    <Button title="注册" onPress={handleLogin} />
                 </View>
             );
         }
@@ -301,9 +299,9 @@ With Better Auth initialized, you can now use the `authClient` to authenticate u
     </Tab>
 </Tabs>
 
-#### Social Sign-In
+#### 社交登录
 
-For social sign-in, you can use the `authClient.signIn.social` method with the provider name and a callback URL. When you pass a relative path like "/dashboard", the Expo plugin automatically converts it to a deep link using `Linking.createURL`.
+对于社交登录，可以使用 `authClient.signIn.social` 方法，传入提供者名称和回调 URL。如果传入相对路径（如 "/dashboard"），Expo 插件会自动利用 `Linking.createURL` 将其转为深度链接。
 
 ```tsx title="app/social-sign-in.tsx"
 import { Button } from "react-native";
@@ -317,22 +315,22 @@ export default function SocialSignIn() {
             callbackURL: "/dashboard" // [!code highlight]
         })
         if (error) {
-            // handle error
+            // 处理错误
             return;
         }
         router.replace("/dashboard"); // [!code highlight]
     };
-    return <Button title="Login with Google" onPress={handleLogin} />;
+    return <Button title="使用 Google 登录" onPress={handleLogin} />;
 }
 ```
 
 <Callout type="info">
-On native (iOS/Android), `signIn.social` does not navigate automatically. Handle navigation yourself after it resolves. Note that the underlying browser behavior differs by platform. For more information, see [here](https://docs.expo.dev/versions/latest/sdk/webbrowser/#webbrowseropenauthsessionasyncurl-redirecturl-options).
+在原生（iOS/Android）平台上，`signIn.social` 不会自动导航。你需要在登录完成后自行处理导航。不同平台的浏览器行为也有差别。详细信息见[这里](https://docs.expo.dev/versions/latest/sdk/webbrowser/#webbrowseropenauthsessionasyncurl-redirecturl-options)。
 </Callout>
 
-#### IdToken Sign-In
+#### IdToken 登录
 
-If you want to make provider request on the mobile device and then verify the ID token on the server, you can use the `authClient.signIn.social` method with the `idToken` option.
+如果你想在移动设备上发起 provider 请求，然后在服务器端验证 ID Token，可以使用带有 `idToken` 选项的 `authClient.signIn.social`。
 
 ```tsx title="app/social-sign-in.tsx"
 import { Button } from "react-native";
@@ -340,24 +338,24 @@ import { Button } from "react-native";
 export default function SocialSignIn() {
     const handleLogin = async () => {
         await authClient.signIn.social({
-            provider: "google", // only google, apple and facebook are supported for idToken signIn
+            provider: "google", // 目前只有 google、apple 和 facebook 支持 idToken 登录
             idToken: {
-                token: "...", // ID token from provider
-                nonce: "...", // nonce from provider (optional)
+                token: "...", // 来自 provider 的 ID Token
+                nonce: "...", // provider 提供的 nonce（可选）
             }
-            callbackURL: "/dashboard" // this will be converted to a deep link (eg. `myapp://dashboard`) on native
+            callbackURL: "/dashboard" // 在原生平台，这会被转为深度链接（如 `myapp://dashboard`）
         })
     };
-    return <Button title="Login with Google" onPress={handleLogin} />;
+    return <Button title="使用 Google 登录" onPress={handleLogin} />;
 }
 ```
 
 <Accordions>
-<Accordion title="Example: Google Sign-In with `@react-native-google-signin/google-signin`">
+<Accordion title="示例：使用 `@react-native-google-signin/google-signin` 实现 Google 登录（idToken）">
 
-This example shows how to implement Google Sign-In using an idToken. No additional configuration is needed in Better Auth. However, since this approach uses native code, you'll need to configure Expo to obtain the idToken.
+本示例展示如何使用 idToken 实现 Google 登录。Better Auth 无需额外配置。但由于该方式使用了原生代码，需要配置 Expo 以便获取 idToken。
 
-Follow the [Expo Google authentication guide](https://docs.expo.dev/guides/google-authentication/) to set up `@react-native-google-signin/google-signin`, then pass the idToken to Better Auth:
+请按照[Expo Google 认证指南](https://docs.expo.dev/guides/google-authentication/)设置 `@react-native-google-signin/google-signin`，然后将 idToken 传给 Better Auth：
 
 ```tsx title="app/sign-in.tsx"
 import {
@@ -400,9 +398,9 @@ export default function GoogleSignIn() {
 </Accordion>
 </Accordions>
 
-### Session
+### 会话
 
-Better Auth provides a `useSession` hook to access the current user's session in your app.
+Better Auth 提供 `useSession` 钩子，用于在应用中访问当前用户会话。
 
 ```tsx title="app/index.tsx"
 import { Text } from "react-native";
@@ -411,16 +409,15 @@ import { authClient } from "@/lib/auth-client";
 export default function Index() {
     const { data: session } = authClient.useSession();
 
-    return <Text>Welcome, {session?.user.name}</Text>;
+    return <Text>欢迎，{session?.user.name}</Text>;
 }
 ```
 
-On native, the session data will be cached in SecureStore. This will allow you to remove the need for a loading spinner when the app is reloaded. You can disable this behavior by passing the `disableCache` option to the client.
+在原生平台，会话数据会缓存到 SecureStore，避免重新加载应用时需要加载动画。你可以通过传入 `disableCache` 选项来禁用此行为。
 
+### 向服务器发起已认证请求
 
-### Making Authenticated Requests to Your Server
-
-To make authenticated requests to your server that require the user's session, you have to retrieve the session cookie from `SecureStore` and manually add it to your request headers.
+如果你需要向服务器发起包含用户会话的认证请求，需要先从 `SecureStore` 中获取会话 Cookie，然后手动添加到请求头。
 
 ```tsx
 import { authClient } from "@/lib/auth-client";
@@ -432,7 +429,7 @@ const makeAuthenticatedRequest = async () => {
   };
   const response = await fetch("http://localhost:8081/api/secure-endpoint", { 
     headers,
-    // 'include' can interfere with the cookies we just set manually in the headers
+    // 设置 'include' 可能会与我们手动设置的 Cookie 冲突
     credentials: "omit" // [!code highlight]
   });
   const data = await response.json();
@@ -440,10 +437,10 @@ const makeAuthenticatedRequest = async () => {
 };
 ```
 
-**Example: Usage With TRPC**
-    
+**示例：与 TRPC 联用**
+
 ```tsx title="lib/trpc-provider.tsx"
-//...other imports
+// ...其他导入
 import { authClient } from "@/lib/auth-client"; // [!code highlight]
 
 export const api = createTRPCReact<AppRouter>();
@@ -454,7 +451,7 @@ export function TRPCProvider(props: { children: React.ReactNode }) {
     api.createClient({
       links: [
         httpBatchLink({
-          //...your other options
+          // ...其他配置
           headers() {
             const headers = new Map<string, string>(); // [!code highlight]
             const cookies = authClient.getCookie(); // [!code highlight]
@@ -478,12 +475,11 @@ export function TRPCProvider(props: { children: React.ReactNode }) {
 }
 ```
 
+## 选项
 
-## Options
+### Expo 客户端
 
-### Expo Client
-
-**storage**: the storage mechanism used to cache the session data and cookies.
+**storage**：用于缓存会话数据和 Cookie 的存储机制。
 
 ```ts title="lib/auth-client.ts"
 import { createAuthClient } from "better-auth/react";
@@ -501,7 +497,7 @@ const authClient = createAuthClient({
 });
 ```
 
-**scheme**: scheme is used to deep link back to your app after a user has authenticated using oAuth providers. By default, Better Auth tries to read the scheme from the `app.json` file. If you need to override this, you can pass the scheme option to the client.
+**scheme**：用于 OAuth 提供者认证后深度链接回调的 scheme。默认情况下，Better Auth 会尝试从 `app.json` 读取。如果需要覆盖，传入该选项即可。
 
 ```ts title="lib/auth-client.ts"
 import { createAuthClient } from "better-auth/react";
@@ -518,7 +514,7 @@ const authClient = createAuthClient({
 });
 ```
 
-**disableCache**: By default, the client will cache the session data in SecureStore. You can disable this behavior by passing the `disableCache` option to the client.
+**disableCache**：默认情况下，客户端会将会话数据缓存到 SecureStore。通过传入 `disableCache` 可以禁用此缓存。
 
 ```ts title="lib/auth-client.ts"
 import { createAuthClient } from "better-auth/react";
@@ -535,7 +531,7 @@ const authClient = createAuthClient({
 });
 ```
 
-**cookiePrefix**: Prefix(es) for server cookie names to identify which cookies belong to better-auth. This prevents infinite refetching when third-party cookies are set. Can be a single string or an array of strings to match multiple prefixes. Defaults to `"better-auth"`.
+**cookiePrefix**：用于识别属于 Better Auth 的服务器 Cookie 名称前缀，避免第三方 Cookie 导致无限重新请求。可以是字符串或字符串数组以匹配多个前缀。默认值为 `"better-auth"`。
 
 ```ts title="lib/auth-client.ts"
 import { createAuthClient } from "better-auth/react";
@@ -547,14 +543,14 @@ const authClient = createAuthClient({
     plugins: [
         expoClient({
             storage: SecureStore,
-            // Single prefix
+            // 单个前缀
             cookiePrefix: "better-auth"
         })
     ]
 });
 ```
 
-You can also provide multiple prefixes to match cookies from different authentication systems:
+你也可以提供多个前缀以匹配不同认证系统的 Cookie：
 
 ```ts title="lib/auth-client.ts"
 const authClient = createAuthClient({
@@ -562,7 +558,7 @@ const authClient = createAuthClient({
     plugins: [
         expoClient({
             storage: SecureStore,
-            // Multiple prefixes
+            // 多个前缀
             cookiePrefix: ["better-auth", "my-app", "custom-auth"]
         })
     ]
@@ -570,12 +566,11 @@ const authClient = createAuthClient({
 ```
 
 <Callout type="info">
-  **Important:** If you're using plugins like passkey with a custom `webAuthnChallengeCookie` option, make sure to include the cookie prefix in the `cookiePrefix` array. For example, if you set `webAuthnChallengeCookie: "my-app-passkey"`, include `"my-app"` in your `cookiePrefix`. See the [Passkey plugin documentation](/docs/plugins/passkey#expo-integration) for more details.
+  **重要提示：** 如果你使用了如 passkey 这类插件，并设置了自定义的 `webAuthnChallengeCookie`，请确保将对应前缀包含在 `cookiePrefix` 数组内。例如若配置了 `webAuthnChallengeCookie: "my-app-passkey"`，则应在 `cookiePrefix` 中包含 `"my-app"`。详情请参考[Passkey 插件文档](/docs/plugins/passkey#expo-integration)。
 </Callout>
 
+### Expo 服务器
 
-### Expo Servers
+服务器插件选项：
 
-Server plugin options:
-
-**disableOriginOverride**: Override the origin for Expo API routes (default: false). Enable this if you're facing cors origin issues with Expo API routes.
+**disableOriginOverride**：是否禁用 Expo API Routes 的 Origin 覆盖，默认值为 false。如果你遇到 Expo API Routes 的 CORS Origin 问题，可以启用此配置。

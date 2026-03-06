@@ -1,51 +1,51 @@
 ---
 title: v1.0
-description: Built-in CLI for managing your project.
+description: 管理你的项目的内置 CLI。
 date: 2021-10-01
 ---
 
-Version update
+版本更新
 
-Better Auth comes with a built-in CLI to help you manage the database schema needed for both core functionality and plugins.
+Better Auth 带有内置的 CLI，帮助你管理核心功能和插件所需的数据库 schema。
 
-## Generate
+## 生成
 
-The `generate` command creates the schema required by Better Auth. If you're using a database adapter like Prisma or Drizzle, this command will generate the right schema for your ORM. If you're using the built-in Kysely adapter, it will generate an SQL file you can run directly on your database.
+`generate` 命令创建 Better Auth 所需的 schema。如果你使用的是 Prisma 或 Drizzle 等数据库适配器，此命令会为你的 ORM 生成合适的 schema。如果你使用内置的 Kysely 适配器，它会生成一个可以直接在数据库上运行的 SQL 文件。
 
 ```bash title="Terminal"
 npx auth@latest generate
 ```
 
-### Options
+### 选项
 
-- `--output` - Where to save the generated schema. For Prisma, it will be saved in prisma/schema.prisma. For Drizzle, it goes to schema.ts in your project root. For Kysely, it’s an SQL file saved as schema.sql in your project root.
-- `--config` - The path to your Better Auth config file. By default, the CLI will search for a better-auth.ts file in **./**, **./utils**, **./lib**, or any of these directories under `src` directory.
-- `--y` - Skip the confirmation prompt and generate the schema directly.
+- `--output` - 保存生成 schema 的位置。对于 Prisma，会保存在 prisma/schema.prisma。对于 Drizzle，会保存在项目根目录的 schema.ts。对于 Kysely，是保存为项目根目录的 schema.sql 的 SQL 文件。
+- `--config` - 指定 Better Auth 配置文件的路径。默认情况下，CLI 会在 **./**、**./utils**、**./lib**，或 `src` 目录下的这些文件夹内搜索 better-auth.ts 文件。
+- `--y` - 跳过确认提示，直接生成 schema。
 
-## Migrate
+## 迁移
 
-The migrate command applies the Better Auth schema directly to your database. This is available if you’re using the built-in Kysely adapter.
+`migrate` 命令将 Better Auth 的 schema 直接应用到你的数据库。如果你使用的是内置的 Kysely 适配器，可以使用此命令。
 
 ```bash title="Terminal"
 npx auth@latest migrate
 ```
 
-### Options
+### 选项
 
-- `--config` - The path to your Better Auth config file. By default, the CLI will search for a better-auth.ts file in **./**, **./utils**, **./lib**, or any of these directories under `src` directory.
-- `--y` - Skip the confirmation prompt and apply the schema directly.
+- `--config` - 指定 Better Auth 配置文件的路径。默认情况下，CLI 会在 **./**、**./utils**、**./lib**，或 `src` 目录下的这些文件夹内搜索 better-auth.ts 文件。
+- `--y` - 跳过确认提示，直接应用 schema。
 
-## Common Issues
+## 常见问题
 
-**Error: Cannot find module X**
+**错误：找不到模块 X**
 
-If you see this error, it means the CLI can’t resolve imported modules in your Better Auth config file. We're working on a fix for many of these issues, but in the meantime, you can try the following:
+如果出现此错误，说明 CLI 无法解析 Better Auth 配置文件中的导入模块。我们正在修复许多这类问题，但目前你可以尝试：
 
-- Remove any import aliases in your config file and use relative paths instead. After running the CLI, you can revert to using aliases.
+- 移除配置文件中的任何导入别名，改用相对路径。运行 CLI 后，你可以再恢复使用别名。
 
 ## Secret
 
-The CLI also provides a way to generate a secret key for your Better Auth instance.
+CLI 还提供了为你的 Better Auth 实例生成密钥的方法。
 
 ```bash title="Terminal"
 npx auth@latest secret

@@ -1,23 +1,23 @@
 ---
-title: Drizzle ORM Adapter
-description: Integrate Better Auth with Drizzle ORM.
+title: Drizzle ORM 适配器
+description: 将 Better Auth 与 Drizzle ORM 集成。
 ---
 
-Drizzle ORM is a powerful and flexible ORM for Node.js and TypeScript. It provides a simple and intuitive API for working with databases, and supports a wide range of databases including MySQL, PostgreSQL, SQLite, and more.
+Drizzle ORM 是一个功能强大且灵活的 Node.js 和 TypeScript ORM。它提供了一个简单直观的 API 来操作数据库，支持包括 MySQL、PostgreSQL、SQLite 等多种数据库。
 
-Before getting started, make sure you have Drizzle installed and configured. For more information, see [Drizzle Documentation](https://orm.drizzle.team/docs/overview/)
+在开始之前，请确保你已经安装并配置了 Drizzle。更多信息请参见 [Drizzle 文档](https://orm.drizzle.team/docs/overview/)。
 
-## Installation
+## 安装
 
-To use the Drizzle adapter, you need to install the `@better-auth/drizzle-adapter` package:
+要使用 Drizzle 适配器，你需要安装 `@better-auth/drizzle-adapter` 包：
 
 ```package-install
 @better-auth/drizzle-adapter
 ```
 
-## Example Usage
+## 示例用法
 
-You can use the Drizzle adapter to connect to your database as follows.
+你可以按如下方式使用 Drizzle 适配器连接你的数据库。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -26,47 +26,45 @@ import { db } from "./database.ts";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { // [!code highlight]
-    provider: "sqlite", // or "pg" or "mysql" // [!code highlight]
+    provider: "sqlite", // 或者 "pg" 或 "mysql" // [!code highlight]
   }), // [!code highlight]
-  //... the rest of your config
+  //... 你的其他配置
 });
 ```
 
-## Schema generation & migration
+## 模式生成与迁移
 
-The [Better Auth CLI](/docs/concepts/cli) allows you to generate or migrate
-your database schema based on your Better Auth configuration and plugins.
+[Better Auth CLI](/docs/concepts/cli) 允许你根据 Better Auth 配置和插件来生成或迁移数据库模式。
 
-To generate the schema required by Better Auth, run the following command:
+生成 Better Auth 所需的数据库模式，运行以下命令：
 
 ```package-install
 npx auth@latest generate
 ```
 
-To generate and apply the migration, run the following commands:
+生成并应用迁移，运行以下命令：
 
-   <Tabs items={["generate", "migrate"]}>
-      <Tab value="generate">
-      ```package-install
-      npx drizzle-kit generate # generate the migration file
-      ```
-      </Tab>
-      <Tab value="migrate">
-      ```package-install
-      npx drizzle-kit migrate # apply the migration
-      ```
-      </Tab>
-    </Tabs>
+<Tabs items={["generate", "migrate"]}>
+  <Tab value="generate">
+  ```package-install
+  npx drizzle-kit generate # 生成迁移文件
+  ```
+  </Tab>
+  <Tab value="migrate">
+  ```package-install
+  npx drizzle-kit migrate # 应用迁移
+  ```
+  </Tab>
+</Tabs>
 
+## 关联查询（实验性）
 
-## Joins (Experimental)
+数据库关联查询在 Better Auth 需要从多个表中一次性获取相关数据时非常有用。
+像 `/get-session`、`/get-full-organization` 等端点都能从此功能获得显著提升，
+根据数据库延迟，性能提升可达 2 倍到 3 倍。
 
-Database joins is useful when Better-Auth needs to fetch related data from multiple tables in a single query.
-Endpoints like `/get-session`, `/get-full-organization` and many others benefit greatly from this feature,
-seeing upwards of 2x to 3x performance improvements depending on database latency.
-
-The Drizzle adapter supports joins out of the box since version `1.4.0`.
-To enable this feature, you need to set the `experimental.joins` option to `true` in your auth configuration.
+自 `1.4.0` 版本起，Drizzle 适配器开箱即用支持关联查询。
+要启用此功能，需要在你的 auth 配置中将 `experimental.joins` 选项设置为 `true`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -76,16 +74,16 @@ export const auth = betterAuth({
 });
 ```
 <Callout type="warn">
-  Please make sure that your Drizzle schema has the necessary relations defined.
-  If you do not see any relations in your Drizzle schema, you can manually add them using the [`relation`](https://orm.drizzle.team/docs/relations) drizzle-orm function
-  or run our latest CLI version `npx auth@latest generate` to generate a new Drizzle schema with the relations.
+  请确保你的 Drizzle 模式定义了必要的关联关系。
+  如果你在 Drizzle 模式中没有看到任何关联关系，可以使用 [`relation`](https://orm.drizzle.team/docs/relations) 函数手动添加关联，
+  或运行最新版本的 CLI 命令 `npx auth@latest generate` 生成包含关联的 Drizzle 模式。
 
-  Additionally, you're required to pass each [relation](https://orm.drizzle.team/docs/relations) through the drizzle adapter schema object.
+  此外，你需要将每个关联关系通过 drizzle 适配器的模式对象传入。
 </Callout>
 
-## Modifying Table Names
+## 修改表名
 
-The Drizzle adapter expects the schema you define to match the table names. For example, if your Drizzle schema maps the `user` table to `users`, you need to manually pass the schema and map it to the user table.
+Drizzle 适配器期望你定义的模式与表名一致。例如，如果 Drizzle 模式将 `user` 表映射为 `users`，你需要手动传入模式并映射到 user 表。
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -95,7 +93,7 @@ import { schema } from "./schema";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: "sqlite", // or "pg" or "mysql"
+    provider: "sqlite", // 或 "pg" 或 "mysql"
     schema: { // [!code highlight]
       ...schema, // [!code highlight]
       user: schema.users, // [!code highlight]
@@ -104,16 +102,16 @@ export const auth = betterAuth({
 });
 ```
 
-You can either modify the provided schema values like the example above,
-or you can mutate the auth config's `modelName` property directly.
-For example:
+你可以像上例这样修改提供的模式值，
+也可以直接修改 auth 配置的 `modelName` 属性。
+例如：
 
 ```ts
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: "sqlite", // or "pg" or "mysql"
+    provider: "sqlite", // 或 "pg" 或 "mysql"
     schema,
   }),
   user: {
@@ -122,32 +120,32 @@ export const auth = betterAuth({
 });
 ```
 
-## Modifying Field Names
+## 修改字段名
 
-We map field names based on property you passed to your Drizzle schema.
-For example, if you want to modify the `email` field to `email_address`,
-you simply need to change the Drizzle schema to:
+我们基于你传入 Drizzle 模式的属性映射字段名。
+例如，如果你想将 `email` 字段修改为 `email_address`，
+只需修改 Drizzle 模式为：
 
 ```ts
 export const user = mysqlTable("user", {
-  // Changed field name without changing the schema property name
-  // This allows drizzle & better-auth to still use the original field name,
-  // while your DB uses the modified field name
+  // 修改字段名但不改变模式属性名
+  // 这样 Drizzle 和 Better Auth 仍使用原始字段名，
+  // 而数据库使用修改后的字段名
   email: varchar("email_address", { length: 255 }).notNull().unique(), // [!code highlight]
-  // ... others
+  // ... 其他字段
 });
 ```
 
-You can either modify the Drizzle schema like the example above,
-or you can mutate the auth config's `fields` property directly.
-For example:
+你可以像上例一样修改 Drizzle 模式，
+也可以直接修改 auth 配置的 `fields` 属性。
+例如：
 
 ```ts
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: "sqlite", // or "pg" or "mysql"
+    provider: "sqlite", // 或 "pg" 或 "mysql"
     schema,
   }),
   user: {
@@ -158,9 +156,9 @@ export const auth = betterAuth({
 });
 ```
 
-## Using Plural Table Names
+## 使用复数表名
 
-If all your tables are using plural form, you can just pass the `usePlural` option:
+如果你的所有表名都是复数形式，你可以直接传入 `usePlural` 选项：
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -173,6 +171,6 @@ export const auth = betterAuth({
 });
 ```
 
-## Additional Information
+## 额外信息
 
-- If you're looking for performance improvements or tips, take a look at our guide to <Link href="/docs/guides/optimizing-for-performance">performance optimizations</Link>.
+- 若你正在寻找性能提升建议或技巧，请查看我们的 <Link href="/docs/guides/optimizing-for-performance">性能优化指南</Link>。

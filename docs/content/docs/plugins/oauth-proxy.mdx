@@ -1,60 +1,60 @@
 ---
-title: OAuth Proxy
-description: OAuth Proxy plugin for Better Auth
+title: OAuth 代理
+description: Better Auth 的 OAuth 代理插件
 ---
 
-A proxy plugin, that allows you to proxy OAuth requests. Useful for development and preview deployments where the redirect URL can't be known in advance to add to the OAuth provider. 
+一个代理插件，允许你代理 OAuth 请求。适用于开发和预览部署场景，在这些场景中由于无法提前确定重定向 URL 以添加到 OAuth 提供商，因此非常有用。
 
-## Installation
+## 安装
 
 <Steps>
   <Step>
-    ### Add the plugin to your **auth** config
+    ### 在你的 **auth** 配置中添加此插件
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
     import { oAuthProxy } from "better-auth/plugins" // [!code highlight]
 
     export const auth = betterAuth({
-    plugins: [
-    oAuthProxy({ // [!code highlight]
-    productionURL: "https://my-main-app.com", // Optional - if the URL isn't inferred correctly // [!code highlight]
-    currentURL: "http://localhost:3000", // Optional - if the URL isn't inferred correctly // [!code highlight]
-  }), // [!code highlight]
-    ]
-  })
+      plugins: [
+        oAuthProxy({ // [!code highlight]
+          productionURL: "https://my-main-app.com", // 可选 - 如果 URL 无法正确推断 // [!code highlight]
+          currentURL: "http://localhost:3000", // 可选 - 如果 URL 无法正确推断 // [!code highlight]
+        }), // [!code highlight]
+      ]
+    })
     ```
   </Step>
   <Step>
-    ### Add redirect URL to your OAuth provider
+    ### 在你的 OAuth 提供商处添加重定向 URL
 
-    For the proxy server to work properly, you’ll need to pass the redirect URL of your main production app registered with the OAuth provider in your social provider config. This needs to be done for each social provider you want to proxy requests for.
+    为了让代理服务器正常工作，你需要在社交提供商配置中传入注册于 OAuth 提供商的主生产环境应用的重定向 URL。每个你想代理请求的社交提供商都需要这样配置。
 
     ```ts
     export const auth = betterAuth({
-    plugins: [
-    oAuthProxy(),
-    ],
-    socialProviders: {
-    github: {
-    clientId: "your-client-id",
-    clientSecret: "your-client-secret",
-    redirectURI: "https://my-main-app.com/api/auth/callback/github" // [!code highlight]
-  }
-  }
-  })
+      plugins: [
+        oAuthProxy(),
+      ],
+      socialProviders: {
+        github: {
+          clientId: "your-client-id",
+          clientSecret: "your-client-secret",
+          redirectURI: "https://my-main-app.com/api/auth/callback/github" // [!code highlight]
+        }
+      }
+    })
     ```
   </Step>
 </Steps>
 
-## How it works
+## 工作原理
 
-The plugin allows you to use a single OAuth client (registered with your production URL) across multiple environments like preview deployments or local development.
+该插件允许你使用单一的 OAuth 客户端（注册于你的生产 URL）在多个环境中使用，比如预览部署或本地开发。
 
-1. Preview server initiates OAuth, redirecting to the OAuth provider with production's redirect URI
-2. OAuth provider callbacks to production server
-3. Production server exchanges the code for tokens and fetches user info
-4. Production server encrypts the profile data and redirects to preview server (**no database write on production**)
-5. Preview server decrypts the profile, creates user/session in its own database, and sets the session cookie
+1. 预览服务器发起 OAuth，重定向至包含生产环境重定向 URI 的 OAuth 提供商
+2. OAuth 提供商回调至生产服务器
+3. 生产服务器用 code 换取令牌并获取用户信息
+4. 生产服务器加密用户信息并重定向回预览服务器（**生产环境无数据库写入**）
+5. 预览服务器解密用户信息，在自己的数据库创建用户/会话，并设置会话 Cookie
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -65,16 +65,16 @@ await authClient.signIn.social({
 })
 ```
 
-The encrypted profile data is passed via URL query parameters and can only be decrypted by servers sharing the same secret. This also allows preview deployments to use separate databases from production if needed.
+加密的用户信息通过 URL 查询参数传递，只有共享相同密钥的服务器能解密。这也允许预览环境使用与生产环境不同的数据库（如果需要）。
 
 <Callout type="info">
-This plugin is intended for development and preview environments. If `baseURL` and `productionURL` are the same, the plugin will not proxy the request.
+此插件适用于开发和预览环境。如果 `baseURL` 和 `productionURL` 相同，插件不会代理请求。
 </Callout>
 
-## Options
+## 选项
 
-**productionURL**: If this value matches the `baseURL` in your auth config, requests will not be proxied. Defaults to the `BETTER_AUTH_URL` environment variable.
+**productionURL**：如果此值与 auth 配置中的 `baseURL` 相匹配，请求将不会被代理。默认为 `BETTER_AUTH_URL` 环境变量。
 
-**currentURL**: The application's current URL is automatically determined by the plugin. It first checks for the request URL if invoked by a client, then it checks the base URL from popular hosting providers, and finally falls back to the `baseURL` in your auth config. If the URL isn't inferred correctly, you can specify it manually here.
+**currentURL**：插件会自动确定应用当前 URL。它会优先检查请求的 URL（如果由客户端调用），然后检查流行托管服务的基 URL，最后回退到 auth 配置中的 `baseURL`。如果无法正确推断 URL，可以在此手动指定。
 
-**maxAge**: Maximum age in seconds for encrypted profile payloads. Payloads older than this will be rejected to prevent replay attacks. Keep this value short (e.g., 30-60 seconds) to minimize the window for potential replay attacks while still allowing normal OAuth flows. Defaults to `60` seconds.
+**maxAge**：加密用户信息的最大有效期（秒）。超过此时间的负载将被拒绝，以防止重放攻击。该值建议保持较短（例如 30-60 秒），以减少潜在重放攻击的窗口，同时保持正常的 OAuth 流程。默认为 `60` 秒。

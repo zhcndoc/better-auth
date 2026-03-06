@@ -1,20 +1,20 @@
 ---
 title: "Better Auth 1.4"
-description: "Stateless Auth, SCIM, Optimized database queries, additional state in OAuth flows, performance improvements, SSO domain verification, and more!"
+description: "无状态认证、SCIM、数据库查询优化、OAuth 流程中的额外状态、性能提升、SSO 域验证等等！"
 date: 2025-11-21
 author:
   name: "Bereket Engida"
   avatar: "/avatars/beka.jpg"
   twitter: "bekacru"
 image: "https://docs.better-auth.com/release-og/1-4.png"
-tags: ["1.4", "stateless sessions", "SCIM", "database indexing", "database join", "SSO domain verification", "uuid", "device authorization"]
+tags: ["1.4", "无状态会话", "SCIM", "数据库索引", "数据库连接", "SSO 域验证", "uuid", "设备授权"]
 ---
 
-## Better Auth 1.4 Release
+## Better Auth 1.4 发布
 
-We're excited to announce the release of Better Auth 1.4. This release includes several new features, performance and security improvements.
+我们很高兴宣布 Better Auth 1.4 版本发布。本次发布包含多项新功能、性能及安全改进。
 
-To upgrade, run:
+升级请运行：
 
 ```package-install
 npm install better-auth@1.4
@@ -22,19 +22,19 @@ npm install better-auth@1.4
 
 ---
 
-## 🚀 Highlights
+## 🚀 重点功能
 
-### Stateless Auth
+### 无状态认证
 
-You can now enable stateless session management without any database by omitting the `database` option in your auth config. 
+现在可以通过在认证配置中省略 `database` 选项，启用无数据库的无状态会话管理。
 
-[👉 Read more about stateless auth](/docs/concepts/session-management#stateless-session-management)
+[👉 详情请阅读无状态认证](/docs/concepts/session-management#stateless-session-management)
 
 ```ts
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    // No database configuration
+    // 无数据库配置
     socialProviders: {
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID,
@@ -44,25 +44,24 @@ export const auth = betterAuth({
 });
 ```
 
-It also supports getting `accessToken`, `accountInfo` and `refreshToken` endpoints without any database.
+此外，还支持无数据库环境下获取 `accessToken`、`accountInfo` 和 `refreshToken` 端点。
 
 ```ts
 import { authClient } from "@/lib/auth-client";
 
 const accessToken = await authClient.getAccessToken();
 
-// get account info
+// 获取账户信息
 const accountInfo = await authClient.accountInfo();
 ```
 
 ---
 
+### SCIM 配置管理
 
-### SCIM Provisioning
+SCIM 通过标准协议简化多域场景下身份管理的支持。
 
-SCIM makes managing identities in multi-domain scenarios easier to support via a standardized protocol.
-
-[👉 Read more about SCIM provisioning](/docs/plugins/scim)
+[👉 详情请阅读 SCIM 配置](/docs/plugins/scim)
 
 ```ts
 import { scim } from "@better-auth/scim";
@@ -72,14 +71,14 @@ export const auth = betterAuth({
     plugins: [scim()]
 });
 ```
+
 ---
 
+### OAuth 流程中的自定义状态
 
-### Custom State for OAuth Flows
+现在可以在 OAuth 流程中传递任意额外的状态数据。
 
-You can now provide any additional state through the OAuth flow.
-
-[👉 Read more about custom state for OAuth flows](/docs/concepts/oauth#passing-additional-data-through-oauth-flow)
+[👉 详情请阅读 OAuth 流程中的自定义状态](/docs/concepts/oauth#passing-additional-data-through-oauth-flow)
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -93,7 +92,7 @@ await authClient.signIn.social({
 });
 ```
 
-Access additional data in any hook, middleware, or endpoints
+可在任意钩子、中间件或端点中访问这些额外数据：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -108,17 +107,17 @@ const auth = betterAuth({
     }
 });
 ```
+
 ---
 
+### 数据库连接性能改进（实验性）
 
-### Database Joins Improvements (experimental)
+Better-Auth 现在支持数据库连接，使用数据库连接技术，提升 50 多个端点 2 到 3 倍的响应速度。
 
-Better-Auth now supports database joins, improving over 50 endpoints by 2 to 3x in latency. This is achieved by using database joins under the hood.
+启用方法：在认证配置的 `experimental` 中设置 `joins` 为 `true`。
+然后重新运行迁移或架构生成以使用支持连接的更新架构。
 
-To enable, simply set the `joins` flag to `true` under `experimental` in your auth config.
-Then, re-run migrations or schema generation to get the updated schema which supports joins!
-
-[👉 Read more about database joins](/docs/concepts/database#experimental-joins)
+[👉 详情请阅读数据库连接](/docs/concepts/database#experimental-joins)
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -131,17 +130,16 @@ export const auth = betterAuth({
 ```
 
 <Callout type="info">
-  Although joins are experimental, they are supported by all adapters and will be enabled by default in the next release.
+  虽然数据库连接仍为实验功能，但所有适配器均支持，且将在下一版本中默认启用。
 </Callout>
 
 ---
 
-### Secondary Storage Support for API Keys
+### API 密钥支持二级存储
 
-The API-Key plugin now supports secondary storage for faster key lookups!
+API-Key 插件新增对二级存储的支持，加快密钥查询速度！
 
-
-[👉 Read more about secondary storage for API keys](/docs/plugins/api-key#storage-modes)
+[👉 详情请阅读 API 密钥的二级存储](/docs/plugins/api-key#storage-modes)
 
 ```ts
 import { apiKey } from "@better-auth/api-key";
@@ -156,8 +154,8 @@ export const auth = betterAuth({
 ```
 
 <Accordions type="single">
-  <Accordion title="How To Migrate?">
-    1. Start with `fallbackToDatabase` enabled and `storage` set to `"secondary-storage"`:
+  <Accordion title="迁移指南">
+    1. 开始时启用 `fallbackToDatabase`，且 `storage` 设置为 `"secondary-storage"`：
 
     ```ts
     import { apiKey } from "@better-auth/api-key";
@@ -171,12 +169,11 @@ export const auth = betterAuth({
     });
     ```
 
-    This allows existing keys in the database to be accessible while new keys are stored in the secondary storage.
+    这样数据库中已有的密钥仍可访问，新密钥则存储于二级存储中。
 
-    2. **Migrate existing keys** (optional): For faster initial cache population, you can write a migration script
-    to copy all keys from the database to the secondary storage. However, this is optional since the cache will warm up automatically as keys are accessed.
+    2. **迁移现有密钥（可选）**：为加快初始缓存填充，可编写迁移脚本将数据库中所有密钥复制到二级存储。不过这一步可选，因缓存会随着访问自动升温。
 
-    3. **Disable fallback**: Once all keys are migrated or when you're confident the cache is sufficiently populated:
+    3. **禁用回退**：当所有密钥迁移完毕或缓存已充分填充后：
 
     ```ts
     import { apiKey } from "@better-auth/api-key";
@@ -186,7 +183,7 @@ export const auth = betterAuth({
         plugins: [
             apiKey({
                 storage: "secondary-storage",
-                fallbackToDatabase: false // omit, false or undefined // [!code highlight]
+                fallbackToDatabase: false // 可省略，false 或 undefined // [!code highlight]
             })
         ],
     });
@@ -195,26 +192,24 @@ export const auth = betterAuth({
   </Accordion>
 </Accordions>
 
+---
+
+### 新默认错误页面
+
+我们重新设计了错误页面，外观更美观且信息更丰富！  
+你也可以自定义默认错误页面的样式，或替换为自定义路径页面。
+
+[👉 详情请阅读错误页面改进](/docs/reference/options#onapierror)
+
+<img src="/images/blogs/1-4_error.png" alt="错误页面" className="w-full max-w-2xl mx-auto rounded-lg border border-border" />
 
 ---
 
-### New Default Error Page
+### SSO 域验证
 
-We've revamped our error page to look much better and more informative!
-You can also customize the stylings of our default error page or simply provide your own path to a custom error page.
+域验证可让应用自动信任新的 SSO 提供者，通过自动验证关联域的所有权来实现：
 
-[👉 Read more about error page improvements](/docs/reference/options#onapierror)
-
-<img src="/images/blogs/1-4_error.png" alt="Error Page" className="w-full max-w-2xl mx-auto rounded-lg border border-border" />
-
----
-
-### SSO Domain Verification
-
-Domain verification allows your application to automatically trust a new SSO provider
-by automatically validating ownership via the associated domain:
-
-👉 [Read more about domain verification](/docs/plugins/sso#domain-verification)
+👉 [详情请阅读域验证](/docs/plugins/sso#domain-verification)
 
 ```ts
 import { sso } from "@better-auth/sso";
@@ -227,9 +222,9 @@ export const auth = betterAuth({
 
 ---
 
-### CLI Database Index Support
+### CLI 支持数据库索引
 
-The Better-Auth CLI now supports indexing your database out of the box, which greatly improves the performance of your application.
+Better-Auth CLI 现在内置支持数据库索引，大大提升应用性能。
 
 ```bash
 npx auth generate
@@ -239,9 +234,9 @@ npx auth migrate
 
 ---
 
-### JWT Key Rotation Support
+### JWT 密钥轮换支持
 
-The JWT plugin now supports key rotation, allowing you to rotate your JWT keys without downtime.
+JWT 插件现支持密钥轮换，允许无停机地替换 JWT 密钥。
 
 ```ts
 import { jwt } from "@better-auth/jwt";
@@ -255,12 +250,11 @@ export const auth = betterAuth({
     ],
 });
 ```
-👉 [Read more about JWT key rotation](/docs/plugins/jwt#key-rotation)
+👉 [详情请阅读 JWT 密钥轮换](/docs/plugins/jwt#key-rotation)
 
-### Improved Generic OAuth Plugin
+### 改进的通用 OAuth 插件
 
-OAuth providers not yet supported natively will be available as pre-configured options for the generic OAuth plugin,
-with plans to eventually support all providers that Auth.js does.
+尚未原生支持的 OAuth 提供者将作为预配置选项加入通用 OAuth 插件，计划最终支持 Auth.js 的所有提供者。
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -283,13 +277,13 @@ export const auth = betterAuth({
 
 ---
 
-### Bundle Size Optimizations
+### 包体积优化
 
-If you're using custom adapters (like Prisma, Drizzle, or MongoDB),
-you can reduce your bundle size by using `better-auth/minimal` instead of better-auth.
-This version excludes Kysely, which is only needed when using direct database connections.
+如果使用自定义适配器（如 Prisma、Drizzle 或 MongoDB），  
+可通过使用 `better-auth/minimal` 替代 better-auth 来减小包体积。  
+该版本不包含 Kysely，仅在直接数据库连接时需要。
 
-[👉 Read more about bundle size optimizations](/docs/guides/optimizing-for-performance#bundle-size-optimization)
+[👉 详情请阅读包体积优化](/docs/guides/optimizing-for-performance#bundle-size-optimization)
 
 ```ts
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -303,11 +297,11 @@ export const auth = betterAuth({
 
 ---
 
-### UUID Support
+### UUID 支持
 
-We now support having UUIDs as the primary ID field type out of the box.
+现在开箱即用支持将 UUID 作为主 ID 字段类型。
 
-[👉 Read more about UUID support](/docs/concepts/database#uuids)
+[👉 详情请阅读 UUID 支持](/docs/concepts/database#uuids)
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -323,12 +317,11 @@ export const auth = betterAuth({
 
 ---
 
-### Improved Email Change Flow
+### 改进的邮箱更改流程
 
-For added security, you can now require users to confirm the change via their **current** email before
-the verification email is sent to the new address. 
+为增强安全性，现在可要求用户通过 **当前邮箱** 确认更改，之后才发送确认邮件到新地址。
 
-[👉 Read more about improved email change flow](/docs/concepts/users-accounts#confirming-with-current-email)
+[👉 详情请阅读改进的邮箱更改流程](/docs/concepts/users-accounts#confirming-with-current-email)
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -339,9 +332,9 @@ export const auth = betterAuth({
             enabled: true,
             sendChangeEmailConfirmation: async ({ user, newEmail, url, token }, request) => {
                 sendEmail({
-                    to: user.email, // Sent to the CURRENT email
-                    subject: 'Approve email change',
-                    text: `Click the link to approve the change to ${newEmail}: ${url}`
+                    to: user.email, // 发送到当前邮箱
+                    subject: '批准邮箱更改',
+                    text: `点击链接以批准更改至 ${newEmail}：${url}`
                 })
             }
         }
@@ -351,11 +344,11 @@ export const auth = betterAuth({
 
 ---
 
-### Device Authorization Plugin
+### 设备授权插件
 
-Full support for the OAuth 2.0 Device Authorization Grant (RFC 8628), allowing users to sign in on input-constrained devices like Smart TVs and gaming consoles.
+完整支持 OAuth 2.0 设备授权协议（RFC 8628），允许用户在输入受限设备（智能电视、游戏机等）上登录。
 
-[👉 Read more about Device Authorization](/docs/plugins/device-authorization)
+[👉 详情请阅读设备授权](/docs/plugins/device-authorization)
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -370,9 +363,9 @@ export const auth = betterAuth({
 
 ---
 
-### Cookie-based Account Storage
+### 基于 Cookie 的账户存储
 
-You can now store user account data in a signed cookie, which is perfect for stateless applications or when you want to defer database persistence.
+现在支持将用户账户数据存储于签名 Cookie 中，非常适合无状态应用或延迟数据库持久化。
 
 ```ts
 export const auth = betterAuth({
@@ -384,20 +377,19 @@ export const auth = betterAuth({
 
 ---
 
+## ⚠️ 破坏性变更
 
-## ⚠️ Breaking Changes
+建议逐项检查破坏性变更，确保升级顺利。
 
-We recommend going through each breaking change to ensure a smooth upgrade.
+### 现有认证流程
 
-### Existing Auth Flows
+小幅调整以提升流畅度、速度和可靠性。
 
-Minor auth flow changes to make everything smoother, faster, and more reliable.
+- **邮箱更改流程**：移除 `changeEmail` 流程中的 `sendChangeEmailVerification`，改用 `emailVerification.sendVerificationEmail`。
+- **忘记密码流程**：将 `authClient.forgotPassword` 改名为 `authClient.requestPasswordReset`。
+- **账户信息端点**：`accountInfo` 端点从 `POST /account-info` 改为 `GET /account-info`。
 
-- **Change-Email Flow**: We've removed `sendChangeEmailVerification` from the `changeEmail` flow to use `emailVerification.sendVerificationEmail` instead.
-- **Forgot Password Flow**: `authClient.forgotPassword` is now `authClient.requestPasswordReset`.
-- **Account Info Endpoint**: The `accountInfo` endpoint has changed from `POST /account-info` to `GET /account-info`.
-
-  This means any auth.api calls must change from:
+  即所有 auth.api 调用需从：
 
   ```ts
   auth.api.accountInfo({
@@ -407,7 +399,7 @@ Minor auth flow changes to make everything smoother, faster, and more reliable.
   });
   ```
 
-  to:
+  改为：
 
   ```ts
   auth.api.accountInfo({
@@ -417,40 +409,41 @@ Minor auth flow changes to make everything smoother, faster, and more reliable.
   });
   ```
 
-### Plugin Options Changes
+### 插件选项变更
 
-Multiple plugin options that accept `request` as an argument for callback functions have now replaced request with `ctx` instead. Passkey plugin is now moved to its own package, and API Key mock-sessions are now disabled by default.
+多个插件回调中的 `request` 参数改为 `ctx`。  
+Passkey 插件独立成包，API Key 的模拟会话默认关闭。
 
-- **Passkey Plugin**: The passkey plugin is now moved to its own package.
-  
-  Install it today:
+- **Passkey 插件**：已独立为单独包。
+
+  立刻安装：
 
   ```package-install
   npm install @better-auth/passkey
   ```
 
-- **Email OTP Plugin**: Plugin options for `sendVerificationOTP` and `generateOTP` now use `ctx` instead of `request` in its callback function. You can still access request via `ctx.request`.
+- **Email OTP 插件**：`sendVerificationOTP` 与 `generateOTP` 回调现使用 `ctx` 替代 `request`，可通过 `ctx.request` 访问请求对象。
 
-- **Magic Link Plugin**: Plugin options for `sendMagicLink` now uses `ctx` instead of `request` for one of its callback options. You can still access request via `ctx.request`.
+- **Magic Link 插件**：`sendMagicLink` 回调同样改为 `ctx`，访问请求使用 `ctx.request`。
 
-- **Phone Number Plugin**: Plugin options for `sendOTP`, `sendPasswordResetOTP` & `callbackOnVerification` have now replaced request with `ctx` in one of its callback options. You can still access request via `ctx.request`.
+- **Phone Number 插件**：`sendOTP`、`sendPasswordResetOTP` 及 `callbackOnVerification` 回调参数由 `request` 改为 `ctx`，请求对象在 `ctx.request`。
 
-- **Organization Plugin**: Plugin options for `teams.defaultTeam.customCreateDefaultTeam` & `teams.maximumTeams` have now replaced request with `ctx` for one of its callback options. You can still access request via `ctx.request`.
+- **Organization 插件**：`teams.defaultTeam.customCreateDefaultTeam` 与 `teams.maximumTeams` 回调中的请求参数改用 `ctx`，请求仍可通过 `ctx.request` 获取。
 
-- **OIDC Plugin**: The field `redirectURLs` have been updated to `redirectUrls`, this requires database migration.
+- **OIDC 插件**：字段 `redirectURLs` 改为 `redirectUrls`，需进行数据库迁移。
 
-- **API Key Plugin**: Mock-sessions by api-keys are now disabled by default, and should be enabled through the auth-config first.
+- **API Key 插件**：API Key 模拟会话默认关闭，需要在认证配置里显式启用。
 
-### Auth Config Changes
+### 认证配置变更
 
-Database configuration options changes.
+数据库配置选项调整。
 
-- **`advanced.generateId` removed**: The long-deprecated `advanced.generateId` has been removed. Please use `advanced.database.generateId` instead.
-- **`advanced.database.useNumberId` moved**: `advanced.database.useNumberId` has been moved to `advanced.database.generateId: "serial"` instead.
+- **移除 `advanced.generateId`**：已废弃，请使用 `advanced.database.generateId`。
+- **`advanced.database.useNumberId` 迁移**：改为 `advanced.database.generateId: "serial"`。
 
 ### Tanstack Start
 
-        The Better-Auth offered `reactStartCookies` plugin is now moved to `tanstackStartCookies` plugin.
+Better-Auth 提供的 `reactStartCookies` 插件迁移为 `tanstackStartCookies` 插件。
 
 ```diff
 - import { reactStartCookies } from "better-auth/react-start";
@@ -464,73 +457,74 @@ export const auth = betterAuth({
 
 ### Expo
 
-With the new pooling features for `useSession` on Expo, you're required to install `expo-network`:
+Expo 上的 `useSession` 新增轮询特性，需要安装 `expo-network`：
 
 ```package-install
 npx expo install expo-network
 ```
 
-### Cloudflare Runtime
+### Cloudflare 运行时
 
-Better Auth uses AsyncLocalStorage for async context tracking.
-To enable this in Cloudflare Workers, add the `nodejs_compat` flag to your `wrangler.toml`:
+Better Auth 使用 AsyncLocalStorage 进行异步上下文跟踪。  
+在 Cloudflare Workers 需于 `wrangler.toml` 中添加 `nodejs_compat` 标记以启用：
 
 ```toml title="wrangler.toml"
 compatibility_flags = ["nodejs_compat"]
 compatibility_date = "2024-09-23"
 ```
 
-Alternatively, if you only need AsyncLocalStorage support:
+若只需 AsyncLocalStorage 支持：
+
 ```toml title="wrangler.toml"
 compatibility_flags = ["nodejs_als"]
 ```
 
-In the next major release, we will assume AsyncLocalStorage support by default, so this configuration will be necessary.
+下一大版本将默认假设支持 AsyncLocalStorage，此配置届时必需。
 
 ---
 
-## ✨ More Features
+## ✨ 更多功能
 
-- **Cookie Chunking**: No more cookie size exceeding errors.
-- **MongoDB String IDs**: Support for using String IDs instead of ObjectIDs in MongoDB.
-- **JWE Cookie Cache**: Session store cookie cache now uses JWE by default for enhanced security.
-- **OIDC RP-Initiated Logout**: Trigger logout at the OIDC provider.
-- **Server-side IP Detection**: Automatic client IP detection utility.
-- **Custom OTP Verification**: Allow custom logic for OTP verification in the Phone Number plugin.
-- **Client `disableSignal`**: Option to disable default abort signal behavior in the client.
-- **`AuthClient` Type Helper**: New type helper for better client-side type inference.
-- **New Providers**: Polar and Paybin OAuth providers added.
-- **ESM Only**: Better-Auth is now 100% ESM.
-- **Session Refetching**: Support for polling & on-window-focus refetching.
-- **Cloudflare Workers**: CLI support for virtual module imports.
-- **Error Documentation**: Common OAuth flow errors are now [documented](/docs/reference/errors).
-- **Last-Login-Method**: Support for tracking SIWE & Passkey.
-
----
-
-## 🐛 Bug fixes & Improvements
-
-This release includes over 250+ bug fixes addressing issues across all areas:
-
-- **Adapter Fixes**: Improved query handling, better type transformations, UUID column types, and resolved issues with nullable foreign keys.
-- **Session Management**: Fixed session refresh triggers, improved cookie handling, and better cache management.
-- **OAuth**: Fixed state management, improved callback handling, and resolved cross-origin issues.
-- **Organization**: Fixed member deletion, team management, permission checks, and inference issues.
-- **Two-Factor**: Improved TOTP error messages, fixed backup code encryption, and better device trust handling.
-- **Email OTP:** Prevented duplicate verification emails and improved session signal triggers.
-- **SSO**: Fixed SAML callback handling, improved OIDC scope fallback, and better consent enforcement.
-- **API-Keys**: Fixed usage tracking and improved request validation.
-- **Phone Number**: Prevent unauthorized phone number updates and improved verification flow.
-- And many more!
+- **Cookie 分块**：避免 Cookie 大小超限错误。
+- **MongoDB 字符串 ID**：支持 MongoDB 使用字符串 ID 代替 ObjectID。
+- **JWE Cookie 缓存**：会话存储 Cookie 缓存改为默认使用 JWE，增强安全。
+- **OIDC RP-发起注销**：支持向 OIDC 提供者发起注销。
+- **服务器端 IP 识别**：自动客户端 IP 检测工具。
+- **自定义 OTP 验证**：Phone Number 插件现在允许自定义 OTP 验证逻辑。
+- **客户端 `disableSignal`**：客户端可关闭默认的 AbortSignal 行为。
+- **`AuthClient` 类型辅助**：新增类型辅助，提升客户端类型推导。
+- **新增提供者**：新增 Polar 和 Paybin OAuth 提供者。
+- **仅支持 ESM**：Better-Auth 完全采用 ESM。
+- **会话重新获取**：支持轮询及窗口聚焦时刷新会话。
+- **Cloudflare Workers**：CLI 支持虚拟模块导入。
+- **错误文档**：常见 OAuth 流程错误现已[文档化](/docs/reference/errors)。
+- **最后登录方式**：支持跟踪 SIWE 与 Passkey 登录方式。
 
 ---
 
-A lot of refinements to make everything smoother, faster, and more reliable.
-👉 [Check the full changelog](https://github.com/better-auth/better-auth/releases/tag/v1.4.0)
+## 🐛 Bug 修复与改进
 
-## ❤️ Contributors
+本次发布共修复 250+ 个问题，涵盖多个领域：
 
-Thanks to all the contributors for making this release possible!
+- **适配器修复**：改进查询处理，增强类型转换，支持 UUID 列类型，修复可空外键问题。
+- **会话管理**：修正会话刷新触发、优化 Cookie 处理和缓存管理。
+- **OAuth**：提升状态管理，改进回调处理，解决跨域问题。
+- **组织管理**：修复成员删除、团队管理、权限校验和推断相关问题。
+- **双因素认证**：改进 TOTP 错误消息，修复备用码加密，优化设备信任管理。
+- **Email OTP**：避免重复发送验证邮件，改进会话信号触发。
+- **SSO**：修复 SAML 回调处理，改进 OIDC 范围回退，强化同意机制。
+- **API-Keys**：修复使用统计，改进请求校验。
+- **Phone Number**：阻止未授权手机号更新，优化验证流程。
+- 以及更多修复！
+
+---
+
+大量细节优化让一切更顺畅、更快速、更可靠。  
+👉 [查看完整更新日志](https://github.com/better-auth/better-auth/releases/tag/v1.4.0)
+
+## ❤️ 贡献者
+
+感谢所有贡献者使本次发布成为可能！
 
 <Contributors usernames={[
   "zain", "dandamian", "hartbit", "rmarscher", "kaandok", "acusti", "rbayliss", "kevcube", "bsklaroff", "jonathansamines", 

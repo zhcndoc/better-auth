@@ -1,25 +1,25 @@
 ---
-title: Passkey
-description: Passkey
+title: Passkey 密钥
+description: Passkey 密钥
 ---
 
-Passkeys are a secure, passwordless authentication method using cryptographic key pairs, supported by WebAuthn and FIDO2 standards in web browsers. They replace passwords with unique key pairs: a private key stored on the user's device and a public key shared with the website. Users can log in using biometrics, PINs, or security keys, providing strong, phishing-resistant authentication without traditional passwords.
+Passkey 密钥是一种安全的无密码认证方法，使用加密密钥对，由 WebAuthn 和 FIDO2 标准支持，适用于网页浏览器。它用独特的密钥对替代密码：私钥存储在用户设备上，公钥共享给网站。用户可以通过生物识别、PIN 码或安全密钥登录，提供强大且抗钓鱼的认证，免除了传统密码的使用。
 
-The passkey plugin implementation is powered by [SimpleWebAuthn](https://simplewebauthn.dev/) behind the scenes.
+Passkey 插件的实现幕后由 [SimpleWebAuthn](https://simplewebauthn.dev/) 提供支持。
 
-## Installation
+## 安装
 
 <Steps>
     <Step>
-        ### Install the plugin
+        ### 安装插件
 
         ```package-install
         npm install @better-auth/passkey
         ```
     </Step>
     <Step>
-        ### Add the plugin to your auth config
-        To add the passkey plugin to your auth config, you need to import the plugin and pass it to the `plugins` option of the auth instance.
+        ### 将插件添加到身份验证配置中
+        要将 passkey 插件添加到您的身份验证配置中，需要导入该插件并传递给 auth 实例的 `plugins` 选项。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -33,9 +33,9 @@ The passkey plugin implementation is powered by [SimpleWebAuthn](https://simplew
         ```
     </Step>
       <Step>
-        ### Migrate the database
+        ### 数据库迁移
 
-        Run the migration or generate the schema to add the necessary fields and tables to the database.
+        运行迁移或生成架构以向数据库添加必需的字段和表。
 
         <Tabs items={["migrate", "generate"]}>
             <Tab value="migrate">
@@ -49,10 +49,10 @@ The passkey plugin implementation is powered by [SimpleWebAuthn](https://simplew
             ```
             </Tab>
         </Tabs>
-        See the [Schema](#schema) section to add the fields manually.
+        请参阅 [Schema](#schema) 部分手动添加字段。
     </Step>
     <Step>
-        ### Add the client plugin
+        ### 添加客户端插件
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
@@ -68,21 +68,21 @@ The passkey plugin implementation is powered by [SimpleWebAuthn](https://simplew
 
 </Steps>
 
-## Usage
+## 使用方法
 
-### Add/Register a passkey
+### 添加/注册 passkey 密钥
 
-To add or register a passkey make sure a user is authenticated and then call the `passkey.addPasskey` function provided by the client.
+要添加或注册 passkey 密钥，确保用户已认证，然后调用客户端提供的 `passkey.addPasskey` 函数。
 
 <APIMethod path="/passkey/add-passkey" method="POST" isClientOnly>
 ```ts
 type addPasskey = {
     /**
-     * An optional name to label the authenticator account being registered. If not provided, it will default to the user's email address or user ID
+     * 可选名称，用于标记正在注册的认证器账户。如果未提供，默认使用用户的邮件地址或用户 ID。
     */
     name?: string = "example-passkey-name"
     /**
-     * You can also specify the type of authenticator you want to register. Default behavior allows both platform and cross-platform passkeys
+     * 你也可以指定要注册的认证器类型。默认行为允许平台和跨平台的 passkey。
     */
     authenticatorAttachment?: "platform" | "cross-platform" = "cross-platform"
 }
@@ -90,49 +90,48 @@ type addPasskey = {
 </APIMethod>
 
 <Callout>
- Setting `throw: true` in the fetch options has no effect for the register and sign-in passkey responses — they will always return a data object containing the error object.
+ 在 fetch 选项中设置 `throw: true` 对注册和登录的 passkey 响应无效——它们始终返回包含错误对象的数据对象。
 </Callout>
 
 
-### Sign in with a passkey
+### 使用 passkey 登录
 
-To sign in with a passkey you can use the `signIn.passkey` method. This will prompt the user to sign in with their passkey.
-
+使用 passkey 登录可以调用 `signIn.passkey` 方法。这会提示用户使用其 passkey 登录。
 
 <APIMethod path="/sign-in/passkey" method="POST" isClientOnly>
 ```ts
 type signInPasskey = {
     /**
-     * Browser autofill, a.k.a. Conditional UI. Read more: https://simplewebauthn.dev/docs/packages/browser#browser-autofill-aka-conditional-ui
+     * 浏览器自动填充，亦称为条件 UI。更多信息：https://simplewebauthn.dev/docs/packages/browser#browser-autofill-aka-conditional-ui
     */
     autoFill?: boolean = true
 }
 ```
 </APIMethod>
 
-#### Example Usage
+#### 示例用法
 ```ts
 import { authClient } from "@/lib/auth-client";
 
-// With post authentication redirect
+// 登录后跳转
 await authClient.signIn.passkey({
     autoFill: true,
     fetchOptions: {
         onSuccess(context) {
-            // Redirect to dashboard after successful authentication
+            // 身份验证成功后跳转到仪表盘
             window.location.href = "/dashboard";
         },
         onError(context) {
-            // Handle authentication errors
-            console.error("Authentication failed:", context.error.message);
+            // 处理身份验证错误
+            console.error("身份验证失败:", context.error.message);
         }
     }
 });
 ```
 
-### List passkeys
+### 列出 passkey
 
-You can list all of the passkeys for the authenticated user by calling `passkey.listUserPasskeys`:
+您可以通过调用 `passkey.listUserPasskeys` 列出所有已认证用户的 passkey：
 
 <APIMethod
   path="/passkey/list-user-passkeys"
@@ -146,9 +145,9 @@ type listPasskeys = {
 ```
 </APIMethod>
 
-### Deleting passkeys
+### 删除 passkey
 
-You can delete a passkey by calling `passkey.delete` and providing the passkey ID.
+您可以通过调用 `passkey.delete` 并提供 passkey ID 来删除 passkey。
 
 <APIMethod
   path="/passkey/delete-passkey"
@@ -158,14 +157,14 @@ You can delete a passkey by calling `passkey.delete` and providing the passkey I
 ```ts
 type deletePasskey = {
     /**
-     * The ID of the passkey to delete. 
+     * 要删除的 passkey 的 ID。
      */
     id: string = "some-passkey-id"
 }
 ```
 </APIMethod>
 
-### Updating passkey names
+### 更新 passkey 名称
 
 <APIMethod
   path="/passkey/update-passkey"
@@ -175,44 +174,44 @@ type deletePasskey = {
 ```ts
 type updatePasskey = {
     /**
-     * The ID of the passkey which you want to update.
+     * 您想要更新的 passkey 的 ID。
      */
     id: string = "id of passkey"
     /**
-     * The new name which the passkey will be updated to. 
+     * passkey 将更新为的新名称。
      */
     name: string = "my-new-passkey-name"
 }
 ```
 </APIMethod>
 
-### Conditional UI
+### 条件 UI
 
-The plugin supports conditional UI, which allows the browser to autofill the passkey if the user has already registered a passkey.
+插件支持条件 UI，允许浏览器在用户已注册 passkey 时自动填充。
 
-There are two requirements for conditional UI to work:
+条件 UI 要正常工作需要两个条件：
 
 <Steps>
     <Step>
-        #### Update input fields
+        #### 更新输入字段
 
-        Add the `autocomplete` attribute with the value `webauthn` to your input fields. You can add this attribute to multiple input fields, but at least one is required for conditional UI to work.
+        为您的输入字段添加 `autocomplete` 属性，值为 `webauthn`。您可以为多个输入字段添加此属性，但至少一个是条件 UI 生效的前提。
 
-        The `webauthn` value should also be the last entry of the `autocomplete` attribute.
+        `webauthn` 值应为 `autocomplete` 属性中的最后一项。
 
         ```html
-        <label for="name">Username:</label>
+        <label for="name">用户名：</label>
         <input type="text" name="name" autocomplete="username webauthn">
-        <label for="password">Password:</label>
+        <label for="password">密码：</label>
         <input type="password" name="password" autocomplete="current-password webauthn">
         ```
     </Step>
     <Step>
-        #### Preload the passkeys
+        #### 预加载 passkey
 
-        When your component mounts, you can preload the user's passkeys by calling the `authClient.signIn.passkey` method with the `autoFill` option set to `true`.
+        组件挂载时，可以通过调用 `authClient.signIn.passkey` 方法并设置 `autoFill` 选项为 `true` 来预加载用户的 passkey。
 
-        To prevent unnecessary calls, we will also add a check to see if the browser supports conditional UI.
+        为避免不必要调用，我们还会检查浏览器是否支持条件 UI。
 
         <Tabs items={["React"]}>
             <Tab value="React">
@@ -233,128 +232,126 @@ There are two requirements for conditional UI to work:
 
    </Steps>
 
-Depending on the browser, a prompt will appear to autofill the passkey. If the user has multiple passkeys, they can select the one they want to use.
+根据浏览器不同，会出现提示以自动填充 passkey。如果用户有多个 passkey 可以选择想用的那个。
 
-Some browsers also require the user to first interact with the input field before the autofill prompt appears.
+某些浏览器还需要用户先与输入框互动，提示才会弹出。
 
-### Debugging
+### 调试
 
-To test your passkey implementation you can use [emulated authenticators](https://developer.chrome.com/docs/devtools/webauthn). This way you can test the registration and sign-in process without even owning a physical device.
+测试 passkey 实现可以使用[模拟认证器](https://developer.chrome.com/docs/devtools/webauthn)。这样您可以测试注册和登录流程，无需真实设备。
 
-## Schema
+## 数据库架构
 
-The plugin require a new table in the database to store passkey data.
+该插件需要在数据库中新建一张表来存储 passkey 数据。
 
-Table Name: `passkey`
+表名：`passkey`
 
 <DatabaseTable
     fields={[
         { 
             name: "id", 
             type: "string", 
-            description: "Unique identifier for each passkey",
+            description: "每个 passkey 的唯一标识",
             isPrimaryKey: true
         },
         {
             name: "name",
             type: "string",
-            description: "The name of the passkey",
+            description: "passkey 的名称",
             isOptional: true
         },
         { 
             name: "publicKey", 
             type: "string", 
-            description: "The public key of the passkey",
+            description: "passkey 的公钥",
         },
         { 
             name: "userId", 
             type: "string", 
-            description: "The ID of the user",
+            description: "用户的 ID",
             isForeignKey: true
         },
         {
             name: "credentialID",
             type: "string",
-            description: "The unique identifier of the registered credential",
+            description: "注册凭据的唯一标识",
         },
         { 
             name: "counter", 
             type: "number", 
-            description: "The counter of the passkey",
+            description: "passkey 的计数器",
         },
         {
             name: "deviceType",
             type: "string",
-            description: "The type of device used to register the passkey",
+            description: "用于注册 passkey 的设备类型",
         },
         {
             name: "backedUp",
             type: "boolean",
-            description: "Whether the passkey is backed up",
+            description: "passkey 是否已备份",
         },
         {
             name: "transports",
             type: "string",
-            description: "The transports used to register the passkey",
+            description: "用于注册 passkey 的传输方式",
             isOptional: true
         },
         { 
             name: "createdAt", 
             type: "Date", 
-            description: "The time when the passkey was created",
+            description: "passkey 创建时间",
             isOptional: true
         },
         {
                 name: "aaguid",
                 type: "string",
-                description: "Authenticator's Attestation GUID indicating the type of the authenticator",
+                description: "认证器的认证 GUID，指示认证器类型",
                 isOptional: true
         },
     ]}
     />
 
-## Options
+## 选项
 
-**rpID**: A unique identifier for your website based on your auth server origin.
-`'localhost'` is okay for local dev. RP ID can be formed by discarding zero or more labels from the left of its effective domain
-until it hits an effective TLD. So `www.example.com` can use the RP IDs `www.example.com` or `example.com`. But not `com`, because that's an eTLD.
+**rpID**：基于您的身份验证服务器源的唯一网站标识符。开发环境可用 `'localhost'`。RP ID 可通过舍弃有效顶级域名左侧的零个或多个标签而形成，例如 `www.example.com` 可使用 `www.example.com` 或 `example.com` 作为 RP ID，但不能使用顶级域名 `com`。
 
-**rpName**: Human-readable title for your website.
+**rpName**：您网站的人类可读名称。
 
-**origin**: The origin URL at which your better-auth server is hosted. `http://localhost` and `http://localhost:PORT` are also valid. Do NOT include any trailing /.
+**origin**：您的 better-auth 服务器所在的源 URL，例如 `http://localhost` 或 `http://localhost:PORT`。请勿包含尾部斜杠。
 
-**authenticatorSelection**: Allows customization of WebAuthn authenticator selection criteria. Leave unspecified for default settings.
+**authenticatorSelection**：允许自定义 WebAuthn 认证器选择标准。若不指定则为默认设置。
 
-- `authenticatorAttachment`: Specifies the type of authenticator
-    - `platform`: Authenticator is attached to the platform (e.g., fingerprint reader)
-    - `cross-platform`: Authenticator is not attached to the platform (e.g., security key)
-    - Default: `not set` (both platform and cross-platform allowed, with platform preferred)
-- `residentKey`: Determines credential storage behavior.
-    - `required`: User MUST store credentials on the authenticator (highest security)
-    - `preferred`: Encourages credential storage but not mandatory
-    - `discouraged`: No credential storage required (fastest experience)
-    - Default: `preferred`
-- `userVerification`: Controls biometric/PIN verification during authentication:
-    - `required`: User MUST verify identity (highest security)
-    - `preferred`: Verification encouraged but not mandatory
-    - `discouraged`: No verification required (fastest experience)
-    - Default: `preferred`
+- `authenticatorAttachment`：指定认证器类型
+    - `platform`：认证器连接于平台（例如指纹识别器）
+    - `cross-platform`：认证器非平台附加（例如安全密钥）
+    - 默认：未设置（允许平台和跨平台，平台优先）
+- `residentKey`：决定凭据存储行为。
+    - `required`：用户必须将凭据存储于认证器（最高安全级别）
+    - `preferred`：鼓励存储凭据，但非强制
+    - `discouraged`：不要求存储凭据（最快体验）
+    - 默认：`preferred`
+- `userVerification`：控制认证时的生物识别 / PIN 验证：
+    - `required`：用户必须验证身份（最高安全）
+    - `preferred`：建议验证，但非强制
+    - `discouraged`：无需验证（最快体验）
+    - 默认：`preferred`
 
-**advanced**: Advanced options
+**advanced**：高级选项
 
-- `webAuthnChallengeCookie`: Cookie name for storing WebAuthn challenge ID during authentication flow (Default: `better-auth-passkey`)
+- `webAuthnChallengeCookie`：认证流程中存储 WebAuthn 挑战 ID 的 cookie 名称（默认：`better-auth-passkey`）
 
-## Expo Integration
+## Expo 集成
 
-When using the passkey plugin with Expo, you need to configure the `cookiePrefix` option in the Expo client to ensure passkey cookies are properly detected and stored.
+使用 passkey 插件和 Expo 时，需要在 Expo 客户端配置 `cookiePrefix` 选项，以确保正确检测和存储 passkey cookies。
 
-By default, the passkey plugin uses `"better-auth-passkey"` as the challenge cookie name. Since this starts with `"better-auth"`, it will work with the default Expo client configuration. However, if you customize the `webAuthnChallengeCookie` option, you must also update the `cookiePrefix` in your Expo client configuration.
+默认情况下，passkey 插件使用 `"better-auth-passkey"` 作为挑战 cookie 名称。该名称以 `"better-auth"` 开头，因此适用于 Expo 客户端默认配置。但如果自定义了 `webAuthnChallengeCookie`，则必须同步更新 Expo 客户端配置中的 `cookiePrefix`。
 
-### Example Configuration
+### 示例配置
 
-If you're using a custom cookie name:
+如果你使用了自定义 cookie 名称：
 
-```ts title="Server: auth.ts"
+```ts title="服务器端: auth.ts"
 import { betterAuth } from "better-auth";
 import { passkey } from "@better-auth/passkey";
 
@@ -362,16 +359,16 @@ export const auth = betterAuth({
     plugins: [
         passkey({
             advanced: {
-                webAuthnChallengeCookie: "my-app-passkey" // Custom cookie name
+                webAuthnChallengeCookie: "my-app-passkey" // 自定义 cookie 名称
             }
         })
     ]
 });
 ```
 
-Make sure to configure your Expo client with the matching prefix:
+确保在 Expo 客户端配置中匹配该前缀：
 
-```ts title="Client: auth-client.ts"
+```ts title="客户端: auth-client.ts"
 import { createAuthClient } from "better-auth/react";
 import { expoClient } from "@better-auth/expo/client";
 import { passkeyClient } from "@better-auth/passkey/client";
@@ -382,16 +379,16 @@ export const authClient = createAuthClient({
     plugins: [
         expoClient({
             storage: SecureStore,
-            cookiePrefix: "my-app" // Must match the prefix of your custom cookie name
+            cookiePrefix: "my-app" // 必须与自定义 cookie 名称的前缀匹配
         }),
         passkeyClient()
     ]
 });
 ```
 
-If you're using multiple authentication systems or custom cookie names, you can provide an array of prefixes:
+如果使用多种认证系统或自定义多个 cookie 名称，也可以传递前缀数组：
 
-```ts title="Client: auth-client.ts"
+```ts title="客户端: auth-client.ts"
 expoClient({
     storage: SecureStore,
     cookiePrefix: ["better-auth", "my-app", "custom-auth"]
@@ -399,7 +396,7 @@ expoClient({
 ```
 
 <Callout type="warn">
-  If the `cookiePrefix` doesn't match the prefix of your `webAuthnChallengeCookie`, the passkey authentication flow will fail because the challenge cookie won't be stored and sent back to the server during verification.
+  如果 `cookiePrefix` 与您的 `webAuthnChallengeCookie` 的前缀不匹配，passkey 认证流程将会失败，因为挑战 cookie 无法存储并在验证时发送回服务器。
 </Callout>
 
-For more information on Expo integration, see the [Expo documentation](/docs/integrations/expo).
+欲了解更多 Expo 集成信息，请参见 [Expo 文档](/docs/integrations/expo)。

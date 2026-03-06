@@ -1,38 +1,37 @@
 ---
-title: Email
-description: Learn how to use email with Better Auth.
+title: 邮件
+description: 了解如何使用 Better Auth 进行邮件操作。
 ---
 
-Email is a key part of Better Auth, required for all users regardless of their authentication method. Better Auth provides email and password authentication out of the box, and a lot of utilities to help you manage email verification, password reset, and more.
+邮件是 Better Auth 的关键部分，所有用户无论使用何种认证方式都必须使用邮件。Better Auth 开箱即用提供邮件和密码认证，并提供了很多工具帮助你管理邮件验证、密码重置等功能。
 
+## 邮件验证
 
-## Email Verification
+邮件验证是一种安全功能，用于确保用户提供有效的邮件地址。它通过确认邮件地址确实属于用户，有助于防止垃圾邮件和滥用。在本指南中，你将学习如何在应用中实现基于令牌的邮件验证。  
+要使用基于 OTP 的邮件验证，请参考 [OTP 验证](/docs/plugins/email-otp) 指南。
 
-Email verification is a security feature that ensures users provide a valid email address. It helps prevent spam and abuse by confirming that the email address belongs to the user. In this guide, you'll get a walk through of how to implement token based email verification in your app.
-To use otp based email verification, check out the [OTP Verification](/docs/plugins/email-otp) guide.
+### 在你的应用中添加邮件验证
 
-### Adding Email Verification to Your App
+要启用邮件验证，你需要传入一个发送验证邮件的函数，该邮件带有一个链接。
 
-To enable email verification, you need to pass a function that sends a verification email with a link.
+- **sendVerificationEmail**：当邮件验证启动时触发的函数。它接收一个包含以下属性的数据对象：
+  - `user`：包含邮件地址的用户对象。
+  - `url`：用户必须点击以验证邮件的验证链接。
+  - `token`：验证令牌，用于完成邮件验证，可用于自定义验证链接的实现。
 
-- **sendVerificationEmail**: This function is triggered when email verification starts. It accepts a data object with the following properties:
-  - `user`: The user object containing the email address.
-  - `url`: The verification URL the user must click to verify their email.
-  - `token`: The verification token used to complete the email verification to be used when implementing a custom verification URL.
-
-and a `request` object as the second parameter.
+第二个参数是 `request` 对象。
 
 ```ts title="auth.ts"
 import { betterAuth } from 'better-auth';
-import { sendEmail } from './email'; // your email sending function
+import { sendEmail } from './email'; // 你的邮件发送函数
 
 export const auth = betterAuth({
     emailVerification: {
         sendVerificationEmail: async ({ user, url, token }, request) => {
             void sendEmail({
                 to: user.email,
-                subject: 'Verify your email address',
-                text: `Click the link to verify your email: ${url}`
+                subject: '验证你的邮件地址',
+                text: `点击链接验证你的邮件：${url}`
             })
         }
     }
@@ -40,17 +39,16 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warn">
-  Avoid awaiting the email sending to prevent 
-  timing attacks. On serverless platforms, use `waitUntil` or similar to ensure the email is sent.
+  避免等待邮件发送完成以防止定时攻击。在无服务器平台上，请使用 `waitUntil` 或类似的方法确保邮件已发送。
 </Callout>
 
-### Triggering Email Verification
+### 触发邮件验证
 
-You can initiate email verification in several ways:
+你可以通过多种方式触发邮件验证：
 
-#### 1. During Sign-up
+#### 1. 注册时
 
-To automatically send a verification email at signup, set `emailVerification.sendOnSignUp` to `true`. 
+要在注册时自动发送验证邮件，将 `emailVerification.sendOnSignUp` 设置为 `true`。
 
 ```ts title="auth.ts"
 import { betterAuth } from 'better-auth';
@@ -62,31 +60,31 @@ export const auth = betterAuth({
 })
 ```
 
-This sends a verification email when a user signs up. For social logins, email verification status is read from the SSO.
+这样用户注册时会发送验证邮件。对于社交登录，邮件验证状态会从 SSO 读取。
 
 <Callout>
-    With `sendOnSignUp` enabled, when the user logs in with an SSO that does not claim the email as verified, Better Auth will dispatch a verification email, but the verification is not required to login even when `requireEmailVerification` is enabled.
+    启用 `sendOnSignUp` 后，当用户使用不声明邮件已验证的 SSO 登录时，Better Auth 会发送验证邮件，但就算启用了 `requireEmailVerification`，该验证仍不是登录的必须条件。
 </Callout>
 
-#### 2. Require Email Verification
+#### 2. 强制邮件验证
 
-If you enable require email verification, users must verify their email before they can log in. And every time a user tries to sign in, `sendVerificationEmail` is called.
+如果启用强制邮件验证，用户必须验证邮件后才能登录。每次用户尝试登录时，都会调用 `sendVerificationEmail`。
 
 <Callout>
-    This only works if you have `sendVerificationEmail` implemented, if `sendOnSignIn` is set to true and if the user is trying to sign in with email and password.
+    这仅在你实现了 `sendVerificationEmail`，`sendOnSignIn` 设置为 true，且用户使用邮件和密码登录时有效。
 </Callout>
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
-import { sendEmail } from './email'; // your email sending function
+import { sendEmail } from './email'; // 你的邮件发送函数
 
 export const auth = betterAuth({
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
       void sendEmail({
         to: user.email,
-        subject: "Verify your email address",
-        text: `Click the link to verify your email: ${url}`,
+        subject: "验证你的邮件地址",
+        text: `点击链接验证你的邮件：${url}`,
       });
     },
     sendOnSignIn: true,
@@ -97,7 +95,7 @@ export const auth = betterAuth({
 });
 ```
 
-If a user tries to sign in without verifying their email, you can handle the error and show a message to the user.
+如果用户尝试在未验证邮件的情况下登录，你可以捕获错误并向用户显示提示。
 
 ```ts title="auth-client.ts"
 await authClient.signIn.email({
@@ -105,63 +103,63 @@ await authClient.signIn.email({
     password: "password"
 }, {
     onError: (ctx) => {
-        // Handle the error
+        // 处理错误
         if(ctx.error.status === 403) {
-            alert("Please verify your email address")
+            alert("请验证你的邮件地址")
         }
-        //you can also show the original error message
+        // 你也可以显示原始错误消息
         alert(ctx.error.message)
     }
 })
 ```
 
-#### 3. Manually
+#### 3. 手动触发
 
-You can also manually trigger email verification by calling `sendVerificationEmail`.
+你也可以通过调用 `sendVerificationEmail` 手动触发邮件验证。
 
 ```ts
 await authClient.sendVerificationEmail({
     email: "user@email.com",
-    callbackURL: "/" // The redirect URL after verification
+    callbackURL: "/" // 验证后重定向的 URL
 })
 ```
 
-### Verifying the Email
+### 验证邮件
 
-If the user clicks the provided verification URL, their email is automatically verified, and they are redirected to the `callbackURL`.
+如果用户点击验证链接，他们的邮件会被自动验证，并被重定向至 `callbackURL`。
 
-For manual verification, you can send the user a custom link with the `token` and call the `verifyEmail` function.
+对于手动验证，你可以发送带有 `token` 的自定义链接给用户，然后调用 `verifyEmail` 方法。
 
 ```ts
 await authClient.verifyEmail({
     query: {
-        token: "" // Pass the token here
+        token: "" // 在这里传递令牌
     }
 })
 ```
 
-### Auto Sign In After Verification
+### 验证后自动登录
 
-To sign in the user automatically after they successfully verify their email, set the `autoSignInAfterVerification` option to `true`:
+若你希望用户成功验证邮件后自动登录，请将 `autoSignInAfterVerification` 选项设置为 `true`：
 
 ```ts
 import { betterAuth } from "better-auth";
 
 const auth = betterAuth({
-    //...your other options
+    //... 其他配置
     emailVerification: {
         autoSignInAfterVerification: true
     }
 })
 ```
 
-### Callback after successful email verification
+### 邮件验证成功后的回调
 
-You can run custom code immediately after a user verifies their email using the `afterEmailVerification` callback. This is useful for any side-effects you want to trigger, like granting access to special features or logging the event.
+你可以使用 `afterEmailVerification` 回调，在用户验证邮件成功后立即执行自定义代码。这对于触发副作用非常有用，比如授予特殊权限或记录日志。
 
-The `afterEmailVerification` function runs automatically when a user's email is confirmed, receiving the `user` object and `request` details so you can perform actions for that specific user.
+`afterEmailVerification` 函数会在用户邮件确认时自动调用，接收 `user` 对象和 `request` 详情，以便你针对特定用户执行操作。
 
-Here's how you can set it up:
+示例如下：
 
 ```ts title="auth.ts"
 import { betterAuth } from 'better-auth';
@@ -169,22 +167,22 @@ import { betterAuth } from 'better-auth';
 export const auth = betterAuth({
     emailVerification: {
         async afterEmailVerification(user, request) {
-            // Your custom logic here, e.g., grant access to premium features
-            console.log(`${user.email} has been successfully verified!`);
+            // 你的自定义逻辑，例如授予高级功能访问权限
+            console.log(`${user.email} 已成功验证！`);
         }
     }
 })
 ```
 
-## Password Reset Email
+## 重置密码邮件
 
-Password reset allows users to reset their password if they forget it. Better Auth provides a simple way to implement password reset functionality.
+忘记密码时，重置密码功能允许用户重设密码。Better Auth 提供了简单的方式实现密码重置。
 
-You can enable password reset by passing a function that sends a password reset email with a link.
+你可以通过传入发送密码重置邮件的函数来启用密码重置功能，该邮件带有一个链接。
 
 ```ts title="auth.ts"
 import { betterAuth } from 'better-auth';
-import { sendEmail } from './email'; // your email sending function
+import { sendEmail } from './email'; // 你的邮件发送函数
 
 export const auth = betterAuth({
     emailAndPassword: {
@@ -192,8 +190,8 @@ export const auth = betterAuth({
         sendResetPassword: async ({ user, url, token }, request) => {
             void sendEmail({
                 to: user.email,
-                subject: 'Reset your password',
-                text: `Click the link to reset your password: ${url}`
+                subject: '重置你的密码',
+                text: `点击链接重置你的密码：${url}`
             })
         }
     }
@@ -201,9 +199,8 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warn">
-  Avoid awaiting the email sending to prevent 
-  timing attacks. On serverless platforms, use `waitUntil` or similar to ensure the email is sent.
+  避免等待邮件发送完成以防止定时攻击。在无服务器平台上，请使用 `waitUntil` 或类似的方法确保邮件已发送。
 </Callout>
 
-Check out the [Email and Password](/docs/authentication/email-password#request-password-reset) guide for more details on how to implement password reset in your app.
-Also you can check out the [Otp verification](/docs/plugins/email-otp#reset-password-with-otp) guide for how to implement password reset with OTP in your app.
+更多关于如何在应用中实现密码重置的信息，请查看 [邮件和密码](/docs/authentication/email-password#request-password-reset) 指南。  
+你也可以参阅 [OTP 验证](/docs/plugins/email-otp#reset-password-with-otp) 指南，了解如何用 OTP 实现密码重置。

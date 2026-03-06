@@ -1,38 +1,37 @@
 ---
 title: email_not_found
-description: The provider did not return an email address.
+description: 提供方未返回电子邮件地址。
 ---
 
-## What is it?
+## 这是什么？
 
-This error occurs during the OAuth flow when the provider does not return an email address for the user. 
-Better Auth uses the email from the provider to identify or create a user account. If the provider omits 
-the email (or returns it as empty/undefined), we cannot proceed and the request is rejected.
+当提供方在 OAuth 流程中未返回用户的电子邮件地址时，会发生此错误。  
+Better Auth 使用来自提供方的电子邮件来识别或创建用户账户。如果提供方遗漏电子邮件（或返回为空/未定义），我们无法继续，且请求会被拒绝。
 
-This error is only possible through OAuth providers. It will not occur in non-OAuth flows.
+此错误仅可能通过 OAuth 提供方出现。在非 OAuth 流程中不会发生。
 
-## Common Causes
+## 常见原因
 
-* Missing or insufficient scopes in the provider configuration (e.g., not requesting `email`).
-* The user's email is private or not exposed by default (e.g., GitHub private email).
-* The provider returns email only via a separate endpoint and the scope/API call to fetch it was not enabled 
-  (e.g., GitHub `user:email`).
-* Provider project or tenant misconfiguration (consent screen, admin consent, restricted claims/attributes).
-* Using different credentials between environments (preview/staging/prod) that do not request the same scopes.
+* 提供方配置中缺少或范围不足（例如，未请求 `email`）。
+* 用户的电子邮件是私密的，默认不显示（例如，GitHub 私密邮箱）。
+* 提供方仅通过单独的端点返回电子邮件，但未启用相应的范围/API 调用以获取电子邮件  
+  （例如，GitHub 的 `user:email`）。
+* 提供方项目或租户配置错误（同意屏幕、管理员同意、受限的声明/属性）。
+* 环境之间使用了不同的凭据（预览/测试/生产），而这些凭据请求的范围不相同。
 
-## How to resolve
+## 如何解决
 
-### Request the correct scopes
+### 请求正确的范围
 
-* Ensure your provider configuration requests the email-related scopes.
+* 确保你的提供方配置请求了与电子邮件相关的范围。
 
-### Verify provider app/dashboard settings
+### 验证提供方应用/控制台设置
 
-* In the provider's dashboard, confirm the app has permission to request email and the consent screen allows it.
+* 在提供方的控制台确认应用有权限请求电子邮件，且同意屏幕允许请求电子邮件。
 
-### Debug locally
+### 本地调试
 
-* Inspect the outgoing authorize request to confirm the scopes include `email` where required.
-* Inspect the callback payload (query, `id_token` claims, userinfo response) to see if an email claim exists.
-* Log the provider profile object received by your callback handler to verify whether `email` is present.
-* Check which environment's provider credentials are in use and whether scopes differ across environments.
+* 检查发出的授权请求，确认其范围中包含所需的 `email`。
+* 检查回调的负载（查询参数，`id_token` 中的声明，userinfo 响应）以查看是否存在电子邮件声明。
+* 记录回调处理程序接收的提供方用户资料对象，验证是否包含 `email`。
+* 检查当前使用的是哪个环境的提供方凭据，以及各环境中的范围是否一致。

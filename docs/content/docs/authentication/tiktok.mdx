@@ -1,37 +1,37 @@
 ---
 title: TikTok
-description: TikTok provider setup and usage.
+description: TikTok 提供者设置和使用说明。
 ---
 
 <Steps>
     <Step>
-        ### Get your TikTok Credentials
-        To integrate with TikTok, you need to obtain API credentials by creating an application in the [TikTok Developer Portal](https://developers.tiktok.com/apps).
+        ### 获取您的 TikTok 凭证
+        要与 TikTok 集成，您需要通过在 [TikTok 开发者门户](https://developers.tiktok.com/apps) 创建应用程序来获取 API 凭证。
 
-        Follow these steps:
-        1. Create an account on the TikTok Developer Portal
-        2. Create a new application
-        3. Set up a sandbox environment for testing
-        4. Configure your redirect URL (must be HTTPS)
-        5. Note your Client Secret and Client Key
+        请按照以下步骤操作：
+        1. 在 TikTok 开发者门户创建账号
+        2. 创建一个新应用
+        3. 设置沙箱环境进行测试
+        4. 配置重定向 URL（必须是 HTTPS）
+        5. 记下您的客户端密钥（Client Secret）和客户端键（Client Key）
 
         <Callout type="info">
-            - The TikTok API does not work with localhost. You need to use a public domain for the redirect URL and HTTPS for local testing. You can use [NGROK](https://ngrok.com/) or another similar tool for this.
-            - For testing, you will need to use the [Sandbox mode](https://developers.tiktok.com/blog/introducing-sandbox), which you can enable in the TikTok Developer Portal.
-            - The default scope is `user.info.profile`. For additional scopes, refer to the [Available Scopes](https://developers.tiktok.com/doc/tiktok-api-scopes/) documentation.
+            - TikTok API 不支持 localhost。您需要使用公开域名作为重定向 URL，并且本地测试时必须使用 HTTPS。您可以使用 [NGROK](https://ngrok.com/) 或其他类似工具。
+            - 测试时，您需要使用 [沙箱模式](https://developers.tiktok.com/blog/introducing-sandbox)，可在 TikTok 开发者门户启用。
+            - 默认权限范围是 `user.info.profile`。如需其他权限范围，请参考 [可用权限范围](https://developers.tiktok.com/doc/tiktok-api-scopes/) 文档。
         </Callout>
 
-        Make sure to set the redirect URL to a valid HTTPS domain for local development. For production, you should set it to the URL of your application. If you change the base path of the auth routes, you should update the redirect URL accordingly.
+        请确保本地开发时将重定向 URL 设置为有效的 HTTPS 域名。生产环境中，应该将其设置为您应用的 URL。如果您更改了认证路由的基础路径，应相应更新重定向 URL。
 
         <Callout type="info">
-            - The TikTok API does not provide email addresses. As a workaround, this implementation uses the user's `username` value for the `email` field, which is why it requires the `user.info.profile` scope instead of just `user.info.basic`.
-            - For production use, you will need to request approval from TikTok for the scopes you intend to use.
+            - TikTok API 不提供邮箱地址。作为解决方案，此实现使用用户的 `username` 作为 `email` 字段，因此需要 `user.info.profile` 权限范围，而非仅 `user.info.basic`。
+            - 生产环境使用时，需要向 TikTok 申请使用相关权限的审批。
         </Callout>
     </Step>
 
   <Step>
-        ### Configure the provider
-        To configure the provider, you need to import the provider and pass it to the `socialProviders` option of the auth instance.
+        ### 配置提供者
+        配置提供者时，您需要导入该提供者并将其传递给认证实例的 `socialProviders` 选项。
 
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth"
@@ -47,9 +47,9 @@ description: TikTok provider setup and usage.
         ```
     </Step>
        <Step>
-        ### Sign In with TikTok
-        To sign in with TikTok, you can use the `signIn.social` function provided by the client. The `signIn` function takes an object with the following properties:
-        - `provider`: The provider to use. It should be set to `tiktok`.
+        ### 使用 TikTok 登录
+        要使用 TikTok 登录，可以调用客户端提供的 `signIn.social` 函数。该 `signIn` 函数接收一个带有以下属性的对象：
+        - `provider`：使用的提供者，应该设置为 `tiktok`。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
