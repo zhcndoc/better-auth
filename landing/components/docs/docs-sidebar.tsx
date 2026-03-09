@@ -81,7 +81,7 @@ export function DocsSidebar() {
 				onClick={() => setOpen(true)}
 			>
 				<Search className="size-3.5 shrink-0" />
-				<span className="truncate">Search</span>
+				<span className="truncate">搜索</span>
 				<span
 					className="ml-auto flex items-center gap-1 shrink-0 text-foreground/55 hover:text-foreground/70 transition-colors"
 					onClick={(e) => {
@@ -93,7 +93,7 @@ export function DocsSidebar() {
 					tabIndex={-1}
 				>
 					<Sparkles className="size-3" />
-					<span className="text-[10px] normal-case tracking-normal">AI</span>
+					<span className="text-[10px] normal-case tracking-normal">问答</span>
 				</span>
 			</button>
 
@@ -203,7 +203,7 @@ function BranchSwitcher() {
 					<p className="text-[12px] uppercase tracking-wider text-foreground/60 block">
 						{branch}{" "}
 						<span className="text-[9px] text-foreground/40 ">
-							{branch === "main" ? "" : "pre-release"}
+							{branch === "main" ? "" : "预发布"}
 						</span>
 					</p>
 				</div>
@@ -234,7 +234,7 @@ function BranchSwitcher() {
 						>
 							<span className="grow text-left">main</span>
 							<span className="text-[10px] text-foreground/45 uppercase tracking-wider">
-								Stable
+								稳定版
 							</span>
 						</button>
 						<button
@@ -252,7 +252,7 @@ function BranchSwitcher() {
 								className="pointer-events-none no-underline! border-dashed decoration-transparent! rounded-none px-1.5 py-0 text-[9px] uppercase tracking-wider text-foreground/55 border-foreground/25"
 								variant="outline"
 							>
-								Pre-release
+								预发布
 							</Badge>
 						</button>
 					</motion.div>
@@ -508,7 +508,7 @@ function NewBadge({ isSelected }: { isSelected?: boolean }) {
 			)}
 			variant="outline"
 		>
-			New
+			新
 		</Badge>
 	);
 }

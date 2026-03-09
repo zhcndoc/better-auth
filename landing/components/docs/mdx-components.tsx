@@ -53,7 +53,7 @@ export function GenerateSecret() {
 					}
 				}}
 			>
-				{generated ? "Generated" : "Generate Secret"}
+				{generated ? "已生成" : "生成密钥"}
 			</Button>
 		</div>
 	);
@@ -393,16 +393,16 @@ export function DatabaseTable({
 					{/* Column headers */}
 					<div className="grid grid-cols-[minmax(120px,1.2fr)_minmax(100px,0.8fr)_minmax(40px,0.4fr)_minmax(150px,2fr)] border-b border-foreground/[0.06] bg-foreground/[0.02]">
 						<div className="px-4 py-1.5 text-[10px] font-mono uppercase tracking-widest text-foreground/60">
-							Field
+							字段
 						</div>
 						<div className="px-4 py-1.5 text-[10px] font-mono uppercase tracking-widest text-foreground/60">
-							Type
+							类型
 						</div>
 						<div className="px-4 py-1.5 text-[10px] font-mono uppercase tracking-widest text-foreground/60">
-							Key
+							键
 						</div>
 						<div className="px-4 py-1.5 text-[10px] font-mono uppercase tracking-widest text-foreground/60">
-							Description
+							描述
 						</div>
 					</div>
 
@@ -512,7 +512,7 @@ export function ForkButton({ url }: { url: string }) {
 			<Link href={`https://codesandbox.io/p/github/${url}`} target="_blank">
 				<Button className="gap-2" variant="outline" size="sm">
 					<ExternalLink size={12} />
-					Open in Stackblitz
+					在 StackBlitz 中打开
 				</Button>
 			</Link>
 			<Link href={`https://github.com/${url}`} target="_blank">
@@ -530,7 +530,7 @@ export function ForkButton({ url }: { url: string }) {
 							clipRule="evenodd"
 						/>
 					</svg>
-					View on GitHub
+					在 GitHub 查看
 				</Button>
 			</Link>
 		</div>
@@ -548,7 +548,7 @@ export function AddToCursor() {
 			>
 				<img
 					src="https://cursor.com/deeplink/mcp-install-dark.svg"
-					alt="Add Better Auth MCP to Cursor"
+					alt="将 Better Auth MCP 添加到 Cursor"
 					height="32"
 				/>
 			</Link>
@@ -559,7 +559,7 @@ export function AddToCursor() {
 			>
 				<img
 					src="https://cursor.com/deeplink/mcp-install-light.svg"
-					alt="Add Better Auth MCP to Cursor"
+					alt="将 Better Auth MCP 添加到 Cursor"
 					height="32"
 				/>
 			</Link>

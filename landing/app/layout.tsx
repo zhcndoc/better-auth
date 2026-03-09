@@ -1,7 +1,7 @@
 import { GeistPixelSquare } from "geist/font/pixel";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Analytics } from "@vercel/analytics/next";
+// import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import Script from "next/script";
 import type { ReactNode } from "react";
@@ -24,14 +24,14 @@ export const metadata: Metadata = {
 		process.env.VERCEL_URL
 			? `https://${process.env.VERCEL_URL}`
 			: process.env.NODE_ENV === "production"
-				? "https://better-auth.com"
+				? "https://better-auth.zhcndoc.com"
 				: (process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"),
 	),
 	title: {
-		template: "%s | Better Auth",
-		default: "Better Auth",
+		template: "%s | Better Auth 中文文档",
+		default: "Better Auth 中文文档",
 	},
-	description: "The Most Comprehensive Authentication Framework",
+	description: "最全面的身份验证框架",
 	icons: {
 		icon: [
 			{ url: "/favicon/favicon.ico", sizes: "any" },
@@ -59,8 +59,54 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
-		<html lang="en" suppressHydrationWarning>
+		<html lang="zh-CN" suppressHydrationWarning>
 			<head>
+				<Script async src="https://www.zhcndoc.com/js/common.js"></Script>
+        <Script id="wwads-inject" strategy="afterInteractive">
+          {`
+            (function () {
+              function injectAdsIntoLayout() {
+                const tocRoot = document.getElementById("nd-toc");
+                if (!tocRoot) return;
+
+                const firstChild = tocRoot.firstElementChild;
+                if (!firstChild) return;
+
+                if (firstChild.querySelector(".wwads-cn.wwads-vertical")) return;
+
+                const verticalAd = document.createElement("div");
+                verticalAd.className = "wwads-cn wwads-vertical";
+                verticalAd.setAttribute(
+                  "style",
+                  "max-width: 200px; margin-top: 0; margin-bottom: 1rem; flex-shrink: 0;"
+                );
+                verticalAd.setAttribute("data-id", "354");
+                firstChild.insertBefore(verticalAd, firstChild.firstChild);
+              }
+
+              function runWhenDomReady(fn) {
+                if (document.readyState === "loading") {
+                  document.addEventListener("DOMContentLoaded", fn, { once: true });
+                } else {
+                  fn();
+                }
+              }
+
+              runWhenDomReady(() => {
+                injectAdsIntoLayout();
+
+                const observer = new MutationObserver(() => {
+                  injectAdsIntoLayout();
+                });
+
+                observer.observe(document.body, {
+                  childList: true,
+                  subtree: true,
+                });
+              });
+            })();
+          `}
+        </Script>
 				<script
 					dangerouslySetInnerHTML={{
 						__html: `
@@ -104,7 +150,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 						</div>
 					</CommandMenuProvider>
 				</Providers>
-				<Analytics />
+				{/* <Analytics /> */}
 			</body>
 		</html>
 	);

@@ -61,15 +61,15 @@ export function getPageTree(): Root {
 			{
 				type: "folder",
 				root: true,
-				name: "Docs",
-				description: "get started, concepts, and plugins.",
+				name: "文档",
+				description: "快速开始、概念与插件。",
 				children: contents.map(contentToPageTree),
 			},
 			{
 				type: "folder",
 				root: true,
-				name: "Examples",
-				description: "exmaples and guides.",
+				name: "示例",
+				description: "示例与指南。",
 				children: examples.map(contentToPageTree),
 			},
 		],
@@ -109,7 +109,7 @@ function contentToPageTree(content: Content): Folder {
 
 export const contents: Content[] = [
 	{
-		title: "Get Started",
+		title: "快速开始",
 		Icon: () => (
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -125,7 +125,7 @@ export const contents: Content[] = [
 		),
 		list: [
 			{
-				title: "Introduction",
+				title: "简介",
 				href: "/docs/introduction",
 				icon: () => (
 					<svg
@@ -142,7 +142,7 @@ export const contents: Content[] = [
 				),
 			},
 			{
-				title: "Comparison",
+				title: "对比",
 				href: "/docs/comparison",
 				icon: () => (
 					<svg
@@ -161,7 +161,7 @@ export const contents: Content[] = [
 				),
 			},
 			{
-				title: "Installation",
+				title: "安装",
 				href: "/docs/installation",
 				icon: () => (
 					<svg
@@ -180,7 +180,7 @@ export const contents: Content[] = [
 				),
 			},
 			{
-				title: "Basic Usage",
+				title: "基础用法",
 				href: "/docs/basic-usage",
 				icon: () => (
 					<svg
@@ -199,7 +199,7 @@ export const contents: Content[] = [
 		],
 	},
 	{
-		title: "Concepts",
+		title: "概念",
 		list: [
 			{
 				href: "/docs/concepts/api",
@@ -238,7 +238,7 @@ export const contents: Content[] = [
 				href: "/docs/concepts/cli",
 			},
 			{
-				title: "Client",
+				title: "客户端",
 				href: "/docs/concepts/client",
 				icon: () => (
 					<svg
@@ -255,7 +255,7 @@ export const contents: Content[] = [
 				),
 			},
 			{
-				title: "Cookies",
+				title: "Cookie",
 				href: "/docs/concepts/cookies",
 				icon: () => (
 					<svg
@@ -272,7 +272,7 @@ export const contents: Content[] = [
 				),
 			},
 			{
-				title: "Database",
+				title: "数据库",
 				icon: (props?: SVGProps<any>) => (
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -292,7 +292,7 @@ export const contents: Content[] = [
 			},
 			{
 				href: "/docs/concepts/email",
-				title: "Email",
+				title: "电子邮件",
 				icon: (props?: SVGProps<any>) => (
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -313,7 +313,7 @@ export const contents: Content[] = [
 			},
 			{
 				href: "/docs/concepts/hooks",
-				title: "Hooks",
+				title: "钩子",
 				icon: (props?: SVGProps<any>) => (
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -333,7 +333,7 @@ export const contents: Content[] = [
 			},
 			{
 				href: "/docs/concepts/plugins",
-				title: "Plugins",
+				title: "插件",
 				icon: (props?: SVGProps<any>) => (
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -366,7 +366,7 @@ export const contents: Content[] = [
 				),
 			},
 			{
-				title: "Rate Limit",
+				title: "限流",
 				icon: () => {
 					return (
 						<svg
@@ -385,7 +385,7 @@ export const contents: Content[] = [
 				href: "/docs/concepts/rate-limit",
 			},
 			{
-				title: "Sessions",
+				title: "会话",
 				href: "/docs/concepts/session-management",
 				icon: () => (
 					<svg
@@ -421,7 +421,7 @@ export const contents: Content[] = [
 				),
 			},
 			{
-				title: "Users & Accounts",
+				title: "用户与账户",
 				href: "/docs/concepts/users-accounts",
 				icon: () => (
 					<svg
@@ -460,7 +460,7 @@ export const contents: Content[] = [
 	},
 
 	{
-		title: "Authentication",
+		title: "认证",
 		Icon: () => (
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -478,7 +478,7 @@ export const contents: Content[] = [
 		),
 		list: [
 			{
-				title: "Email & Password",
+				title: "邮箱和密码",
 				href: "/docs/authentication/email-password",
 				icon: () => (
 					<svg
@@ -497,7 +497,7 @@ export const contents: Content[] = [
 				),
 			},
 			{
-				title: "Social Sign-On",
+				title: "社交登录",
 				group: true,
 				icon: LucideAArrowDown,
 				href: "",
@@ -1156,13 +1156,13 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Others",
+				title: "其他",
 				group: true,
 				icon: () => null,
 				href: "",
 			},
 			{
-				title: "Other Social Providers",
+				title: "其他社交提供商",
 				href: "/docs/authentication/other-social-providers",
 				icon: () => (
 					<svg
@@ -1181,7 +1181,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 		],
 	},
 	{
-		title: "Databases",
+		title: "数据库",
 		Icon: () => (
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -1295,13 +1295,13 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Other Relational Databases",
+				title: "其他关系型数据库",
 				href: "/docs/adapters/other-relational-databases",
 				icon: () => <Database className="w-4 h-4 text-current" />,
 			},
 			{
 				group: true,
-				title: "Adapters",
+				title: "适配器",
 				href: "",
 				icon: () => <Database className="w-4 h-4 text-current" />,
 			},
@@ -1387,12 +1387,12 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 			},
 			{
 				group: true,
-				title: "Others",
+				title: "其他",
 				href: "",
 				icon: () => <Database className="w-4 h-4 text-current" />,
 			},
 			{
-				title: "Community Adapters",
+				title: "社区适配器",
 				href: "/docs/adapters/community-adapters",
 				icon: () => (
 					<svg
@@ -1417,7 +1417,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 		],
 	},
 	{
-		title: "Integrations",
+		title: "集成",
 		Icon: () => (
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -1437,7 +1437,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 		list: [
 			{
 				group: true,
-				title: "Full Stack",
+				title: "全栈",
 				href: "",
 				icon: LucideAArrowDown,
 			},
@@ -1484,7 +1484,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 			},
 			{
 				group: true,
-				title: "Backend",
+				title: "后端",
 				href: "",
 				icon: LucideAArrowDown,
 			},
@@ -1525,7 +1525,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 			},
 			{
 				group: true,
-				title: "Mobile & Desktop",
+				title: "移动端与桌面端",
 				href: "",
 				icon: LucideAArrowDown,
 			},
@@ -1542,7 +1542,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 		],
 	},
 	{
-		title: "Infrastructure",
+		title: "基础设施",
 		Icon: () => (
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -1558,28 +1558,28 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 		),
 		list: [
 			{
-				title: "Introduction",
+				title: "简介",
 				href: "/docs/infrastructure/introduction",
 				icon: () => <Book className="size-4" />,
 			},
 			{
-				title: "Getting Started",
+				title: "快速开始",
 				href: "/docs/infrastructure/getting-started",
 				icon: () => <Gauge className="size-4" />,
 			},
 			{
-				title: "Plugins",
+				title: "插件",
 				group: true,
 				icon: () => <Server className="size-4" />,
 				href: "",
 			},
 			{
-				title: "Dashboard",
+				title: "仪表盘",
 				href: "/docs/infrastructure/plugins/dashboard",
 				icon: () => <AppWindow className="size-4" />,
 			},
 			{
-				title: "Audit Logs",
+				title: "审计日志",
 				href: "/docs/infrastructure/plugins/audit-logs",
 				icon: () => <Logs className="size-4" />,
 			},
@@ -1589,25 +1589,25 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				icon: () => <ShieldCheck className="size-4" />,
 			},
 			{
-				title: "Services",
+				title: "服务",
 				group: true,
 				icon: () => <Server className="size-4" />,
 				href: "",
 			},
 			{
-				title: "Email",
+				title: "电子邮件",
 				href: "/docs/infrastructure/services/email",
 				icon: () => <Mail className="size-4" />,
 			},
 			{
-				title: "SMS",
+				title: "短信",
 				href: "/docs/infrastructure/services/sms",
 				icon: () => <Phone className="size-4" />,
 			},
 		],
 	},
 	{
-		title: "Plugins",
+		title: "插件",
 		Icon: () => (
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -1626,39 +1626,39 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 		),
 		list: [
 			{
-				title: "Authentication",
+				title: "认证",
 				group: true,
 				href: "",
 				icon: () => <LucideAArrowDown className="w-4 h-4" />,
 			},
 
 			{
-				title: "Two Factor",
+				title: "双因素认证",
 				icon: () => <ScanFace className="w-4 h-4" />,
 				href: "/docs/plugins/2fa",
 			},
 			{
-				title: "Username",
+				title: "用户名",
 				icon: () => <UserSquare2 className="w-4 h-4" />,
 				href: "/docs/plugins/username",
 			},
 			{
-				title: "Anonymous",
+				title: "匿名",
 				icon: () => <UserCircle className="w-4 h-4" />,
 				href: "/docs/plugins/anonymous",
 			},
 			{
-				title: "Phone Number",
+				title: "手机号",
 				icon: () => <Phone className="w-4 h-4" />,
 				href: "/docs/plugins/phone-number",
 			},
 			{
-				title: "Magic Link",
+				title: "魔法链接",
 				href: "/docs/plugins/magic-link",
 				icon: () => <Mailbox className="w-4 h-4" />,
 			},
 			{
-				title: "Email OTP",
+				title: "邮箱 OTP",
 				href: "/docs/plugins/email-otp",
 				icon: () => <Mail className="w-4 h-4" />,
 			},
@@ -1680,7 +1680,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Generic OAuth",
+				title: "通用 OAuth",
 				href: "/docs/plugins/generic-oauth",
 				icon: () => (
 					<svg
@@ -1703,7 +1703,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "One Tap",
+				title: "一键登录",
 				href: "/docs/plugins/one-tap",
 				icon: () => (
 					<svg
@@ -1722,7 +1722,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Sign In With Ethereum",
+				title: "使用以太坊登录",
 				href: "/docs/plugins/siwe",
 				icon: () => (
 					<svg
@@ -1740,13 +1740,13 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 			},
 
 			{
-				title: "Authorization",
+				title: "授权",
 				group: true,
 				href: "",
 				icon: () => <LucideAArrowDown className="w-4 h-4" />,
 			},
 			{
-				title: "Admin",
+				title: "管理员",
 				href: "/docs/plugins/admin",
 				icon: () => (
 					<svg
@@ -1768,18 +1768,18 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "API Key",
+				title: "API 密钥",
 				href: "/docs/plugins/api-key",
 				icon: () => <KeyRound className="size-4" />,
 				subpages: [
 					{
 						href: "/docs/plugins/api-key/advanced",
-						title: "Advanced Features",
+						title: "高级功能",
 						icon: () => <Zap className="size-4" />,
 					},
 					{
 						href: "/docs/plugins/api-key/reference",
-						title: "Reference",
+						title: "参考",
 						icon: () => (
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -1834,18 +1834,18 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				href: "/docs/plugins/mcp",
 			},
 			{
-				title: "Organization",
+				title: "组织",
 				icon: () => <Users2 className="w-4 h-4" />,
 				href: "/docs/plugins/organization",
 			},
 			{
-				title: "Enterprise",
+				title: "企业",
 				group: true,
 				href: "",
 				icon: () => <LucideAArrowDown className="w-4 h-4" />,
 			},
 			{
-				title: "OIDC Provider",
+				title: "OIDC 提供方",
 				href: "/docs/plugins/oidc-provider",
 				icon: () => (
 					<svg
@@ -1863,7 +1863,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "OAuth Provider",
+				title: "OAuth 提供方",
 				href: "/docs/plugins/oauth-provider",
 				icon: () => (
 					<svg
@@ -1925,7 +1925,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				isNew: true,
 			},
 			{
-				title: "Utility",
+				title: "工具",
 				group: true,
 				href: "",
 				icon: () => <LucideAArrowDown className="w-4 h-4" />,
@@ -1936,7 +1936,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				href: "/docs/plugins/bearer",
 			},
 			{
-				title: "Device Authorization",
+				title: "设备授权",
 				icon: () => (
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -1992,7 +1992,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Last Login Method",
+				title: "最近登录方式",
 				href: "/docs/plugins/last-login-method",
 				icon: () => (
 					<svg
@@ -2009,7 +2009,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Multi Session",
+				title: "多会话",
 				icon: () => (
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -2048,7 +2048,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "One-Time Token",
+				title: "一次性令牌",
 				href: "/docs/plugins/one-time-token",
 				icon: () => (
 					<svg
@@ -2068,7 +2068,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Open API",
+				title: "OpenAPI",
 				href: "/docs/plugins/open-api",
 				icon: () => (
 					<svg
@@ -2118,13 +2118,13 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				href: "/docs/plugins/jwt",
 			},
 			{
-				title: "Test Utils",
+				title: "测试工具",
 				href: "/docs/plugins/test-utils",
 				icon: () => <FlaskConical className="w-4 h-4" />,
 				isNew: true,
 			},
 			{
-				title: "Payments",
+				title: "支付",
 				group: true,
 				href: "",
 				icon: () => <LucideAArrowDown className="w-4 h-4" />,
@@ -2284,7 +2284,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Others",
+				title: "其他",
 				group: true,
 				icon: () => null,
 				href: "",
@@ -2327,7 +2327,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Community Plugins",
+				title: "社区插件",
 				href: "/docs/plugins/community-plugins",
 				icon: () => (
 					<svg
@@ -2352,7 +2352,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 		],
 	},
 	{
-		title: "Guides",
+		title: "指南",
 		Icon: () => (
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -2368,7 +2368,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 		),
 		list: [
 			{
-				title: "Create Your First Plugin",
+				title: "创建你的第一个插件",
 				href: "/docs/guides/your-first-plugin",
 				icon: () => (
 					<svg
@@ -2393,12 +2393,12 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Create a Database Adapter",
+				title: "创建数据库适配器",
 				href: "/docs/guides/create-a-db-adapter",
 				icon: () => <Database className="w-4 h-4 text-current" />,
 			},
 			{
-				title: "Browser Extension Guide",
+				title: "浏览器扩展指南",
 				href: "/docs/guides/browser-extension-guide",
 				icon: () => (
 					<svg
@@ -2419,7 +2419,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "SAML SSO with Okta",
+				title: "使用 Okta 的 SAML SSO",
 				href: "/docs/guides/saml-sso-with-okta",
 				icon: () => (
 					<svg
@@ -2434,18 +2434,18 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Optimize for Performance",
+				title: "性能优化",
 				href: "/docs/guides/optimizing-for-performance",
 				icon: () => <Gauge className="size-4" />,
 			},
 			{
-				title: "Migration",
+				title: "迁移",
 				group: true,
 				icon: () => null,
 				href: "",
 			},
 			{
-				title: "Auth.js Migration Guide",
+				title: "Auth.js 迁移指南",
 				href: "/docs/guides/next-auth-migration-guide",
 				icon: () => (
 					<svg
@@ -2536,7 +2536,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Auth0 Migration Guide",
+				title: "Auth0 迁移指南",
 				href: "/docs/guides/auth0-migration-guide",
 				icon: () => (
 					<svg
@@ -2557,7 +2557,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Clerk Migration Guide",
+				title: "Clerk 迁移指南",
 				href: "/docs/guides/clerk-migration-guide",
 				icon: () => (
 					<svg
@@ -2587,7 +2587,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Supabase Migration Guide",
+				title: "Supabase 迁移指南",
 				href: "/docs/guides/supabase-migration-guide",
 				icon: () => (
 					<svg
@@ -2637,7 +2637,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "WorkOS Migration Guide",
+				title: "WorkOS 迁移指南",
 				href: "/docs/guides/workos-migration-guide",
 				icon: () => (
 					<svg
@@ -2661,7 +2661,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 		],
 	},
 	{
-		title: "Reference",
+		title: "参考",
 		Icon: () => (
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -2677,7 +2677,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 		),
 		list: [
 			{
-				title: "Options",
+				title: "配置项",
 				href: "/docs/reference/options",
 				icon: () => (
 					<svg
@@ -2694,7 +2694,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Errors",
+				title: "错误",
 				href: "/docs/reference/errors",
 				icon: () => <TriangleAlertIcon className="w-4 h-4 text-current" />,
 				subpages: [
@@ -2746,7 +2746,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				],
 			},
 			{
-				title: "Contributing",
+				title: "贡献指南",
 				href: "/docs/reference/contributing",
 				icon: () => (
 					<svg
@@ -2763,23 +2763,23 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Resources",
+				title: "资源",
 				href: "/docs/reference/resources",
 				icon: () => <Book className="w-4 h-4 text-current" />,
 			},
 
 			{
-				title: "Security",
+				title: "安全",
 				href: "/docs/reference/security",
 				icon: () => <ShieldCheck className="w-4 h-4 text-current" />,
 			},
 			{
-				title: "Telemetry",
+				title: "遥测",
 				href: "/docs/reference/telemetry",
 				icon: () => <Binoculars className="w-4 h-4 text-current" />,
 			},
 			{
-				title: "Instrumentation",
+				title: "埋点",
 				href: "/docs/reference/instrumentation",
 				icon: () => <Activity className="w-4 h-4 text-current" />,
 			},
@@ -2794,7 +2794,7 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 
 export const examples: Content[] = [
 	{
-		title: "Examples",
+		title: "示例",
 		href: "/docs/examples/next",
 		Icon: () => (
 			<svg

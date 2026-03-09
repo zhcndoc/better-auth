@@ -50,10 +50,10 @@ export function useCommandMenu() {
 // ─── AI Suggestions ──────────────────────────────────────────────────────────
 
 const suggestions = [
-	"How to configure Sqlite database?",
-	"How to require email verification?",
-	"How to change session expiry?",
-	"How to share cookies across subdomains?",
+	"如何配置 SQLite 数据库？",
+	"如何要求邮箱验证？",
+	"如何修改会话过期时间？",
+	"如何在子域之间共享 Cookie？",
 ];
 
 // ─── Provider ────────────────────────────────────────────────────────────────
@@ -294,7 +294,7 @@ function SearchMode({
 					value={query}
 					onChange={(e) => setQuery(e.target.value)}
 					onKeyDown={handleKeyDown}
-					placeholder="Search documentation..."
+					placeholder="搜索文档..."
 					className="flex h-11 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground font-mono"
 				/>
 				<button
@@ -311,17 +311,17 @@ function SearchMode({
 			<div className="overflow-y-auto flex-1 p-1">
 				{results.isLoading && (
 					<div className="py-6 text-center text-sm text-muted-foreground">
-						Searching...
+						搜索中...
 					</div>
 				)}
 				{!results.isLoading && query && items.length === 0 && (
 					<div className="py-6 text-center text-sm text-muted-foreground">
-						No results found.
+						未找到结果。
 					</div>
 				)}
 				{!results.isLoading && !query && (
 					<div className="py-6 text-center text-sm text-muted-foreground">
-						Type to search documentation...
+						输入内容以搜索文档...
 					</div>
 				)}
 				{items.map((item, index) => {
@@ -362,7 +362,7 @@ function SearchMode({
 												: "text-muted-foreground/60 group-hover:text-foreground/80",
 										)}
 									>
-										in {pageName}
+										位于 {pageName}
 									</span>
 								)}
 							</span>
@@ -378,17 +378,17 @@ function SearchMode({
 						<kbd className="px-1 py-0.5 border border-foreground/[0.08]">
 							↑↓
 						</kbd>{" "}
-						navigate
+						移动
 					</span>
 					<span>
 						<kbd className="px-1 py-0.5 border border-foreground/[0.08]">↵</kbd>{" "}
-						open
+						打开
 					</span>
 					<span>
 						<kbd className="px-1 py-0.5 border border-foreground/[0.08]">
 							esc
 						</kbd>{" "}
-						close
+						关闭
 					</span>
 				</div>
 			</div>
@@ -488,7 +488,7 @@ function AIMode({
 						onChange={setInput}
 						onSubmit={onStart}
 						disabled={isLoading}
-						placeholder={isLoading ? "Answering..." : "Ask BA Bot..."}
+						placeholder={isLoading ? "回答中..." : "向 BA 助手提问..."}
 					/>
 					{isLoading ? (
 						<button
@@ -521,9 +521,9 @@ function AIMode({
 			>
 				{showSuggestions && (
 					<div className="flex flex-col gap-3">
-						<p className="text-xs text-muted-foreground">Try asking:</p>
+						<p className="text-xs text-muted-foreground">可以试试：</p>
 						<p className="text-xs text-muted-foreground/80">
-							We also offer{" "}
+							我们也提供适用于本地开发集成的{" "}
 							<a
 								href="https://docs.inkeep.com/talk-to-your-agents/vercel-ai-sdk/inkeep-provider#installation"
 								target="_blank"
@@ -532,16 +532,16 @@ function AIMode({
 							>
 								Skills
 							</a>{" "}
-							and{" "}
+							和{" "}
 							<a
 								href="https://docs.inkeep.com/talk-to-your-agents/vercel-ai-sdk/inkeep-provider#installation"
 								target="_blank"
 								rel="noreferrer"
 								className="underline hover:text-foreground transition-colors"
 							>
-								MCP servers
+								MCP 服务器
 							</a>{" "}
-							for local development integrations.
+							能力。
 						</p>
 						<div className="flex flex-wrap gap-2">
 							{suggestions.map((s) => (
@@ -592,14 +592,14 @@ function AIMode({
 							className="flex items-center gap-1 hover:text-foreground transition-colors"
 						>
 							<Trash2 className="size-3" />
-							<span>Clear</span>
+							<span>清空</span>
 						</button>
 					)}
 					<span>
 						<kbd className="px-1 py-0.5 border border-foreground/[0.08]">
 							esc
 						</kbd>{" "}
-						close
+						关闭
 					</span>
 				</div>
 				<div className="flex items-center gap-1 truncate">
@@ -609,7 +609,7 @@ function AIMode({
 						rel="noreferrer"
 						className="hover:text-foreground transition-colors"
 					>
-						Powered by Inkeep
+						由 Inkeep 提供支持
 					</a>
 				</div>
 			</div>
@@ -675,8 +675,8 @@ function AIMessage({
 	isStreaming?: boolean;
 } & ComponentProps<"div">) {
 	const roleName: Record<string, string> = {
-		user: "you",
-		assistant: "BA bot",
+		user: "你",
+		assistant: "BA 助手",
 	};
 
 	let markdown = "";
@@ -705,7 +705,7 @@ function AIMessage({
 					message.role === "assistant" && "text-foreground",
 				)}
 			>
-				{roleName[message.role] ?? "unknown"}
+				{roleName[message.role] ?? "未知"}
 			</p>
 			<div className="text-sm prose prose-sm max-w-none">
 				<Markdown text={markdown} />
@@ -731,7 +731,7 @@ function AIMessage({
 function ThinkingIndicator() {
 	return (
 		<div className="flex flex-col">
-			<p className="mb-1 text-xs font-medium text-muted-foreground">BA bot</p>
+			<p className="mb-1 text-xs font-medium text-muted-foreground">BA 助手</p>
 			<div className="flex gap-1 items-end text-sm text-muted-foreground">
 				<div className="flex gap-1 items-center opacity-70">
 					<span className="inline-block size-1 bg-foreground rounded-full animate-bounce [animation-delay:0ms]" />

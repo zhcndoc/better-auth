@@ -1,0 +1,5 @@
+{
+  "app_dir": "/",
+  "build_command": "cd landing && pnpm run build",
+  "start_command": "cd landing && pnpm run start"
+}

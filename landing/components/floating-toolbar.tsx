@@ -22,7 +22,7 @@ export function FloatingToolbar() {
 				<kbd className="flex items-center gap-0.5 text-[10px] font-mono">
 					<span className="text-[11px]">&#8984;</span>K
 				</kbd>
-				<span className="sr-only">Command menu</span>
+				<span className="sr-only">命令菜单</span>
 			</button>
 			<span className="w-px h-3 bg-foreground/[0.08]" />
 			<div className="flex items-center justify-center size-9 [&_button]:text-foreground/40 [&_button:hover]:text-foreground/70">

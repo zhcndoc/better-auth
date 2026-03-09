@@ -38,31 +38,31 @@ const mcpCommands = [
 			"claude mcp add --transport http better-auth https://mcp.inkeep.com/better-auth/mcp",
 	},
 	{ name: "Open Code", command: "npx auth mcp --open-code" },
-	{ name: "Manual", command: "npx auth mcp --manual" },
+	{ name: "手动", command: "npx auth mcp --manual" },
 ];
 
-const aiPromptText = `Set up authentication in my project using Better Auth (better-auth npm package).
+const aiPromptText = `请使用 Better Auth（better-auth npm 包）为我的项目配置认证。
 
-1. Install better-auth. If I already have a database configured in this project, use that — don't set up a new one.
+1. 安装 better-auth。如果我的项目已经配置了数据库，就直接复用，不要新建数据库。
 
-2. Create lib/auth.ts — call betterAuth() with:
-   - My existing database connection (or a new SQLite/Postgres setup if none exists)
-   - emailAndPassword enabled
-   - Any social providers if I have OAuth credentials in my env
+2. 创建 lib/auth.ts，调用 betterAuth() 并传入：
+	- 我现有的数据库连接（如果没有，再新建 SQLite/Postgres 配置）
+	- 启用 emailAndPassword
+	- 如果环境变量里有 OAuth 凭据，则配置对应的社交登录提供商
 
-3. Create lib/auth-client.ts — use the correct framework import:
-   - React/Next.js: "better-auth/react"
-   - Vue: "better-auth/vue"
-   - Svelte: "better-auth/svelte"
-   - Vanilla: "better-auth/client"
+3. 创建 lib/auth-client.ts，并使用正确的框架导入：
+	- React/Next.js: "better-auth/react"
+	- Vue: "better-auth/vue"
+	- Svelte: "better-auth/svelte"
+	- Vanilla: "better-auth/client"
 
-4. Add the API route handler for my framework (e.g. app/api/auth/[...all]/route.ts for Next.js App Router).
+4. 为我的框架添加 API 路由处理器（例如 Next.js App Router 的 app/api/auth/[...all]/route.ts）。
 
-5. Add BETTER_AUTH_SECRET to my .env if it doesn't exist (generate a 32+ char secret).
+5. 如果 .env 中不存在 BETTER_AUTH_SECRET，就补充一个（生成一个至少 32 个字符的密钥）。
 
-6. Run npx auth migrate to apply database migrations.
+6. 运行 npx auth migrate 以应用数据库迁移。
 
-Refer to better-auth.com/docs for exact API and plugin syntax.`;
+准确的 API 和插件语法请参考 better-auth.com/docs。`;
 
 function CredentialFields() {
 	const emailText = "user@email.com";
@@ -236,7 +236,7 @@ function InstallBlock() {
 							: "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-400",
 					)}
 				>
-					Prompt
+					提示词
 					{mode === "prompt" && (
 						<div className="absolute bottom-0 left-4 right-4 h-[1.5px] bg-neutral-600 dark:bg-neutral-400" />
 					)}
@@ -323,7 +323,7 @@ function InstallBlock() {
 													copy("npx skills add better-auth/skills")
 												}
 												className="text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors p-1"
-												aria-label="Copy command"
+												aria-label="复制命令"
 											>
 												{copied ? (
 													<svg
@@ -357,7 +357,7 @@ function InstallBlock() {
 														setPmOpen(!pmOpen);
 													}}
 													className="text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors p-1"
-													aria-label="Copy command"
+													aria-label="复制命令"
 												>
 													{copied ? (
 														<svg
@@ -389,7 +389,7 @@ function InstallBlock() {
 															className="fixed inset-0 z-40"
 															role="button"
 															tabIndex={-1}
-															aria-label="Close dropdown"
+															aria-label="关闭下拉菜单"
 															onClick={() => setPmOpen(false)}
 															onKeyDown={(e) => {
 																if (e.key === "Escape") setPmOpen(false);
@@ -538,7 +538,7 @@ function InstallBlock() {
 												setPmOpen(!pmOpen);
 											}}
 											className="text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors p-1"
-											aria-label="Add MCP"
+											aria-label="添加 MCP"
 										>
 											{copied ? (
 												<svg
@@ -570,7 +570,7 @@ function InstallBlock() {
 													className="fixed inset-0 z-40"
 													role="button"
 													tabIndex={-1}
-													aria-label="Close dropdown"
+													aria-label="关闭下拉菜单"
 													onClick={() => setPmOpen(false)}
 													onKeyDown={(e) => {
 														if (e.key === "Escape") setPmOpen(false);
@@ -671,17 +671,15 @@ function InstallBlock() {
 							) : (
 								<div className="bg-neutral-100/50 dark:bg-[#050505] px-5 py-4">
 									<p className="text-[13px] font-medium text-neutral-700 dark:text-neutral-200 leading-relaxed">
-										Set up authentication in my project using Better Auth.
+										使用 Better Auth 为我的项目配置认证。
 									</p>
 									<div className="relative mt-1.5">
 										<p className="text-[11px] text-neutral-400 dark:text-neutral-500 leading-relaxed line-clamp-2">
-											Install better-auth. If I already have a database
-											configured, use that. Create lib/auth.ts with{" "}
+											安装 better-auth。如果已经配置了数据库，就直接复用。创建 lib/auth.ts 并调用{" "}
 											<code className="text-neutral-500 dark:text-neutral-400">
 												betterAuth()
 											</code>
-											, create auth-client.ts, add the route handler, run
-											migrations...
+											，创建 auth-client.ts，添加路由处理器，并执行迁移……
 										</p>
 										<div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-neutral-100/50 dark:from-[#050505] to-transparent pointer-events-none" />
 									</div>
@@ -700,7 +698,7 @@ function InstallBlock() {
 													d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5M12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5s5 2.24 5 5s-2.24 5-5 5m0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3s3-1.34 3-3s-1.34-3-3-3"
 												/>
 											</svg>
-											View full prompt
+											查看完整提示词
 										</button>
 										<button
 											onClick={() => copy(aiPromptText)}
@@ -718,7 +716,7 @@ function InstallBlock() {
 															d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41z"
 														/>
 													</svg>
-													Copied
+													已复制
 												</>
 											) : (
 												<>
@@ -732,7 +730,7 @@ function InstallBlock() {
 															d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2m0 16H8V7h11z"
 														/>
 													</svg>
-													Copy prompt
+													复制提示词
 												</>
 											)}
 										</button>
@@ -809,7 +807,7 @@ function InstallBlock() {
 													d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41z"
 												/>
 											</svg>
-											Copied
+													已复制
 										</>
 									) : (
 										<>
@@ -823,7 +821,7 @@ function InstallBlock() {
 													d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2m0 16H8V7h11z"
 												/>
 											</svg>
-											Copy prompt
+													复制提示词
 										</>
 									)}
 								</button>
@@ -838,54 +836,54 @@ function InstallBlock() {
 
 const sentinelEvents = [
 	{
-		action: "Blocked",
+		action: "已拦截",
 		color: "bg-red-500",
 		identifier: "akash.prish@dropmeon.com",
 		ip: "::1",
-		reason: "Disposable Email",
-		location: "Unknown",
+		reason: "临时邮箱",
+		location: "未知",
 		path: "/sign-up/email",
-		time: "2 min ago",
+		time: "2 分钟前",
 	},
 	{
-		action: "Blocked",
+		action: "已拦截",
 		color: "bg-red-500",
 		identifier: "kamef69609@cucadas.com",
 		ip: "Unknown IP",
-		reason: "Disposable Email",
-		location: "Unknown",
+		reason: "临时邮箱",
+		location: "未知",
 		path: "/sign-up/email",
-		time: "4 min ago",
+		time: "4 分钟前",
 	},
 	{
-		action: "Challenged",
+		action: "已质询",
 		color: "bg-yellow-500",
 		identifier: "195.142.xx.xx",
 		ip: "",
-		reason: "Suspicious IP",
+		reason: "可疑 IP",
 		location: "Moscow, RU",
 		path: "/sign-in",
-		time: "7 min ago",
+		time: "7 分钟前",
 	},
 	{
-		action: "Blocked",
+		action: "已拦截",
 		color: "bg-red-500",
 		identifier: "bot-crawler-7x",
 		ip: "52.14.xx.xx",
-		reason: "Bot Detected",
+		reason: "检测到机器人",
 		location: "US-East",
 		path: "/api/auth",
-		time: "12 min ago",
+		time: "12 分钟前",
 	},
 	{
-		action: "Blocked",
+		action: "已拦截",
 		color: "bg-red-500",
 		identifier: "admin@tempmail.ninja",
 		ip: "::1",
-		reason: "Breached Password",
-		location: "Unknown",
+		reason: "泄露密码",
+		location: "未知",
 		path: "/sign-up/email",
-		time: "18 min ago",
+		time: "18 分钟前",
 	},
 ];
 
@@ -901,12 +899,10 @@ function SentinelSection() {
 
 			<div className="mb-5">
 				<h3 className="text-base sm:text-lg  text-neutral-800 dark:text-neutral-200 leading-snug mb-2">
-					Security infrastructure for your app.
+					为你的应用提供安全基础设施。
 				</h3>
 				<p className="text-[14px] text-foreground/70 dark:text-foreground/55 leading-relaxed max-w-2xl">
-					Bot detection, brute force protection, disposable email blocking, geo
-					restrictions, and more &mdash; all working in real time before threats
-					reach your users.
+					机器人检测、暴力破解防护、临时邮箱拦截、地理位置限制等能力，都会在威胁触达用户之前实时生效。
 				</p>
 			</div>
 
@@ -970,14 +966,14 @@ function SentinelSection() {
 								Sentinel
 							</span>
 							<span className="text-[10px] font-mono text-foreground/50  ml-1">
-								Monitor and analyze security events
+								监控并分析安全事件
 							</span>
 						</div>
 						<div className="hidden sm:flex items-center gap-3">
 							<span className="flex items-center gap-1.5 text-[9px] font-mono">
 								<span className="size-1.5 rounded-full bg-red-500" />
 								<span className="text-foreground/50 dark:text-foreground/35">
-									Blocked
+									已拦截
 								</span>
 								<span className="text-foreground/70 dark:text-foreground/50">
 									847
@@ -986,7 +982,7 @@ function SentinelSection() {
 							<span className="flex items-center gap-1.5 text-[9px] font-mono">
 								<span className="size-1.5 rounded-full bg-yellow-500" />
 								<span className="text-foreground/50 dark:text-foreground/35">
-									Challenged
+									已质询
 								</span>
 								<span className="text-foreground/70 dark:text-foreground/50">
 									124
@@ -995,7 +991,7 @@ function SentinelSection() {
 							<span className="flex items-center gap-1.5 text-[9px] font-mono">
 								<span className="size-1.5 rounded-full bg-green-500" />
 								<span className="text-foreground/50 dark:text-foreground/35">
-									Allowed
+									已放行
 								</span>
 								<span className="text-foreground/70 dark:text-foreground/50">
 									12.4k
@@ -1007,22 +1003,22 @@ function SentinelSection() {
 					{/* Table header */}
 					<div className="grid grid-cols-[70px_1fr_100px_70px_80px] sm:grid-cols-[70px_1fr_110px_80px_70px_80px] gap-0 px-4 py-2 border-b border-foreground/[0.06] bg-foreground/[0.01]">
 						<span className="text-[9px] font-mono uppercase tracking-wider text-foreground/35 dark:text-foreground/50">
-							Action
+							操作
 						</span>
 						<span className="text-[9px] font-mono uppercase tracking-wider text-foreground/35 dark:text-foreground/50">
-							Identifier
+							标识
 						</span>
 						<span className="text-[9px] font-mono uppercase tracking-wider text-foreground/35 dark:text-foreground/50">
-							Reason
+							原因
 						</span>
 						<span className="hidden sm:block text-[9px] font-mono uppercase tracking-wider text-foreground/35 dark:text-foreground/50">
-							Location
+							位置
 						</span>
 						<span className="text-[9px] font-mono uppercase tracking-wider text-foreground/35 dark:text-foreground/50">
-							Path
+							路径
 						</span>
 						<span className="text-[9px] font-mono uppercase tracking-wider text-foreground/35 dark:text-foreground/50 text-right">
-							Time
+							时间
 						</span>
 					</div>
 
@@ -1039,7 +1035,7 @@ function SentinelSection() {
 								<span
 									className={cn(
 										"text-[10px] font-mono",
-										event.action === "Blocked"
+										event.action === "已拦截"
 											? "text-red-500/80 dark:text-red-400/70"
 											: "text-yellow-500/80 dark:text-yellow-400/70",
 									)}
@@ -1079,7 +1075,7 @@ function SentinelSection() {
 				{(
 					[
 						{
-							tag: "Bot Detection",
+							tag: "机器人检测",
 							icon: (
 								<>
 									<circle cx="12" cy="12" r="10" />
@@ -1089,7 +1085,7 @@ function SentinelSection() {
 							),
 						},
 						{
-							tag: "Brute Force",
+							tag: "暴力破解",
 							icon: (
 								<>
 									<rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
@@ -1098,7 +1094,7 @@ function SentinelSection() {
 							),
 						},
 						{
-							tag: "Breached Passwords",
+							tag: "泄露密码",
 							icon: (
 								<>
 									<path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z" />
@@ -1107,7 +1103,7 @@ function SentinelSection() {
 							),
 						},
 						{
-							tag: "Impossible Travel",
+							tag: "异常异地登录",
 							icon: (
 								<>
 									<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
@@ -1115,7 +1111,7 @@ function SentinelSection() {
 							),
 						},
 						{
-							tag: "Rate Limiting",
+							tag: "限流",
 							icon: (
 								<>
 									<circle cx="12" cy="12" r="10" />
@@ -1124,7 +1120,7 @@ function SentinelSection() {
 							),
 						},
 						{
-							tag: "Geo Blocking",
+							tag: "地域封锁",
 							icon: (
 								<>
 									<circle cx="12" cy="12" r="10" />
@@ -1134,7 +1130,7 @@ function SentinelSection() {
 							),
 						},
 						{
-							tag: "Suspicious IPs",
+							tag: "可疑 IP",
 							icon: (
 								<>
 									<path d="M6 18h8" />
@@ -1147,7 +1143,7 @@ function SentinelSection() {
 							),
 						},
 						{
-							tag: "Disposable Emails",
+							tag: "临时邮箱",
 							icon: (
 								<>
 									<rect width="20" height="16" x="2" y="4" rx="2" />
@@ -1156,7 +1152,7 @@ function SentinelSection() {
 							),
 						},
 						{
-							tag: "Email Abuse",
+							tag: "邮箱滥用",
 							icon: (
 								<>
 									<path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.8 0L13 14" />
@@ -1167,7 +1163,7 @@ function SentinelSection() {
 							),
 						},
 						{
-							tag: "Free Trial Abuse",
+							tag: "试用滥用",
 							icon: (
 								<>
 									<path d="M6 3h12l4 6-10 13L2 9Z" />
@@ -1177,7 +1173,7 @@ function SentinelSection() {
 							),
 						},
 						{
-							tag: "Stale Users",
+							tag: "沉寂用户",
 							icon: (
 								<>
 									<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -1237,17 +1233,17 @@ function ContributorsSection({
 	return (
 		<div className="mt-10 pt-8">
 			<div className="flex items-center gap-3 mb-2">
-				<span className="text-base text-foreground/85 dark:text-foreground/75">
-					Contributors
+					<span className="text-base text-foreground/85 dark:text-foreground/75">
+						贡献者
 				</span>
 				<div className="h-px flex-1 bg-foreground/[0.08]" />
 			</div>
 			<p className="text-[13px] text-foreground/50 dark:text-foreground/40 mb-5 leading-relaxed">
-				Built by a community of{" "}
+				由超过{" "}
 				<span className="text-foreground/70 dark:text-foreground/60 font-medium tabular-nums">
 					746+
 				</span>{" "}
-				contributors.
+				位贡献者共同打造。
 			</p>
 
 			{contributors.length > 0 && (
@@ -1328,11 +1324,11 @@ function formatCount(num: number | null | undefined): string {
 }
 
 const footerLinks = [
-	{ label: "Terms", href: "/legal/terms" },
-	{ label: "Privacy", href: "/legal/privacy" },
-	{ label: "Blog", href: "/blog" },
-	{ label: "Community", href: "/community" },
-	{ label: "Changelog", href: "/changelog" },
+	{ label: "条款", href: "/legal/terms" },
+	{ label: "隐私", href: "/legal/privacy" },
+	{ label: "博客", href: "/blog" },
+	{ label: "社区", href: "/community" },
+	{ label: "更新日志", href: "/changelog" },
 ];
 
 function ReadmeFooter({
@@ -1378,7 +1374,7 @@ function ReadmeFooter({
 			{/* CTA */}
 			<div className="relative">
 				<p className="text-center text-[15px] text-foreground/60 dark:text-foreground/50 tracking-tight">
-					Roll your own auth with confidence in minutes.
+					几分钟内，自信构建属于你自己的认证系统。
 				</p>
 
 				<div className="flex items-center justify-center gap-4 mt-4">
@@ -1386,13 +1382,13 @@ function ReadmeFooter({
 						href="https://dash.better-auth.com/sign-in"
 						className="inline-flex items-center gap-1.5 px-5 py-2 bg-foreground text-background text-[11px] font-mono uppercase tracking-wider hover:opacity-90 transition-opacity"
 					>
-						Get Started
+						开始使用
 					</a>
 					<Link
 						href="/docs"
 						className="inline-flex items-center gap-1.5 px-4 py-2 border border-foreground/12 text-foreground/50 dark:text-foreground/40 hover:text-foreground/70 hover:border-foreground/25 text-[11px] font-mono uppercase tracking-wider transition-all"
 					>
-						Read Docs
+						阅读文档
 					</Link>
 				</div>
 
@@ -1541,10 +1537,7 @@ export function HeroReadMe({
 						</h1>
 
 						<p className="text-sm sm:text-[14px] text-neutral-600 dark:text-neutral-300 leading-[1.8] sm:leading-[1.9] mb-5 sm:mb-6">
-							Better Auth is an authentication framework. It provides a
-							comprehensive set of features out of the box and includes a Plugin
-							ecosystem that simplifies adding advanced functionalities and
-							infrastructure to help own your auth at scale.
+							Better Auth 是一个认证框架。它开箱即用地提供完整的功能集，并拥有插件生态，能更轻松地扩展高级能力和基础设施，帮助你在大规模场景下掌控自己的认证系统。
 						</p>
 
 						<InstallBlock />
@@ -1552,7 +1545,7 @@ export function HeroReadMe({
 						<div className="flex items-center gap-3 my-4">
 							<div className="flex-1 border-t border-foreground/6"></div>
 							<span className="text-[10px] text-foreground/50 dark:text-foreground/50 font-mono tracking-wider uppercase shrink-0">
-								Trusted By
+								受到信赖
 							</span>
 						</div>
 
@@ -1560,7 +1553,7 @@ export function HeroReadMe({
 
 						<div className="flex items-center gap-3 my-4">
 							<span className="text-[10px] text-foreground/50 dark:text-foreground/50 font-mono tracking-wider uppercase shrink-0">
-								Features
+								特性
 							</span>
 							<div className="flex-1 border-t border-foreground/10"></div>
 						</div>
@@ -1568,66 +1561,66 @@ export function HeroReadMe({
 						<div className="relative grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 mb-2 border border-foreground/15 overflow-hidden">
 							{[
 								{
-									label: "Framework Agnostic",
-									headline: "Works with your stack.",
-									desc: "First-class support for Next.js, Nuxt, SvelteKit, Astro, Hono, Express, and 20+ more.",
+									label: "框架无关",
+									headline: "适配你的技术栈。",
+									desc: "对 Next.js、Nuxt、SvelteKit、Astro、Hono、Express 等 20 多种框架提供一流支持。",
 									logos: true,
 									href: "/docs",
 								},
 								{
-									label: "Email & Password",
-									headline: "Built-in credential auth.",
-									desc: "Session management, email verification, and password reset out of the box.",
+									label: "邮箱和密码",
+									headline: "内置凭证认证。",
+									desc: "开箱即用支持会话管理、邮箱验证和密码重置。",
 									credential: true,
 									href: "/docs",
 								},
 								{
-									label: "Social Sign-on",
-									headline: "40+ social providers.",
-									desc: "Google, GitHub, Apple, Discord, Microsoft, and more — each a few lines of config.",
+									label: "社交登录",
+									headline: "40+ 社交提供商。",
+									desc: "Google、GitHub、Apple、Discord、Microsoft 等主流平台，几行配置即可接入。",
 									social: true,
 									href: "/docs",
 								},
 								{
-									label: "Organizations",
-									headline: "Multi-tenancy built in.",
-									desc: "Teams, roles, invitations, and member management with fine-grained access control.",
+									label: "组织",
+									headline: "内置多租户能力。",
+									desc: "支持团队、角色、邀请和成员管理，并提供细粒度访问控制。",
 									org: true,
 									href: "/docs",
 								},
 								{
-									label: "Enterprise",
-									headline: "SSO, SAML & SCIM.",
-									desc: "Enterprise SSO, SAML 2.0, SCIM provisioning, and directory sync for B2B products.",
+									label: "企业级",
+									headline: "SSO、SAML 与 SCIM。",
+									desc: "为 B2B 产品提供企业级 SSO、SAML 2.0、SCIM 预配与目录同步。",
 									enterprise: true,
 									href: "/docs",
 								},
 								{
-									label: "Plugins",
-									headline: "50+ and growing.",
-									desc: "Passkeys, magic links, anonymous auth, API keys, JWTs, and a community ecosystem.",
+									label: "插件",
+									headline: "50+ 并持续增长。",
+									desc: "涵盖 Passkey、魔法链接、匿名认证、API 密钥、JWT 以及社区生态。",
 									plugins: true,
 									href: "/docs",
 								},
 								{
-									label: "Agent Auth",
-									headline: "Auth for AI agents.",
-									desc: "MCP server auth, async auth flows, token exchange, and agent-to-agent delegation.",
+									label: "Agent 认证",
+									headline: "为 AI Agent 提供认证。",
+									desc: "支持 MCP 服务器认证、异步认证流程、令牌交换以及 Agent 间委托。",
 									agent: true,
 									href: "/docs",
 								},
 								{
-									label: "Infrastructure",
-									headline: "Security & observability.",
-									desc: "Bot detection, real-time behavior analysis, IP blocking, email validation, and more.",
+									label: "基础设施",
+									headline: "安全与可观测性。",
+									desc: "覆盖机器人检测、实时行为分析、IP 封锁、邮箱校验等能力。",
 									security: true,
 									href: "/products/infrastructure",
 									managed: true,
 								},
 								{
-									label: "Dashboard",
-									headline: "User management.",
-									desc: "Manage users, sessions, and organizations. Track sign-ups, active users, and growth.",
+									label: "控制台",
+									headline: "用户管理。",
+									desc: "管理用户、会话和组织，并跟踪注册、活跃用户与增长情况。",
 									dashboard: true,
 									href: "/products/infrastructure",
 									managed: true,
@@ -1691,7 +1684,7 @@ export function HeroReadMe({
 											{feature.label}
 											{"managed" in feature && feature.managed && (
 												<span className="ml-1.5 text-[8px] normal-case tracking-widest text-foreground/40 dark:text-foreground/30 border border-dashed border-foreground/10 px-1 py-px">
-													managed
+													托管
 												</span>
 											)}
 										</div>

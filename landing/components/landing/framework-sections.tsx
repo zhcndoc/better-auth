@@ -891,15 +891,14 @@ export function DatabaseSection() {
 		<div>
 			<div className="flex items-center gap-3 mb-5">
 				<span className="text-base text-foreground/85 dark:text-foreground/75">
-					Bring Your Own{" "}
-					<span className="text-amber-600 dark:text-amber-400">Database</span>
+					带上你自己的{" "}
+					<span className="text-amber-600 dark:text-amber-400">数据库</span>
 				</span>
 				<div className="h-px flex-1 bg-foreground/10" />
 			</div>
 
 			<p className="text-[13px] text-foreground/55 dark:text-foreground/45 mb-5 max-w-xl leading-relaxed">
-				Use any database you want. Connect directly with a connection string, or
-				use your favorite ORM adapter. Your data stays in your database.
+				使用任何你想要的数据库。可以直接通过连接字符串连接，或者使用你喜欢的 ORM 适配器。你的数据会保留在你的数据库中。
 			</p>
 
 			<div className="border border-foreground/[0.12] overflow-hidden bg-neutral-50/50 dark:bg-black/40">
@@ -959,7 +958,7 @@ export function DatabaseSection() {
 					>
 						<div className="px-3 pt-3 pb-2">
 							<p className="text-[9px] font-mono uppercase tracking-widest text-amber-600/80 dark:text-amber-400/80 mb-2.5">
-								Direct Drivers
+								直接驱动程序
 							</p>
 							<div className="space-y-1">
 								{dbDrivers.map((db) => (
@@ -987,7 +986,7 @@ export function DatabaseSection() {
 						</div>
 						<div className="border-t border-foreground/[0.06] px-3 pt-2.5 pb-2">
 							<p className="text-[9px] font-mono uppercase tracking-widest text-violet-600/80 dark:text-violet-400/80 mb-2.5">
-								ORM Adapters
+								ORM 适配器
 							</p>
 							<div className="space-y-1">
 								{ormAdapters.map((adapter) => (
@@ -1017,7 +1016,7 @@ export function DatabaseSection() {
 						</div>
 						<div className="border-t border-foreground/[0.06] px-3 pt-2.5 pb-3">
 							<p className="text-[9px] font-mono uppercase tracking-widest text-sky-600/80 dark:text-sky-400/80 mb-2">
-								Community
+								社区
 							</p>
 							<div className="space-y-1">
 								{["Supabase", "Neon", "Turso", "PlanetScale", "D1"].map(

@@ -61,7 +61,7 @@ export function MessageFeedback({
 						),
 					}),
 				)}
-				title="Helpful"
+				title="有帮助"
 			>
 				{feedback === "positive" ? (
 					<Check className="h-3.5 w-3.5 text-green-600 animate-in fade-in duration-200" />
@@ -85,7 +85,7 @@ export function MessageFeedback({
 						),
 					}),
 				)}
-				title="Not helpful"
+				title="没帮助"
 			>
 				{feedback === "negative" ? (
 					<Check className="h-3.5 w-3.5 text-green-600 animate-in fade-in duration-200" />
@@ -105,7 +105,7 @@ export function MessageFeedback({
 							"h-7 w-7 hover:bg-fd-accent hover:text-fd-accent-foreground transition-colors",
 					}),
 				)}
-				title={copied ? "Copied!" : "Copy message"}
+				title={copied ? "已复制！" : "复制消息"}
 			>
 				{copied ? (
 					<Check className="h-3.5 w-3.5 text-green-600" />

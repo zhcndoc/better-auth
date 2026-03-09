@@ -21,20 +21,20 @@ interface NavFileItem {
 }
 
 const navFiles: NavFileItem[] = [
-	{ name: "readme", href: "/" },
-	{ name: "docs", href: "/docs" },
+	{ name: "首页", href: "/" },
+	{ name: "文档", href: "/docs" },
 ];
 
 const productFiles: NavFileItem[] = [
-	{ name: "framework", href: "/products/framework" },
-	{ name: "infrastructure", href: "/products/infrastructure" },
+	{ name: "框架", href: "/products/framework" },
+	{ name: "基础设施", href: "/products/infrastructure" },
 ];
 
 const resourceFiles: NavFileItem[] = [
-	{ name: "blog", href: "/blog" },
-	{ name: "changelog", href: "/changelog" },
-	{ name: "community", href: "/community" },
-	{ name: "careers", href: "/careers" },
+	{ name: "博客", href: "/blog" },
+	{ name: "更新日志", href: "/changelog" },
+	{ name: "社区", href: "/community" },
+	{ name: "招聘", href: "/careers" },
 ];
 
 function DropdownItem({ item }: { item: NavFileItem }) {
@@ -341,7 +341,7 @@ export function StaggeredNavFiles() {
 											: "text-foreground/65 dark:text-foreground/50 group-hover/tab:text-foreground/75"
 								}`}
 							>
-								products
+								产品
 							</span>
 							<svg
 								className={`h-2 w-2 text-foreground/55 dark:text-foreground/40 transition-transform duration-200 ${
@@ -414,7 +414,7 @@ export function StaggeredNavFiles() {
 										: "text-foreground/65 dark:text-foreground/50 group-hover/tab:text-foreground/75"
 								}`}
 							>
-								enterprise
+								企业
 							</span>
 						</Link>
 					</motion.div>
@@ -446,7 +446,7 @@ export function StaggeredNavFiles() {
 											: "text-foreground/65 dark:text-foreground/50 group-hover/tab:text-foreground/75"
 								}`}
 							>
-								resources
+								资源
 							</span>
 							<svg
 								className={`h-2 w-2 text-foreground/55 dark:text-foreground/40 transition-transform duration-200 ${

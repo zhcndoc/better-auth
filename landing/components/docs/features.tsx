@@ -25,41 +25,40 @@ export function Features() {
 
 const grid = [
 	{
-		title: "Framework Agnostic",
-		description: "Support for most popular frameworks",
+		title: "框架无关",
+		description: "支持大多数主流框架",
 	},
 	{
-		title: "Email & Password",
-		description:
-			"Built-in support for secure email and password authentication",
+		title: "邮箱和密码",
+		description: "内置安全的邮箱密码认证支持",
 	},
 	{
-		title: "Account & Session Management",
-		description: "Manage user accounts and sessions with ease",
+		title: "账户与会话管理",
+		description: "轻松管理用户账户和会话",
 	},
 	{
-		title: "Built-In Rate Limiter",
-		description: "Built-in rate limiter with custom rules",
+		title: "内置限流器",
+		description: "内置支持自定义规则的限流能力",
 	},
 	{
-		title: "Automatic Database Management",
-		description: "Automatic database management and migrations",
+		title: "自动数据库管理",
+		description: "自动处理数据库管理与迁移",
 	},
 	{
-		title: "Social Sign-on",
-		description: "Multiple social sign-on providers",
+		title: "社交登录",
+		description: "支持多种社交登录提供商",
 	},
 	{
-		title: "Organization & Access Control",
-		description: "Manage organizations and access control",
+		title: "组织与访问控制",
+		description: "管理组织与访问控制",
 	},
 	{
-		title: "Two Factor Authentication",
-		description: "Secure your users with two factor authentication",
+		title: "双因素认证",
+		description: "通过双因素认证提升用户安全性",
 	},
 	{
-		title: "Plugin Ecosystem",
-		description: "Even more capabilities with plugins",
+		title: "插件生态",
+		description: "通过插件获得更多能力",
 	},
 ];
 

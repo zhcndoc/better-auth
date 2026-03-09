@@ -91,7 +91,7 @@ export function LLMCopyButton({ rawUrl }: { rawUrl: string }) {
 			onClick={onClick}
 		>
 			{checked ? <Check /> : <Copy />}
-			{checked ? "Copied" : "Copy MD"}
+			{checked ? "已复制" : "复制 MD"}
 		</button>
 	);
 }
@@ -103,7 +103,7 @@ export function ViewOptions(props: { markdownUrl: string; githubUrl: string }) {
 			? window.location.origin
 			: "https://better-auth.com",
 	);
-	const q = `Read ${markdownUrl}, I want to ask questions about it.`;
+	const q = `阅读 ${markdownUrl}，我想基于这篇文档继续提问。`;
 
 	const claudeUrl = new URL("https://claude.ai/new");
 	claudeUrl.searchParams.set("q", q);
@@ -129,7 +129,7 @@ export function ViewOptions(props: { markdownUrl: string; githubUrl: string }) {
 	return (
 		<Popover>
 			<PopoverTrigger className={cn(tocAction)}>
-				Open in
+				打开至
 				<ChevronDown />
 			</PopoverTrigger>
 			<PopoverContent className="flex flex-col p-1 min-w-[200px]">

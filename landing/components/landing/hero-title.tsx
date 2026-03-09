@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const rotatingWords = ["the web", "Next.js", "TypeScript"];
+const rotatingWords = ["Web", "Next.js", "TypeScript"];
 
 export function HeroTitle() {
 	const [wordIndex, setWordIndex] = useState(0);
@@ -39,11 +39,11 @@ export function HeroTitle() {
 						/>
 					</svg>
 					<span className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-100">
-						Own Your Auth
+						掌控你的身份验证
 					</span>
 				</div>
 				<h1 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-neutral-800 dark:text-neutral-200 tracking-tight leading-tight">
-					The most comprehensive authentication framework for{" "}
+					最全面的身份验证框架，专为{" "}
 					<span className="relative inline-flex overflow-hidden align-bottom">
 						<AnimatePresence mode="wait">
 							<motion.span
@@ -66,7 +66,7 @@ export function HeroTitle() {
 						href="/docs/installation"
 						className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 bg-neutral-900 text-neutral-100 dark:bg-neutral-100 dark:text-neutral-900 text-xs sm:text-sm font-medium hover:opacity-90 transition-colors"
 					>
-						Get Started
+						开始使用
 					</Link>
 					<Link
 						href="https://dash.better-auth.com/sign-in"
@@ -96,7 +96,7 @@ export function HeroTitle() {
 						<span className="absolute -bottom-[6px] -right-[6px] font-mono text-[8px] text-foreground/40 dark:text-foreground/50 leading-none select-none translate-x-1/2 translate-y-1/2">
 							+
 						</span>
-						<span className="relative">Sign In </span>
+						<span className="relative">登录 </span>
 					</Link>
 				</div>
 			</div>
