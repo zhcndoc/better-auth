@@ -122,7 +122,7 @@ export default app;
 
 ## 二级存储
 
-Better Auth 的二级存储允许你使用键值存储来管理会话数据、限速计数器等。当你希望将大量记录存储外包到高性能存储甚至内存时，这很有用。
+Better Auth 的辅助存储允许您使用键值存储来管理会话数据、验证记录、限流计数器以及其他短暂的认证数据。当您希望将高强度记录的存储卸载到高性能存储甚至内存时，这会非常有用。
 
 ### 实现
 
@@ -211,6 +211,104 @@ export const auth = betterAuth({
 ```
 
 此实现允许 Better Auth 使用 Redis 存储会话数据和限速计数器。你还可以为键名添加前缀。
+
+**示例：Upstash Redis 实现**
+
+以下是使用 Upstash Redis 的示例。首先，安装 Upstash Redis 客户端：
+
+```bash
+npm install @upstash/redis
+```
+
+然后，创建一个新的 Redis 客户端：
+
+```typescript
+// src/lib/redis/index.ts
+
+import { Redis } from "@upstash/redis";
+
+export const redis = Redis.fromEnv();
+```
+
+别忘了设置 `UPSTASH_REDIS_REST_URL` 和 `UPSTASH_REDIS_REST_TOKEN` 环境变量。有关如何使用 Upstash Redis 结合 Node.js 的更多信息，请参见 [Upstash 文档](https://upstash.com/docs/redis/howto/connectwithupstashredis)。
+
+之后，我们可以创建一个二级存储的实现：
+
+```typescript
+// src/lib/auth/adapters/redis-secondary-storage.ts
+
+import { SecondaryStorage } from "better-auth";
+import { redis } from "~/lib/redis";
+
+export const redisSecondaryStorage: SecondaryStorage = {
+  async get(key: string) {
+    try {
+      const value = await redis.get(key);
+
+      // 处理 Redis 返回的不同类型
+      if (value === null || value === undefined) {
+        return null;
+      }
+
+      // 如果已经是字符串，则直接返回
+      if (typeof value === "string") {
+        return value;
+      }
+
+      // 如果是对象，则进行字符串化
+      if (typeof value === "object") {
+        return JSON.stringify(value);
+      }
+
+      // 其他类型转换为字符串返回
+      return String(value);
+    } catch (error) {
+      console.error("Redis get 错误:", error);
+      return null;
+    }
+  },
+
+  async set(key: string, value: string, ttl?: number) {
+    try {
+      // 确保值为字符串
+      const stringValue =
+        typeof value === "string" ? value : JSON.stringify(value);
+
+      if (ttl) {
+        // 设置带有 TTL（秒）
+        await redis.setex(key, ttl, stringValue);
+      } else {
+        // 不带 TTL 设置
+        await redis.set(key, stringValue);
+      }
+    } catch (error) {
+      console.error("Redis set 错误:", error);
+      throw error;
+    }
+  },
+
+  async delete(key: string) {
+    try {
+      await redis.del(key);
+    } catch (error) {
+      console.error("Redis delete 错误:", error);
+      throw error;
+    }
+  },
+};
+```
+
+最后，我们可以将该实现传递给 `betterAuth` 函数。
+
+```typescript
+import { betterAuth } from "better-auth";
+import { redisSecondaryStorage } from "~/lib/auth/adapters/redis-secondary-storage";
+
+export const auth = betterAuth({
+  // ...其他选项
+  secondaryStorage: redisSecondaryStorage,
+});
+```
 
 ## 核心架构
 

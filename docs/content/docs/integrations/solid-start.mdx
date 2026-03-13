@@ -9,7 +9,7 @@ description: 将 Better Auth 集成到 SolidStart 中。
 
 我们需要将处理器挂载到 SolidStart 服务器。在 `/routes/api/auth` 文件夹内的 `*auth.ts` 文件中添加以下代码。
 
-```ts title="*auth.ts"
+```ts title="[...auth].ts"
 import { auth } from "~/lib/auth";
 import { toSolidStartHandler } from "better-auth/solid-start";
 

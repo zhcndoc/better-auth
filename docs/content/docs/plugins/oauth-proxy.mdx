@@ -17,34 +17,51 @@ description: Better Auth 的 OAuth 代理插件
     export const auth = betterAuth({
       plugins: [
         oAuthProxy({ // [!code highlight]
-          productionURL: "https://my-main-app.com", // 可选 - 如果 URL 无法正确推断 // [!code highlight]
-          currentURL: "http://localhost:3000", // 可选 - 如果 URL 无法正确推断 // [!code highlight]
+          productionURL: "https://my-production-app.com", // [!code highlight]
         }), // [!code highlight]
-      ]
+      ],
+      socialProviders: {
+        github: {
+          clientId: process.env.GITHUB_CLIENT_ID || "",
+          clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+        },
+      },
     })
     ```
+
+    The plugin will automatically route OAuth requests through your production server.
   </Step>
   <Step>
     ### 在你的 OAuth 提供商处添加重定向 URL
 
-    为了让代理服务器正常工作，你需要在社交提供商配置中传入注册于 OAuth 提供商的主生产环境应用的重定向 URL。每个你想代理请求的社交提供商都需要这样配置。
+    在你的 OAuth 提供商的开发者控制台（例如 GitHub、Google）中，使用你的**生产**域名注册回调 URL。例如：
 
-    ```ts
+    ```
+    https://my-production-app.com/api/auth/callback/github
+    ```
+
+    Only the production callback URL needs to be registered. The plugin handles routing OAuth requests from preview and development environments through production automatically.
+  </Step>
+  <Step>
+    ### Add trusted origins
+
+    Since preview and development servers redirect through production, you need to add them as `trustedOrigins` in your auth config:
+
+    ```ts title="auth.ts"
     export const auth = betterAuth({
-      plugins: [
-        oAuthProxy(),
-      ],
-      socialProviders: {
-        github: {
-          clientId: "your-client-id",
-          clientSecret: "your-client-secret",
-          redirectURI: "https://my-main-app.com/api/auth/callback/github" // [!code highlight]
-        }
-      }
+      // ...其他配置
+      trustedOrigins: [ // [!code highlight]
+        "http://localhost:3000", // [!code highlight]
+        "https://my-app-*-preview.example.com", // [!code highlight]
+      ], // [!code highlight]
     })
     ```
   </Step>
 </Steps>
+
+<Callout type="info">
+所有环境（生产、预览、开发）必须共享相同的 `BETTER_AUTH_SECRET`。该插件使用此密钥加密和解密 OAuth 流程中服务器之间传递的数据。
+</Callout>
 
 ## 工作原理
 
@@ -73,8 +90,8 @@ await authClient.signIn.social({
 
 ## 选项
 
-**productionURL**：如果此值与 auth 配置中的 `baseURL` 相匹配，请求将不会被代理。默认为 `BETTER_AUTH_URL` 环境变量。
+**productionURL**：你的生产服务器的 URL。如果此值与 auth 配置中的 `baseURL` 相匹配，请求将不会被代理。默认为 `BETTER_AUTH_URL` 环境变量。
 
-**currentURL**：插件会自动确定应用当前 URL。它会优先检查请求的 URL（如果由客户端调用），然后检查流行托管服务的基 URL，最后回退到 auth 配置中的 `baseURL`。如果无法正确推断 URL，可以在此手动指定。
+**currentURL**：插件会自动确定应用当前的 URL。它会优先检查请求的 URL、流行托管服务提供商的特定环境变量，最后回退到 auth 配置中的 `baseURL`。只有当环境中无法正确推断 URL 时才需要手动设置。
 
 **maxAge**：加密用户信息的最大有效期（秒）。超过此时间的负载将被拒绝，以防止重放攻击。该值建议保持较短（例如 30-60 秒），以减少潜在重放攻击的窗口，同时保持正常的 OAuth 流程。默认为 `60` 秒。

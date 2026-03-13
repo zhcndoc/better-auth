@@ -409,13 +409,13 @@ export const auth = betterAuth({
 
 当超过最大尝试次数时，`verifyOTP`、`signIn.emailOtp`、`verifyEmail` 和 `resetPassword` 方法将返回错误，错误码为 `TOO_MANY_ATTEMPTS`。
 
-- `storeOTP`：在数据库中存储 OTP 的方式，可选 `encrypted`、`hashed` 或 `plain` 文本。默认为明文存储。
+- `storeOTP`：Better Auth 验证层在存储 OTP 之前对其进行处理的方法，可选 `encrypted`（加密）、`hashed`（哈希）或 `plain`（明文）文本。默认是明文。
 
 <Callout>
-注意：这不会影响发送给用户的 OTP，只影响数据库中存储的 OTP。
+注意：这不会影响发送给用户的 OTP，只会影响存储的 OTP 值。存储后端本身由全局 [`verification`](/docs/reference/options#verification) 配置控制，因此如果你配置了 `secondaryStorage`，这些验证记录可以存放在那里，而不是数据库中。
 </Callout>
 
-您也可以传入自定义的加密器或哈希器来存储 OTP。
+您也可以传入自定义的加密器或哈希器来控制存储的 OTP 值的持久化方式。
 
 **自定义加密器**
 

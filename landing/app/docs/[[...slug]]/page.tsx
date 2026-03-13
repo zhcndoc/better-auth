@@ -24,6 +24,7 @@ import {
 	GenerateSecret,
 } from "@/components/docs/mdx-components";
 import { Callout } from "@/components/ui/callout";
+import { createMetadata } from "@/lib/metadata";
 import { getSource } from "@/lib/source";
 import { cn } from "@/lib/utils";
 import { LLMCopyButton, ViewOptions } from "./page.client";
@@ -165,7 +166,7 @@ export async function generateMetadata({
 
 	const ogUrl = `/api/og?${ogSearchParams.toString()}`;
 
-	return {
+	return createMetadata({
 		title: page.data.title,
 		description: page.data.description,
 		openGraph: {
@@ -187,5 +188,5 @@ export async function generateMetadata({
 			description: page.data.description,
 			images: [ogUrl],
 		},
-	};
+	});
 }

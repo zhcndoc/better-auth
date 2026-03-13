@@ -1,33 +1,20 @@
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
-import { RootProvider } from "fumadocs-ui/provider/next";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
+import { AIChat, AIChatPanel, AIChatTrigger } from "@/components/ai-chat";
 import { DocsSidebar } from "@/components/docs/docs-sidebar";
-import { FloatingToolbar } from "@/components/floating-toolbar";
 import { source } from "@/lib/source";
+import type { PageEntry } from "./provider";
+import { DocsProvider } from "./provider";
+
+const allPages: PageEntry[] = source.getPages().map((page) => ({
+	name: page.data.title,
+	url: page.url,
+}));
 
 export default function Layout({ children }: { children: ReactNode }) {
 	return (
-		<RootProvider
-			i18n={{
-				locale: "zh-CN",
-				translations: {
-					search: "搜索",
-					searchNoResult: "未找到结果",
-					toc: "本页目录",
-					tocNoHeadings: "本页暂无标题",
-					lastUpdate: "最后更新于",
-					chooseLanguage: "选择语言",
-					nextPage: "下一页",
-					previousPage: "上一页",
-					chooseTheme: "选择主题",
-					editOnGithub: "在 GitHub 上编辑",
-				},
-			}}
-			search={{
-				enabled: false,
-			}}
-		>
+		<DocsProvider pages={allPages}>
 			<Suspense>
 				<DocsSidebar />
 			</Suspense>
@@ -42,8 +29,17 @@ export default function Layout({ children }: { children: ReactNode }) {
 				}}
 			>
 				{children}
+				<AIChat>
+					<AIChatPanel />
+					<AIChatTrigger>
+						<span className="text-sm text-muted-foreground">Ask AI</span>
+						<span className="h-5 w-px bg-foreground/10" />
+						<kbd className="inline-flex items-center gap-0.5 text-[10px] font-mono text-muted-foreground">
+							<span className="text-[11px]">&#8984;</span>I
+						</kbd>
+					</AIChatTrigger>
+				</AIChat>
 			</DocsLayout>
-			<FloatingToolbar />
-		</RootProvider>
+		</DocsProvider>
 	);
 }

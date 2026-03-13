@@ -20,7 +20,7 @@ description: 魔法链接插件
     export const auth = betterAuth({
         plugins: [
             magicLink({ // [!code highlight]
-                sendMagicLink: async ({ email, token, url }, ctx) => { // [!code highlight]
+                sendMagicLink: async ({ email, token, url, metadata }, ctx) => { // [!code highlight]
                     // 发送邮件给用户 // [!code highlight]
                 } // [!code highlight]
             }) // [!code highlight]
@@ -83,6 +83,10 @@ type signInMagicLink = {
      * 如果只提供了 callbackURL 而没有 `errorCallbackURL`，则会重定向到 callbackURL 并带有 `error` 查询参数。
      */
     errorCallbackURL?: string = "/error"
+    /**
+     * Additional metadata forwarded to the sendMagicLink callback.
+     */
+    metadata?: Record<string, any> = { inviteId: "123" }
 }
 ```
 </APIMethod>
@@ -127,6 +131,7 @@ type magicLinkVerify = {
 - `email`：用户的电子邮件地址。
 - `url`：发送给用户的 URL，该 URL 包含令牌。
 - `token`：如果你想用自定义 URL 发送令牌，则为令牌内容。
+- `metadata`：从 `signIn.magicLink` 传入的额外请求元数据。
 
 此外，函数的第二个参数为上下文对象 `ctx`。
 
@@ -144,10 +149,12 @@ type magicLinkVerify = {
   使用 `generateToken` 时，确保返回的字符串难以猜测，因为它用于以保密方式验证用户身份。默认情况下，我们返回一个长度较长且密码学安全的字符串。
 </Callout>
 
-**storeToken**：调用该函数将魔法链接令牌存储在数据库中。默认值为 `"plain"`。
+**storeToken**：`storeToken` 函数控制魔法链接令牌在被 Better Auth 的验证层存储前的转换方式。默认值为 `"plain"`。
 
 `storeToken` 可为以下之一：
 
-- `"plain"`：以明文形式存储令牌。
-- `"hashed"`：使用默认哈希算法对令牌进行哈希存储。
-- `{ type: "custom-hasher", hash: (token: string) => Promise<string> }`：使用自定义哈希算法对令牌进行哈希存储。
+- `"plain"`：令牌以明文形式存储。
+- `"hashed"`：令牌使用默认哈希算法进行哈希存储。
+- `{ type: "custom-hasher", hash: (token: string) => Promise<string> }`：令牌使用自定义哈希算法进行哈希存储。
+
+存储后端本身由全局 [`verification`](/docs/reference/options#verification) 配置控制。如果你配置了 `secondaryStorage`，魔法链接验证记录可以存储在那里，而不是数据库中。

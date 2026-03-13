@@ -93,7 +93,7 @@ const signIn = async () => {
 
 首先，创建服务器端的会话检查辅助函数：
 
-```ts title="src/lib/auth.server.ts"
+```ts title="src/lib/auth.functions.ts"
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { auth } from "@/lib/auth";
@@ -123,7 +123,7 @@ export const ensureSession = createServerFn({ method: "GET" }).handler(async () 
 
 ```tsx title="src/routes/dashboard.tsx"
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { getSession } from '@/lib/auth.server'
+import { getSession } from '@/lib/auth.functions'
 
 export const Route = createFileRoute('/dashboard')({
   beforeLoad: async () => {
@@ -151,7 +151,7 @@ function Dashboard() {
 
 ```tsx title="src/routes/_protected.tsx"
 import { createFileRoute, redirect, Outlet } from '@tanstack/react-router'
-import { getSession } from '@/lib/auth.server'
+import { getSession } from '@/lib/auth.functions'
 
 export const Route = createFileRoute('/_protected')({
   beforeLoad: async ({ location }) => {
@@ -189,9 +189,9 @@ export const Route = createFileRoute('/_protected')({
 
 使用 `ensureSession` 辅助函数保护服务器函数：
 
-```ts title="src/lib/posts.server.ts"
+```ts title="src/lib/posts.functions.ts"
 import { createServerFn } from "@tanstack/react-start";
-import { ensureSession } from "./auth.server";
+import { ensureSession } from "./auth.functions";
 
 export const createPost = createServerFn({ method: "POST" })
   .inputValidator((data: { title: string }) => data)

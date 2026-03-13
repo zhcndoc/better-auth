@@ -191,7 +191,7 @@ Better Auth 支持多种数据库配置，包括 [PostgreSQL](/docs/adapters/pos
 
 ## `secondaryStorage`
 
-用于存储会话和速率限制数据的二级存储配置。
+用于存储会话数据、验证记录和速率限制数据的二级存储配置。
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -489,19 +489,24 @@ const hook = createAuthMiddleware(async (ctx) => {
 ```ts
 import { betterAuth } from "better-auth";
 export const auth = betterAuth({
+	secondaryStorage: {
+		// your Redis or KV implementation
+	},
 	verification: {
-		modelName: "verifications",
-		fields: {
-			userId: "user_id"
-		},
-		disableCleanup: false
+		disableCleanup: false,
+		storeIdentifier: "hashed",
+		storeInDatabase: false
 	},
 })
 ```
 
-- `modelName`：验证表的模型名
-- `fields`：字段映射
-- `disableCleanup`：获取验证值时是否禁用过期数据清理
+- `modelName`：验证表的模型名称  
+- `fields`：字段映射到不同的列名  
+- `disableCleanup`：获取验证值时是否禁用已过期值的清理  
+- `storeIdentifier`：如何存储验证标识符（如令牌和 OTP 密钥）。支持 `"plain"`、`"hashed"` 或自定义哈希函数。你还可以使用 `{ default, overrides }` 来针对不同的标识符前缀应用不同策略。  
+- `storeInDatabase`：即使配置了 `secondaryStorage`，是否仍存储验证记录到数据库中。默认值为 `false`。  
+
+如果配置了 `secondaryStorage`，验证记录默认存储于二级存储中。此行为适用于使用 Better Auth 共享验证层的流程，包括 OTP 和魔法链接（magic-link）风格的流程。  
 
 ## `rateLimit`
 

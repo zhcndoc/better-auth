@@ -16,10 +16,11 @@ description: Openfort Web3 钱包基础设施的更佳身份验证插件
 
 - 嵌入式钱包的创建和管理。
 - 与 Better Auth 身份验证无缝集成。
-- 多链支持（Ethereum、Polygon 等）。
+- 支持 EVM 链（Ethereum、Polygon、Base 等）和/或 Solana —— 可单独使用或同时使用两者。
 - 用户交易的 Gas 资助。
 - 多种恢复方式（Passkey、密码、自动恢复）。
 - 签名消息及执行智能合约交互。
+- 可选的 Wagmi 集成，用于 EVM 链。
 
 ## 安装
 
@@ -36,12 +37,24 @@ description: Openfort Web3 钱包基础设施的更佳身份验证插件
     #### 客户端
 
     ```package-install
-    @openfort/react wagmi viem @tanstack/react-query
+    @openfort/react @tanstack/react-query
+    ```
+
+    Then install the peer dependencies for the chains you need:
+
+    **For EVM (Ethereum, Polygon, Base, etc.):**
+    ```package-install
+    viem wagmi
+    ```
+
+    **For Solana:**
+    ```package-install
+    @solana/kit
     ```
 
     <Callout>
-      `@openfort/react` 仅支持 **EVM 链**（Ethereum、Polygon 等）。React SDK 通过 Wagmi 实现区块链交互。  
-      若需要支持非 EVM 链，请直接使用 Openfort JS SDK。
+      `@openfort/react` 包支持 **EVM 链**（Ethereum、Polygon、Base 等）和 **Solana**。你可以构建仅 EVM、仅 Solana 或多链应用。React SDK 通过 Wagmi 实现 EVM 链的区块链交互，Solana 则使用 `@solana/kit`。  
+      若需要支持其他链，请直接使用 Openfort JS SDK。
     </Callout>
   </Step>
 
@@ -85,7 +98,7 @@ description: Openfort Web3 钱包基础设施的更佳身份验证插件
     # Openfort
     VITE_OPENFORT_PUBLISHABLE_KEY=pk_test_...
     VITE_SHIELD_PUBLISHABLE_KEY=...
-    VITE_POLICY_ID=pol_...  # Openfort 控制面板中的交易策略 ID
+    VITE_FEE_SPONSORSHIP_ID=pol_...  # Openfort 控制面板中的费用资助 ID
 
     # Better Auth
     VITE_BETTERAUTH_URL=http://localhost:3000
@@ -165,10 +178,72 @@ description: Openfort Web3 钱包基础设施的更佳身份验证插件
   <Step>
     ### 在应用中添加 OpenfortProvider
 
-    使用 OpenfortProvider、WagmiProvider 和 QueryClientProvider 包裹应用：
+    `OpenfortProvider` 可独立使用 — 仅当你使用 Wagmi 的 hooks 时，才需要 Wagmi 和 React Query。
 
     ```tsx title="app/providers.tsx"
-    import { OpenfortProvider, ThirdPartyOAuthProvider, getDefaultConfig } from "@openfort/react";
+    import { OpenfortProvider, ThirdPartyOAuthProvider } from "@openfort/react";
+    import { authClient } from "./auth-client";
+
+    export function OpenfortProviders({ children }: { children: React.ReactNode }) {
+      return (
+        <OpenfortProvider
+          publishableKey={import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY}
+          walletConfig={{
+            shieldPublishableKey: import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY,
+            ethereum: {
+              ethereumFeeSponsorshipId: import.meta.env.VITE_FEE_SPONSORSHIP_ID,
+            },
+            solana: {
+              cluster: "devnet", // "mainnet-beta" | "devnet" | "testnet"
+            },
+            getEncryptionSession: async ({ accessToken }) => {
+              const response = await fetch(
+                import.meta.env.VITE_BETTERAUTH_URL +
+                import.meta.env.VITE_BETTERAUTH_BASE_PATH +
+                "/encryption-session",
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+
+              if (!response.ok) return null;
+
+              const data = await response.json();
+              return data.sessionId;
+            },
+            connectOnLogin: false,
+          }}
+          thirdPartyAuth={{
+            getAccessToken: async () => {
+              const session = await authClient.getSession();
+              return session?.data?.session?.token ?? null;
+            },
+            provider: ThirdPartyOAuthProvider.BETTER_AUTH,
+          }}
+        >
+          {children}
+        </OpenfortProvider>
+      );
+    }
+    ```
+
+    <Callout>
+      The `getEncryptionSession` callback receives `{ accessToken, otpCode, userId }` — the SDK provides these automatically. Set `connectOnLogin` to `false` if you want to handle wallet creation manually. Include only the chain configs (`ethereum`, `solana`) you need.
+    </Callout>
+  </Step>
+
+  <Step>
+    ### Add Wagmi for EVM interactions
+
+    Wrap your provider tree with `OpenfortWagmiBridge` to enable Wagmi hooks (`useSignMessage`, `useWriteContract`, etc.):
+
+    ```tsx title="app/providers.tsx"
+    import { OpenfortProvider, ThirdPartyOAuthProvider } from "@openfort/react";
+    import { OpenfortWagmiBridge, getDefaultConfig } from "@openfort/react/wagmi";
     import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
     import { polygonAmoy, sepolia } from "viem/chains";
     import { WagmiProvider, createConfig } from "wagmi";
@@ -187,47 +262,46 @@ description: Openfort Web3 钱包基础设施的更佳身份验证插件
       return (
         <WagmiProvider config={wagmiConfig}>
           <QueryClientProvider client={queryClient}>
-            <OpenfortProvider
-              publishableKey={import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY}
-              walletConfig={{
-                shieldPublishableKey: import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY,
-                ethereumProviderPolicyId: import.meta.env.VITE_POLICY_ID,
-                getEncryptionSession: async () => {
-                  const session = await authClient.getSession();
-                  const token = session?.data?.session?.token;
+            <OpenfortWagmiBridge>
+              <OpenfortProvider
+                publishableKey={import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY}
+                walletConfig={{
+                  shieldPublishableKey: import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY,
+                  ethereum: {
+                    ethereumFeeSponsorshipId: import.meta.env.VITE_FEE_SPONSORSHIP_ID,
+                  },
+                  getEncryptionSession: async ({ accessToken }) => {
+                    const response = await fetch(
+                      import.meta.env.VITE_BETTERAUTH_URL +
+                      import.meta.env.VITE_BETTERAUTH_BASE_PATH +
+                      "/encryption-session",
+                      {
+                        method: "POST",
+                        headers: {
+                          Authorization: `Bearer ${accessToken}`,
+                          "Content-Type": "application/json",
+                        },
+                      }
+                    );
 
-                  if (!token) return null;
+                    if (!response.ok) return null;
 
-                  const response = await fetch(
-                    import.meta.env.VITE_BETTERAUTH_URL +
-                    import.meta.env.VITE_BETTERAUTH_BASE_PATH +
-                    "/encryption-session",
-                    {
-                      method: "POST",
-                      headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                      },
-                    }
-                  );
-
-                  if (!response.ok) return null;
-
-                  const data = await response.json();
-                  return data.sessionId;
-                },
-                recoverWalletAutomaticallyAfterAuth: false,
-              }}
-              thirdPartyAuth={{
-                getAccessToken: async () => {
-                  const session = await authClient.getSession();
-                  return session?.data?.session?.token ?? null;
-                },
-                provider: ThirdPartyOAuthProvider.BETTER_AUTH,
-              }}
-            >
-              {children}
-            </OpenfortProvider>
+                    const data = await response.json();
+                    return data.sessionId;
+                  },
+                  connectOnLogin: false,
+                }}
+                thirdPartyAuth={{
+                  getAccessToken: async () => {
+                    const session = await authClient.getSession();
+                    return session?.data?.session?.token ?? null;
+                  },
+                  provider: ThirdPartyOAuthProvider.BETTER_AUTH,
+                }}
+              >
+                {children}
+              </OpenfortProvider>
+            </OpenfortWagmiBridge>
           </QueryClientProvider>
         </WagmiProvider>
       );
@@ -235,7 +309,7 @@ description: Openfort Web3 钱包基础设施的更佳身份验证插件
     ```
 
     <Callout>
-      OpenfortProvider 需要 Wagmi 和 React Query 的提供者。若想手动处理钱包创建，请将 `recoverWalletAutomaticallyAfterAuth` 设置为 `false`。
+      `OpenfortWagmiBridge` 和 `getDefaultConfig` 从 `@openfort/react/wagmi` 导入。
     </Callout>
   </Step>
 
@@ -258,68 +332,84 @@ description: Openfort Web3 钱包基础设施的更佳身份验证插件
 
 ## 使用方法
 
-### 钱包创建
+### 钱包创建（EVM）
 
-使用 `useWallets` hook 为已认证用户创建嵌入式钱包：
+使用 `useEthereumEmbeddedWallet` hook 创建嵌入式 EVM 钱包：
 
 ```tsx
-import { RecoveryMethod, useWallets } from "@openfort/react";
+import { useEthereumEmbeddedWallet } from "@openfort/react/ethereum";
+import { RecoveryMethod } from "@openfort/react";
 
 export default function CreateWallet() {
-  const { isCreating, createWallet, error } = useWallets({
-    onSuccess: () => {
-      console.log("钱包创建成功！");
-    },
-  });
+  const { status, create, activeWallet } = useEthereumEmbeddedWallet();
 
-  if (isCreating) {
+  if (status === "creating") {
     return <div>正在创建钱包...</div>;
+  }
+
+  if (status === "connected" && activeWallet) {
+    return <div>Wallet: {activeWallet.address}</div>;
   }
 
   return (
     <div>
       <button
-        onClick={() =>
-          createWallet({
-            recovery: {
-              recoveryMethod: RecoveryMethod.PASSKEY,
-            },
-          })
-        }
+        onClick={() => create({ recoveryMethod: RecoveryMethod.PASSKEY })}
       >
         使用 Passkey 创建
       </button>
 
       <button
-        onClick={() =>
-          createWallet({
-            recovery: {
-              recoveryMethod: RecoveryMethod.AUTOMATIC,
-            },
-          })
-        }
+        onClick={() => create({ recoveryMethod: RecoveryMethod.AUTOMATIC })}
       >
         使用自动恢复创建
       </button>
 
       <button
         onClick={() =>
-          createWallet({
-            recovery: {
-              recoveryMethod: RecoveryMethod.PASSWORD,
-              password: "your-secure-password",
-            },
+          create({
+            recoveryMethod: RecoveryMethod.PASSWORD,
+            password: "your-secure-password",
           })
         }
       >
         使用密码创建
       </button>
 
-      {error && <p className="text-red-500">错误：{error.message}</p>}
     </div>
   );
 }
 ```
+
+### 钱包创建（Solana）
+
+使用 `useSolanaEmbeddedWallet` 创建嵌入式 Solana 钱包：
+
+```tsx
+import { useSolanaEmbeddedWallet } from "@openfort/react/solana";
+import { RecoveryMethod } from "@openfort/react";
+
+export default function CreateSolanaWallet() {
+  const { status, create, activeWallet } = useSolanaEmbeddedWallet();
+
+  if (status === "connected" && activeWallet) {
+    return <div>Solana 钱包地址: {activeWallet.address}</div>;
+  }
+
+  return (
+    <button
+      onClick={() => create({ recoveryMethod: RecoveryMethod.AUTOMATIC })}
+      disabled={status === "creating"}
+    >
+      {status === "creating" ? "创建中..." : "创建 Solana 钱包"}
+    </button>
+  );
+}
+```
+
+<Callout>
+  Solana 需要额外安装 `@solana/kit` 依赖，并在 `walletConfig` 中配置 `solana` 参数。
+</Callout>
 
 ### 签名消息
 
@@ -394,24 +484,22 @@ export default function MintTokens() {
 
 ### 访问用户信息
 
-获取用户及钱包信息：
+使用 `useUser` 获取用户及钱包信息：
 
 ```tsx
 import { useUser } from "@openfort/react";
-import { useAccount } from "wagmi";
 
 export default function UserProfile() {
-  const { user } = useUser();
-  const { address, isConnected } = useAccount();
+  const { user, isAuthenticated, isConnected, linkedAccounts } = useUser();
 
-  if (!isConnected) {
-    return <p>未连接钱包</p>;
+  if (!isAuthenticated) {
+    return <p>未认证</p>;
   }
 
   return (
     <div>
-      <h2>欢迎，{user?.player?.name || user?.linkedAccounts[0]?.email}</h2>
-      <p>钱包地址：{address}</p>
+      <h2>欢迎，{user?.player?.name || linkedAccounts?.[0]?.email}</h2>
+      <p>已连接：{isConnected ? "是" : "否"}</p>
     </div>
   );
 }
@@ -445,13 +533,22 @@ interface EncryptionSessionConfig {
 ```ts
 interface OpenfortProviderProps {
   publishableKey: string; // Openfort 发布钥匙
-  walletConfig: {
+  walletConfig?: {
     shieldPublishableKey: string; // Shield 发布钥匙
-    ethereumProviderPolicyId?: string; // 交易资助策略 ID
-    getEncryptionSession: () => Promise<string | null>; // 获取加密会话 ID
-    recoverWalletAutomaticallyAfterAuth?: boolean; // 认证后自动恢复钱包（默认：false）
+    connectOnLogin?: boolean; // 认证后自动恢复/创建钱包（默认：true）
+    passkeyDisplayName?: string; // Passkey 提示显示名
+    // 加密会话（选其一）：
+    getEncryptionSession?: (params: {
+      accessToken: string;
+      otpCode?: string;
+      userId: string;
+    }) => Promise<string>;
+    createEncryptedSessionEndpoint?: string; // 或提供 API 端点
+    // 链相关配置：
+    ethereum?: EthereumConfig; // EVM 链配置（chainId, rpcUrls, policyId）
+    solana?: SolanaConfig; // Solana 集群和 RPC 配置
   };
-  thirdPartyAuth: {
+  thirdPartyAuth?: {
     getAccessToken: () => Promise<string | null>; // 获取 Better Auth 令牌
     provider: ThirdPartyOAuthProvider; // 认证提供商类型
   };
@@ -471,30 +568,21 @@ Openfort 支持三种钱包恢复方式：
 - **密码**：用户自定义密码恢复  
 
 ```tsx
-import { RecoveryMethod, useWallets } from "@openfort/react";
+import { useEthereumEmbeddedWallet } from "@openfort/react/ethereum";
+import { RecoveryMethod } from "@openfort/react";
 
-const { createWallet } = useWallets();
+const { create } = useEthereumEmbeddedWallet();
 
 // Passkey 恢复
-createWallet({
-  recovery: {
-    recoveryMethod: RecoveryMethod.PASSKEY,
-  },
-});
+create({ recoveryMethod: RecoveryMethod.PASSKEY });
 
 // 自动恢复
-createWallet({
-  recovery: {
-    recoveryMethod: RecoveryMethod.AUTOMATIC,
-  },
-});
+create({ recoveryMethod: RecoveryMethod.AUTOMATIC });
 
 // 密码恢复
-createWallet({
-  recovery: {
-    recoveryMethod: RecoveryMethod.PASSWORD,
-    password: "your-secure-password",
-  },
+create({
+  recoveryMethod: RecoveryMethod.PASSWORD,
+  password: "your-secure-password",
 });
 ```
 

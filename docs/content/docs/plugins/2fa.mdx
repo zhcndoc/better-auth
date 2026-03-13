@@ -159,10 +159,15 @@ const authClient = createAuthClient({
 
 当您在服务器调用 `auth.api.signInEmail` 并且用户启用了 2FA 时，返回的对象中会含有 `twoFactorRedirect` 并设置为 `true`。这种行为在 TypeScript 中不会被类型推断，可能会导致误导。您可以使用 `in` 操作符检查是否含有 `twoFactorRedirect`。
 
+`authClient.twoFactor.*` 会在浏览器中自动处理 cookies。如果你在服务器端使用 `auth.api.*` 继续 2FA 流程，你必须传递相关的请求头，这样 Better Auth 才能读取当前的 2FA 状态并设置相应的 2FA/会话 cookies。下面生成的示例使用 `await headers()` 来实现这一点，但在其他框架中，你应该传递等效的传入请求头。
+
+如果你在同一个服务器流程中串联多个 `auth.api.*` 调用，请确保将上一个认证响应中的 cookies 转发到下一个调用中。
+
 ```ts title="sign-in.ts"
 import { auth } from "@/lib/auth"
 
-const response = await auth.api.signInEmail({
+const { headers: responseHeaders, response } = await auth.api.signInEmail({
+	returnHeaders: true,
 	body: {
 		email: "test@test.com",
 		password: "test",
@@ -170,6 +175,7 @@ const response = await auth.api.signInEmail({
 });
 
 if ("twoFactorRedirect" in response) {
+	// 转发 responseHeaders 中的 cookies 到后续的 auth.api 2FA 调用中。
 	// 处理当前页面上的 2FA 验证
 }
 ```
@@ -252,7 +258,12 @@ export default function UserCard({ password }: { password: string }){
 
 用户输入 2FA 代码后，可调用 `twoFactor.verifyTotp` 方法进行验证。`Better Auth` 遵循标准做法，接受当前时间段前后各一个周期内的代码，确保用户即使存在轻微时间偏差也可认证成功。
 
-<APIMethod path="/two-factor/verify-totp" method="POST">
+<APIMethod
+  path="/two-factor/verify-totp"
+  method="POST"
+  requireHeaders
+  headersComment="Pass the current request headers so Better Auth can read and set the 2FA/session cookies."
+>
 ```ts
 type verifyTOTP = {
     /**
@@ -292,11 +303,16 @@ export const auth = betterAuth({
 
 #### 发送 OTP
 
-发送 OTP 通过调用 `twoFactor.sendOtp` 完成。该函数会触发您在 Better Auth 配置中提供的 `sendOTP` 实现。
+发送 OTP 通过调用客户端的 `authClient.twoFactor.sendOtp` 函数或服务器端的 `auth.api.sendTwoFactorOTP` 完成。该函数会触发您在 Better Auth 配置中提供的 `sendOTP` 实现。
 
-<APIMethod path="/two-factor/send-otp" method="POST">
+<APIMethod
+  path="/two-factor/send-otp"
+  method="POST"
+  requireHeaders
+  headersComment="Pass the current request headers so Better Auth can read and set the 2FA/session cookies."
+>
 ```ts
-type send2FaOTP = {
+type sendTwoFactorOTP = {
     /**
      * 若为 true，该设备将在 30 天内被信任。期间每次登录均刷新信任期限。 
      */
@@ -311,11 +327,16 @@ if (data) {
 
 #### 验证 OTP
 
-用户输入 OTP 代码后，您可进行验证。
+用户输入 OTP 代码后，您可以使用客户端的 `authClient.twoFactor.verifyOtp` 或服务器端的 `auth.api.verifyTwoFactorOTP` 进行验证。
 
-<APIMethod path="/two-factor/verify-otp" method="POST">
+<APIMethod
+  path="/two-factor/verify-otp"
+  method="POST"
+  requireHeaders
+  headersComment="Pass the current request headers so Better Auth can read and set the 2FA/session cookies."
+>
 ```ts
-type verifyOTP = {
+type verifyTwoFactorOTP = {
     /**
      * 待验证 otp 代码。 
      */
@@ -363,7 +384,12 @@ if (data) {
 
 您可允许用户使用备用代码作为账户恢复方式。
 
-<APIMethod path="/two-factor/verify-backup-code" method="POST">
+<APIMethod
+  path="/two-factor/verify-backup-code"
+  method="POST"
+  requireHeaders
+  headersComment="Pass the current request headers so Better Auth can read and set the 2FA/session cookies."
+>
 ```ts
 type verifyBackupCode = {
     /**
@@ -505,7 +531,7 @@ OTP 的相关配置。
         default: 3,
     },
     storeOTP: {
-        description: "OTP 存储方式，可为明文、加密或哈希，也可定制加密器或哈希器。",
+        description: "如何转换存储的 OTP 值，支持明文、加密或哈希。您也可以提供自定义的加密器或哈希器。存储后端由全局验证配置控制，因此可以使用二级存储代替数据库。",
         type: "string",
         default: "plain",
     },

@@ -870,6 +870,7 @@ stripe({
 | `limits`                  | `object`     | 计划限制（如 `{ projects: 10, storage: 5 }`）。                             |
 | `group`                   | `string`     | 计划分组名称。                                                                 |
 | `seatPriceId`             | `string`     | 按座位计费价格 ID，需启用 `organization` 插件。                             |
+| `prorationBehavior`       | `string`     | 订阅更新时的费用调整行为：`"create_prorations"`（默认）、`"always_invoice"` 或 `"none"`。 |
 | `lineItems`               | `LineItem[]` | 额外的结账会话商品条目。                                                      |
 | `freeTrial`               | `object`     | 试用配置，详见下文 [免费试用配置](#free-trial-configuration)。                 |
 
