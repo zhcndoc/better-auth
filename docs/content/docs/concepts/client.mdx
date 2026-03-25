@@ -1,6 +1,6 @@
 ---
-title: 客户端
-description: 用于身份验证的 Better Auth 客户端库。
+title: Client
+description: Learn how to set up the Better Auth client for React, Vue, Svelte, and other frameworks, use hooks, configure fetch options, handle errors, and extend with client plugins.
 ---
 
 Better Auth 提供了一个与流行前端框架（如 React、Vue、Svelte 等）兼容的客户端库。该客户端库包含一组用于与 Better Auth 服务器交互的函数。每个框架的客户端库都建立在一个与框架无关的核心客户端库之上，因此所有方法和钩子在所有客户端库中均保持一致。
@@ -18,7 +18,7 @@ npm i better-auth
 从你所用的框架的包中导入 `createAuthClient`（例如 React 框架使用 "better-auth/react"）。调用该函数创建你的客户端。传入你身份验证服务器的基础 URL。如果身份验证服务器与客户端运行在同一域上，则可以跳过此步骤。
 
 <Callout type="info">
-如果你使用的基础路径不是 `/api/auth`，请确保传入包含路径的完整 URL。（例如，`http://localhost:3000/custom-path/auth`）
+If your auth server uses a different base path other than `/api/auth`, you can either pass the full URL including the path (e.g., `http://localhost:3000/custom-path/auth`), or use the `basePath` option separately.
 </Callout>
 
 
@@ -254,7 +254,55 @@ await authClient.signIn.email({
 })
 ```
 
-### 禁用钩子重新渲染
+### Session Options
+
+You can configure how the client handles session fetching and revalidation using the `sessionOptions` option.
+
+```ts title="auth-client.ts"
+import { createAuthClient } from "better-auth/client"
+
+const authClient = createAuthClient({
+    sessionOptions: {
+        refetchInterval: 0,
+        refetchOnWindowFocus: true,
+        refetchWhenOffline: false,
+    }
+})
+```
+
+<TypeTable
+  type={{
+    refetchInterval: {
+      description: "Polling interval in seconds. Set to 0 to disable",
+      type: "number",
+      default: "0",
+    },
+    refetchOnWindowFocus: {
+      description: "Automatically refetch session when the user switches back to the window/tab",
+      type: "boolean",
+      default: "true",
+    },
+    refetchWhenOffline: {
+      description: "Whether to refetch when the device has no internet access",
+      type: "boolean",
+      default: "false",
+    },
+  }}
+/>
+
+### Disable Default Fetch Plugins
+
+The client includes a default redirect plugin that handles authentication redirects. If you need to disable this behavior, you can set `disableDefaultFetchPlugins` to `true`.
+
+```ts title="auth-client.ts"
+import { createAuthClient } from "better-auth/client"
+
+const authClient = createAuthClient({
+    disableDefaultFetchPlugins: true
+})
+```
+
+### Disabling Hook Rerenders
 
 某些端点在成功响应后，会触发 atom 信号，导致像 `useSession` 的钩子重新渲染。
 这对于让你的 UI 与身份验证状态保持同步非常有用。

@@ -497,11 +497,13 @@ const permissions = {
       name: "enabled",
       type: "boolean",
       description: "API 密钥是否启用。",
+      isOptional: true,
     },
     {
       name: "rateLimitEnabled",
       type: "boolean",
-      description: "是否启用速率限制。",
+      description: "API 密钥是否启用了速率限制。",
+      isOptional: true,
     },
     {
       name: "rateLimitTimeWindow",
@@ -520,7 +522,8 @@ const permissions = {
       name: "requestCount",
       type: "number",
       description:
-        "当前时间窗口内已发起的请求数。",
+        "在速率限制时间窗口内已发出的请求数。",
+      isOptional: true,
     },
     {
       name: "remaining",
@@ -558,7 +561,7 @@ const permissions = {
     },
     {
       name: "metadata",
-      type: "Object",
+      type: "string",
       isOptional: true,
       description: "任意附加元数据。",
     },

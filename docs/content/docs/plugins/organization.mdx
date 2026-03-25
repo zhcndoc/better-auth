@@ -646,9 +646,9 @@ type setActiveOrganization = {
 要在会话创建时自动设置活跃组织，可以使用 [数据库钩子](/docs/concepts/database#database-hooks)。您需要实现逻辑，以确定初始活跃组织。
 
 ```ts title="auth.ts"
-export const auth = betterAuth({
-  import { betterAuth } from "better-auth";
+import { betterAuth } from "better-auth";
 
+export const auth = betterAuth({
   databaseHooks: {
     session: {
       create: {
@@ -2120,7 +2120,8 @@ await authClient.organization.inviteMember({
     {
       name: "createdAt",
       type: "Date",
-      description: "团队成员加入时间",
+      description: "Timestamp of when the team member was created",
+      isOptional: true,
     },
   ]}
 />
@@ -2149,7 +2150,8 @@ await authClient.organization.inviteMember({
     {
       name: "slug",
       type: "string",
-      description: "组织短名称",
+      description: "The slug of the organization",
+      isUnique: true,
     },
     {
       name: "logo",
@@ -2240,7 +2242,8 @@ await authClient.organization.inviteMember({
     {
       name: "role",
       type: "string",
-      description: "用户在组织中的角色",
+      description: "The role of the user in the organization",
+      isOptional: true,
     },
     {
       name: "status",
@@ -2331,7 +2334,8 @@ await authClient.organization.inviteMember({
     {
       name: "updatedAt",
       type: "Date",
-      description: "更新时间",
+      description: "Timestamp of when the organization role was updated",
+      isOptional: true,
     },
   ]}
 />
@@ -2398,7 +2402,8 @@ await authClient.organization.inviteMember({
     {
       name: "createdAt",
       type: "Date",
-      description: "成员加入时间",
+      description: "Timestamp of when the team member was created",
+      isOptional: true,
     },
   ]}
 />

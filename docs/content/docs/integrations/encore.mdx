@@ -1,0 +1,144 @@
+---
+title: Encore 集成
+description: 将 Better Auth 与 Encore 集成。
+---
+
+Better Auth 可以与您的 [Encore](https://encore.dev) 应用程序集成（一个具有自动化基础设施和可观测性的开源 TypeScript 框架）。
+
+在开始之前，请确保您已配置 Better Auth 实例。如果您还没有配置，请查看[安装](/docs/installation)。
+
+### 开始使用
+
+安装 Encore CLI 并创建一个新的应用程序。这将使用所需结构搭建一个 TypeScript 项目：
+
+```bash title="终端"
+brew install encoredev/tap/encore # 如果您尚未安装 Encore
+encore app create my-app --example=ts/hello-world
+cd my-app
+npm install better-auth
+```
+
+### 挂载处理器
+
+要处理身份验证请求，请使用 Encore 的 `api.raw()` 在一个全捕获端点上挂载 Better Auth：
+
+```ts title="auth/handler.ts"
+import { api } from "encore.dev/api";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./auth"; // 您的 Better Auth 实例
+
+export const authHandler = api.raw(
+  { expose: true, path: "/api/auth/*path", method: "*" },
+  toNodeHandler(auth)
+);
+```
+
+<Callout>
+Encore 的 `api.raw()` 提供 Node.js 请求/响应类型。我们使用 `better-auth/node` 中的 `toNodeHandler` 将这些桥接到 Better Auth 的 Web API 处理器。
+</Callout>
+
+### CORS
+
+如果您的网站运行在不同源上，需要在 `encore.app` 文件中配置 CORS 以允许携带凭证（cookies）发送请求：
+
+```json title="encore.app"
+{
+  "id": "your-app",
+  "global_cors": {
+    "allow_origins_with_credentials": ["http://localhost:3000"]
+  }
+}
+```
+
+### 受信任的源
+
+当请求来自不同的源时，默认情况下会被阻止。请将受信任的源添加到您的 Better Auth 配置中：
+
+```ts title="auth/auth.ts"
+export const auth = betterAuth({
+  trustedOrigins: ["http://localhost:3000", "https://your-app.com"],
+  // ... 其余配置
+});
+```
+
+### 本地开发
+
+使用 Encore CLI 启动您的应用程序。请确保 Docker 正在运行，因为 Encore 使用它来管理本地基础设施：
+
+```bash title="终端"
+encore run
+```
+
+<Callout type="tip">
+打开 `localhost:9400` 上的本地仪表板，查看所有请求的追踪，包括身份验证处理器执行和会话验证。这对于调试身份验证问题非常有用。
+</Callout>
+
+### 保护端点
+
+Encore 有一个内置的身份验证处理器模式用于保护端点。创建一个验证 Better Auth 会话的身份验证处理器：
+
+```ts title="auth/gateway.ts"
+import { APIError, Gateway, Header } from "encore.dev/api";
+import { authHandler } from "encore.dev/auth";
+import { auth } from "./auth";
+
+interface AuthParams {
+  authorization: Header<"Authorization">;
+  cookie: Header<"Cookie">;
+}
+
+interface AuthData {
+  userID: string;
+  email: string;
+  name: string;
+}
+
+const handler = authHandler(async (params: AuthParams): Promise<AuthData> => {
+  const headers = new Headers();
+  if (params.authorization) {
+    headers.set("Authorization", params.authorization);
+  }
+  if (params.cookie) {
+    headers.set("Cookie", params.cookie);
+  }
+
+  // 从请求中获取会话
+  const session = await auth.api.getSession({ headers });
+
+  // 如果未找到用户则抛出错误
+  if (!session?.user) {
+    throw APIError.unauthenticated("invalid session");
+  }
+
+  return {
+    userID: session.user.id,
+    email: session.user.email,
+    name: session.user.name,
+  };
+});
+
+export const gateway = new Gateway({ authHandler: handler });
+```
+
+然后使用 `auth: true` 保护任何端点：
+
+```ts
+import { api } from "encore.dev/api";
+import { getAuthData } from "~encore/auth";
+
+export const getProfile = api(
+  { expose: true, auth: true, method: "GET", path: "/profile" },
+  async () => {
+    const authData = getAuthData()!;
+    return { id: authData.userID, email: authData.email };
+  }
+);
+```
+
+<Callout type="tip">
+如果您想直接在 Encore 端点中管理会话 cookie，请查看 Encore 的[类型化 cookie 支持](https://encore.dev/docs/ts/primitives/cookies)。
+</Callout>
+
+### 了解更多
+
+有关包括数据库设置和部署的完整指南，请参阅 [Better Auth 与 Encore 教程](https://encore.dev/blog/betterauth-tutorial)。

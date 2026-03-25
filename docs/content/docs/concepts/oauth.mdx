@@ -1,6 +1,6 @@
 ---
 title: OAuth
-description: Better Auth 如何处理 OAuth
+description: 了解如何配置社交 OAuth 提供商、登录和关联账户、请求权限范围、传递额外数据、刷新访问令牌、映射用户资料以及自定义提供商选项。
 ---
 
 Better Auth 内置支持 OAuth 2.0 和 OpenID Connect。这使得你可以通过流行的 OAuth 提供商（如 Google、Facebook、GitHub 等）进行用户身份验证。
@@ -17,7 +17,7 @@ Better Auth 内置支持 OAuth 2.0 和 OpenID Connect。这使得你可以通过
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-  // 其它配置...
+  // 其他配置...
   socialProviders: {
     google: {
       clientId: "YOUR_GOOGLE_CLIENT_ID",
@@ -100,7 +100,7 @@ await auth.api.getAccessToken({
 
 ```ts
 const info = await authClient.accountInfo({
-  accountId: "accountId", // 传入提供商的账户 ID，提供商会自动识别
+  query: { accountId: "accountId" }, // 在此传入提供商提供的账户 id，提供商从账户 id 自动检测
 })
 ```
 
@@ -129,7 +129,7 @@ const requestAdditionalScopes = async () => {
 ```
 
 <Callout>
-确保你使用的 Better Auth 版本在 1.2.7 及以上。早期版本（例如 1.2.2）在尝试为已有账户关联追加权限时可能会出现 “Social account already linked” 错误。
+确保你使用的 Better Auth 版本在 1.2.7 及以上。早期版本（例如 1.2.2）在尝试为已有账户关联追加权限时可能会出现 "Social account already linked" 错误。
 </Callout>
 
 ### 通过 OAuth 流传递额外数据

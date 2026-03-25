@@ -9,7 +9,7 @@ description: Polar 提供者的设置和使用。
         要使用 Polar 登录，你需要创建一个 OAuth 2.0 客户端。你可以从 [Polar 用户设置](https://polar.sh/dashboard/account/developer) 获取你的凭证。
 
         1. 访问你的 [Polar 用户设置](https://polar.sh/settings#oauth)
-        2. 点击 “创建 OAuth 客户端”
+        2. 点击 "创建 OAuth 客户端"
         3. 填写必填字段：
            - **应用名称**：在授权时展示给用户的名称
            - **客户端类型**：选择适合你应用的客户端类型
@@ -49,7 +49,7 @@ description: Polar 提供者的设置和使用。
 
         ```ts title="auth-client.ts"
         import { createAuthClient } from "better-auth/client"
-        const authClient =  createAuthClient()
+        const authClient = createAuthClient()
 
         const signIn = async () => {
             const data = await authClient.signIn.social({

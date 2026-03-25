@@ -409,7 +409,27 @@ export const auth = betterAuth({
 
 当超过最大尝试次数时，`verifyOTP`、`signIn.emailOtp`、`verifyEmail` 和 `resetPassword` 方法将返回错误，错误码为 `TOO_MANY_ATTEMPTS`。
 
-- `storeOTP`：Better Auth 验证层在存储 OTP 之前对其进行处理的方法，可选 `encrypted`（加密）、`hashed`（哈希）或 `plain`（明文）文本。默认是明文。
+- `resendStrategy`: 控制当用户在已有有效 OTP 时请求新 OTP 的行为。默认为 `"rotate"`。
+  - `"rotate"`：始终生成新 OTP（默认行为）。
+  - `"reuse"`：重新发送相同的 OTP 并延长其过期时间。这可以防止在邮件延迟时存在多个有效验证码。仅当 OTP 可恢复时（`plain`、`encrypted` 或自定义加密/解密）才有效。当 OTP 被哈希时，会回退到 `"rotate"`。如果允许的尝试次数已耗尽，则会生成新的 OTP 而不是重用已耗尽的 OTP。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+import { emailOTP } from "better-auth/plugins"
+
+export const auth = betterAuth({
+    plugins: [
+        emailOTP({
+            resendStrategy: "reuse", // [!code highlight]
+            async sendVerificationOTP({ email, otp, type }) {
+                // 发送 OTP
+            },
+        })
+    ]
+})
+```
+
+- `storeOTP`: 用于在 Better Auth 的验证层存储 OTP 之前对其进行转换的方法，可以是 `encrypted`、`hashed` 或 `plain` 文本。默认为 `plain` 文本。
 
 <Callout>
 注意：这不会影响发送给用户的 OTP，只会影响存储的 OTP 值。存储后端本身由全局 [`verification`](/docs/reference/options#verification) 配置控制，因此如果你配置了 `secondaryStorage`，这些验证记录可以存放在那里，而不是数据库中。

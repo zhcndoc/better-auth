@@ -1,0 +1,534 @@
+---
+title: Agent Auth
+description: AI Agent 的身份认证、注册、发现以及基于能力的授权。
+---
+
+`AI Agents` `MCP` `Capabilities`
+
+Agent Auth 插件让你的 Better Auth 服务器充当 **Agent Auth 提供者**。它是 [Agent Auth Protocol](https://agentauthprotocol.com) 的服务器端实现。
+
+它为 AI Agent 提供了一种标准方式来发现你的服务、注册自身、请求授权，以及使用短期签名 JWT 执行作用域能力。它自带 **OpenAPI** 和 **MCP** 适配器——因此你可以将现有的 REST API 或 MCP 服务器转换为支持 Agent Auth 的服务，而无需手动编写能力定义。
+
+<Callout type="warn">
+此插件是正在大力开发中的标准的实现。它尚未稳定，未来可能会发生变化。请在 [Github](https://github.com/better-auth/agent-auth) 上报告任何问题或错误。
+</Callout>
+
+## 功能特点
+
+- **OpenAPI 适配器** — 直接从 OpenAPI 3.x 规范派生能力、输入/输出模式，以及代理 `onExecute` 处理器
+- **MCP 适配器** — 将 Agent Auth 作为 MCP 工具暴露，使任何兼容 MCP 的 AI Agent 都能发现和调用你的能力
+- `/.well-known/agent-configuration` 上的发现文档
+- 能力列表、描述和执行（可选的每个能力 `location` URL）
+- 委托和自主 Agent 模式
+- 设备授权和 CIBA 审批流程
+- 带重放保护的短期签名 JWT
+- 审批、授权和执行的事件/审计钩子
+
+## 安装
+
+<Steps>
+    <Step>
+        ### 安装包
+
+        ```package-install
+        @better-auth/agent-auth
+        ```
+
+        客户端和 CLI 包（可选）：
+
+        ```bash
+        npm install @auth/agent @auth/agent-cli
+        ```
+    </Step>
+
+    <Step>
+        ### 将插件添加到你的 auth 配置中
+
+        首先定义你的服务暴露的能力，以及一个 `onExecute` 处理器，用于为已认证的 Agent 执行操作。
+
+        ```ts title="auth.ts"
+        import { betterAuth } from "better-auth";
+        import { agentAuth } from "@better-auth/agent-auth"; // [!code highlight]
+
+        export const auth = betterAuth({
+          plugins: [
+            agentAuth({ // [!code highlight]
+              providerName: "Acme", // [!code highlight]
+              providerDescription: "Acme project and deployment APIs for AI agents.", // [!code highlight]
+              modes: ["delegated", "autonomous"], // [!code highlight]
+              capabilities: [ // [!code highlight]
+                { // [!code highlight]
+                  name: "deploy_project", // [!code highlight]
+                  description: "Deploy a project to production.", // [!code highlight]
+                  input: { // [!code highlight]
+                    type: "object", // [!code highlight]
+                    properties: { // [!code highlight]
+                      projectId: { type: "string" }, // [!code highlight]
+                    }, // [!code highlight]
+                    required: ["projectId"], // [!code highlight]
+                  }, // [!code highlight]
+                }, // [!code highlight]
+                { // [!code highlight]
+                  name: "list_projects", // [!code highlight]
+                  description: "List projects the current user can access.", // [!code highlight]
+                }, // [!code highlight]
+              ], // [!code highlight]
+              async onExecute({ capability, arguments: args, agentSession }) { // [!code highlight] 
+                switch (capability) { // [!code highlight]
+                  case "list_projects": // [!code highlight]  
+                    return [{ id: "proj_123", name: "marketing-site" }]; // [!code highlight]
+                  case "deploy_project": // [!code highlight]
+                    return { // [!code highlight]
+                      ok: true, // [!code highlight]
+                      projectId: args?.projectId, // [!code highlight]
+                      requestedBy: agentSession.user.id, // [!code highlight]   
+                    }; // [!code highlight]
+                  default: // [!code highlight]
+                    throw new Error(`Unsupported capability: ${capability}`); // [!code highlight]
+                } // [!code highlight]
+              }, // [!code highlight]
+            }), // [!code highlight]
+          ], // [!code highlight]
+        }); // [!code highlight]
+        ```
+    </Step>
+
+    <Step>
+        ### 暴露发现文档
+
+        插件提供了 `auth.api.getAgentConfiguration()`，但你应该从应用的根路径 `/.well-known/agent-configuration` 暴露它。
+
+        ```ts title="app/.well-known/agent-configuration/route.ts"
+        import { auth } from "@/lib/auth";
+        import { NextResponse } from "next/server";
+
+        export async function GET() {
+          const configuration = await auth.api.getAgentConfiguration();
+          return NextResponse.json(configuration);
+        }
+        ```
+    </Step>
+
+    <Step>
+        ### 迁移数据库
+
+        运行迁移或生成模式以添加 Agent、Host、Grant 和 Approval 表。
+
+        <Tabs items={["migrate", "generate"]}>
+            <Tab value="migrate">
+            ```package-install
+            npx auth migrate
+            ```
+            </Tab>
+            <Tab value="generate">
+            ```package-install
+            npx auth generate
+            ```
+            </Tab>
+        </Tabs>
+    </Step>
+
+    <Step>
+        ### 可选：添加 Better Auth 客户端插件
+
+        如果你想从 Better Auth 客户端类型安全地访问插件端点，也添加客户端插件。
+
+        ```ts title="auth-client.ts"
+        import { createAuthClient } from "better-auth/client";
+        import { agentAuthClient } from "@better-auth/agent-auth/client"; // [!code highlight]
+
+        export const authClient = createAuthClient({
+          plugins: [
+            agentAuthClient(), // [!code highlight]
+          ],
+        });
+        ```
+    </Step>
+</Steps>
+
+## 工作原理
+
+Agent Auth 流程通常如下：
+
+1. Agent 从 `/.well-known/agent-configuration` 发现你的提供者
+2. Agent 列出能力并决定它需要什么
+3. Agent 向你的服务器注册并请求能力授权
+4. 你的用户通过设备授权或 CIBA 审批请求
+5. Agent 签署短期 JWT（`aud` 匹配它调用的 URL），并在 **`default_location`** 或该能力自己的 **`location`**（如果你设置的话）调用每个已授权的能力
+
+## 发现
+
+发现文档告诉 Agent 如何与你的服务器交互。插件包含提供者元数据、支持模式、审批方法、绝对端点 URL 和 **`default_location`** 字段。
+
+执行的重要字段：
+
+- **`issuer`** — 提供者的基础 URL（Better Auth `baseURL`）。
+- **`endpoints`** — 每个路由的绝对 URL（例如 `execute` 指向该基础上的 `POST /capability/execute`）。
+- **`default_location`** — 默认执行端点的完整 URL。它始终与 `endpoints.execute` 匹配。当能力未定义自定义 URL 时，Agent 将此作为 JWT **`aud`**，并作为这些能力的请求 URL。
+
+从你的应用根路径暴露它：
+
+```ts title="app/.well-known/agent-configuration/route.ts"
+import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  const configuration = await auth.api.getAgentConfiguration();
+  return NextResponse.json(configuration);
+}
+```
+
+<Callout>
+发现路由应该位于 `/.well-known/agent-configuration`，即使你的 Better Auth 基础路径是 `/api/auth`。
+</Callout>
+
+## OpenAPI 适配器
+
+如果你的服务已有 OpenAPI 规范，你只需几行代码就能将整个 API 转换为 Agent Auth 提供者。**`createFromOpenAPI`** 读取规范并生成插件所需的一切：能力（每个 `operationId` 一个）、输入/输出 JSON Schema、代理 **`onExecute`** 处理器，以及可选的 **`providerName`** / **`providerDescription`**（从 `info` 获取）。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { agentAuth } from "@better-auth/agent-auth";
+import { createFromOpenAPI } from "@better-auth/agent-auth/openapi";
+
+const spec = await fetch("https://api.example.com/openapi.json").then((r) =>
+  r.json(),
+);
+
+export const auth = betterAuth({
+  plugins: [
+    agentAuth({
+      ...createFromOpenAPI(spec, {
+        baseUrl: "https://api.example.com",
+      }),
+    }),
+  ],
+});
+```
+
+就这么简单。规范中每个具有 `operationId` 的操作都成为一个能力，其名称为该 ID。路径、查询和头参数加上 JSON 请求体被合并为一个 `input` schema，而 200/201 响应体成为 `output`。
+
+### 上游认证
+
+代理处理器代表 Agent 调用你的上游 API。使用 **`resolveHeaders`** 注入每个请求所需的凭据（例如内部服务令牌或从 `agentSession` 查找的用户作用域访问令牌）。
+
+```ts title="auth.ts"
+createFromOpenAPI(spec, {
+  baseUrl: "https://api.example.com",
+  async resolveHeaders({ agentSession }) {
+    const token = await getAccessToken(agentSession.user.id);
+    return { Authorization: `Bearer ${token}` };
+  },
+});
+```
+
+### 默认主机能力
+
+控制哪些能力自动授予新主机。你可以传递 `true`（所有）、单个 HTTP 方法字符串、方法数组，或接收完整运行时上下文的回调。
+
+```ts title="auth.ts"
+createFromOpenAPI(spec, {
+  baseUrl: "https://api.example.com",
+  defaultHostCapabilities: ["GET", "HEAD"],
+});
+```
+
+### 每个方法的审批强度
+
+将 HTTP 方法映射到 **`approvalStrength`**，使修改操作需要更强的用户验证（例如 WebAuthn），而读取使用普通会话。
+
+```ts title="auth.ts"
+createFromOpenAPI(spec, {
+  baseUrl: "https://api.example.com",
+  approvalStrength: {
+    GET: "session",
+    POST: "webauthn",
+    PUT: "webauthn",
+    DELETE: "webauthn",
+  },
+});
+```
+
+### 每个能力的 `location`
+
+当你设置 **`location`** 时，每个派生能力都会获得该 URL。Agent 直接调用它（使用 Agent JWT），而不是通过默认执行端点——当你希望 Agent 访问真实 API URL 并在你的中间件中处理会话时很有用，而不是通过 `onExecute` 代理。
+
+```ts title="auth.ts"
+createFromOpenAPI(spec, {
+  baseUrl: "https://api.example.com",
+  location: "https://api.example.com/agent/execute",
+});
+```
+
+### 单独使用各个部分
+
+如果你只需要部分管道，适配器也导出了较低级别的辅助函数：
+
+- **`fromOpenAPI(spec)`** — 仅返回 `Capability[]`（无处理器，无主机能力）。
+- **`createOpenAPIHandler(spec, opts)`** — 仅返回 `onExecute` 代理处理器，这样你可以将其与手写能力配对，或自行过滤规范。
+
+```ts title="auth.ts"
+import {
+  fromOpenAPI,
+  createOpenAPIHandler,
+} from "@better-auth/agent-auth/openapi";
+
+const capabilities = fromOpenAPI(spec);
+const onExecute = createOpenAPIHandler(spec, {
+  baseUrl: "https://api.example.com",
+});
+
+agentAuth({ capabilities, onExecute });
+```
+
+## 功能
+
+功能是应用程序与代理之间的契约。每个功能都有名称、描述，以及可选的 JSON Schema `input` 定义。
+
+默认情况下，代理调用发现中的 **`default_location`**（执行 URL），插件运行 **`onExecute`**。如果在功能上设置了 **`location`**，代理将改为调用该绝对 URL——例如现有的 REST 路由——并且**这些请求不会使用 `onExecute`**；你需要使用下面的辅助工具解析代理会话，并自行实现处理器。
+
+使用功能来公开狭窄、可审查的操作，而不是广泛的 API 访问。
+
+### 定义功能
+
+```ts title="auth.ts"
+agentAuth({
+  capabilities: [
+    {
+      name: "create_issue",
+      description: "在当前工作空间中创建问题。",
+      input: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          body: { type: "string" },
+        },
+        required: ["title"],
+      },
+    },
+  ],
+});
+```
+
+可选的 **`location`** — 代理使用代理 JWT 调用此 URL，而不是默认执行 URL：
+
+```ts title="auth.ts"
+{
+  name: "create_issue",
+  description: "在当前工作空间中创建问题。",
+  location: "https://api.example.com/v1/issues",
+}
+```
+
+### 默认执行与自定义 `location`
+
+- **无 `location`** — 代理 `POST` 到 **`default_location`**（`endpoints.execute`），内容为 `{ capability, arguments }`。插件验证 JWT 和授权后，运行 **`onExecute`**。
+- **有 `location`** — 代理调用该 URL（你的 REST 处理器、另一个服务、OpenAPI 操作 URL 等）。**`onExecute` 不会运行**。在你的处理器中使用下面的辅助工具解析 **`agentSession`**，然后执行授权检查和业务逻辑。
+
+### `onExecute` 之外的代理会话
+
+对于自定义 **`location`** 路由（或任何非执行处理器），代理仍会发送带有代理 JWT 的 **`Authorization: Bearer`** 头。无论你使用什么框架，获取传入的 **`Headers`**（例如 **`request.headers`**，或你运行时的等效项）并传递它们——验证路径相同：签名、**`aud`**、重放（**`jti`**）、过期，以及（当存在时）请求绑定声明。
+
+**`auth.api.getAgentSession({ headers })`** 在进程内运行该流程并返回 **`AgentSession`** 或 **`null`**。**`verifyAgentRequest(request, auth)`** 同样通过将 **`Request`** 的 headers 转发到 **`GET /agent/session`**（通过 **`auth.handler`**）来实现相同功能——选择适合你代码结构的方式；没有 Hono 与 Next 的区分，只有"headers 进、session 出"。
+
+```ts title="api/issues/route.ts"
+import { auth } from "@/lib/auth";
+
+export async function POST(request: Request) {
+  const agentSession = await auth.api.getAgentSession({
+    headers: request.headers,
+  });
+  if (!agentSession) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  // 检查授权、执行约束、运行你的处理器……
+}
+```
+
+```ts
+// 当你已有 `Request` + `auth` 并偏好辅助工具时的等效写法：
+import { verifyAgentRequest } from "@better-auth/agent-auth";
+const agentSession = await verifyAgentRequest(request, auth);
+```
+
+**检查授权和输入**
+
+获取 **`agentSession`** 后，检查 **`agentSession.agent.capabilityGrants`**。这些是 JWT 的 **`capabilities`** 声明交集后的**活跃**数据库授权（与执行时相同）。对于此路由实现的功能，确保存在匹配的授权：
+
+```ts
+const CAP = "create_issue";
+const allowed = agentSession.agent.capabilityGrants.some(
+  (g) => g.capability === CAP && g.status === "active",
+);
+if (!allowed) {
+  return new Response("Forbidden", { status: 403 });
+}
+```
+
+如果该授权有 **`constraints`**，以与 **`POST /capability/execute`** 相同的方式验证请求体或查询——否则客户端可以通过调用你的自定义 URL 绕过约束。插件不会在任意路由上重新运行执行的约束辅助工具；该逻辑保留在你的处理器中（或调用你从 **`onExecute`** 路径中提取的共享代码）。
+
+**会话中包含的内容**
+
+- **`agentSession.user`** — 代理的已解析用户（委托的主机用户或 **`resolveAutonomousUser`**）。
+- **`agentSession.agent`** — ID、名称、模式、**`capabilityGrants`**、主机 ID、元数据。
+- **`agentSession.host`** — 当代理链接到主机时的主机记录。
+
+类型从 **`@better-auth/agent-auth`** 导出（例如 **`AgentSession`**）。
+
+### JWT 受众（`aud`）
+
+JWT **`aud`** 必须与你正在调用的 URL 匹配：
+
+- **无每功能 `location`** — 使用 **`default_location`** / **`endpoints.execute`**，或插件已允许的 issuer / base URL 值。
+- **有 `location`** — **`aud`** 应为相同的绝对 URL。`GET /capability/list` 在设置时包含 `location`。配置中无效的 `location` 值会在启动时失败。
+
+**JWT 中的单一功能** — 如果 `capabilities` 只列出一个 ID，当设置了时 **`aud`** 可以等于该功能的 **`location`**。
+
+**JWT 中的多个功能** — 不接受每功能 **`location`** 值作为 **`aud`**；改用 issuer、base path 或默认执行端点。
+
+在反向代理后面，如果需要 **`Host`** / **`X-Forwarded-Proto`** 与 **`aud`** 验证对齐，请设置 **`trustProxy`**。
+
+### 过滤可见的功能
+
+使用 `resolveCapabilities` 向不同调用者展示不同的功能集，例如按计划、用户或组织限制的功能。
+
+### `onExecute`
+
+为使用**默认执行 URL**（无每功能 **`location`**）的功能运行。插件验证 JWT（包括 **`aud`**）、附加 **`agentSession`**、检查授权，然后调用 **`onExecute`**。具有自定义 **`location`** 的功能永远不会到达此路径——你使用上面的会话辅助工具在自己的路由中处理它们。
+
+```ts title="auth.ts"
+agentAuth({
+  capabilities: [
+    {
+      name: "create_issue",
+      description: "在当前工作空间中创建问题。",
+    },
+  ],
+  async onExecute({ capability, arguments: args, agentSession }) {
+    if (capability !== "create_issue") {
+      throw new Error("不支持的功能");
+    }
+
+    return {
+      ok: true,
+      title: args?.title,
+      createdBy: agentSession.user.id,
+    };
+  },
+});
+```
+
+## 授权流程
+
+插件支持两种授权方法：
+
+- `device_authorization` 用于基于浏览器的授权和用户码
+- `ciba` 用于后台通道授权流程
+
+默认情况下，两者都启用。你可以使用 `approvalMethods` 和 `resolveApprovalMethod` 来限制或自定义它们。
+
+```ts title="auth.ts"
+agentAuth({
+  approvalMethods: ["ciba", "device_authorization"],
+  resolveApprovalMethod: ({ preferredMethod, supportedMethods }) => {
+    if (preferredMethod && supportedMethods.includes(preferredMethod)) {
+      return preferredMethod;
+    }
+    return "device_authorization";
+  },
+  deviceAuthorizationPage: "/device/capabilities",
+});
+```
+
+<Callout type="warn">
+  插件不会为你渲染设备授权 UI。你的应用必须提供 `deviceAuthorizationPage` 引用的页面。
+</Callout>
+
+## 事件和审计
+
+使用 `onEvent` 捕获重要的生命周期事件，例如：
+
+- 代理创建和撤销
+- 主机创建和注册
+- 功能请求和授权
+- 功能执行
+
+此钩子是写入审计日志或向分析管道提供数据的好地方。
+
+## 配置
+
+Agent Auth 插件支持许多选项。这些是你通常首先使用的：
+
+<TypeTable
+  type={{
+    providerName: {
+      description: "在发现元数据中返回的人类可读提供商名称。",
+      type: "string",
+      required: false,
+    },
+    providerDescription: {
+      description: "在发现文档中返回的描述。",
+      type: "string",
+      required: false,
+    },
+    modes: {
+      description: "支持的代理模式。默认为 `[\"delegated\", \"autonomous\"]`。",
+      type: '("delegated" | "autonomous")[]',
+      required: false,
+    },
+    capabilities: {
+      description:
+        "功能定义（`name`、`description`、可选的 `input`、可选的绝对 `location`——如果设置，代理调用此 URL 而不是 `default_location`，你使用会话辅助工具在你的处理器中）。",
+      type: "Capability[]",
+      required: false,
+    },
+    onExecute: {
+      description:
+        "通过默认执行 URL（`default_location`）调用的功能的处理器。当代理使用自定义每功能 `location` 时不会调用。",
+      type: "function",
+      required: false,
+    },
+    requireAuthForCapabilities: {
+      description: "列出和描述功能时需要主机或代理 JWT。",
+      type: "boolean",
+      required: false,
+    },
+    approvalMethods: {
+      description: "支持的授权方法。默认为 `[\"ciba\", \"device_authorization\"]`。",
+      type: "string[]",
+      required: false,
+    },
+    resolveApprovalMethod: {
+      description: "为请求选择授权方法。",
+      type: "function",
+      required: false,
+    },
+    deviceAuthorizationPage: {
+      description: "面向用户设备授权页面的路径或绝对 URL。",
+      type: "string",
+      required: false,
+    },
+    defaultHostCapabilities: {
+      description: "应用于新创建主机的默认功能。",
+      type: "string[] | function",
+      required: false,
+    },
+    allowDynamicHostRegistration: {
+      description: "允许未知主机动态注册。",
+      type: "boolean | function",
+      required: false,
+    },
+    onEvent: {
+      description: "审计和生命周期事件的回调。",
+      type: "function",
+      required: false,
+    },
+    trustProxy: {
+      description:
+        "验证 JWT `aud` 时信任 `X-Forwarded-Proto`（在反向代理后面使用）。默认为 `false`。",
+      type: "boolean",
+      required: false,
+    },
+  }}
+/>
+

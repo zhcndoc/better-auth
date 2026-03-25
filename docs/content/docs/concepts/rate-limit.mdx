@@ -1,6 +1,6 @@
 ---
 title: 速率限制
-description: 如何限制用户在给定时间段内对服务器发起的请求次数。
+description: 了解如何在 Better Auth 中配置速率限制，包括 IP 地址检测、IPv6 支持、自定义速率限制时间窗口、存储后端、错误处理和按端点的规则。
 ---
 
 Better Auth 包含内置的速率限制器，以帮助管理流量和防止滥用。默认情况下，在生产模式下，速率限制器设置为：
@@ -288,18 +288,19 @@ await authClient.signIn.email({
         isPrimaryKey: true
         },
         { 
-        name: "key", 
-        type: "string", 
-        description: "每个速率限制键的唯一标识",
+        name: "key",
+        type: "string",
+        description: "每个速率限制键的唯一标识符",
+        isUnique: true,
         },
         { 
-        name: "count", 
-        type: "integer", 
-        description: "时间窗口（单位秒）" 
+        name: "count",
+        type: "integer",
+        description: "当前时间窗口内的请求数量"
         },
-        { 
-        name: "lastRequest", 
-        type: "bigint", 
-        description: "窗口内最大请求数" 
+        {
+        name: "lastRequest",
+        type: "bigint",
+        description: "最后请求的时间戳（毫秒）" 
         }]}
     />

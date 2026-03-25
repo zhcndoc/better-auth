@@ -151,6 +151,24 @@ const authClient = createAuthClient({
 });
 ```
 
+使用 `twoFactorPage` 配置：
+
+```ts title="sign-in.ts"
+import { createAuthClient } from "better-auth/client";
+import { twoFactorClient } from "better-auth/client/plugins";
+
+const authClient = createAuthClient({
+    plugins: [
+        twoFactorClient({
+            twoFactorPage: "/two-factor", // 如果用户需要验证第二因素，重定向到该页面
+        }),
+    ],
+});
+```
+
+<Callout type="warn">
+使用 `twoFactorPage` 选项会在重定向到二次验证页面时导致整页重新加载。如果您想避免页面重新加载，请考虑使用 `onTwoFactorRedirect` 回调来在应用内以编程方式处理重定向。
+</Callout>
 
 
 
@@ -262,7 +280,7 @@ export default function UserCard({ password }: { password: string }){
   path="/two-factor/verify-totp"
   method="POST"
   requireHeaders
-  headersComment="Pass the current request headers so Better Auth can read and set the 2FA/session cookies."
+  headersComment="传递当前请求头，以便 Better Auth 可以读取和设置 2FA/会话 cookies。"
 >
 ```ts
 type verifyTOTP = {
@@ -309,7 +327,7 @@ export const auth = betterAuth({
   path="/two-factor/send-otp"
   method="POST"
   requireHeaders
-  headersComment="Pass the current request headers so Better Auth can read and set the 2FA/session cookies."
+  headersComment="传递当前请求头，以便 Better Auth 可以读取和设置 2FA/会话 cookies。"
 >
 ```ts
 type sendTwoFactorOTP = {
@@ -333,7 +351,7 @@ if (data) {
   path="/two-factor/verify-otp"
   method="POST"
   requireHeaders
-  headersComment="Pass the current request headers so Better Auth can read and set the 2FA/session cookies."
+  headersComment="传递当前请求头，以便 Better Auth 可以读取和设置 2FA/会话 cookies。"
 >
 ```ts
 type verifyTwoFactorOTP = {
@@ -388,7 +406,7 @@ if (data) {
   path="/two-factor/verify-backup-code"
   method="POST"
   requireHeaders
-  headersComment="Pass the current request headers so Better Auth can read and set the 2FA/session cookies."
+  headersComment="传递当前请求头，以便 Better Auth 可以读取和设置 2FA/会话 cookies。"
 >
 ```ts
 type verifyBackupCode = {
@@ -461,7 +479,6 @@ twoFactor({
     issuer: "my-app-name" // [!code highlight]
 })
 ```
----
 
 ## 模式 (Schema)
 
@@ -479,10 +496,10 @@ twoFactor({
 
 <DatabaseTable
     fields={[
-        { name: "id", type: "string", description: "双重身份验证记录的 ID。", isPrimaryKey: true },
-        { name: "userId", type: "string", description: "用户 ID", isForeignKey: true },
-        { name: "secret", type: "string", description: "用于生成 TOTP 代码的密钥。", isOptional: true },
-        { name: "backupCodes", type: "string", description: "用于恢复账户访问的备用代码。", isOptional: true },
+        { name: "id", type: "string", description: "双重身份验证的 ID。", isPrimaryKey: true },
+        { name: "userId", type: "string", description: "用户的 ID", isForeignKey: true },
+        { name: "secret", type: "string", description: "用于生成 TOTP 代码的密钥。" },
+        { name: "backupCodes", type: "string", description: "当用户无法访问手机或邮箱时，用于恢复账户访问的备用代码。" },
     ]}
 />
 

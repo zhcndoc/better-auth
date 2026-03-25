@@ -26,20 +26,47 @@ export const auth = betterAuth({
 ```json
 {
   "code": "PASSWORD_COMPROMISED",
-  "message": "密码已泄露"
+  "message": "The password you entered has been compromised. Please choose a different password."
 }
 ```
 
-## 配置
+## Options
 
-你可以自定义错误消息：
+### `enabled`
 
-```ts
-haveIBeenPwned({
-    customPasswordCompromisedMessage: "请选择一个更安全的密码。"
+启用或禁用对 HIBP 数据库的密码检查。在开发或测试环境中跳过检查很有用，无需移除插件。默认为 `true`。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+import { haveIBeenPwned } from "better-auth/plugins"
+
+const auth = betterAuth({
+    plugins: [
+        haveIBeenPwned({
+            enabled: process.env.NODE_ENV === 'production' // [!code highlight]
+        })
+    ]
 })
 ```
-## 安全注意事项
+
+### `customPasswordCompromisedMessage`
+
+自定义检测到被泄露密码时显示的错误信息。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+import { haveIBeenPwned } from "better-auth/plugins"
+
+const auth = betterAuth({
+    plugins: [
+        haveIBeenPwned({
+            customPasswordCompromisedMessage: "Please choose a more secure password." // [!code highlight]
+        })
+    ]
+})
+```
+
+## Security Notes
 
 - 仅发送密码哈希的前 5 个字符到 API
 - 永远不会传输完整密码

@@ -15,7 +15,7 @@ description: 一个更好的认证插件，使您的认证服务器能够作为 
 - **兼容 OIDC**：遵循 [OIDC](https://openid.net/specs/openid-connect-core-1_0.html) 标准，支持 `openid` 范围
   - **UserInfo**：提供当前用户详情的端点
   - **id_token**：JWT 签名的用户信息
-  - **OIDC 注销**：[RP发起](https://openid.net/specs/openid-connect-rpinitiated-1_0.html)的注销支持
+  - **OIDC 注销**：[RP发起](https://openid.net/specs/oidc-rpinitiated-1_0.html)的注销支持
 - **动态客户端注册**：允许客户端动态注册
   - **公有客户端**：支持原生移动客户端和用户代理客户端（如 AI）
   - **机密客户端**：支持 Web 客户端
@@ -195,6 +195,33 @@ type getOAuthClientPublic = {
 ```
 </APIMethod>
 
+#### 获取公有客户端预登录信息
+
+若要在登录前获取公有客户端信息，您必须先在配置中启用该端点：
+
+```ts title="auth.ts"
+oauthProvider({
+  allowPublicClientPrelogin: true,
+})
+```
+
+然后，以下端点将获取公有客户端信息。
+
+<APIMethod path="/oauth2/public-client-prelogin" method="POST">
+```ts
+type getOAuthClientPublicPrelogin = {
+  /**
+   * OAuth 客户端的 client_id
+   */
+  client_id: string,
+  /**
+   * 有效的 oauth 查询参数（使用提供的客户端时自动发送）
+   */
+  oauth_query: string
+}
+```
+</APIMethod>
+
 #### 列出客户端
 
 获取特定用户或组织所拥有的所有客户端列表，使用以下端点：
@@ -225,9 +252,9 @@ await auth.api.adminCreateOAuthClient({
   headers,
   body: {
     redirect_uris: [redirectUri],
-    client_secret_expires_at: 0, // [!code highlight]
-    skip_consent: true, // [!code highlight]
-    enable_end_session: true, // [!code highlight]
+    client_secret_expires_at: 0, // 机密客户端密钥过期时间
+    skip_consent: true, // 允许跳过用户同意流程
+    enable_end_session: true, // 允许 RP 发起注销
   }
 });
 ```
@@ -264,9 +291,9 @@ await auth.api.adminUpdateOAuthClient({
   headers,
   body: {
     redirect_uris: [redirectUri],
-    client_secret_expires_at: 0, // [!code highlight]
-    skip_consent: true, // [!code highlight]
-    enable_end_session: true, // [!code highlight]
+    client_secret_expires_at: 0, // 机密客户端密钥过期时间
+    skip_consent: true, // 允许跳过用户同意流程
+    enable_end_session: true, // 允许 RP 发起注销
   }
 });
 ```
@@ -492,7 +519,7 @@ type oauth2Consent = {
 ```
 </APIMethod>
 
-### Continue 端点
+### 继续端点
 
 注册页面必须先 [配置](#sign-up-account-screen) 以进行注册步骤。
 账户选择页面必须先 [配置](#select-account-screen) 用于账户选择。
@@ -1595,8 +1622,8 @@ OAuth 提供者插件新增以下表格：
     {
       name: "clientId",
       type: "string",
-      description: "OAuth 客户端唯一标识",
-      isPrimaryKey: true,
+      description: "每个 OAuth 客户端的唯一标识符",
+      isUnique: true,
     },
     {
       name: "clientSecret",
@@ -1647,17 +1674,18 @@ OAuth 提供者插件新增以下表格：
       type: "string",
       description: "客户端所属引用 ID（非用户）（可选）",
       isOptional: true,
-      isForeignKey: true,
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "创建时间",
+      description: "OAuth 客户端创建时间戳",
+      isOptional: true,
     },
     {
       name: "updatedAt",
       type: "Date",
-      description: "更新时间",
+      description: "OAuth 客户端最后更新时间戳",
+      isOptional: true,
     },
     {
       name: "name",
@@ -1717,7 +1745,12 @@ OAuth 提供者插件新增以下表格：
       name: "redirectUris",
       type: "string[]",
       description: "重定向 URI 数组",
-      isRequired: true,
+    },
+    {
+      name: "postLogoutRedirectUris",
+      type: "string[]",
+      description: "注销后重定向 URI 数组",
+      isOptional: true,
     },
     {
       name: "tokenEndpointAuthMethod",
@@ -1750,6 +1783,12 @@ OAuth 提供者插件新增以下表格：
       isOptional: true,
     },
     {
+      name: "requirePKCE",
+      type: "boolean",
+      description: "此客户端是否需要 PKCE",
+      isOptional: true,
+    },
+    {
       name: "metadata",
       type: "json",
       description: "客户端附加元数据",
@@ -1773,15 +1812,13 @@ OAuth 提供者插件新增以下表格：
     {
       name: "token",
       type: "string",
-      description: "刷新令牌的哈希或加密后的值",
-      isRequired: true,
+      description: "哈希/加密后的刷新令牌",
     },
     {
       name: "clientId",
       type: "string",
       description: "所属 OAuth 客户端 ID",
       isForeignKey: true,
-      isRequired: true,
       references: { model: "oauthClient", field: "clientId" },
     },
     {
@@ -1789,7 +1826,7 @@ OAuth 提供者插件新增以下表格：
       type: "string",
       description: "发放令牌时使用的会话 ID（且会话仍有效）",
       isForeignKey: true,
-      isRequired: false,
+      isOptional: true,
       references: { model: "session", field: "id" },
     },
     {
@@ -1797,7 +1834,6 @@ OAuth 提供者插件新增以下表格：
       type: "string",
       description: "所属用户 ID",
       isForeignKey: true,
-      isRequired: true,
       references: { model: "user", field: "id" },
     },
     {
@@ -1805,13 +1841,11 @@ OAuth 提供者插件新增以下表格：
       type: "string",
       description: "同意的引用 ID",
       isOptional: true,
-      isForeignKey: true,
     },
     {
       name: "scopes",
       type: "string[]",
-      description: "授权的 scopes 数组",
-      isRequired: true,
+      description: "授予的权限范围数组",
     },
     {
       name: "revoked",
@@ -1853,15 +1887,14 @@ OAuth 提供者插件新增以下表格：
     {
       name: "token",
       type: "string",
-      description: "访问令牌哈希或加密值",
-      isRequired: true,
+      description: "哈希/加密后的访问令牌",
+      isUnique: true,
     },
     {
       name: "clientId",
       type: "string",
       description: "所属 OAuth 客户端 ID",
       isForeignKey: true,
-      isRequired: true,
       references: { model: "oauthClient", field: "clientId" }
     },
     {
@@ -1893,18 +1926,16 @@ OAuth 提供者插件新增以下表格：
       type: "string",
       description: "同意的引用 ID",
       isOptional: true,
-      isForeignKey: true,
     },
     {
       name: "scopes",
       type: "string[]",
-      description: "授权的 scopes 数组",
-      isRequired: true,
+      description: "授予的权限范围数组",
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "创建时间"
+      description: "Timestamp when the token was created",
     },
     {
       name: "expiresAt",
@@ -1945,23 +1976,21 @@ OAuth 提供者插件新增以下表格：
       type: "string",
       description: "同意引用 ID",
       isOptional: true,
-      isForeignKey: true,
     },
     {
       name: "scopes",
-      type: "string",
-      description: "以逗号分隔的已同意 scopes",
-      isRequired: true
+      type: "string[]",
+      description: "Array of scopes consented to",
     },
     {
       name: "createdAt",
       type: "Date",
-      description: "同意时间戳"
+      description: "Timestamp of when the consent was given",
     },
     {
       name: "updatedAt",
       type: "Date",
-      description: "同意更新时间戳"
+      description: "Timestamp of when the consent was last updated",
     },
   ]}
 />

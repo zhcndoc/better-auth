@@ -48,6 +48,7 @@ description: 将单点登录（SSO）集成到您的应用程序中。
             ```
             </Tab>
         </Tabs>
+
         请参考 [Schema](#schema) 部分了解手动添加字段的方法。
     </Step>
     <Step>
@@ -1406,15 +1407,15 @@ samlConfig: {
 <DatabaseTable
     fields={[
         {
-            name: "id", type: "string", description: "数据库标识符", isRequired: true, isPrimaryKey: true,
+            name: "id", type: "string", description: "数据库标识符", isPrimaryKey: true,
         },
-        { name: "issuer", type: "string", description: "发行者标识", isRequired: true },
-        { name: "domain", type: "string", description: "提供者对应域名", isRequired: true },
-        { name: "oidcConfig", type: "string", description: "OIDC 配置（JSON 字符串）", isRequired: false },
-        { name: "samlConfig", type: "string", description: "SAML 配置（JSON 字符串）", isRequired: false },
-        { name: "userId", type: "string", description: "用户 ID", isRequired: true, references: { model: "user", field: "id" } },
-        { name: "providerId", type: "string", description: "提供者 ID，用于识别提供者及生成重定向 URL", isRequired: true, isUnique: true },
-        { name: "organizationId", type: "string", description: "组织 ID，如提供者关联组织", isRequired: false }
+        { name: "issuer", type: "string", description: "发行者标识符" },
+        { name: "domain", type: "string", description: "提供者域名" },
+        { name: "oidcConfig", type: "string", description: "OIDC 配置（JSON 字符串）", isOptional: true },
+        { name: "samlConfig", type: "string", description: "SAML 配置（JSON 字符串）", isOptional: true },
+        { name: "userId", type: "string", description: "用户 ID", isForeignKey: true },
+        { name: "providerId", type: "string", description: "提供者 ID。用于识别提供者并生成重定向 URL。", isUnique: true },
+        { name: "organizationId", type: "string", description: "组织 ID。如果提供者关联到某个组织。", isOptional: true }
     ]}
 />
 
@@ -1424,7 +1425,7 @@ samlConfig: {
 
 <DatabaseTable
     fields={[
-        { name: "domainVerified", type: "boolean", description: "标记提供者域名是否已验证", isRequired: false },
+        { name: "domainVerified", type: "boolean", description: "指示提供者域名是否已验证的标志。", isOptional: true },
     ]}
 />
 

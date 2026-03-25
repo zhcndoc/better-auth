@@ -611,12 +611,11 @@ authenticateCLI().catch((err) => {
             type: "string",
             description: "用户友好的验证代码",
         },
-        { 
-            name: "userId", 
-            type: "string", 
-            description: "批准或拒绝的用户 ID",
-            isOptional: true,
-            isForeignKey: true
+        {
+            name: "userId",
+            type: "string",
+            description: "批准/拒绝的用户 ID",
+            isOptional: true
         },
         {
             name: "clientId",
@@ -652,15 +651,5 @@ authenticateCLI().catch((err) => {
             description: "轮询最小间隔秒数",
             isOptional: true
         },
-        {
-            name: "createdAt",
-            type: "Date",
-            description: "请求创建时间",
-        },
-        {
-            name: "updatedAt",
-            type: "Date",
-            description: "请求上次更新时间",
-        }
     ]}
 />

@@ -146,7 +146,7 @@ type isUsernameAvailable = {
     username: string = "new-username"
 }
 
-if(response?.available) {
+if (response?.available) {
     console.log("用户名可用");
 } else {
     console.log("用户名不可用");
@@ -345,13 +345,14 @@ const auth = betterAuth({
             name: "username",
             type: "string",
             description: "用户的用户名",
-            isUnique: true
+            isUnique: true,
+            isOptional: true
         },
         {
             name: "displayUsername",
             type: "string",
-            description: "非标准化的用户名",
-            isUnique: true
+            description: "用户的非标准化用户名",
+            isOptional: true
         },
     ]}
 />

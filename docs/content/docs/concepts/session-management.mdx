@@ -1,6 +1,6 @@
 ---
 title: 会话管理
-description: 更好的身份验证会话管理。
+description: 了解 Better Auth 中的会话管理，包括会话过期、新鲜度、Cookie 缓存策略、次级存储、无状态会话以及自定义会话响应。
 ---
 
 Better Auth 使用传统的基于 Cookie 的会话管理。会话存储在 Cookie 中，并在每个请求时发送到服务器。服务器随后验证会话，若会话有效则返回用户数据。
@@ -36,7 +36,7 @@ export const auth = betterAuth({
 
 ### 禁用会话刷新
 
-你可以禁用会话刷新，使得无论 `updateAge` 怎样，都会话都不会被更新。
+你可以禁用会话刷新，使得无论 `updateAge` 怎样，会话都不会被更新。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -389,7 +389,7 @@ export const auth = betterAuth({
     },
     account: {
         storeStateStrategy: "cookie",
-        storeAccountCookie: true, // OAuth 流程后将账号数据存入 Cookie （适用于无数据库）
+        storeAccountCookie: true, // OAuth 流程后将账号数据存入 Cookie（适用于无数据库）
     }
 });
 ```

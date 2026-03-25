@@ -1,6 +1,6 @@
 ---
 title: 用户与账户
-description: 用户和账户管理。
+description: 了解如何管理用户和账户，包括更新用户信息、更改邮箱和密码、验证删除用户、令牌加密以及账户关联与解除关联。
 ---
 
 除了认证用户外，Better Auth 还提供了一组管理用户的方法。这包括更新用户信息、更改密码等。
@@ -50,7 +50,7 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warn">
-  避免等待邮件发送完成以防止时序攻击。在无服务器平台上，使用 `waitUntil` 或类似功能确保邮件被发送。
+避免等待邮件发送完成以防止时序攻击。在无服务器平台上，使用 `waitUntil` 或类似功能确保邮件被发送。
 </Callout>
 
 默认情况下，当用户请求更改邮箱时，验证邮件会发送到**新的**邮箱地址。
@@ -99,7 +99,7 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warn">
-    如果 `updateEmailWithoutVerification` 为假（默认），即使当前邮箱未验证，新邮箱未验证之前邮箱也不会被更新。
+如果 `updateEmailWithoutVerification` 为假（默认），即使当前邮箱未验证，新邮箱未验证之前邮箱也不会被更新。
 </Callout>
 
 #### 客户端用法
@@ -140,7 +140,7 @@ type changePassword = {
 
 ### 设置密码
 
-如果用户通过 OAuth 或其他提供者注册，则不会有密码或凭证账户。这种情况下，可以使用 `setPassword` 操作为用户设置密码。出于安全考虑，此函数只能在服务器端调用。建议用户通过“忘记密码”流程来设置密码。
+如果用户通过 OAuth 或其他提供者注册，则不会有密码或凭证账户。这种情况下，可以使用 `setPassword` 操作为用户设置密码。出于安全考虑，此函数只能在服务器端调用。建议用户通过"忘记密码"流程来设置密码。
 
 ```ts title="set-password.ts"
 import { auth } from "@/lib/auth"

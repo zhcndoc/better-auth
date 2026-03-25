@@ -33,21 +33,19 @@ npx skills add better-auth/skills
 
 Better Auth 提供了一个 MCP 服务器，使你可以在任何支持模型上下文协议（Model Context Protocol, MCP）的 AI 模型中使用它。
 
-<AddToCursor />
+#### with CLI
 
-#### CLI 选项
+你可以使用 `auth` CLI 将 Better Auth MCP 添加到你的 MCP 客户端（如 Cursor、Claude Code 或 Open Code）。
 
-使用 Better Auth CLI，可轻松将 MCP 服务器添加到你喜欢的客户端：
-
-<Tabs items={["Cursor", "Claude Code", "Open Code", "Manual"]}>
-    <Tab value="Cursor">
-      ```bash title="terminal"
-      npx auth mcp --cursor
-      ```
-    </Tab>
+<Tabs items={["Claude Code", "Cursor", "Open Code", "Manual"]}>
     <Tab value="Claude Code">
       ```bash title="terminal"
       npx auth mcp --claude-code
+      ```
+    </Tab>
+        <Tab value="Cursor">
+      ```bash title="terminal"
+      npx auth mcp --cursor
       ```
     </Tab>
     <Tab value="Open Code">
@@ -62,41 +60,8 @@ Better Auth 提供了一个 MCP 服务器，使你可以在任何支持模型上
     </Tab>
 </Tabs>
 
-#### 手动配置
+#### with Cursor
 
-你也可以为每个客户端手动配置 MCP 服务器：
+如果你正在使用 Cursor，你也可以使用下面的按钮。
 
-<Tabs items={["Claude Code", "Open Code", "Manual"]}>
-    <Tab value="Claude Code">
-      ```bash title="terminal"
-      claude mcp add --transport http better-auth https://mcp.inkeep.com/better-auth/mcp
-      ```
-    </Tab>
-    <Tab value="Open Code">
-      ```json title="opencode.json"
-        {
-            "$schema": "https://opencode.ai/config.json",
-            "mcp": {
-                "better-auth": {
-                    "type": "remote",
-                    "url": "https://mcp.inkeep.com/better-auth/mcp",
-                    "enabled": true
-                }
-            }
-        }
-      ```
-    </Tab>
-    <Tab value="Manual">
-     ```json title="mcp.json"
-    {
-        "better-auth": {
-            "url": "https://mcp.inkeep.com/better-auth/mcp"
-        }
-    }
-    ```
-    </Tab>
-</Tabs>
-
-<Callout>
-我们提供了由 [Inkeep](https://inkeep.com) 支持的第一方 MCP。你也可以选择使用 [`context7`](https://context7.com/) 以及其他 MCP 提供商。
-</Callout>
+<AddToCursor />

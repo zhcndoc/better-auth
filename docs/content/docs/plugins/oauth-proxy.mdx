@@ -29,7 +29,7 @@ description: Better Auth 的 OAuth 代理插件
     })
     ```
 
-    The plugin will automatically route OAuth requests through your production server.
+    插件会自动将 OAuth 请求路由到你的生产服务器。
   </Step>
   <Step>
     ### 在你的 OAuth 提供商处添加重定向 URL
@@ -40,12 +40,12 @@ description: Better Auth 的 OAuth 代理插件
     https://my-production-app.com/api/auth/callback/github
     ```
 
-    Only the production callback URL needs to be registered. The plugin handles routing OAuth requests from preview and development environments through production automatically.
+    只需注册生产环境的回调 URL。插件会自动处理将预览和开发环境的 OAuth 请求路由到生产环境。
   </Step>
   <Step>
-    ### Add trusted origins
+    ### 添加可信来源
 
-    Since preview and development servers redirect through production, you need to add them as `trustedOrigins` in your auth config:
+    由于预览和开发服务器会通过生产环境重定向，你需要将它们添加为 `trustedOrigins`：
 
     ```ts title="auth.ts"
     export const auth = betterAuth({
@@ -60,7 +60,7 @@ description: Better Auth 的 OAuth 代理插件
 </Steps>
 
 <Callout type="info">
-所有环境（生产、预览、开发）必须共享相同的 `BETTER_AUTH_SECRET`。该插件使用此密钥加密和解密 OAuth 流程中服务器之间传递的数据。
+所有参与 OAuth 代理流程的环境必须共享相同的加密密钥。默认情况下，插件使用 `BETTER_AUTH_SECRET`。为避免在多个环境间共享主密钥，可以提供专用的 `secret` 选项（参见[选项](#options)）。
 </Callout>
 
 ## 工作原理
@@ -94,4 +94,6 @@ await authClient.signIn.social({
 
 **currentURL**：插件会自动确定应用当前的 URL。它会优先检查请求的 URL、流行托管服务提供商的特定环境变量，最后回退到 auth 配置中的 `baseURL`。只有当环境中无法正确推断 URL 时才需要手动设置。
 
-**maxAge**：加密用户信息的最大有效期（秒）。超过此时间的负载将被拒绝，以防止重放攻击。该值建议保持较短（例如 30-60 秒），以减少潜在重放攻击的窗口，同时保持正常的 OAuth 流程。默认为 `60` 秒。
+**maxAge**: 加密载荷的最大有效期（秒）。超过此时间的载荷将被拒绝以防止重放攻击。保持较短的值（例如 30-60 秒）可以最大程度减少潜在重放攻击的窗口，同时仍允许正常的 OAuth 流程。默认为 `60` 秒。
+
+**secret**: 用于 OAuth 代理流程中加密和解密数据的专用密钥。设置后，此密钥**替代**全局的 `BETTER_AUTH_SECRET`，如果密钥在多个环境间共享，泄露的代理密钥无法伪造会话或解密由主密钥保护的其他数据，从而限制爆炸半径。所有参与代理流程的环境必须共享相同的 `secret` 值。

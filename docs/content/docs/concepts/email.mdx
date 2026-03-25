@@ -1,13 +1,13 @@
 ---
 title: 邮件
-description: 了解如何使用 Better Auth 进行邮件操作。
+description: 学习如何设置邮件验证、要求登录时验证邮件、验证后自动登录、处理验证后回调以及实现密码重置邮件。
 ---
 
 邮件是 Better Auth 的关键部分，所有用户无论使用何种认证方式都必须使用邮件。Better Auth 开箱即用提供邮件和密码认证，并提供了很多工具帮助你管理邮件验证、密码重置等功能。
 
 ## 邮件验证
 
-邮件验证是一种安全功能，用于确保用户提供有效的邮件地址。它通过确认邮件地址确实属于用户，有助于防止垃圾邮件和滥用。在本指南中，你将学习如何在应用中实现基于令牌的邮件验证。  
+邮件验证是一种安全功能，用于确保用户提供有效的邮件地址。它通过确认邮件地址确实属于用户，有助于防止垃圾邮件和滥用。在本指南中，你将学习如何在应用中实现基于令牌的邮件验证。
 要使用基于 OTP 的邮件验证，请参考 [OTP 验证](/docs/plugins/email-otp) 指南。
 
 ### 在你的应用中添加邮件验证
@@ -202,5 +202,5 @@ export const auth = betterAuth({
   避免等待邮件发送完成以防止定时攻击。在无服务器平台上，请使用 `waitUntil` 或类似的方法确保邮件已发送。
 </Callout>
 
-更多关于如何在应用中实现密码重置的信息，请查看 [邮件和密码](/docs/authentication/email-password#request-password-reset) 指南。  
+更多关于如何在应用中实现密码重置的信息，请查看 [邮件和密码](/docs/authentication/email-password#request-password-reset) 指南。
 你也可以参阅 [OTP 验证](/docs/plugins/email-otp#reset-password-with-otp) 指南，了解如何用 OTP 实现密码重置。

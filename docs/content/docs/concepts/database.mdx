@@ -1,6 +1,6 @@
 ---
-title: 数据库
-description: 学习如何使用 Better Auth 连接数据库。
+title: Database
+description: 了解数据库适配器、迁移、使用 Redis 的二级存储、核心架构（用户、会话、账户、验证）、自定义表、扩展架构、ID 生成、数据库钩子以及插件架构。
 ---
 
 ## 适配器
@@ -334,7 +334,8 @@ Better Auth 需要数据库中存在以下表。下面是 `typescript` 格式的
     {
       name: "email",
       type: "string",
-      description: "用户用于通信和登录的邮箱地址",
+      description: "用户的邮箱地址，用于通信和登录",
+      isUnique: true,
     },
     {
       name: "emailVerified",

@@ -4,7 +4,7 @@ description: 将 SCIM 集成到您的应用程序中。
 ---
 
 跨域身份管理系统（[SCIM](https://simplecloud.info/#Specification)）通过标准化协议，使多域场景中的身份管理变得更容易支持。  
-此插件公开了一个 [SCIM](https://simplecloud.info/#Specification) 服务器，允许第三方身份提供商将身份同步到您的服务。
+此插件公开了一个符合规范的 [SCIM 2.0](https://simplecloud.info/#Specification) 服务器，允许第三方身份提供商将身份同步到您的服务。
 
 ## 安装
 
@@ -82,7 +82,7 @@ description: 将 SCIM 集成到您的应用程序中。
 通常，该服务器供第三方（您的身份提供商）使用，需要以下内容：
 
 - **SCIM 基础 URL**：应该是 SCIM 服务器的完整 URL（例如 `http://your-app.com/api/auth/scim/v2`）  
-- **SCIM Bearer Token**：请参见[生成 SCIM 令牌](#生成-scim-令牌)
+- **SCIM Bearer 令牌**：请参见[生成 SCIM 令牌](#生成-scim-令牌)
 
 ### 生成 SCIM 令牌
 
@@ -98,7 +98,7 @@ type generateSCIMToken = {
   */
   providerId: string = "acme-corp"
   /**
-   * 可选的组织 ID。指定时，必须启用 organizations 插件
+   * 可选的 organization ID。指定时，必须启用 organizations 插件
   */
   organizationId?: string = "the-org"
 }
@@ -152,7 +152,7 @@ const auth = betterAuth({
                 {
                     providerId: "default-scim", // 要预配置的现有提供商 ID
                     scimToken: "some-scim-token", // SCIM 明文令牌
-                    organizationId: "the-org" // 可选的组织 ID
+                    organizationId: "the-org" // 可选的 organization ID
                 }
             ]
         })
@@ -201,7 +201,6 @@ const auth = betterAuth({
 </Tabs>
 
 请参考 [Schema](#如果通过providerownershipenabled启用了提供商所有权) 部分手动添加字段。
-
 
 ### 管理 SCIM 提供商连接
 
@@ -303,11 +302,11 @@ type createSCIMUser = {
         formatted?: string = "Daniel Perez"
         /**
          * 名
-        */
+         */
         givenName?: string = "Daniel"
         /**
          * 姓
-        */
+         */
         familyName?: string = "Perez"
     }
     /**
@@ -335,15 +334,15 @@ type updateSCIMUser = {
     name?: {
         /**
          * 格式化姓名（优先于名和姓）
-        */
+         */
         formatted?: string = "Daniel Perez"
         /**
          * 名
-        */
+         */
         givenName?: string = "Daniel"
         /**
          * 姓
-        */
+         */
         familyName?: string = "Perez"
     }
     /**
@@ -363,11 +362,11 @@ type updateSCIMUser = {
 type patchSCIMUser = {
     /**
      * 必需的模式声明
-    */
+     */
     schemas: string[] = ["urn:ietf:params:scim:api:messages:2.0:PatchOp"]
     /**
      * JSON 补丁操作列表
-    */
+     */
     Operations: Array<{ op: "replace" | "add" | "remove", path?: string, value: any }> = [{ op: "replace", path: "/userName", value: "任意值" }]
 }
 ```
@@ -457,11 +456,11 @@ type getSCIMResourceType = {
 <DatabaseTable
     fields={[
         {
-            name: "id", type: "string", description: "数据库标识符", isRequired: true, isPrimaryKey: true,
+            name: "id", type: "string", description: "数据库标识符", isPrimaryKey: true,
         },
-        { name: "providerId", type: "string", description: "提供商 ID。用于识别提供商和生成重定向 URL。", isRequired: true, isUnique: true },
-        { name: "scimToken", type: "string", description: "SCIM Bearer 令牌。由您的身份提供商用于向服务器身份验证", isRequired: true, isUnique: true },
-        { name: "organizationId", type: "string", description: "组织 ID。如果提供商关联到组织。", isRequired: false },
+        { name: "providerId", type: "string", description: "提供商 ID。用于标识提供商并生成重定向 URL。", isUnique: true },
+        { name: "scimToken", type: "string", description: "SCIM bearer 令牌。由您的身份提供程序用于向服务器进行身份验证", isUnique: true },
+        { name: "organizationId", type: "string", description: "组织 ID。如果提供商链接到了某个组织。", isOptional: true },
     ]}
 />
 
@@ -471,10 +470,9 @@ type getSCIMResourceType = {
 
 <DatabaseTable
     fields={[
-        { name: "userId", type: "string", description: "连接所有者的用户 ID。通过 API 生成令牌时自动设置。", isRequired: false },
+        { name: "userId", type: "string", description: "连接所有者的用户 ID。通过 API 生成令牌时自动设置。", isOptional: true },
     ]}
 />
-
 
 ## 配置选项
 

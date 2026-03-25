@@ -70,7 +70,7 @@ export const birthdayPlugin = () =>
       user: {// [!code highlight]
         fields: {// [!code highlight]
           birthday: {// [!code highlight]
-            type: "date", // string, number, boolean, date // [!code highlight]
+            type: "date", // 字符串、数字、布尔值、日期 // [!code highlight]
             required: true, // 新记录时此字段是否必填（默认：false） // [!code highlight]
             unique: false, // 此字段是否唯一（默认：false） // [!code highlight]
           },// [!code highlight]
@@ -93,7 +93,7 @@ export const birthdayPlugin = () =>
 export const birthdayPlugin = () => ({
     //...
     // 在我们的例子中，我们要写授权逻辑，
-    // 也就是说，我们希望在操作执行“之前”拦截。
+    // 也就是说，我们希望在操作执行"之前"拦截。
     hooks: {
       before: [
         {
@@ -117,8 +117,7 @@ export const birthdayPlugin = () => ({
 
 接着针对逻辑，我们写以下代码检查用户生日是否满足年龄大于 5 岁：
 ```ts title="Imports"
-import { APIError } from "better-auth/api";
-import { createAuthMiddleware } from "better-auth/plugins";
+import { createAuthMiddleware, APIError } from "better-auth/api";
 ```
 ```ts title="Before hook"
 {
