@@ -1,0 +1,71 @@
+***
+
+title: MCP
+description: 通过远程文档 MCP 服务器将 Better Auth 文档连接到支持 MCP 的客户端。
+----------------------------------------------------------
+
+Better Auth 托管了一个**远程 MCP 服务器**，可为任何支持 MCP 的客户端（Cursor、Claude Code、Open Code 等）提供文档搜索、示例和设置帮助。
+
+**端点：** `https://mcp.better-auth.com/mcp`
+
+这与 [MCP 插件](/docs/plugins/mcp) 是分开的，后者会为你的应用添加 MCP *提供者认证*。上面的服务器用于在你的编辑器或代理中**消费** Better Auth 文档。
+
+## 使用 CLI
+
+运行 [Better Auth CLI](/docs/concepts/cli) 并选择你的客户端：
+
+```bash title="terminal"
+npx auth@latest mcp
+```
+
+在不带标志的情况下，该命令会列出支持的目标。你也可以直接传入一个目标：
+
+<Tabs items={["Cursor", "Claude Code", "Open Code", "Manual"]}>
+  <Tab value="Cursor">
+    ```bash title="terminal"
+    npx auth@latest mcp --cursor
+    ```
+
+    这将打开 Cursor，并通过 deeplink 将服务器添加到你的 MCP 配置中。
+
+    你也可以在本网站上使用一键控制：
+
+    <AddToCursor />
+  </Tab>
+
+  <Tab value="Claude Code">
+    ```bash title="terminal"
+    npx auth@latest mcp --claude-code
+    ```
+
+    这会使用 Better Auth URL 运行 `claude mcp add`。如果失败，CLI 会打印出你需要手动运行的确切命令。
+  </Tab>
+
+  <Tab value="Open Code">
+    ```bash title="terminal"
+    npx auth@latest mcp --open-code
+    ```
+
+    这会将一个 `better-auth` 条目合并到当前目录中的 `opencode.json`（远程传输，使用上面的 URL）。
+  </Tab>
+
+  <Tab value="Manual">
+    ```bash title="terminal"
+    npx auth@latest mcp --manual
+    ```
+
+    在当前工作目录中写入或合并 `mcp.json`，内容如下：
+
+    ```json
+    {
+      "better-auth": {
+        "url": "https://mcp.better-auth.com/mcp"
+      }
+    }
+    ```
+
+    对于 **Cursor**，你可以将相同的 `better-auth` 条目添加到 MCP 配置中——通常是 `~/.cursor/mcp.json`（用户）或 `.cursor/mcp.json`（项目）——并使用你的 Cursor 版本对 HTTP 服务器所期望的格式（远程 MCP 使用 `url`）。
+
+    修改后，请在你的客户端中重启或重新加载 MCP。
+  </Tab>
+</Tabs>

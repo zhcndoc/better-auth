@@ -1,12 +1,13 @@
----
+***
+
 title: Hooks
-description: Learn how to use before and after hooks to customize endpoint behavior, modify requests and responses, handle cookies, throw errors, access auth context, and run background tasks.
----
+description: 了解如何使用前置和后置钩子来自定义端点行为、修改请求和响应、处理 Cookie、抛出错误、访问认证上下文以及运行后台任务。
+--------------------------------------------------------------------------
 
 Better Auth 中的钩子允许你“钩入”生命周期并执行自定义逻辑。它们提供了一种无需编写完整插件即可定制 Better Auth 行为的方式。
 
 <Callout>
-我们强烈建议如果你需要对某个端点进行自定义调整时，使用钩子，而不是在 Better Auth 之外创建另一个端点。
+  我们强烈建议如果你需要对某个端点进行自定义调整时，使用钩子，而不是在 Better Auth 之外创建另一个端点。
 </Callout>
 
 ## 前置钩子（Before Hooks）
@@ -96,12 +97,12 @@ export const auth = betterAuth({
 
 调用 `createAuthMiddleware` 时会传入一个 `ctx` 对象，提供了许多有用的属性，包括：
 
-- **路径（Path）:** 通过 `ctx.path` 获取当前端点路径。
-- **请求体（Body）:** 通过 `ctx.body` 访问已解析的请求体（POST 请求可用）。
-- **请求头（Headers）:** 通过 `ctx.headers` 访问请求头。
-- **请求对象（Request）:** 通过 `ctx.request` 访问请求对象（仅在非纯服务器端点存在）。
-- **查询参数（Query Parameters）:** 通过 `ctx.query` 访问查询参数。
-- **上下文（Context）:** `ctx.context` 包含与认证相关的上下文，方便访问新会话、认证 Cookie 配置、密码哈希、配置等。
+* **路径（Path）:** 通过 `ctx.path` 获取当前端点路径。
+* **请求体（Body）:** 通过 `ctx.body` 访问已解析的请求体（POST 请求可用）。
+* **请求头（Headers）:** 通过 `ctx.headers` 访问请求头。
+* **请求对象（Request）:** 通过 `ctx.request` 访问请求对象（仅在非纯服务器端点存在）。
+* **查询参数（Query Parameters）:** 通过 `ctx.query` 访问查询参数。
+* **上下文（Context）:** `ctx.context` 包含与认证相关的上下文，方便访问新会话、认证 Cookie 配置、密码哈希、配置等。
 
 以及更多信息。
 
@@ -137,8 +138,8 @@ const hook = createAuthMiddleware(async (ctx) => {
 
 #### Cookie
 
-- 设置 Cookie：`ctx.setCookies` 或 `ctx.setSignedCookie`。
-- 获取 Cookie：`ctx.getCookies` 或 `ctx.getSignedCookie`。
+* 设置 cookie：`ctx.setCookie` 或 `ctx.setSignedCookie`。
+* 获取 cookie：`ctx.getCookie` 或 `ctx.getSignedCookie`。
 
 示例：
 
@@ -146,12 +147,12 @@ const hook = createAuthMiddleware(async (ctx) => {
 import { createAuthMiddleware } from "better-auth/api";
 
 const hook = createAuthMiddleware(async (ctx) => {
-    ctx.setCookies("my-cookie", "value");
+    ctx.setCookie("my-cookie", "value");
     await ctx.setSignedCookie("my-signed-cookie", "value", ctx.context.secret, {
         maxAge: 1000,
     });
 
-    const cookie = ctx.getCookies("my-cookie");
+    const cookie = ctx.getCookie("my-cookie");
     const signedCookie = await ctx.getSignedCookie("my-signed-cookie");
 });
 ```
@@ -230,8 +231,8 @@ createAuthMiddleware(async (ctx) => {
 
 密码对象提供了 `hash` 和 `verify` 方法：
 
-- `ctx.context.password.hash`: 用于对给定密码进行哈希。
-- `ctx.context.password.verify`: 用于验证给定的 `password` 与 `hash` 是否匹配。
+* `ctx.context.password.hash`: 用于对给定密码进行哈希。
+* `ctx.context.password.verify`: 用于验证给定的 `password` 与 `hash` 是否匹配。
 
 #### 适配器（Adapter）
 

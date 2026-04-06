@@ -1,16 +1,17 @@
----
-title: 为 BetterAuth 贡献代码  
-description: 关于如何为 BetterAuth 贡献代码的简明指南  
----
+***
 
-感谢你对贡献 Better Auth 的兴趣！本指南是为 Better Auth 贡献代码的简明指南。
+title: 为 BetterAuth 贡献代码\
+description: 关于如何为 BetterAuth 贡献代码的简明指南
+---------------------------------------
+
+感谢你对为 Better Auth 贡献代码的兴趣！本指南是为 Better Auth 贡献代码的简明指南。
 
 ## 入门
 
 在开始之前，这里有一些重要资源：
 
-- 浏览我们现有的 <Link href="https://github.com/better-auth/better-auth/issues">问题</Link> 和 <Link href="https://github.com/better-auth/better-auth/pulls">拉取请求</Link>  
-- 加入我们的 <Link href="https://discord.gg/better-auth">Discord 社区讨论</Link>  
+* 浏览我们现有的 <Link href="https://github.com/better-auth/better-auth/issues">问题</Link> 和 <Link href="https://github.com/better-auth/better-auth/pulls">拉取请求</Link>
+* 加入我们的 <Link href="https://discord.gg/better-auth">Discord 社区讨论</Link>
 
 ## 开发环境搭建
 
@@ -21,46 +22,43 @@ description: 关于如何为 BetterAuth 贡献代码的简明指南
 </Callout>
 
 <Steps>
+  <Step>
+    ### 1. Fork 仓库
 
-    <Step>
-        ### 1. Fork 仓库
+    访问 [https://github.com/better-auth/better-auth](https://github.com/better-auth/better-auth)
 
-        访问 https://github.com/better-auth/better-auth
+    点击右上角的 “Fork” 按钮。
+  </Step>
 
-        点击右上角的 “Fork” 按钮。
+  <Step>
+    ### 2. 克隆你的 Fork
 
-    </Step>
+    ```bash
+    # 用你的 GitHub 用户名替换 YOUR-USERNAME
+    git clone https://github.com/YOUR-USERNAME/better-auth.git
+    cd better-auth
+    ```
+  </Step>
 
-    <Step>
-        ### 2. 克隆你的 Fork
+  <Step>
+    ### 3. 安装依赖
 
-        ```bash
-        # 用你的 GitHub 用户名替换 YOUR-USERNAME
-        git clone https://github.com/YOUR-USERNAME/better-auth.git
-        cd better-auth
-        ```
-    </Step>
+    请确保你已经安装了 <Link href="https://pnpm.io/installation">pnpm</Link>！
 
-    <Step>
-        ### 3. 安装依赖
+    ```bash
+    pnpm install
+    ```
+  </Step>
 
-        请确保你已经安装了 <Link href="https://pnpm.io/installation">pnpm</Link>！
+  <Step>
+    ### 4. 准备环境变量文件
 
-        ```bash
-        pnpm install
-        ```
-    </Step>
+    复制示例 env 文件创建新的 `.env` 文件。
 
-    <Step>
-        ### 4. 准备环境变量文件
-
-        复制示例 env 文件创建新的 `.env` 文件。
-
-        ```bash
-        cp -n ./docs/.env.example ./docs/.env
-        ```
-    </Step>
-
+    ```bash
+    cp -n ./docs/.env.example ./docs/.env
+    ```
+  </Step>
 </Steps>
 
 ## 进行更改
@@ -68,77 +66,76 @@ description: 关于如何为 BetterAuth 贡献代码的简明指南
 当你确定想要贡献的内容后，就可以开始更改了。以下是入门步骤：
 
 <Steps>
-    <Step>
-        ### 1. 创建新分支
+  <Step>
+    ### 1. 创建新分支
 
-        ```bash
-        # 添加上游远程（如果未添加）
-        git remote add upstream https://github.com/better-auth/better-auth.git
+    ```bash
+    # 添加上游远程（如果未添加）
+    git remote add upstream https://github.com/better-auth/better-auth.git
 
-        # 确保当前在 canary 分支
-        git checkout canary
+    # 确保你在 main 分支上
+    git checkout main
 
-        # 拉取最新更改
-        git pull upstream canary
+    # 拉取最新更改
+    git pull upstream main
 
-        # 创建并切换到新分支
-        git checkout -b feature/your-feature-name
-        ```
-    </Step>
-    <Step>
-        ### 2. 启动开发服务器
+    # 创建并切换到新分支
+    git checkout -b feature/your-feature-name
+    ```
+  </Step>
 
-        启动开发服务器：
+  <Step>
+    ### 2. 启动开发服务器
 
-        ```bash
-        pnpm dev
-        ```
+    启动开发服务器：
 
-        启动文档服务器：
+    ```bash
+    pnpm dev
+    ```
 
-        ```bash
-        pnpm -F docs dev
-        ```
-    </Step>
-    <Step>
-        ### 3. 进行更改
+    启动文档服务器：
 
-        * 修改代码库。
+    ```bash
+    pnpm -F docs dev
+    ```
+  </Step>
 
-        * 如需要，编写测试。（关于测试的更多内容请见 <Link href="/docs/reference/contributing#testing">这里</Link>）
+  <Step>
+    ### 3. 进行更改
 
-        * 更新文档。（关于文档的更多内容请见 <Link href="/docs/reference/contributing#documentation">这里</Link>）
+    * 修改代码库。
 
-    </Step>
+    * 如需要，编写测试。（关于测试的更多内容请见 <Link href="/docs/reference/contributing#testing">这里</Link>）
 
+    * 更新文档。（关于文档的更多内容请见 <Link href="/docs/reference/contributing#documentation">这里</Link>）
+  </Step>
 </Steps>
-
 
 ### 问题和 Bug 修复
 
-- 查看我们的 [GitHub issues](https://github.com/better-auth/better-auth/issues) 中标注为 `good first issue` 的任务  
-- 报告 Bug 时请包含复现步骤和预期行为  
-- 在你希望参与的问题上留言，以避免重复工作  
+* 查看我们的 [GitHub issues](https://github.com/better-auth/better-auth/issues) 中标注为 `good first issue` 的任务
+* 报告 Bug 时请包含复现步骤和预期行为
+* 在你希望参与的问题上留言，以避免重复工作
 
 ### 框架集成
 
 欢迎为更多框架贡献支持：
 
-- 尽可能关注框架无关的解决方案  
-- 保持集成方案简洁且易于维护  
-- 所有集成目前都在主包中  
+* 尽可能关注框架无关的解决方案
+* 保持集成方案简洁且易于维护
+* 所有集成目前都在主包中
 
 ### 插件开发
 
-- 核心插件：请先开 issue 讨论你的想法  
-- 社区插件：可独立开发  
-- 遵循我们的插件架构指南  
+* 核心插件：请先开 issue 讨论你的想法
+* 社区插件：可独立开发
+* 遵循我们的插件架构指南
 
 ### 文档
 
-- 修正拼写和错误  
-- 添加示例，澄清现有内容  
-- 确保文档与代码更改同步更新  
+* 修正拼写和错误
+* 添加示例，澄清现有内容
+* 确保文档与代码更改同步更新
 
 ## 测试
 
@@ -180,18 +177,18 @@ await runWithDefaultUser(async (headers) => {
 
 ### 测试最佳实践
 
-- 编写清晰的提交信息  
-- 更新文档以反映更改  
-- 为新功能添加测试  
-- 遵循我们的编码规范  
-- 保持拉取请求专注于单一更改  
+* 编写清晰的提交信息
+* 更新文档以反映更改
+* 为新功能添加测试
+* 遵循我们的编码规范
+* 保持拉取请求专注于单一更改
 
 ## 需要帮助？
 
 请随时寻求帮助！你可以：
 
-- 提交 <Link href="https://github.com/better-auth/better-auth/issues">issue</Link> 提问  
-- 加入我们的 <Link href="https://discord.gg/better-auth">社区讨论</Link>  
-- 联系项目维护者  
+* 提交 <Link href="https://github.com/better-auth/better-auth/issues">issue</Link> 提问
+* 加入我们的 <Link href="https://discord.gg/better-auth">社区讨论</Link>
+* 联系项目维护者
 
 感谢你为 Better Auth 做出的贡献！

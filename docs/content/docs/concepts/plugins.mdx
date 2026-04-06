@@ -1,7 +1,8 @@
----
+***
+
 title: 插件
 description: 了解如何使用和创建 Better Auth 插件，包括定义端点、schema、钩子、中间件、速率限制、受信任来源，以及使用自定义操作和原子构建客户端插件。
----
+------------------------------------------------------------------------------------------
 
 插件是 Better Auth 的关键部分，它们允许您扩展基础功能。您可以使用插件添加新的身份验证方法、功能，或者自定义行为。
 
@@ -37,9 +38,11 @@ const authClient = createAuthClient({
 ```
 
 我们建议将 auth-client 和您的普通认证实例保存在不同的文件中。
+
 <Files>
   <Folder name="auth" defaultOpen>
     <File name="server.ts" />
+
     <File name="auth-client.ts" />
   </Folder>
 </Files>
@@ -50,7 +53,7 @@ const authClient = createAuthClient({
 服务器插件是所有插件的核心，客户端插件提供与前端 API 的接口，便于与服务器插件协作。
 
 <Callout type="info">
-    如果您的服务器插件有需要从客户端调用的端点，还需要创建客户端插件。
+  如果您的服务器插件有需要从客户端调用的端点，还需要创建客户端插件。
 </Callout>
 
 ### 插件能做什么？
@@ -78,8 +81,9 @@ export const myPlugin = () => {
     } satisfies BetterAuthPlugin
 }
 ```
+
 <Callout>
-    您不需要将插件写成函数，但推荐这么做。这样可以向插件传递选项，与内置插件保持一致。
+  您不需要将插件写成函数，但推荐这么做。这样可以向插件传递选项，与内置插件保持一致。
 </Callout>
 
 ### 端点
@@ -114,31 +118,31 @@ const myPlugin = () => {
 
 **Context 对象**
 
-- `appName`：应用名称。默认为 "Better Auth"。
-- `options`：传入 Better Auth 实例的选项。
-- `tables`：核心表定义。是一个以表名为键、以模式定义为值的对象。
-- `baseURL`：认证服务器基本地址，包含路径。例如，如果服务器运行在 `http://localhost:3000`，则默认 `baseURL` 为 `http://localhost:3000/api/auth`，除非用户更改。
-- `session`：会话配置。包括 `updateAge` 和 `expiresIn`。
-- `secret`：用于各种目的的密钥，由用户定义。
-- `authCookie`：核心认证 Cookie 的默认配置。
-- `logger`：Better Auth 使用的日志实例。
-- `db`：Better Auth 使用的 Kysely 实例，用于数据库交互。
-- `adapter`：与 `db` 相似，但提供 ORM 风格的函数操作数据库。（推荐使用此，除非需要原始 SQL 查询或性能需求）
-- `internalAdapter`：Better Auth 内部数据库调用。例如，您可通过它创建会话，而不是直接使用 `adapter`，如 `internalAdapter.createSession(userId)`。
-- `createAuthCookie`：辅助函数，根据是否安全连接（HTTPS）或生产环境，实现了如 `__Secure-` 前缀，为设置或获取 Cookie 返回名称及配置。
-- `trustedOrigins`：您通过 `options.trustedOrigins` 配置的受信任来源列表。
-- `isTrustedOrigin`：辅助函数，用于快速判断指定 URL 或路径是否基于受信任来源配置被信任。
+* `appName`：应用名称。默认为 "Better Auth"。
+* `options`：传入 Better Auth 实例的选项。
+* `tables`：核心表定义。是一个以表名为键、以模式定义为值的对象。
+* `baseURL`：认证服务器基本地址，包含路径。例如，如果服务器运行在 `http://localhost:3000`，则默认 `baseURL` 为 `http://localhost:3000/api/auth`，除非用户更改。
+* `session`：会话配置。包括 `updateAge` 和 `expiresIn`。
+* `secret`：用于各种目的的密钥，由用户定义。
+* `authCookie`：核心认证 Cookie 的默认配置。
+* `logger`：Better Auth 使用的日志实例。
+* `db`：Better Auth 使用的 Kysely 实例，用于数据库交互。
+* `adapter`：与 `db` 相似，但提供 ORM 风格的函数操作数据库。（推荐使用此，除非需要原始 SQL 查询或性能需求）
+* `internalAdapter`：Better Auth 内部数据库调用。例如，您可通过它创建会话，而不是直接使用 `adapter`，如 `internalAdapter.createSession(userId)`。
+* `createAuthCookie`：辅助函数，根据是否安全连接（HTTPS）或生产环境，实现了如 `__Secure-` 前缀，为设置或获取 Cookie 返回名称及配置。
+* `trustedOrigins`：您通过 `options.trustedOrigins` 配置的受信任来源列表。
+* `isTrustedOrigin`：辅助函数，用于快速判断指定 URL 或路径是否基于受信任来源配置被信任。
 
-其他属性，您可以参考 <Link href="https://github.com/bekacru/better-call">Better Call</Link> 文档和 <Link href="https://github.com/better-auth/better-auth/blob/canary/packages/better-auth/src/context/create-context.ts">源码</Link>。
+对于其他属性，您可以查看 <Link href="https://github.com/bekacru/better-call">Better Call</Link> 文档和 <Link href="https://github.com/better-auth/better-auth/blob/main/packages/better-auth/src/context/create-context.ts">源代码 </Link>。
 
 **端点规则**
 
-- 确保端点路径采用 kebab-case（连字符小写）风格
-- 端点方法只允许使用 `POST` 或 `GET`
-- 修改数据的接口应使用 `POST`
-- 获取数据的接口应使用 `GET`
-- 必须使用 `createAuthEndpoint` 创建 API 端点
-- 端点路径应保证唯一，避免与其他插件冲突。如果使用常见路径，请在路径前加上插件名作为前缀。例如 `/my-plugin/hello-world` 而非 `/hello-world`。
+* 确保端点路径采用 kebab-case（连字符小写）风格
+* 端点方法只允许使用 `POST` 或 `GET`
+* 修改数据的接口应使用 `POST`
+* 获取数据的接口应使用 `GET`
+* 必须使用 `createAuthEndpoint` 创建 API 端点
+* 端点路径应保证唯一，避免与其他插件冲突。如果使用常见路径，请在路径前加上插件名作为前缀。例如 `/my-plugin/hello-world` 而非 `/hello-world`。
 
 ### Schema（数据库模式）
 
@@ -170,17 +174,17 @@ const myPlugin = () => {
 
 字段名作为键，字段定义为值。定义属性包括：
 
-- `type`：字段类型，可选 `string`、`number`、`boolean`、`date`
-- `required`：是否为必填字段，（默认 `true`）
-- `unique`：字段是否唯一，（默认 `false`）
-- `references`：字段是否为关联另一张表的外键（可选），对象格式包含：
-  - `model`：所关联表名
-  - `field`：所关联字段名
-  - `onDelete`：关联记录删除时操作（默认 `cascade`）
+* `type`：字段类型，可选 `string`、`number`、`boolean`、`date`
+* `required`：是否为必填字段，（默认 `true`）
+* `unique`：字段是否唯一，（默认 `false`）
+* `references`：字段是否为关联另一张表的外键（可选），对象格式包含：
+  * `model`：所关联表名
+  * `field`：所关联字段名
+  * `onDelete`：关联记录删除时操作（默认 `cascade`）
 
 **其他 Schema 属性**
 
-- `disableMigration`：是否禁用同步更新（迁移），默认 `false`
+* `disableMigration`：是否禁用同步更新（迁移），默认 `false`
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -226,7 +230,7 @@ const myPlugin = () => {
 这样会为 `user` 表添加 `age` 字段，所有返回 `user` 的接口也会包含此字段，且 TypeScript 会正确推断。
 
 <Callout type="warn">
-请勿在 `user` 或 `session` 表存储敏感信息。如需存储敏感信息，请创建新表。
+  请勿在 `user` 或 `session` 表存储敏感信息。如需存储敏感信息，请创建新表。
 </Callout>
 
 ### Hooks（钩子）
@@ -234,7 +238,7 @@ const myPlugin = () => {
 钩子用于在操作执行前后运行代码，无论是从客户端还是直接在服务器上执行。您可以通过传入 `hooks` 对象添加钩子，该对象须包含 `before` 和 `after` 属性。
 
 ```ts title="plugin.ts"
-import { createAuthMiddleware } from "better-auth/plugins";
+import { createAuthMiddleware } from "better-auth/api";
 
 const myPlugin = () => {
     return {
@@ -303,9 +307,9 @@ const myPlugin = () => {
 
 用法示例：
 
-- **继续正常流程**：不返回任何值，请求照常进行。
-- **中断请求**：返回含有 `response` 属性的对象，`response` 为 `Response` 实例，则请求被中断，且发送对应响应。
-- **修改请求**：返回修改后的 `request` 对象以更改请求。
+* **继续正常流程**：不返回任何值，请求照常进行。
+* **中断请求**：返回含有 `response` 属性的对象，`response` 为 `Response` 实例，则请求被中断，且发送对应响应。
+* **修改请求**：返回修改后的 `request` 对象以更改请求。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -326,8 +330,8 @@ const myPlugin = () => {
 
 用法示例：
 
-- **修改响应**：返回修改后的响应对象以更改发送给客户端的内容。
-- **继续正常**：不返回任何内容，响应保持不变。
+* **修改响应**：返回修改后的响应对象以更改发送给客户端的内容。
+* **继续正常**：不返回任何内容，响应保持不变。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -415,8 +419,7 @@ const myPlugin = () => {
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
-import { createAuthMiddleware } from "better-auth/plugins";
-import { getSessionFromCtx } from "better-auth/api";
+import { createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
 
 const myPlugin = {
     id: "my-plugin",
@@ -530,9 +533,9 @@ const myPluginClient = {
 ```
 
 <Callout>
-作为一般指导，确保每个函数只接受一个参数，第二个参数为可选的 fetchOptions，以让用户传递额外的 fetch 选项。函数应返回包含 `data` 和 `error` 键的对象。
+  作为一般指导，确保每个函数只接受一个参数，第二个参数为可选的 fetchOptions，以让用户传递额外的 fetch 选项。函数应返回包含 `data` 和 `error` 键的对象。
 
-如您的用例不局限于 API 调用，可灵活调整此规则。
+  如您的用例不局限于 API 调用，可灵活调整此规则。
 </Callout>
 
 ### 获取 Atom

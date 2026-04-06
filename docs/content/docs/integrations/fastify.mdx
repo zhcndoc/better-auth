@@ -1,23 +1,24 @@
----
+***
+
 title: Better Auth 与 Fastify 集成指南
 description: 学习如何将 Better Auth 无缝集成到您的 Fastify 应用中。
----
+---------------------------------------------------
 
 本指南提供了配置基本处理程序和 CORS 设置的逐步说明。
 
 <Callout type="important">
-在继续之前，您需要先配置好 Better Auth 实例。如果尚未设置，请查阅我们的[安装指南](/docs/installation)。
+  在继续之前，您需要先配置好 Better Auth 实例。如果尚未设置，请查阅我们的[安装指南](/docs/installation)。
 </Callout>
 
 ### 前提条件
 
 在集成之前，请确认满足以下要求：
 
-- **Node.js 环境**：安装了 v16 或更高版本
-- **ES 模块支持**：启用 ES 模块方式，通过以下任一途径：
-  - `package.json` 中设置 `{ "type": "module" }`
-  - TypeScript 的 `tsconfig.json` 中设置 `{ "module": "ESNext" }`
-- **Fastify 依赖**：
+* **Node.js 环境**：安装了 v16 或更高版本
+* **ES 模块支持**：启用 ES 模块方式，通过以下任一途径：
+  * `package.json` 中设置 `{ "type": "module" }`
+  * TypeScript 的 `tsconfig.json` 中设置 `{ "module": "ESNext" }`
+* **Fastify 依赖**：
   ```package-install
   fastify @fastify/cors
   ```
@@ -30,7 +31,8 @@ description: 学习如何将 Better Auth 无缝集成到您的 Fastify 应用中
 
 ```ts title="server.ts"
 import Fastify from "fastify";
-import { auth } from "./auth"; // 您配置的 Better Auth 实例
+import { fromNodeHeaders } from "better-auth/node";
+import { auth } from "./auth"; // 您配置好的 Better Auth 实例
 
 const fastify = Fastify({ logger: true });
 
@@ -43,11 +45,8 @@ fastify.route({
       // 构造请求 URL
       const url = new URL(request.url, `http://${request.headers.host}`);
       
-      // 将 Fastify 的 headers 转换为标准 Headers 对象
-      const headers = new Headers();
-      Object.entries(request.headers).forEach(([key, value]) => {
-        if (value) headers.append(key, value.toString());
-      });
+      // 将 Fastify 请求头转换为标准 Headers 对象
+      const headers = fromNodeHeaders(request.headers);
 
       // 创建兼容 Fetch API 的请求对象
       const req = new Request(url.toString(), {

@@ -1,7 +1,8 @@
----
+***
+
 title: 双重身份验证 (2FA)
 description: 通过双重身份验证增强您的应用安全性。
----
+-------------------------------
 
 `OTP` `TOTP` `备用代码` `受信设备`
 
@@ -13,102 +14,103 @@ description: 通过双重身份验证增强您的应用安全性。
 2. **TOTP (基于时间的一次性密码)**：由用户设备上的应用生成的代码。
 
 **附加功能包括：**
-- 生成备用代码用于账户恢复
-- 启用/禁用 2FA
-- 管理受信设备
+
+* 生成备用代码用于账户恢复
+* 启用/禁用 2FA
+* 管理受信设备
 
 ## 安装
 
 <Steps>
-    <Step>
-        ### 将插件添加到您的身份验证配置中
+  <Step>
+    ### 将插件添加到您的身份验证配置中
 
-        将双重身份验证插件添加到您的身份验证配置，并将您的应用名称指定为发布者。
+    将双重身份验证插件添加到您的身份验证配置，并将您的应用名称指定为发布者。
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
-        import { twoFactor } from "better-auth/plugins" // [!code highlight]
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+    import { twoFactor } from "better-auth/plugins" // [!code highlight]
 
-        export const auth = betterAuth({
-            // ... 其他配置选项
-            appName: "My App", // 提供您的应用名称。它将作为发布者使用。 // [!code highlight]
-            plugins: [
-                twoFactor() // [!code highlight]
-            ]
-        })
+    export const auth = betterAuth({
+        // ... 其他配置选项
+        appName: "My App", // 提供您的应用名称。它将作为发布者使用。 // [!code highlight]
+        plugins: [
+            twoFactor() // [!code highlight]
+        ]
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 迁移数据库
+
+    运行迁移或生成模式，为数据库添加必要的字段和表。
+
+    <Tabs items={["migrate", "generate"]}>
+      <Tab value="migrate">
+        ```package-install
+        npx auth migrate
         ```
-    </Step>
-    <Step>
-        ### 迁移数据库
+      </Tab>
 
-        运行迁移或生成模式，为数据库添加必要的字段和表。
-
-        <Tabs items={["migrate", "generate"]}>
-            <Tab value="migrate">
-            ```package-install
-            npx auth migrate
-            ```
-            </Tab>
-            <Tab value="generate">
-            ```package-install
-            npx auth generate
-            ```
-            </Tab>
-        </Tabs>
-        详细请参阅[模式](#schema)部分手动添加字段。
-    </Step>
-
-        <Step>
-        ### 添加客户端插件
-
-        添加客户端插件，并指定用户需要进行二次验证时的重定向地址。
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        import { twoFactorClient } from "better-auth/client/plugins" // [!code highlight]
-
-        export const authClient = createAuthClient({
-            plugins: [
-                twoFactorClient() // [!code highlight]
-            ]
-        })
+      <Tab value="generate">
+        ```package-install
+        npx auth generate
         ```
-        </Step>
+      </Tab>
+    </Tabs>
+
+    详细请参阅[模式](#schema)部分手动添加字段。
+  </Step>
+
+  <Step>
+    ### 添加客户端插件
+
+    添加客户端插件，并指定用户需要进行二次验证时的重定向地址。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    import { twoFactorClient } from "better-auth/client/plugins" // [!code highlight]
+
+    export const authClient = createAuthClient({
+        plugins: [
+            twoFactorClient() // [!code highlight]
+        ]
+    })
+    ```
+  </Step>
 </Steps>
 
 ## 使用
 
 ### 启用 2FA
 
-要启用双重身份验证，调用 `twoFactor.enable`，传入用户密码和可选的发布者：
+要启用双重身份验证，请使用用户的密码（凭证账户必填）和发布者（可选）调用 `twoFactor.enable`。如果启用了 `allowPasswordless`，对于没有凭证账户的用户可以省略密码。
 
-<APIMethod
-  path="/two-factor/enable"
-  method="POST"
-  requireSession
->
-```ts
-type enableTwoFactor = {
-    /**
-     * 用户密码
-     */
-    password: string = "secure-password"
-    /**
-     * 可选的 TOTP URI 发布者。默认是身份验证配置中的 app-name。
-     */
-    issuer?: string = "my-app-name"
-}
-```
+<APIMethod path="/two-factor/enable" method="POST" requireSession>
+  ```ts
+  type enableTwoFactor = {
+      /**
+       * 用户的密码（凭证账户必填）
+       */
+      password?: string = "secure-password"
+      /**
+       * 可选的 TOTP URI 发布者。默认是身份验证配置中的 app-name。
+       */
+      issuer?: string = "my-app-name"
+  }
+  ```
 </APIMethod>
 
 启用 2FA 时：
-- 会生成加密的 `secret` 和 `backupCodes`。
-- `enable` 返回 `totpURI` 和 `backupCodes`。
+
+* 会生成加密的 `secret` 和 `backupCodes`。
+* `enable` 返回 `totpURI` 和 `backupCodes`。
 
 注意：在用户验证他们的 TOTP 代码之前，`twoFactorEnabled` 不会被设置为 `true`。了解更多关于 TOTP 验证内容请参阅[这里](#totp)。您也可以在插件配置中将 `skipVerificationOnEnable` 设置为 true，跳过验证。
 
 <Callout type="warn">
-当前双重身份验证只支持凭证账户（credential accounts）。对于社交账户，默认假设提供商已处理 2FA。
+  默认情况下，双重身份验证需要凭证（密码）账户。若要允许无密码用户（通行密钥、魔法链接、邮箱 OTP、OAuth/社交登录或匿名用户），请设置 `allowPasswordless: true`。
 </Callout>
 
 ### 使用 2FA 登录
@@ -167,82 +169,71 @@ const authClient = createAuthClient({
 ```
 
 <Callout type="warn">
-使用 `twoFactorPage` 选项会在重定向到二次验证页面时导致整页重新加载。如果您想避免页面重新加载，请考虑使用 `onTwoFactorRedirect` 回调来在应用内以编程方式处理重定向。
+  使用 `twoFactorPage` 选项会在重定向到二次验证页面时导致整页重新加载。如果您想避免页面重新加载，请考虑使用 `onTwoFactorRedirect` 回调来在应用内以编程方式处理重定向。
 </Callout>
 
-
-
 <Callout type="warn">
-**关于 `auth.api`**
+  **关于 `auth.api`**
 
-当您在服务器调用 `auth.api.signInEmail` 并且用户启用了 2FA 时，返回的对象中会含有 `twoFactorRedirect` 并设置为 `true`。这种行为在 TypeScript 中不会被类型推断，可能会导致误导。您可以使用 `in` 操作符检查是否含有 `twoFactorRedirect`。
+  当您在服务器调用 `auth.api.signInEmail` 并且用户启用了 2FA 时，返回的对象中会含有 `twoFactorRedirect` 并设置为 `true`。这种行为在 TypeScript 中不会被类型推断，可能会导致误导。您可以使用 `in` 操作符检查是否含有 `twoFactorRedirect`。
 
-`authClient.twoFactor.*` 会在浏览器中自动处理 cookies。如果你在服务器端使用 `auth.api.*` 继续 2FA 流程，你必须传递相关的请求头，这样 Better Auth 才能读取当前的 2FA 状态并设置相应的 2FA/会话 cookies。下面生成的示例使用 `await headers()` 来实现这一点，但在其他框架中，你应该传递等效的传入请求头。
+  `authClient.twoFactor.*` 会在浏览器中自动处理 cookies。如果你在服务器端使用 `auth.api.*` 继续 2FA 流程，你必须传递相关的请求头，这样 Better Auth 才能读取当前的 2FA 状态并设置相应的 2FA/会话 cookies。下面生成的示例使用 `await headers()` 来实现这一点，但在其他框架中，你应该传递等效的传入请求头。
 
-如果你在同一个服务器流程中串联多个 `auth.api.*` 调用，请确保将上一个认证响应中的 cookies 转发到下一个调用中。
+  如果你在同一个服务器流程中串联多个 `auth.api.*` 调用，请确保将上一个认证响应中的 cookies 转发到下一个调用中。
 
-```ts title="sign-in.ts"
-import { auth } from "@/lib/auth"
+  ```ts title="sign-in.ts"
+  import { auth } from "@/lib/auth"
 
-const { headers: responseHeaders, response } = await auth.api.signInEmail({
-	returnHeaders: true,
-	body: {
-		email: "test@test.com",
-		password: "test",
-	},
-});
+  const { headers: responseHeaders, response } = await auth.api.signInEmail({
+  	returnHeaders: true,
+  	body: {
+  		email: "test@test.com",
+  		password: "test",
+  	},
+  });
 
-if ("twoFactorRedirect" in response) {
-	// 转发 responseHeaders 中的 cookies 到后续的 auth.api 2FA 调用中。
-	// 处理当前页面上的 2FA 验证
-}
-```
+  if ("twoFactorRedirect" in response) {
+  	// 将 responseHeaders 中的 cookies 转发到后续的 auth.api 2FA 调用中。
+  	// 处理当前页面上的 2FA 验证
+  }
+  ```
 </Callout>
 
 ### 禁用 2FA
 
-要禁用双重身份验证，调用 `twoFactor.disable` 并传入用户密码：
+要禁用双重身份验证，请使用用户的密码（凭证账户必填）调用 `twoFactor.disable`。如果启用了 `allowPasswordless`，对于没有凭证账户的用户可以省略密码。
 
-<APIMethod
-  path="/two-factor/disable"
-  method="POST"
-  requireSession
->
-```ts
-type disableTwoFactor = {
-    /**
-     * 用户密码
-     */
-    password: string
-}
-```
+<APIMethod path="/two-factor/disable" method="POST" requireSession>
+  ```ts
+  type disableTwoFactor = {
+      /**
+       * 用户的密码（凭证账户必填）
+       */
+      password?: string
+  }
+  ```
 </APIMethod>
 
 ### TOTP
 
-TOTP（基于时间的一次性密码）是一种使用时间计数器为每次登录生成唯一密码的算法。每隔固定时间（Better Auth 默认 30 秒）生成一个新密码。它解决了传统密码可能被遗忘、窃取或猜测的问题。虽然 OTP 也解决了一部分问题，但通过短信或邮箱发送 OTP 的可靠性较差（甚至较风险，因为可能带来新的攻击面）。
+TOTP（基于时间的一次性密码）是一种使用时间计数器为每次登录生成唯一密码的算法。每隔固定时间（Better Auth 默认 30 秒）生成一个新密码。它解决了传统密码可能被遗忘、窃取或猜测的问题。虽然 OTP 也解决了一部分问题，但通过短信或邮箱发送 OTP 的可靠性较差（甚至更有风险，因为可能带来新的攻击面）。
 
-而 TOTP 是线下生成代码，既安全又便捷。只需在手机安装认证器应用即可。
+而 TOTP 是离线生成代码，既安全又便捷。只需在手机安装认证器应用即可。
 
 #### 获取 TOTP URI
 
 启用 2FA 后，可获取 TOTP URI 并向用户展示。该 URI 是服务器基于 `secret` 与 `issuer` 生成，用于生成二维码，供用户用认证器扫描。
 
-<APIMethod
-  path="/two-factor/get-totp-uri"
-  method="POST"
-  requireSession
->
-```ts
-type getTOTPURI = {
-    /**
-     * 用户密码
-     */
-    password: string
-}
-```
+<APIMethod path="/two-factor/get-totp-uri" method="POST" requireSession>
+  ```ts
+  type getTOTPURI = {
+      /**
+       * 用户的密码（凭证账户必填）
+       */
+      password?: string
+  }
+  ```
 </APIMethod>
-
 
 **示例：React 方式**
 
@@ -269,31 +260,26 @@ export default function UserCard({ password }: { password: string }){
 ```
 
 <Callout>
-默认情况下，TOTP 的发布者为身份验证配置中的应用名称，如果未指定，则默认为 `Better Auth`。您可以通过传入 `issuer` 至插件配置来覆盖默认值。
+  默认情况下，TOTP 的发布者为身份验证配置中的应用名称，如果未指定，则默认为 `Better Auth`。您可以通过在插件配置中传入 `issuer` 来覆盖默认值。
 </Callout>
 
 #### 验证 TOTP
 
 用户输入 2FA 代码后，可调用 `twoFactor.verifyTotp` 方法进行验证。`Better Auth` 遵循标准做法，接受当前时间段前后各一个周期内的代码，确保用户即使存在轻微时间偏差也可认证成功。
 
-<APIMethod
-  path="/two-factor/verify-totp"
-  method="POST"
-  requireHeaders
-  headersComment="传递当前请求头，以便 Better Auth 可以读取和设置 2FA/会话 cookies。"
->
-```ts
-type verifyTOTP = {
-    /**
-     * 待验证的 otp 代码。 
-     */
-    code: string = "012345"
-    /**
-     * 若为 true，该设备将在 30 天内被信任。期间每次登录均刷新信任期限。 
-     */
-    trustDevice?: boolean = true
-}
-```
+<APIMethod path="/two-factor/verify-totp" method="POST" requireHeaders headersComment="传递当前请求头，以便 Better Auth 可以读取和设置 2FA/会话 cookies。">
+  ```ts
+  type verifyTOTP = {
+      /**
+       * 待验证的 otp 代码。 
+       */
+      code: string = "012345"
+      /**
+       * 若为 true，该设备将在 30 天内被信任。期间每次登录均刷新信任期限。 
+       */
+      trustDevice?: boolean = true
+  }
+  ```
 </APIMethod>
 
 ### OTP
@@ -311,7 +297,7 @@ export const auth = betterAuth({
         twoFactor({
           	otpOptions: {
 				async sendOTP({ user, otp }, ctx) {
-                    // 发送 otp 给用户
+                    // 向用户发送 otp
 				},
 			},
         })
@@ -323,48 +309,38 @@ export const auth = betterAuth({
 
 发送 OTP 通过调用客户端的 `authClient.twoFactor.sendOtp` 函数或服务器端的 `auth.api.sendTwoFactorOTP` 完成。该函数会触发您在 Better Auth 配置中提供的 `sendOTP` 实现。
 
-<APIMethod
-  path="/two-factor/send-otp"
-  method="POST"
-  requireHeaders
-  headersComment="传递当前请求头，以便 Better Auth 可以读取和设置 2FA/会话 cookies。"
->
-```ts
-type sendTwoFactorOTP = {
-    /**
-     * 若为 true，该设备将在 30 天内被信任。期间每次登录均刷新信任期限。 
-     */
-    trustDevice?: boolean = true
-}
+<APIMethod path="/two-factor/send-otp" method="POST" requireHeaders headersComment="传递当前请求头，以便 Better Auth 可以读取和设置 2FA/会话 cookies。">
+  ```ts
+  type sendTwoFactorOTP = {
+      /**
+       * 若为 true，该设备将在 30 天内被信任。期间每次登录均刷新信任期限。 
+       */
+      trustDevice?: boolean = true
+  }
 
-if (data) {
-    // 重定向或提示用户输入代码
-}
-```
+  if (data) {
+      // 重定向或提示用户输入代码
+  }
+  ```
 </APIMethod>
 
 #### 验证 OTP
 
 用户输入 OTP 代码后，您可以使用客户端的 `authClient.twoFactor.verifyOtp` 或服务器端的 `auth.api.verifyTwoFactorOTP` 进行验证。
 
-<APIMethod
-  path="/two-factor/verify-otp"
-  method="POST"
-  requireHeaders
-  headersComment="传递当前请求头，以便 Better Auth 可以读取和设置 2FA/会话 cookies。"
->
-```ts
-type verifyTwoFactorOTP = {
-    /**
-     * 待验证 otp 代码。 
-     */
-    code: string = "012345"
-    /**
-     * 若为 true，该设备将在 30 天内被信任。期间每次登录均刷新信任期限。 
-     */
-    trustDevice?: boolean = true
-}
-```
+<APIMethod path="/two-factor/verify-otp" method="POST" requireHeaders headersComment="传递当前请求头，以便 Better Auth 可以读取和设置 2FA/会话 cookies。">
+  ```ts
+  type verifyTwoFactorOTP = {
+      /**
+       * 待验证 otp 代码。 
+       */
+      code: string = "012345"
+      /**
+       * 若为 true，该设备将在 30 天内被信任。期间每次登录均刷新信任期限。 
+       */
+      trustDevice?: boolean = true
+  }
+  ```
 </APIMethod>
 
 ### 备用代码
@@ -372,82 +348,68 @@ type verifyTwoFactorOTP = {
 备用代码存储于数据库。当用户失去手机或邮箱访问权限时，可用于账户恢复。
 
 #### 生成备用代码
+
 生成用于账户恢复的备用代码：
 
-<APIMethod
-  path="/two-factor/generate-backup-codes"
-  method="POST"
-  requireSession
->
-```ts
-type generateBackupCodes = {
-    /**
-     * 用户密码。 
-     */
-    password: string
-}
+<APIMethod path="/two-factor/generate-backup-codes" method="POST" requireSession>
+  ```ts
+  type generateBackupCodes = {
+      /**
+       * 用户的密码（凭证账户必填）。 
+       */
+      password?: string
+  }
 
-if (data) {
-    // 显示备用代码给用户
-}
-```
+  if (data) {
+      // 向用户显示备用代码
+  }
+  ```
 </APIMethod>
 
-
 <Callout type="warn">
-生成备用代码时，旧的备用代码会被删除，生成新的。
+  生成备用代码时，旧的备用代码会被删除，并生成新的。
 </Callout>
 
 #### 使用备用代码
 
 您可允许用户使用备用代码作为账户恢复方式。
 
-<APIMethod
-  path="/two-factor/verify-backup-code"
-  method="POST"
-  requireHeaders
-  headersComment="传递当前请求头，以便 Better Auth 可以读取和设置 2FA/会话 cookies。"
->
-```ts
-type verifyBackupCode = {
-    /**
-     * 待验证的备用代码。 
-     */
-    code: string = "123456"
-    /**
-     * 若为 true，不会设置会话 cookie。 
-     */
-    disableSession?: boolean = false
-    /**
-     * 若为 true，该设备将在 30 天内被信任。期间每次登录均刷新信任期限。 
-     */
-    trustDevice?: boolean = true
-}
-```
+<APIMethod path="/two-factor/verify-backup-code" method="POST" requireHeaders headersComment="传递当前请求头，以便 Better Auth 可以读取和设置 2FA/会话 cookies。">
+  ```ts
+  type verifyBackupCode = {
+      /**
+       * 待验证的备用代码。 
+       */
+      code: string = "123456"
+      /**
+       * 若为 true，不会设置会话 cookie。 
+       */
+      disableSession?: boolean = false
+      /**
+       * 若为 true，该设备将在 30 天内被信任。期间每次登录均刷新信任期限。 
+       */
+      trustDevice?: boolean = true
+  }
+  ```
 </APIMethod>
 
 <Callout>
-一旦备用代码被使用，它会从数据库中移除，且不可再次使用。
+  一旦备用代码被使用，它会从数据库中移除，且不可再次使用。
 </Callout>
 
 #### 查看备用代码
 
 要向用户展示备用代码，可在服务器调用 `viewBackupCodes`，返回备用代码。请确保仅允许拥有刚创建的新鲜会话的用户执行此操作。
 
-<APIMethod
-  path="/two-factor/view-backup-codes"
-  method="POST"
-  isServerOnly
-  forceAsBody
->
-```ts
-type viewBackupCodes = {
-    /**
-     * 要查看备用代码的用户 ID。 
-     */
-    userId?: string | null = "user-id"
-}
-```
+<APIMethod path="/two-factor/view-backup-codes" method="POST" isServerOnly forceAsBody>
+  ```ts
+  type viewBackupCodes = {
+      /**
+       * 要查看备用代码的用户 ID。 
+       */
+      userId?: string | null = "user-id"
+  }
+  ```
 </APIMethod>
 
 ### 受信设备
@@ -458,10 +420,10 @@ type viewBackupCodes = {
 const verify2FA = async (code: string) => {
     const { data, error } = await authClient.twoFactor.verifyTotp({
         code,
-        trustDevice: true, // 标记当前设备为受信设备 // [!code highlight]
+        trustDevice: true, // 将当前设备标记为受信设备 // [!code highlight]
     })
     if (data) {
-        // 2FA 验证成功且设备被标记受信
+        // 2FA 验证成功且设备被标记为受信
     }
 }
 ```
@@ -487,20 +449,20 @@ twoFactor({
 表：`user`
 
 <DatabaseTable
-    fields={[
-        { name: "twoFactorEnabled", type: "boolean", description: "用户是否启用了双重身份验证。", isOptional: true },
-    ]}
+  fields={[
+      { name: "twoFactorEnabled", type: "boolean", description: "用户是否启用了双重身份验证。", isOptional: true },
+  ]}
 />
 
 表：`twoFactor`
 
 <DatabaseTable
-    fields={[
-        { name: "id", type: "string", description: "双重身份验证的 ID。", isPrimaryKey: true },
-        { name: "userId", type: "string", description: "用户的 ID", isForeignKey: true },
-        { name: "secret", type: "string", description: "用于生成 TOTP 代码的密钥。" },
-        { name: "backupCodes", type: "string", description: "当用户无法访问手机或邮箱时，用于恢复账户访问的备用代码。" },
-    ]}
+  fields={[
+      { name: "id", type: "string", description: "双重身份验证的 ID。", isPrimaryKey: true },
+      { name: "userId", type: "string", description: "用户的 ID", isForeignKey: true },
+      { name: "secret", type: "string", description: "用于生成 TOTP 代码的密钥。" },
+      { name: "backupCodes", type: "string", description: "当用户无法访问手机或邮箱时，用于恢复账户访问的备用代码。" },
+  ]}
 />
 
 ## 配置选项
@@ -511,7 +473,9 @@ twoFactor({
 
 **skipVerificationOnEnable**：启用用户的双重身份验证时，跳过验证过程。
 
-**Issuer**：应用的名称，用于生成 TOTP 代码，会显示在认证器应用中。
+**allowPasswordless**: 允许对没有凭据账户的用户在没有密码的情况下启用和管理 2FA。如果存在凭据账户，则仍然需要密码。
+
+**Issuer**：签发者是您的应用程序名称。它用于生成 TOTP 代码，并会显示在身份验证器应用中。
 
 **TOTP 选项**
 
@@ -519,17 +483,17 @@ TOTP 的相关配置。
 
 <TypeTable
   type={{
-    digits:{
-        description: "OTP 代码的位数",
-        type: "number",
-        default: 6,
-    },
-    period: {
-        description: "TOTP 的周期，单位秒。",
-        type: "number",
-        default: 30,
-    },
-  }}
+  digits:{
+      description: "OTP 代码的位数",
+      type: "number",
+      default: 6,
+  },
+  period: {
+      description: "TOTP 的周期，单位秒。",
+      type: "number",
+      default: 30,
+  },
+}}
 />
 
 **OTP 选项**
@@ -538,49 +502,49 @@ OTP 的相关配置。
 
 <TypeTable
   type={{
-    sendOTP: {
-        description: "将 OTP 发送给用户的邮箱或手机号的函数，带有 user 和 otp 两个参数",
-        type: "function",
-    },
-    period: {
-        description: "OTP 的有效周期，单位分钟。", 
-        type: "number",
-        default: 3,
-    },
-    storeOTP: {
-        description: "如何转换存储的 OTP 值，支持明文、加密或哈希。您也可以提供自定义的加密器或哈希器。存储后端由全局验证配置控制，因此可以使用二级存储代替数据库。",
-        type: "string",
-        default: "plain",
-    },
-  }}
-  />
+  sendOTP: {
+      description: "将 OTP 发送给用户的邮箱或手机号的函数，带有 user 和 otp 两个参数",
+      type: "function",
+  },
+  period: {
+      description: "OTP 的有效周期，单位分钟。", 
+      type: "number",
+      default: 3,
+  },
+  storeOTP: {
+      description: "如何转换存储的 OTP 值，支持明文、加密或哈希。您也可以提供自定义的加密器或哈希器。存储后端由全局验证配置控制，因此可以使用二级存储代替数据库。",
+      type: "string",
+      default: "plain",
+  },
+}}
+/>
 
 **备用代码选项**
 
 当用户启用双重身份验证时，备用代码会被生成并存储，用于在用户无法访问手机或邮箱时恢复账户。
 
 <TypeTable
-    type={{
-        amount: {
-            description: "生成的备用代码数量",
-            type: "number",
-            default: 10,
-        },
-        length: {
-            description: "备用代码长度",
-            type: "number",
-            default: 10,
-        },
-        customBackupCodesGenerate: {
-            description: "自定义生成备用代码的函数，无参数，返回字符串数组。",
-            type: "function",
-        },
-        storeBackupCodes: {
-            description: "备用代码在数据库中的存储方式，明文或加密，也可自定义加密器。",
-            type: "string",
-            default: "plain",
-        },
-    }}
+  type={{
+      amount: {
+          description: "生成的备用代码数量",
+          type: "number",
+          default: 10,
+      },
+      length: {
+          description: "备用代码长度",
+          type: "number",
+          default: 10,
+      },
+      customBackupCodesGenerate: {
+          description: "自定义生成备用代码的函数，无参数，返回字符串数组。",
+          type: "function",
+      },
+      storeBackupCodes: {
+          description: "备用代码在数据库中的存储方式，明文或加密，也可自定义加密器。",
+          type: "string",
+          default: "plain",
+      },
+  }}
 />
 
 ### 客户端
@@ -601,7 +565,6 @@ const authClient =  createAuthClient({
     ]
 })
 ```
-
 
 **选项**
 

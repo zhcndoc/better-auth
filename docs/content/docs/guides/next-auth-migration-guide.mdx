@@ -1,7 +1,8 @@
----
+***
+
 title: 从 Auth.js 迁移到 Better Auth
 description: 从 Auth.js 迁移到 Better Auth 的分步指南。
----
+---------------------------------------------
 
 ## 介绍
 
@@ -10,759 +11,767 @@ description: 从 Auth.js 迁移到 Better Auth 的分步指南。
 但如果您正在启动新项目或在当前设置中遇到挑战，我们强烈建议使用 Better Auth。我们的路线图包括以前仅 Auth.js 才有的功能，我们希望这能加强生态系统的统一，而不会导致分裂。
 
 <Steps>
-<Step>
-## 创建 Better Auth 实例
+  <Step>
+    ## 创建 Better Auth 实例
 
-在开始迁移过程之前，请在项目中设置 Better Auth。请按照[安装指南](/docs/installation)开始。
+    在开始迁移过程之前，请在项目中设置 Better Auth。请按照[安装指南](/docs/installation)开始。
 
-例如，如果您使用 GitHub OAuth 提供商，以下是 `auth.ts` 文件的对比。
+    例如，如果您使用 GitHub OAuth 提供商，以下是 `auth.ts` 文件的对比。
 
-<Tabs items={["Auth.js", "Better Auth"]}>
-<Tab value="Auth.js">
-```ts 
-import NextAuth from "next-auth"
-import GitHub from "next-auth/providers/github"
-  
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [GitHub],
-})
-```
-</Tab>
+    <Tabs items={["Auth.js", "Better Auth"]}>
+      <Tab value="Auth.js">
+        ```ts
+        import NextAuth from "next-auth"
+        import GitHub from "next-auth/providers/github"
+          
+        export const { handlers, signIn, signOut, auth } = NextAuth({
+          providers: [GitHub],
+        })
+        ```
+      </Tab>
 
-<Tab value="Better Auth">
-```ts
-import { betterAuth } from "better-auth";
+      <Tab value="Better Auth">
+        ```ts
+        import { betterAuth } from "better-auth";
 
-export const auth = betterAuth({
-  socialProviders: { 
-    github: { 
-      clientId: process.env.GITHUB_CLIENT_ID!, 
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!, 
-    }, 
-  }, 
-})
-```
-</Tab>
-</Tabs>
+        export const auth = betterAuth({
+          socialProviders: { 
+            github: { 
+              clientId: process.env.GITHUB_CLIENT_ID!, 
+              clientSecret: process.env.GITHUB_CLIENT_SECRET!, 
+            }, 
+          }, 
+        })
+        ```
+      </Tab>
+    </Tabs>
 
-<Callout type="info">
-Better Auth 现在支持无数据库的无状态会话管理。如果您之前在 Auth.js 中使用了数据库适配器，可以参阅下方的[数据库模型](#database-models)来了解 Better Auth 核心模式的差异。
-</Callout>
-</Step>
+    <Callout type="info">
+      Better Auth 现在支持无数据库的无状态会话管理。如果您之前在 Auth.js 中使用了数据库适配器，可以参阅下方的[数据库模型](#database-models)来了解 Better Auth 核心模式的差异。
+    </Callout>
+  </Step>
 
-<Step>
-## 创建客户端实例
+  <Step>
+    ## 创建客户端实例
 
-此客户端实例包含一组与 Better Auth 服务器实例交互的函数。详情请参见[此处](/docs/concepts/client)。
+    此客户端实例包含一组与 Better Auth 服务器实例交互的函数。详情请参见[此处](/docs/concepts/client)。
 
-```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/react"
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/react"
 
-export const authClient = createAuthClient()
-```
-</Step>
+    export const authClient = createAuthClient()
+    ```
+  </Step>
 
-<Step>
-## 更新路由处理器
+  <Step>
+    ## 更新路由处理器
 
-将 `/app/api/auth/[...nextauth]` 文件夹重命名为 `/app/api/auth/[...all]` 以避免混淆。然后更新 `route.ts` 文件如下：
+    将 `/app/api/auth/[...nextauth]` 文件夹重命名为 `/app/api/auth/[...all]` 以避免混淆。然后更新 `route.ts` 文件如下：
 
-<Tabs items={["Auth.js", "Better Auth"]}>
-<Tab value="Auth.js">
-```ts 
-import { handlers } from "@/lib/auth"
+    <Tabs items={["Auth.js", "Better Auth"]}>
+      <Tab value="Auth.js">
+        ```ts
+        import { handlers } from "@/lib/auth"
 
-export const { GET, POST } = handlers
-```
-</Tab>
+        export const { GET, POST } = handlers
+        ```
+      </Tab>
 
-<Tab value="Better Auth">
-```ts
-import { auth } from "@/lib/auth";
-import { toNextJsHandler } from "better-auth/next-js";
+      <Tab value="Better Auth">
+        ```ts
+        import { auth } from "@/lib/auth";
+        import { toNextJsHandler } from "better-auth/next-js";
 
-export const { POST, GET } = toNextJsHandler(auth)
-```
-</Tab>
-</Tabs>
-</Step>
+        export const { POST, GET } = toNextJsHandler(auth)
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
 
-<Step>
-## 会话管理
+  <Step>
+    ## 会话管理
 
-本节将对比 Auth.js 和 Better Auth 中的会话管理方式。详情请参见[此处](/docs/concepts/session-management)。
+    本节将对比 Auth.js 和 Better Auth 中的会话管理方式。详情请参见[此处](/docs/concepts/session-management)。
 
-### 客户端
+    ### 客户端
 
-#### 登入
+    #### 登录
 
-以下是使用 GitHub OAuth 提供商时，Auth.js 与 Better Auth 登录用户的差异示例：
+    以下是使用 GitHub OAuth 提供商时，Auth.js 与 Better Auth 登录用户的差异示例：
 
-<Tabs items={["Auth.js", "Better Auth"]}>
-<Tab value="Auth.js">
-```ts 
-"use client"
+    <Tabs items={["Auth.js", "Better Auth"]}>
+      <Tab value="Auth.js">
+        ```ts
+        "use client"
 
-import { signIn } from "next-auth/react"
+        import { signIn } from "next-auth/react"
 
-signIn("github")
-```
-</Tab>
+        signIn("github")
+        ```
+      </Tab>
 
-<Tab value="Better Auth">
-```ts
-"use client"
+      <Tab value="Better Auth">
+        ```ts
+        "use client"
 
-import { authClient } from "@/lib/auth-client";
+        import { authClient } from "@/lib/auth-client";
 
-const { data, error } = await authClient.signIn.social({
-  provider: "github",
-})
-```
-</Tab>
-</Tabs>
+        const { data, error } = await authClient.signIn.social({
+          provider: "github",
+        })
+        ```
+      </Tab>
+    </Tabs>
 
-#### 登出
+    #### 登出
 
-以下是 Auth.js 和 Better Auth 用户登出的差异示例。
+    以下是 Auth.js 和 Better Auth 用户登出的差异示例。
 
-<Tabs items={["Auth.js", "Better Auth"]}>
-<Tab value="Auth.js">
-```ts 
-"use client"
+    <Tabs items={["Auth.js", "Better Auth"]}>
+      <Tab value="Auth.js">
+        ```ts
+        "use client"
 
-import { signOut } from "next-auth/react"
+        import { signOut } from "next-auth/react"
 
-signOut()
-```
-</Tab>
+        signOut()
+        ```
+      </Tab>
 
-<Tab value="Better Auth">
-```ts
-"use client"
+      <Tab value="Better Auth">
+        ```ts
+        "use client"
 
-import { authClient } from "@/lib/auth-client";
+        import { authClient } from "@/lib/auth-client";
 
-const { data, error } = await authClient.signOut()
-```
-</Tab>
-</Tabs>
+        const { data, error } = await authClient.signOut()
+        ```
+      </Tab>
+    </Tabs>
 
-#### 获取会话
+    #### 获取会话
 
-以下是 Auth.js 和 Better Auth 获取当前活动会话的差异示例。
+    以下是 Auth.js 和 Better Auth 获取当前活动会话的差异示例。
 
-<Tabs items={["Auth.js", "Better Auth"]}>
-<Tab value="Auth.js">
-```ts 
-"use client"
+    <Tabs items={["Auth.js", "Better Auth"]}>
+      <Tab value="Auth.js">
+        ```ts
+        "use client"
 
-import { useSession } from "next-auth/react"
+        import { useSession } from "next-auth/react"
 
-const { data, status, update } = useSession()
-```
-</Tab>
+        const { data, status, update } = useSession()
+        ```
+      </Tab>
 
-<Tab value="Better Auth">
-```ts
-"use client"
+      <Tab value="Better Auth">
+        ```ts
+        "use client"
 
-import { authClient } from "@/lib/auth-client";
+        import { authClient } from "@/lib/auth-client";
 
-const { data, error, refetch, isPending, isRefetching } = authClient.useSession()
-```
-</Tab>
-</Tabs>
+        const { data, error, refetch, isPending, isRefetching } = authClient.useSession()
+        ```
+      </Tab>
+    </Tabs>
 
-### 服务器端
+    ### 服务器端
 
-#### 登入
+    #### 登录
 
-以下是使用 GitHub OAuth 提供商时，Auth.js 和 Better Auth 登录用户的差异示例：
+    以下是使用 GitHub OAuth 提供商时，Auth.js 和 Better Auth 登录用户的差异示例：
 
-<Tabs items={["Auth.js", "Better Auth"]}>
-<Tab value="Auth.js">
-```ts 
-import { signIn } from "@/lib/auth"
+    <Tabs items={["Auth.js", "Better Auth"]}>
+      <Tab value="Auth.js">
+        ```ts
+        import { signIn } from "@/lib/auth"
 
-await signIn("github")
-```
-</Tab>
+        await signIn("github")
+        ```
+      </Tab>
 
-<Tab value="Better Auth">
-```ts
-import { auth } from "@/lib/auth";
+      <Tab value="Better Auth">
+        ```ts
+        import { auth } from "@/lib/auth";
 
-const { redirect, url } = await auth.api.signInSocial({
-  body: {
-    provider: "github",
+        const { redirect, url } = await auth.api.signInSocial({
+          body: {
+            provider: "github",
+          },
+        })
+        ```
+      </Tab>
+    </Tabs>
+
+    #### 登出
+
+    以下是 Auth.js 和 Better Auth 用户登出的差异示例。
+
+    <Tabs items={["Auth.js", "Better Auth"]}>
+      <Tab value="Auth.js">
+        ```ts
+        import { signOut } from "@/lib/auth"
+
+        await signOut()
+        ```
+      </Tab>
+
+      <Tab value="Better Auth">
+        ```ts
+        import { auth } from "@/lib/auth";
+        import { headers } from "next/headers";
+
+        const { success } = await auth.api.signOut({
+          headers: await headers(),
+        })
+        ```
+      </Tab>
+    </Tabs>
+
+    #### 获取会话
+
+    以下是 Auth.js 和 Better Auth 获取当前活动会话的差异示例。
+
+    <Tabs items={["Auth.js", "Better Auth"]}>
+      <Tab value="Auth.js">
+        ```ts
+        import { auth } from "@/lib/auth";
+
+        const session = await auth()
+        ```
+      </Tab>
+
+      <Tab value="Better Auth">
+        ```ts
+        import { auth } from "@/lib/auth";
+        import { headers } from "next/headers";
+
+        const session = await auth.api.getSession({
+          headers: await headers(),
+        })
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step>
+    ## 保护资源
+
+    > Proxy（中间件）并非为慢速数据获取设计。虽然 Proxy 可用于权限检查类的乐观性校验（如基于权限的重定向），但不应作为完整的会话管理或授权解决方案。- [Next.js 文档](https://nextjs.org/docs/app/getting-started/proxy#use-cases)
+
+    Auth.js 提供了使用 Proxy（中间件）的方式，但我们建议在每个页面或路由里进行身份验证检查，而非在 Proxy 或 Layout 中。以下是使用 Better Auth 保护资源的基本示例。
+
+    <Tabs items={["客户端", "服务器端"]}>
+      <Tab value="客户端">
+        ```ts title="app/dashboard/page.tsx"
+        "use client";
+
+        import { authClient } from "@/lib/auth-client";
+        import { redirect } from "next/navigation";
+
+        const DashboardPage = () => {
+          const { data, error, isPending } = authClient.useSession();
+
+          if (isPending) {
+            return <div>加载中</div>;
+          }
+          if (!data || error) {
+            redirect("/sign-in");
+          }
+
+          return (
+            <div>
+              <h1>欢迎 {data.user.name}</h1>
+            </div>
+          );
+        };
+
+        export default DashboardPage;
+        ```
+      </Tab>
+
+      <Tab value="服务器端">
+        ```ts title="app/dashboard/page.tsx"
+        import { auth } from "@/lib/auth";
+        import { headers } from "next/headers";
+        import { redirect } from "next/navigation";
+
+        const DashboardPage = async () => {
+          const session = await auth.api.getSession({
+            headers: await headers(),
+          });
+
+          if (!session) {
+            redirect("/sign-in");
+          }
+
+          return (
+            <div>
+              <h1>欢迎 {session.user.name}</h1>
+            </div>
+          );
+        };
+
+        export default DashboardPage;
+
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step>
+    ## 数据库模型
+
+    Auth.js 和 Better Auth 都提供无状态（JWT）和数据库会话策略。如果您之前在 Auth.js 中使用数据库会话策略，并计划在 Better Auth 中继续使用，则需要迁移数据库。
+
+    正如 Auth.js 有数据库模型，Better Auth 也有核心模式。本节将对比两者并探讨差异。
+
+    ### User -> User
+
+    <Tabs items={["Auth.js", "Better Auth"]}>
+      <Tab value="Auth.js">
+        <DatabaseTable
+          fields={[
+  {
+    name: "id",
+    type: "string",
+    description: "用户的唯一标识符",
+    isPrimaryKey: true,
   },
-})
-```
-</Tab>
-</Tabs>
+  {
+    name: "name",
+    type: "string",
+    description: "用户选择的显示名称",
+    isOptional: true,
+  },
+  {
+    name: "email",
+    type: "string",
+    description: "用户的电子邮件地址，用于通信和登录",
+    isOptional: true,
+  },
+  {
+    name: "emailVerified",
+    type: "Date",
+    description: "用户电子邮件的验证时间",
+    isOptional: true,
+  },
+  {
+    name: "image",
+    type: "string",
+    description: "用户的头像链接",
+    isOptional: true,
+  },
+]}
+        />
+      </Tab>
 
-#### 登出
+      <Tab value="Better Auth">
+        <DatabaseTable
+          fields={[
+  {
+    name: "id",
+    type: "string",
+    description: "用户的唯一标识符",
+    isPrimaryKey: true,
+  },
+  {
+    name: "name",
+    type: "string",
+    description: "用户选择的显示名称",
+  },
+  {
+    name: "email",
+    type: "string",
+    description: "用户的电子邮件地址，用于通信和登录",
+    isUnique: true,
+  },
+  {
+    name: "emailVerified",
+    type: "boolean",
+    description: "用户的电子邮件是否已验证",
+  },
+  {
+    name: "image",
+    type: "string",
+    description: "用户的头像链接",
+    isOptional: true,
+  },
+  {
+    name: "createdAt",
+    type: "Date",
+    description: "用户账户创建时间戳",
+  },
+  {
+    name: "updatedAt",
+    type: "Date",
+    description: "用户信息最后更新时间戳",
+  },
+]}
+        />
+      </Tab>
+    </Tabs>
 
-以下是 Auth.js 和 Better Auth 用户登出的差异示例。
+    ### Session -> Session
 
-<Tabs items={["Auth.js", "Better Auth"]}>
-<Tab value="Auth.js">
-```ts 
-import { signOut } from "@/lib/auth"
+    <Tabs items={["Auth.js", "Better Auth"]}>
+      <Tab value="Auth.js">
+        <DatabaseTable
+          fields={[
+  {
+    name: "id",
+    type: "string",
+    description: "每个会话的唯一标识符",
+    isPrimaryKey: true,
+  },
+  {
+    name: "userId",
+    type: "string",
+    description: "用户的 ID",
+    isForeignKey: true,
+  },
+  {
+    name: "sessionToken",
+    type: "string",
+    description: "唯一的会话令牌",
+  },
+  {
+    name: "expires",
+    type: "Date",
+    description: "会话过期时间",
+  },
+]}
+        />
+      </Tab>
 
-await signOut()
-```
-</Tab>
+      <Tab value="Better Auth">
+        <DatabaseTable
+          fields={[
+  {
+    name: "id",
+    type: "string",
+    description: "每个会话的唯一标识符",
+    isPrimaryKey: true,
+  },
+  {
+    name: "userId",
+    type: "string",
+    description: "用户的 ID",
+    isForeignKey: true,
+  },
+  {
+    name: "token",
+    type: "string",
+    description: "唯一的会话令牌",
+    isUnique: true,
+  },
+  {
+    name: "expiresAt",
+    type: "Date",
+    description: "会话过期时间",
+  },
+  {
+    name: "ipAddress",
+    type: "string",
+    description: "设备的 IP 地址",
+    isOptional: true,
+  },
+  {
+    name: "userAgent",
+    type: "string",
+    description: "设备的用户代理信息",
+    isOptional: true,
+  },
+  {
+    name: "createdAt",
+    type: "Date",
+    description: "会话创建时间戳",
+  },
+  {
+    name: "updatedAt",
+    type: "Date",
+    description: "会话更新时间戳",
+  },
+]}
+        />
+      </Tab>
+    </Tabs>
 
-<Tab value="Better Auth">
-```ts
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+    ### Account -> Account
 
-const { success } = await auth.api.signOut({
-  headers: await headers(),
-})
-```
-</Tab>
-</Tabs>
+    <Tabs items={["Auth.js", "Better Auth"]}>
+      <Tab value="Auth.js">
+        <DatabaseTable
+          fields={[
+  {
+    name: "id",
+    type: "string",
+    description: "每个账号的唯一标识符",
+    isPrimaryKey: true,
+  },
+  {
+    name: "userId",
+    type: "string",
+    description: "用户 ID",
+    isForeignKey: true,
+  },
+  {
+    name: "type",
+    type: "string",
+    description: "账号类型（例如 'oauth'、'email'、'credentials'）",
+  },
+  {
+    name: "provider",
+    type: "string",
+    description: "提供商标识",
+  },
+  {
+    name: "providerAccountId",
+    type: "string",
+    description: "提供商的账号 ID",
+  },
+  {
+    name: "refresh_token",
+    type: "string",
+    description: "账号的刷新令牌，由提供商返回",
+    isOptional: true,
+  },
+  {
+    name: "access_token",
+    type: "string",
+    description: "账号的访问令牌，由提供商返回",
+    isOptional: true,
+  },
+  {
+    name: "expires_at",
+    type: "number",
+    description: "访问令牌过期时间",
+    isOptional: true,
+  },
+  {
+    name: "token_type",
+    type: "string",
+    description: "令牌类型",
+    isOptional: true,
+  },
+  {
+    name: "scope",
+    type: "string",
+    description: "账号权限范围，由提供商返回",
+    isOptional: true,
+  },
+  {
+    name: "id_token",
+    type: "string",
+    description: "提供商返回的 ID 令牌",
+    isOptional: true,
+  },
+  {
+    name: "session_state",
+    type: "string",
+    description: "OAuth 会话状态",
+    isOptional: true,
+  },
+]}
+        />
+      </Tab>
 
-#### 获取会话
+      <Tab value="Better Auth">
+        <DatabaseTable
+          fields={[
+  {
+    name: "id",
+    type: "string",
+    description: "每个账号的唯一标识符",
+    isPrimaryKey: true,
+  },
+  {
+    name: "userId",
+    type: "string",
+    description: "用户 ID",
+    isForeignKey: true,
+  },
+  {
+    name: "accountId",
+    type: "string",
+    description:
+      "账号由 SSO 提供的 ID，或凭证账号时与 userId 相同",
+  },
+  {
+    name: "providerId",
+    type: "string",
+    description: "提供商 ID",
+  },
+  {
+    name: "accessToken",
+    type: "string",
+    description: "账号的访问令牌，由提供商返回",
+    isOptional: true,
+  },
+  {
+    name: "refreshToken",
+    type: "string",
+    description: "账号的刷新令牌，由提供商返回",
+    isOptional: true,
+  },
+  {
+    name: "accessTokenExpiresAt",
+    type: "Date",
+    description: "访问令牌过期时间",
+    isOptional: true,
+  },
+  {
+    name: "refreshTokenExpiresAt",
+    type: "Date",
+    description: "刷新令牌过期时间",
+    isOptional: true,
+  },
+  {
+    name: "scope",
+    type: "string",
+    description: "账号权限范围，由提供商返回",
+    isOptional: true,
+  },
+  {
+    name: "idToken",
+    type: "string",
+    description: "提供商返回的 ID 令牌",
+    isOptional: true,
+  },
+  {
+    name: "password",
+    type: "string",
+    description:
+      "账号密码，主要用于邮件和密码认证",
+    isOptional: true,
+  },
+  {
+    name: "createdAt",
+    type: "Date",
+    description: "账号创建时间戳",
+  },
+  {
+    name: "updatedAt",
+    type: "Date",
+    description: "账号更新时间戳",
+  },
+]}
+        />
+      </Tab>
+    </Tabs>
 
-以下是 Auth.js 和 Better Auth 获取当前活动会话的差异示例。
+    ### VerificationToken -> Verification
 
-<Tabs items={["Auth.js", "Better Auth"]}>
-<Tab value="Auth.js">
-```ts 
-import { auth } from "@/lib/auth";
+    <Tabs items={["Auth.js", "Better Auth"]}>
+      <Tab value="Auth.js">
+        <DatabaseTable
+          fields={[
+  {
+    name: "identifier",
+    type: "string",
+    description: "验证请求的标识符",
+    isPrimaryKey: true,
+  },
+  {
+    name: "token",
+    type: "string",
+    description: "验证令牌",
+    isPrimaryKey: true,
+  },
+  {
+    name: "expires",
+    type: "Date",
+    description: "验证令牌过期时间",
+  },
+]}
+        />
+      </Tab>
 
-const session = await auth()
-```
-</Tab>
+      <Tab value="Better Auth">
+        <DatabaseTable
+          fields={[
+  {
+    name: "id",
+    type: "string",
+    description: "每条验证的唯一标识符",
+    isPrimaryKey: true,
+  },
+  {
+    name: "identifier",
+    type: "string",
+    description: "验证请求的标识",
+  },
+  {
+    name: "value",
+    type: "string",
+    description: "需验证的值",
+  },
+  {
+    name: "expiresAt",
+    type: "Date",
+    description: "验证请求过期时间",
+  },
+  {
+    name: "createdAt",
+    type: "Date",
+    description: "验证请求创建时间戳",
+  },
+  {
+    name: "updatedAt",
+    type: "Date",
+    description: "验证请求更新时间戳",
+  },
+]}
+        />
+      </Tab>
+    </Tabs>
 
-<Tab value="Better Auth">
-```ts
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+    ### 比较总结
 
-const session = await auth.api.getSession({
-  headers: await headers(),
-})
-```
-</Tab>
-</Tabs>
-</Step>
+    表：<strong className="underline italic">User</strong>
 
-<Step>
-## 保护资源
+    * Better Auth 中 `name`、`email` 和 `emailVerified` 字段为必填，Auth.js 中为可选
+    * Better Auth 使用布尔值表示 `emailVerified`，而 Auth.js 使用时间戳
+    * Better Auth 增加了 `createdAt` 和 `updatedAt` 时间戳字段
 
-> Proxy（中间件）并非为慢速数据获取设计。虽然 Proxy 可用于权限检查类的乐观性校验（如基于权限的重定向），但不应作为完整的会话管理或授权解决方案。- [Next.js 文档](https://nextjs.org/docs/app/getting-started/proxy#use-cases)
+    表：<strong className="underline italic">Session</strong>
 
-Auth.js 提供了使用 Proxy（中间件）的方式，但我们建议在每个页面或路由里进行身份验证检查，而非在 Proxy 或 Layout 中。以下是使用 Better Auth 保护资源的基本示例。
+    * Better Auth 使用 `token` 替代 `sessionToken`
+    * Better Auth 使用 `expiresAt` 替代 `expires`
+    * Better Auth 增加了 `ipAddress` 和 `userAgent` 字段
+    * Better Auth 包括 `createdAt` 和 `updatedAt` 时间戳
 
-<Tabs items={["客户端", "服务器端"]}>
-<Tab value="客户端">
-```ts title="app/dashboard/page.tsx"
-"use client";
+    表：<strong className="underline italic">Account</strong>
 
-import { authClient } from "@/lib/auth-client";
-import { redirect } from "next/navigation";
+    * Better Auth 采用 camelCase 命名（如 `refreshToken` 替代 `refresh_token`）
+    * Better Auth 增加了 `accountId`，用于区分账号外部 ID 和内部 ID
+    * Better Auth 使用 `providerId` 替代 `provider`
+    * Better Auth 增加了 `accessTokenExpiresAt` 和 `refreshTokenExpiresAt` 用于令牌管理
+    * Better Auth 增加了 `password` 字段，支持内建的凭证认证
+    * Better Auth 没有 `type` 字段，其类型由 `providerId` 决定
+    * Better Auth 移除了 `token_type` 和 `session_state` 字段
+    * Better Auth 增加了 `createdAt` 和 `updatedAt` 时间戳
 
-const DashboardPage = () => {
-  const { data, error, isPending } = authClient.useSession();
+    表：<strong className="underline italic">VerificationToken -> Verification</strong>
 
-  if (isPending) {
-    return <div>加载中</div>;
-  }
-  if (!data || error) {
-    redirect("/sign-in");
-  }
+    * Better Auth 使用 `Verification` 表替代 `VerificationToken`
+    * Better Auth 使用单一 `id` 作为主键，替代复合主键
+    * Better Auth 使用 `value` 替代 `token`，支持多种验证类型
+    * Better Auth 使用 `expiresAt` 替代 `expires`
+    * Better Auth 增加了 `createdAt` 和 `updatedAt` 时间戳
 
-  return (
-    <div>
-      <h1>欢迎 {data.user.name}</h1>
-    </div>
-  );
-};
+    <Callout type="info">
+      如果您使用的是 Auth.js v4，注意 v5 在数据库模式方面没有破坏性变更。如果您不使用 `oauth_token_secret` 和 `oauth_token` 等可选字段，可以删除它们。像 `refresh_token_expires_in` 这样的少用字段也可以移除。
+    </Callout>
 
-export default DashboardPage;
-```
-</Tab>
+    ### 自定义
 
-<Tab value="服务器端">
-```ts title="app/dashboard/page.tsx"
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-
-const DashboardPage = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    redirect("/sign-in");
-  }
-
-  return (
-    <div>
-      <h1>欢迎 {session.user.name}</h1>
-    </div>
-  );
-};
-
-export default DashboardPage;
-
-```
-</Tab>
-</Tabs>
-</Step>
-
-<Step>
-## 数据库模型
-
-Auth.js 和 Better Auth 都提供无状态（JWT）和数据库会话策略。如果您之前在 Auth.js 中使用数据库会话策略，并计划在 Better Auth 中继续使用，则需要迁移数据库。
-
-正如 Auth.js 有数据库模型，Better Auth 也有核心模式。本节将对比两者并探讨差异。
-
-### User -> User
-
-<Tabs items={["Auth.js", "Better Auth"]}>
-<Tab value="Auth.js">
-<DatabaseTable
-  fields={[
-    {
-      name: "id",
-      type: "string",
-      description: "用户的唯一标识符",
-      isPrimaryKey: true,
-    },
-    {
-      name: "name",
-      type: "string",
-      description: "用户选择的显示名称",
-      isOptional: true,
-    },
-    {
-      name: "email",
-      type: "string",
-      description: "用户的电子邮件地址，用于通信和登录",
-      isOptional: true,
-    },
-    {
-      name: "emailVerified",
-      type: "Date",
-      description: "用户电子邮件的验证时间",
-      isOptional: true,
-    },
-    {
-      name: "image",
-      type: "string",
-      description: "用户的头像链接",
-      isOptional: true,
-    },
-  ]}
-/>
-</Tab>
-<Tab value="Better Auth">
-<DatabaseTable
-  fields={[
-    {
-      name: "id",
-      type: "string",
-      description: "用户的唯一标识符",
-      isPrimaryKey: true,
-    },
-    {
-      name: "name",
-      type: "string",
-      description: "用户选择的显示名称",
-    },
-    {
-      name: "email",
-      type: "string",
-      description: "用户的电子邮件地址，用于通信和登录",
-      isUnique: true,
-    },
-    {
-      name: "emailVerified",
-      type: "boolean",
-      description: "用户的电子邮件是否已验证",
-    },
-    {
-      name: "image",
-      type: "string",
-      description: "用户的头像链接",
-      isOptional: true,
-    },
-    {
-      name: "createdAt",
-      type: "Date",
-      description: "用户账户创建时间戳",
-    },
-    {
-      name: "updatedAt",
-      type: "Date",
-      description: "用户信息最后更新时间戳",
-    },
-  ]}
-/>
-</Tab>
-</Tabs>
-
-### Session -> Session
-
-<Tabs items={["Auth.js", "Better Auth"]}>
-<Tab value="Auth.js">
-<DatabaseTable
-  fields={[
-    {
-      name: "id",
-      type: "string",
-      description: "每个会话的唯一标识符",
-      isPrimaryKey: true,
-    },
-    {
-      name: "userId",
-      type: "string",
-      description: "用户的 ID",
-      isForeignKey: true,
-    },
-    {
-      name: "sessionToken",
-      type: "string",
-      description: "唯一的会话令牌",
-    },
-    {
-      name: "expires",
-      type: "Date",
-      description: "会话过期时间",
-    },
-  ]}
-/>
-</Tab>
-<Tab value="Better Auth">
-<DatabaseTable
-  fields={[
-    {
-      name: "id",
-      type: "string",
-      description: "每个会话的唯一标识符",
-      isPrimaryKey: true,
-    },
-    {
-      name: "userId",
-      type: "string",
-      description: "用户的 ID",
-      isForeignKey: true,
-    },
-    {
-      name: "token",
-      type: "string",
-      description: "唯一的会话令牌",
-      isUnique: true,
-    },
-    {
-      name: "expiresAt",
-      type: "Date",
-      description: "会话过期时间",
-    },
-    {
-      name: "ipAddress",
-      type: "string",
-      description: "设备的 IP 地址",
-      isOptional: true,
-    },
-    {
-      name: "userAgent",
-      type: "string",
-      description: "设备的用户代理信息",
-      isOptional: true,
-    },
-    {
-      name: "createdAt",
-      type: "Date",
-      description: "会话创建时间戳",
-    },
-    {
-      name: "updatedAt",
-      type: "Date",
-      description: "会话更新时间戳",
-    },
-  ]}
-/>
-</Tab>
-</Tabs>
-
-### Account -> Account
-
-<Tabs items={["Auth.js", "Better Auth"]}>
-<Tab value="Auth.js">
-<DatabaseTable
-  fields={[
-    {
-      name: "id",
-      type: "string",
-      description: "每个账号的唯一标识符",
-      isPrimaryKey: true,
-    },
-    {
-      name: "userId",
-      type: "string",
-      description: "用户 ID",
-      isForeignKey: true,
-    },
-    {
-      name: "type",
-      type: "string",
-      description: "账号类型（例如 'oauth'、'email'、'credentials'）",
-    },
-    {
-      name: "provider",
-      type: "string",
-      description: "提供商标识",
-    },
-    {
-      name: "providerAccountId",
-      type: "string",
-      description: "提供商的账号 ID",
-    },
-    {
-      name: "refresh_token",
-      type: "string",
-      description: "账号的刷新令牌，由提供商返回",
-      isOptional: true,
-    },
-    {
-      name: "access_token",
-      type: "string",
-      description: "账号的访问令牌，由提供商返回",
-      isOptional: true,
-    },
-    {
-      name: "expires_at",
-      type: "number",
-      description: "访问令牌过期时间",
-      isOptional: true,
-    },
-    {
-      name: "token_type",
-      type: "string",
-      description: "令牌类型",
-      isOptional: true,
-    },
-    {
-      name: "scope",
-      type: "string",
-      description: "账号权限范围，由提供商返回",
-      isOptional: true,
-    },
-    {
-      name: "id_token",
-      type: "string",
-      description: "提供商返回的 ID 令牌",
-      isOptional: true,
-    },
-    {
-      name: "session_state",
-      type: "string",
-      description: "OAuth 会话状态",
-      isOptional: true,
-    },
-  ]}
-/>
-</Tab>
-<Tab value="Better Auth">
-<DatabaseTable
-  fields={[
-    {
-      name: "id",
-      type: "string",
-      description: "每个账号的唯一标识符",
-      isPrimaryKey: true,
-    },
-    {
-      name: "userId",
-      type: "string",
-      description: "用户 ID",
-      isForeignKey: true,
-    },
-    {
-      name: "accountId",
-      type: "string",
-      description:
-        "账号由 SSO 提供的 ID，或凭证账号时与 userId 相同",
-    },
-    {
-      name: "providerId",
-      type: "string",
-      description: "提供商 ID",
-    },
-    {
-      name: "accessToken",
-      type: "string",
-      description: "账号的访问令牌，由提供商返回",
-      isOptional: true,
-    },
-    {
-      name: "refreshToken",
-      type: "string",
-      description: "账号的刷新令牌，由提供商返回",
-      isOptional: true,
-    },
-    {
-      name: "accessTokenExpiresAt",
-      type: "Date",
-      description: "访问令牌过期时间",
-      isOptional: true,
-    },
-    {
-      name: "refreshTokenExpiresAt",
-      type: "Date",
-      description: "刷新令牌过期时间",
-      isOptional: true,
-    },
-    {
-      name: "scope",
-      type: "string",
-      description: "账号权限范围，由提供商返回",
-      isOptional: true,
-    },
-    {
-      name: "idToken",
-      type: "string",
-      description: "提供商返回的 ID 令牌",
-      isOptional: true,
-    },
-    {
-      name: "password",
-      type: "string",
-      description:
-        "账号密码，主要用于邮件和密码认证",
-      isOptional: true,
-    },
-    {
-      name: "createdAt",
-      type: "Date",
-      description: "账号创建时间戳",
-    },
-    {
-      name: "updatedAt",
-      type: "Date",
-      description: "账号更新时间戳",
-    },
-  ]}
-/>
-</Tab>
-</Tabs>
-
-### VerificationToken -> Verification
-
-<Tabs items={["Auth.js", "Better Auth"]}>
-<Tab value="Auth.js">
-<DatabaseTable
-  fields={[
-    {
-      name: "identifier",
-      type: "string",
-      description: "验证请求的标识符",
-      isPrimaryKey: true,
-    },
-    {
-      name: "token",
-      type: "string",
-      description: "验证令牌",
-      isPrimaryKey: true,
-    },
-    {
-      name: "expires",
-      type: "Date",
-      description: "验证令牌过期时间",
-    },
-  ]}
-/>
-</Tab>
-<Tab value="Better Auth">
-<DatabaseTable
-  fields={[
-    {
-      name: "id",
-      type: "string",
-      description: "每条验证的唯一标识符",
-      isPrimaryKey: true,
-    },
-    {
-      name: "identifier",
-      type: "string",
-      description: "验证请求的标识",
-    },
-    {
-      name: "value",
-      type: "string",
-      description: "需验证的值",
-    },
-    {
-      name: "expiresAt",
-      type: "Date",
-      description: "验证请求过期时间",
-    },
-    {
-      name: "createdAt",
-      type: "Date",
-      description: "验证请求创建时间戳",
-    },
-    {
-      name: "updatedAt",
-      type: "Date",
-      description: "验证请求更新时间戳",
-    },
-  ]}
-/>
-</Tab>
-</Tabs>
-
-### 比较总结
-
-表：<strong className='underline italic'>User</strong>
-- Better Auth 中 `name`、`email` 和 `emailVerified` 字段为必填，Auth.js 中为可选
-- Better Auth 使用布尔值表示 `emailVerified`，而 Auth.js 使用时间戳
-- Better Auth 增加了 `createdAt` 和 `updatedAt` 时间戳字段
-
-表：<strong className='underline italic'>Session</strong>
-- Better Auth 使用 `token` 替代 `sessionToken`
-- Better Auth 使用 `expiresAt` 替代 `expires`
-- Better Auth 增加了 `ipAddress` 和 `userAgent` 字段
-- Better Auth 包括 `createdAt` 和 `updatedAt` 时间戳
-
-表：<strong className='underline italic'>Account</strong>
-- Better Auth 采用 camelCase 命名（如 `refreshToken` 替代 `refresh_token`）
-- Better Auth 增加了 `accountId`，用于区分账号外部 ID 和内部 ID
-- Better Auth 使用 `providerId` 替代 `provider`
-- Better Auth 增加了 `accessTokenExpiresAt` 和 `refreshTokenExpiresAt` 用于令牌管理
-- Better Auth 增加了 `password` 字段，支持内建的凭证认证
-- Better Auth 没有 `type` 字段，其类型由 `providerId` 决定
-- Better Auth 移除了 `token_type` 和 `session_state` 字段
-- Better Auth 增加了 `createdAt` 和 `updatedAt` 时间戳
-
-表：<strong className='underline italic'>VerificationToken -> Verification</strong>
-- Better Auth 使用 `Verification` 表替代 `VerificationToken`
-- Better Auth 使用单一 `id` 作为主键，替代复合主键
-- Better Auth 使用 `value` 替代 `token`，支持多种验证类型
-- Better Auth 使用 `expiresAt` 替代 `expires`
-- Better Auth 增加了 `createdAt` 和 `updatedAt` 时间戳
-
-<Callout type="info">
-如果您使用的是 Auth.js v4，注意 v5 在数据库模式方面没有破坏性变更。如果您不使用 `oauth_token_secret` 和 `oauth_token` 等可选字段，可以删除它们。像 `refresh_token_expires_in` 这样的少用字段也可以移除。
-</Callout>
-
-### 自定义
-
-如果您扩展了数据库模型或在 Auth.js 中实现了额外逻辑，Better Auth 允许您以类型安全的方式自定义核心模式。您还可以在数据库操作的生命周期中定义自定义逻辑。更多详情请参见[概念 - 数据库](/docs/concepts/database)。
-</Step>
+    如果您扩展了数据库模型或在 Auth.js 中实现了额外逻辑，Better Auth 允许您以类型安全的方式自定义核心模式。您还可以在数据库操作的生命周期中定义自定义逻辑。更多详情请参见[概念 - 数据库](/docs/concepts/database)。
+  </Step>
 </Steps>
 
 ## 总结
 
-现在，您已准备好从 Auth.js 迁移到 Better Auth。欲了解包含多种认证方式的完整实现，请访问 [Next.js Demo 应用](https://github.com/better-auth/better-auth/tree/canary/demo/nextjs)。Better Auth 提供更灵活和更多功能，请务必探索[文档](/docs)以充分发挥其潜力。
+现在你已经准备好从 Auth.js 迁移到 Better Auth 了。若要查看包含多种身份验证方法的完整实现，请参阅 [Next.js 演示应用](https://github.com/better-auth/better-auth/tree/main/demo/nextjs)。Better Auth 提供了更高的灵活性和更多功能，因此请务必浏览 [文档](/docs)，以充分发挥其全部潜力。
 
 如果您需要迁移帮助，欢迎加入我们的[社区](/community)或联系 [contact@better-auth.com](mailto:contact@better-auth.com)。

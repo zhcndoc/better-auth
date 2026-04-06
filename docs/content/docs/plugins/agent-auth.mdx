@@ -1,149 +1,151 @@
----
+***
+
 title: Agent Auth
 description: AI Agent 的身份认证、注册、发现以及基于能力的授权。
----
+-------------------------------------------
 
 `AI Agents` `MCP` `Capabilities`
 
-Agent Auth 插件让你的 Better Auth 服务器充当 **Agent Auth 提供者**。它是 [Agent Auth Protocol](https://agentauthprotocol.com) 的服务器端实现。
-
-它为 AI Agent 提供了一种标准方式来发现你的服务、注册自身、请求授权，以及使用短期签名 JWT 执行作用域能力。它自带 **OpenAPI** 和 **MCP** 适配器——因此你可以将现有的 REST API 或 MCP 服务器转换为支持 Agent Auth 的服务，而无需手动编写能力定义。
-
 <Callout type="warn">
-此插件是正在大力开发中的标准的实现。它尚未稳定，未来可能会发生变化。请在 [Github](https://github.com/better-auth/agent-auth) 上报告任何问题或错误。
+  此插件是正在大力开发中的标准的实现。它尚未稳定，未来可能会发生变化。请在 [Github](https://github.com/better-auth/agent-auth) 上报告任何问题或错误。
 </Callout>
 
-## 功能特点
+Agent Auth 插件让你的 Better Auth 服务器充当一个 **Agent Auth 提供者**。它是 [Agent Auth Protocol](https://agentauthprotocol.com) 的服务端实现。
 
-- **OpenAPI 适配器** — 直接从 OpenAPI 3.x 规范派生能力、输入/输出模式，以及代理 `onExecute` 处理器
-- **MCP 适配器** — 将 Agent Auth 作为 MCP 工具暴露，使任何兼容 MCP 的 AI Agent 都能发现和调用你的能力
-- `/.well-known/agent-configuration` 上的发现文档
-- 能力列表、描述和执行（可选的每个能力 `location` URL）
-- 委托和自主 Agent 模式
-- 设备授权和 CIBA 审批流程
-- 带重放保护的短期签名 JWT
-- 审批、授权和执行的事件/审计钩子
+它为 AI agents 提供了一种标准方式来发现你的服务、注册自己、请求审批，并使用短期签名 JWT 执行受限能力。它自带 **OpenAPI** 和 **MCP** 适配器——因此你无需手写能力，就能将现有的 REST API 或 MCP 服务器转换为支持 agent-auth 的服务。
+
+## 特性
+
+* **OpenAPI 适配器** — 直接从 OpenAPI 3.x 规范派生能力、输入/输出模式，以及代理 `onExecute` 处理器
+* **MCP 适配器** — 将 Agent Auth 作为 MCP 工具暴露，使任何兼容 MCP 的 AI Agent 都能发现和调用你的能力
+* `/.well-known/agent-configuration` 上的发现文档
+* 能力列表、描述和执行（可选的每个能力 `location` URL）
+* 委托和自主 Agent 模式
+* 设备授权和 CIBA 审批流程
+* 带重放保护的短期签名 JWT
+* 审批、授权和执行的事件/审计钩子
 
 ## 安装
 
 <Steps>
-    <Step>
-        ### 安装包
+  <Step>
+    ### 安装包
 
-        ```package-install
-        @better-auth/agent-auth
-        ```
+    ```package-install
+    @better-auth/agent-auth
+    ```
 
-        客户端和 CLI 包（可选）：
+    客户端和 CLI 包（可选）：
 
-        ```bash
-        npm install @auth/agent @auth/agent-cli
-        ```
-    </Step>
+    ```bash
+    npm install @auth/agent @auth/agent-cli
+    ```
+  </Step>
 
-    <Step>
-        ### 将插件添加到你的 auth 配置中
+  <Step>
+    ### 将插件添加到你的 auth 配置中
 
-        首先定义你的服务暴露的能力，以及一个 `onExecute` 处理器，用于为已认证的 Agent 执行操作。
+    首先定义你的服务暴露的能力，以及一个 `onExecute` 处理器，用于为已认证的 Agent 执行操作。
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth";
-        import { agentAuth } from "@better-auth/agent-auth"; // [!code highlight]
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
+    import { agentAuth } from "@better-auth/agent-auth"; // [!code highlight]
 
-        export const auth = betterAuth({
-          plugins: [
-            agentAuth({ // [!code highlight]
-              providerName: "Acme", // [!code highlight]
-              providerDescription: "Acme project and deployment APIs for AI agents.", // [!code highlight]
-              modes: ["delegated", "autonomous"], // [!code highlight]
-              capabilities: [ // [!code highlight]
-                { // [!code highlight]
-                  name: "deploy_project", // [!code highlight]
-                  description: "Deploy a project to production.", // [!code highlight]
-                  input: { // [!code highlight]
-                    type: "object", // [!code highlight]
-                    properties: { // [!code highlight]
-                      projectId: { type: "string" }, // [!code highlight]
-                    }, // [!code highlight]
-                    required: ["projectId"], // [!code highlight]
-                  }, // [!code highlight]
+    export const auth = betterAuth({
+      plugins: [
+        agentAuth({ // [!code highlight]
+          providerName: "Acme", // [!code highlight]
+          providerDescription: "Acme 项目和部署 API，供 AI agents 使用。", // [!code highlight]
+          modes: ["delegated", "autonomous"], // [!code highlight]
+          capabilities: [ // [!code highlight]
+            { // [!code highlight]
+              name: "deploy_project", // [!code highlight]
+              description: "将项目部署到生产环境。", // [!code highlight]
+              input: { // [!code highlight]
+                type: "object", // [!code highlight]
+                properties: { // [!code highlight]
+                  projectId: { type: "string" }, // [!code highlight]
                 }, // [!code highlight]
-                { // [!code highlight]
-                  name: "list_projects", // [!code highlight]
-                  description: "List projects the current user can access.", // [!code highlight]
-                }, // [!code highlight]
-              ], // [!code highlight]
-              async onExecute({ capability, arguments: args, agentSession }) { // [!code highlight] 
-                switch (capability) { // [!code highlight]
-                  case "list_projects": // [!code highlight]  
-                    return [{ id: "proj_123", name: "marketing-site" }]; // [!code highlight]
-                  case "deploy_project": // [!code highlight]
-                    return { // [!code highlight]
-                      ok: true, // [!code highlight]
-                      projectId: args?.projectId, // [!code highlight]
-                      requestedBy: agentSession.user.id, // [!code highlight]   
-                    }; // [!code highlight]
-                  default: // [!code highlight]
-                    throw new Error(`Unsupported capability: ${capability}`); // [!code highlight]
-                } // [!code highlight]
+                required: ["projectId"], // [!code highlight]
               }, // [!code highlight]
-            }), // [!code highlight]
+            }, // [!code highlight]
+            { // [!code highlight]
+              name: "list_projects", // [!code highlight]
+              description: "列出当前用户可以访问的项目。", // [!code highlight]
+            }, // [!code highlight]
           ], // [!code highlight]
-        }); // [!code highlight]
+          async onExecute({ capability, arguments: args, agentSession }) { // [!code highlight] 
+            switch (capability) { // [!code highlight]
+              case "list_projects": // [!code highlight]  
+                return [{ id: "proj_123", name: "marketing-site" }]; // [!code highlight]
+              case "deploy_project": // [!code highlight]
+                return { // [!code highlight]
+                  ok: true, // [!code highlight]
+                  projectId: args?.projectId, // [!code highlight]
+                  requestedBy: agentSession.user.id, // [!code highlight]   
+                }; // [!code highlight]
+              default: // [!code highlight]
+                throw new Error(`Unsupported capability: ${capability}`); // [!code highlight]
+            } // [!code highlight]
+          }, // [!code highlight]
+        }), // [!code highlight]
+      ], // [!code highlight]
+    }); // [!code highlight]
+    ```
+  </Step>
+
+  <Step>
+    ### 暴露发现文档
+
+    插件提供了 `auth.api.getAgentConfiguration()`，但你应该从应用的根路径 `/.well-known/agent-configuration` 暴露它。
+
+    ```ts title="app/.well-known/agent-configuration/route.ts"
+    import { auth } from "@/lib/auth";
+    import { NextResponse } from "next/server";
+
+    export async function GET() {
+      const configuration = await auth.api.getAgentConfiguration();
+      return NextResponse.json(configuration);
+    }
+    ```
+  </Step>
+
+  <Step>
+    ### 迁移数据库
+
+    运行迁移或生成模式以添加 Agent、Host、Grant 和 Approval 表。
+
+    <Tabs items={["migrate", "generate"]}>
+      <Tab value="migrate">
+        ```package-install
+        npx auth migrate
         ```
-    </Step>
+      </Tab>
 
-    <Step>
-        ### 暴露发现文档
-
-        插件提供了 `auth.api.getAgentConfiguration()`，但你应该从应用的根路径 `/.well-known/agent-configuration` 暴露它。
-
-        ```ts title="app/.well-known/agent-configuration/route.ts"
-        import { auth } from "@/lib/auth";
-        import { NextResponse } from "next/server";
-
-        export async function GET() {
-          const configuration = await auth.api.getAgentConfiguration();
-          return NextResponse.json(configuration);
-        }
+      <Tab value="generate">
+        ```package-install
+        npx auth generate
         ```
-    </Step>
+      </Tab>
+    </Tabs>
+  </Step>
 
-    <Step>
-        ### 迁移数据库
+  <Step>
+    ### 可选：添加 Better Auth 客户端插件
 
-        运行迁移或生成模式以添加 Agent、Host、Grant 和 Approval 表。
+    如果你想从 Better Auth 客户端类型安全地访问插件端点，也添加客户端插件。
 
-        <Tabs items={["migrate", "generate"]}>
-            <Tab value="migrate">
-            ```package-install
-            npx auth migrate
-            ```
-            </Tab>
-            <Tab value="generate">
-            ```package-install
-            npx auth generate
-            ```
-            </Tab>
-        </Tabs>
-    </Step>
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client";
+    import { agentAuthClient } from "@better-auth/agent-auth/client"; // [!code highlight]
 
-    <Step>
-        ### 可选：添加 Better Auth 客户端插件
-
-        如果你想从 Better Auth 客户端类型安全地访问插件端点，也添加客户端插件。
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client";
-        import { agentAuthClient } from "@better-auth/agent-auth/client"; // [!code highlight]
-
-        export const authClient = createAuthClient({
-          plugins: [
-            agentAuthClient(), // [!code highlight]
-          ],
-        });
-        ```
-    </Step>
+    export const authClient = createAuthClient({
+      plugins: [
+        agentAuthClient(), // [!code highlight]
+      ],
+    });
+    ```
+  </Step>
 </Steps>
 
 ## 工作原理
@@ -162,9 +164,9 @@ Agent Auth 流程通常如下：
 
 执行的重要字段：
 
-- **`issuer`** — 提供者的基础 URL（Better Auth `baseURL`）。
-- **`endpoints`** — 每个路由的绝对 URL（例如 `execute` 指向该基础上的 `POST /capability/execute`）。
-- **`default_location`** — 默认执行端点的完整 URL。它始终与 `endpoints.execute` 匹配。当能力未定义自定义 URL 时，Agent 将此作为 JWT **`aud`**，并作为这些能力的请求 URL。
+* **`issuer`** — 提供者的基础 URL（Better Auth `baseURL`）。
+* **`endpoints`** — 每个路由的绝对 URL（例如 `execute` 指向该基础上的 `POST /capability/execute`）。
+* **`default_location`** — 默认执行端点的完整 URL。它始终与 `endpoints.execute` 匹配。当能力未定义自定义 URL 时，Agent 将此作为 JWT **`aud`**，并作为这些能力的请求 URL。
 
 从你的应用根路径暴露它：
 
@@ -179,7 +181,7 @@ export async function GET() {
 ```
 
 <Callout>
-发现路由应该位于 `/.well-known/agent-configuration`，即使你的 Better Auth 基础路径是 `/api/auth`。
+  发现路由应该位于 `/.well-known/agent-configuration`，即使你的 Better Auth 基础路径是 `/api/auth`。
 </Callout>
 
 ## OpenAPI 适配器
@@ -264,8 +266,8 @@ createFromOpenAPI(spec, {
 
 如果你只需要部分管道，适配器也导出了较低级别的辅助函数：
 
-- **`fromOpenAPI(spec)`** — 仅返回 `Capability[]`（无处理器，无主机能力）。
-- **`createOpenAPIHandler(spec, opts)`** — 仅返回 `onExecute` 代理处理器，这样你可以将其与手写能力配对，或自行过滤规范。
+* **`fromOpenAPI(spec)`** — 仅返回 `Capability[]`（无处理器，无主机能力）。
+* **`createOpenAPIHandler(spec, opts)`** — 仅返回 `onExecute` 代理处理器，这样你可以将其与手写能力配对，或自行过滤规范。
 
 ```ts title="auth.ts"
 import {
@@ -322,8 +324,8 @@ agentAuth({
 
 ### 默认执行与自定义 `location`
 
-- **无 `location`** — 代理 `POST` 到 **`default_location`**（`endpoints.execute`），内容为 `{ capability, arguments }`。插件验证 JWT 和授权后，运行 **`onExecute`**。
-- **有 `location`** — 代理调用该 URL（你的 REST 处理器、另一个服务、OpenAPI 操作 URL 等）。**`onExecute` 不会运行**。在你的处理器中使用下面的辅助工具解析 **`agentSession`**，然后执行授权检查和业务逻辑。
+* **无 `location`** — 代理 `POST` 到 **`default_location`**（`endpoints.execute`），内容为 `{ capability, arguments }`。插件验证 JWT 和授权后，运行 **`onExecute`**。
+* **有 `location`** — 代理调用该 URL（你的 REST 处理器、另一个服务、OpenAPI 操作 URL 等）。**`onExecute` 不会运行**。在你的处理器中使用下面的辅助工具解析 **`agentSession`**，然后执行授权检查和业务逻辑。
 
 ### `onExecute` 之外的代理会话
 
@@ -369,9 +371,9 @@ if (!allowed) {
 
 **会话中包含的内容**
 
-- **`agentSession.user`** — 代理的已解析用户（委托的主机用户或 **`resolveAutonomousUser`**）。
-- **`agentSession.agent`** — ID、名称、模式、**`capabilityGrants`**、主机 ID、元数据。
-- **`agentSession.host`** — 当代理链接到主机时的主机记录。
+* **`agentSession.user`** — 代理的已解析用户（委托的主机用户或 **`resolveAutonomousUser`**）。
+* **`agentSession.agent`** — ID、名称、模式、**`capabilityGrants`**、主机 ID、元数据。
+* **`agentSession.host`** — 当代理链接到主机时的主机记录。
 
 类型从 **`@better-auth/agent-auth`** 导出（例如 **`AgentSession`**）。
 
@@ -379,8 +381,8 @@ if (!allowed) {
 
 JWT **`aud`** 必须与你正在调用的 URL 匹配：
 
-- **无每功能 `location`** — 使用 **`default_location`** / **`endpoints.execute`**，或插件已允许的 issuer / base URL 值。
-- **有 `location`** — **`aud`** 应为相同的绝对 URL。`GET /capability/list` 在设置时包含 `location`。配置中无效的 `location` 值会在启动时失败。
+* **无每功能 `location`** — 使用 **`default_location`** / **`endpoints.execute`**，或插件已允许的 issuer / base URL 值。
+* **有 `location`** — **`aud`** 应为相同的绝对 URL。`GET /capability/list` 在设置时包含 `location`。配置中无效的 `location` 值会在启动时失败。
 
 **JWT 中的单一功能** — 如果 `capabilities` 只列出一个 ID，当设置了时 **`aud`** 可以等于该功能的 **`location`**。
 
@@ -422,8 +424,8 @@ agentAuth({
 
 插件支持两种授权方法：
 
-- `device_authorization` 用于基于浏览器的授权和用户码
-- `ciba` 用于后台通道授权流程
+* `device_authorization` 用于基于浏览器的授权和用户码
+* `ciba` 用于后台通道授权流程
 
 默认情况下，两者都启用。你可以使用 `approvalMethods` 和 `resolveApprovalMethod` 来限制或自定义它们。
 
@@ -448,10 +450,10 @@ agentAuth({
 
 使用 `onEvent` 捕获重要的生命周期事件，例如：
 
-- 代理创建和撤销
-- 主机创建和注册
-- 功能请求和授权
-- 功能执行
+* 代理创建和撤销
+* 主机创建和注册
+* 功能请求和授权
+* 功能执行
 
 此钩子是写入审计日志或向分析管道提供数据的好地方。
 
@@ -461,74 +463,73 @@ Agent Auth 插件支持许多选项。这些是你通常首先使用的：
 
 <TypeTable
   type={{
-    providerName: {
-      description: "在发现元数据中返回的人类可读提供商名称。",
-      type: "string",
-      required: false,
-    },
-    providerDescription: {
-      description: "在发现文档中返回的描述。",
-      type: "string",
-      required: false,
-    },
-    modes: {
-      description: "支持的代理模式。默认为 `[\"delegated\", \"autonomous\"]`。",
-      type: '("delegated" | "autonomous")[]',
-      required: false,
-    },
-    capabilities: {
-      description:
-        "功能定义（`name`、`description`、可选的 `input`、可选的绝对 `location`——如果设置，代理调用此 URL 而不是 `default_location`，你使用会话辅助工具在你的处理器中）。",
-      type: "Capability[]",
-      required: false,
-    },
-    onExecute: {
-      description:
-        "通过默认执行 URL（`default_location`）调用的功能的处理器。当代理使用自定义每功能 `location` 时不会调用。",
-      type: "function",
-      required: false,
-    },
-    requireAuthForCapabilities: {
-      description: "列出和描述功能时需要主机或代理 JWT。",
-      type: "boolean",
-      required: false,
-    },
-    approvalMethods: {
-      description: "支持的授权方法。默认为 `[\"ciba\", \"device_authorization\"]`。",
-      type: "string[]",
-      required: false,
-    },
-    resolveApprovalMethod: {
-      description: "为请求选择授权方法。",
-      type: "function",
-      required: false,
-    },
-    deviceAuthorizationPage: {
-      description: "面向用户设备授权页面的路径或绝对 URL。",
-      type: "string",
-      required: false,
-    },
-    defaultHostCapabilities: {
-      description: "应用于新创建主机的默认功能。",
-      type: "string[] | function",
-      required: false,
-    },
-    allowDynamicHostRegistration: {
-      description: "允许未知主机动态注册。",
-      type: "boolean | function",
-      required: false,
-    },
-    onEvent: {
-      description: "审计和生命周期事件的回调。",
-      type: "function",
-      required: false,
-    },
-    trustProxy: {
-      description:
-        "验证 JWT `aud` 时信任 `X-Forwarded-Proto`（在反向代理后面使用）。默认为 `false`。",
-      type: "boolean",
-      required: false,
-    },
-  }}
+  providerName: {
+    description: "在发现元数据中返回的人类可读提供商名称。",
+    type: "string",
+    required: false,
+  },
+  providerDescription: {
+    description: "在发现文档中返回的描述。",
+    type: "string",
+    required: false,
+  },
+  modes: {
+    description: "支持的代理模式。默认为 `[\"delegated\", \"autonomous\"]`。",
+    type: '("delegated" | "autonomous")[]',
+    required: false,
+  },
+  capabilities: {
+    description:
+      "功能定义（`name`、`description`、可选的 `input`、可选的绝对 `location`——如果设置，代理调用此 URL 而不是 `default_location`，你使用会话辅助工具在你的处理器中）。",
+    type: "Capability[]",
+    required: false,
+  },
+  onExecute: {
+    description:
+      "通过默认执行 URL（`default_location`）调用的功能的处理器。当代理使用自定义每功能 `location` 时不会调用。",
+    type: "function",
+    required: false,
+  },
+  requireAuthForCapabilities: {
+    description: "列出和描述功能时需要主机或代理 JWT。",
+    type: "boolean",
+    required: false,
+  },
+  approvalMethods: {
+    description: "支持的授权方法。默认为 `[\"ciba\", \"device_authorization\"]`。",
+    type: "string[]",
+    required: false,
+  },
+  resolveApprovalMethod: {
+    description: "为请求选择授权方法。",
+    type: "function",
+    required: false,
+  },
+  deviceAuthorizationPage: {
+    description: "面向用户设备授权页面的路径或绝对 URL。",
+    type: "string",
+    required: false,
+  },
+  defaultHostCapabilities: {
+    description: "应用于新创建主机的默认功能。",
+    type: "string[] | function",
+    required: false,
+  },
+  allowDynamicHostRegistration: {
+    description: "允许未知主机动态注册。",
+    type: "boolean | function",
+    required: false,
+  },
+  onEvent: {
+    description: "审计和生命周期事件的回调。",
+    type: "function",
+    required: false,
+  },
+  trustProxy: {
+    description:
+      "验证 JWT `aud` 时信任 `X-Forwarded-Proto`（在反向代理后面使用）。默认为 `false`。",
+    type: "boolean",
+    required: false,
+  },
+}}
 />
-
