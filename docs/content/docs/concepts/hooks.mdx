@@ -1,12 +1,12 @@
 ---
-title: Hooks
+title: 钩子
 description: 了解如何使用前置和后置钩子来自定义端点行为、修改请求和响应、处理 Cookie、抛出错误、访问认证上下文以及运行后台任务。
 ---
 
 Better Auth 中的钩子允许你“钩入”生命周期并执行自定义逻辑。它们提供了一种无需编写完整插件即可定制 Better Auth 行为的方式。
 
 <Callout>
-  我们强烈建议如果你需要对某个端点进行自定义调整时，使用钩子，而不是在 Better Auth 之外创建另一个端点。
+  我们强烈建议，如果你需要对某个端点进行自定义调整，请使用钩子，而不是在 Better Auth 之外创建另一个端点。
 </Callout>
 
 ## 前置钩子（Before Hooks）
@@ -152,7 +152,7 @@ const hook = createAuthMiddleware(async (ctx) => {
     });
 
     const cookie = ctx.getCookie("my-cookie");
-    const signedCookie = await ctx.getSignedCookie("my-signed-cookie");
+    const signedCookie = await ctx.getSignedCookie("my-signed-cookie", ctx.context.secret);
 });
 ```
 

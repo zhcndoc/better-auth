@@ -1,51 +1,185 @@
 ---
 title: state_mismatch
-description: 请求中的 state 参数与 cookie 中的 state 参数不匹配。
+description: OAuth 回调期间状态验证失败。涵盖所有与状态相关的错误代码及其原因。
 ---
 
 ## 什么是 state_mismatch？
 
-当 OAuth 流程开始时，会生成一个唯一的 `state` 值并存储在 cookie 中。
-当用户从 OAuth 提供商返回时，会将该 `state` 值与回调中提供的值进行比较。
-如果它们不匹配，请求将被拒绝，以防止未经授权的访问。
+当 OAuth 或 SSO 流程开始时，Better Auth 会生成一个唯一的 `state` 值并将其存储，以便在提供方重定向回来时进行验证。这通过确保回调真正属于启动它的同一浏览器会话，来防止 CSRF 和重放攻击。
 
-此检查存在的目的是为了防止 OAuth 流程中的 CSRF（跨站请求伪造）和重放攻击——
-基本上，就是确保访问 `/api/auth/callback` 端点的回调请求确实属于
-启动该流程的同一浏览器会话。
+Better Auth 支持两种状态存储策略 - **database**（默认）和 **cookie** - 每种策略都有其自身的失败模式。本页涵盖每个状态相关的错误代码、触发原因以及如何修复。
 
+***
 
-## 常见原因
+## 错误代码概览
 
-* 回调时 cookie 未设置或无法读取（在 `.vercel.app` 预览域或跨域问题中常见）。
-* 应用和回调路由之间的 cookie 域名或路径不匹配。
-* 浏览器阻止了第三方 cookie（尤其是在 Safari / iOS 上）。
-* 你在一个标签页启动 OAuth 流程，但在另一个标签页完成（cookie 上下文不同）。
-* 预览环境与生产环境域名不一致（例如，`preview.myapp.com` 与 `myapp.com`）。
+| Code                      | Message                               | Strategy | Meaning                                                                                       |
+| ------------------------- | ------------------------------------- | -------- | --------------------------------------------------------------------------------------------- |
+| `state_mismatch`          | verification not found                | Database | 此状态的验证记录在数据库（或二级存储）中不存在。 |
+| `state_mismatch`          | auth state cookie not found           | Cookie   | 加密的状态 cookie 未随回调请求发送回来。 |
+| `state_mismatch`          | request expired                       | Both     | 找到了状态数据，但其 `expiresAt` 时间戳已过期。 |
+| `state_invalid`           | Failed to decrypt or parse auth state | Cookie   | 状态 cookie 存在但无法解密或解析（例如密钥已更改）。 |
+| `state_security_mismatch` | State not persisted correctly         | Database | 签名的状态 cookie 缺失或与回调 URL 中的状态不匹配。 |
+| `state_generation_error`  | Unable to create verification         | Database | 启动流程时无法写入验证记录。 |
 
-## 如何解决
-### 使用固定域名
+***
 
-* 最好的解决办法是为你的应用和回调路由使用固定域名。
-* 避免使用 `.vercel.app` 子域——浏览器会将其当作公共后缀，因此无法跨子域共享 cookie。
+## `state_mismatch` - verification not found (database strategy)
 
-### 验证 cookie 配置
+这是**最常报告**的状态错误。这意味着从 OAuth 提供方返回的状态值用于在数据库中查找验证记录，但未找到匹配的记录。
 
-* 你可能在身份验证配置中设置了自定义的 cookie 属性，导致此问题。
-* 检查浏览器设置或隐私模式中是否阻止了 cookie。
-* 确认你在同一浏览器会话中启动并结束 OAuth 流程。
+### 常见原因
 
-### 跳过 state cookie 校验
+1. **用户在提供方的登录页面上花费了太长时间。** 验证记录在 10 分钟后过期。一旦过期，任何其他 `findVerificationValue` 调用（来自 OTP 检查、魔法链接、2FA 等）都会触发后台清理，删除所有过期记录 - 包括此记录。
 
-如果你知道自己在做什么，可以通过在身份验证配置中
-将 `account.skipStateCookieCheck` 选项设置为 `true` 来跳过 state cookie 校验。
+2. **回调 URL 被加载了两次。** 成功查找后，验证记录会立即被删除。如果浏览器刷新、按下后退按钮或重定向循环重放回调，第二次请求将找不到任何内容。
+
+3. **没有数据库回退的二级存储（Redis / KV）。** 当配置了 `secondaryStorage` 时，验证记录默认存储在那里，数据库会被跳过。如果键被逐出（TTL 过期、内存压力、服务器重启）且未将 `verification.storeInDatabase` 显式设置为 `true`，则查找会返回 `null` 而不检查数据库。
+
+4. **多实例部署无共享状态。** 无服务器函数或运行各自独立内存 SQLite 的多个容器将不会共享验证记录。创建记录的实例可能不是接收回调的实例。
+
+5. **使用哈希标识符进行密钥轮换。** 如果 `verification.storeIdentifier` 是 `"hashed"`，则标识符使用服务器密钥进行哈希。在流程开始和回调之间更改 `BETTER_AUTH_SECRET` 意味着查找时的哈希与存储的哈希不匹配。
+
+6. **OAuth 提供方修改了 state 参数。** 某些提供方在重定向过程中对 `state` 查询参数进行 URL 编码、截断或以其他方式修改，导致查找时出现不匹配。
+
+7. **缺少验证表。** 如果未运行数据库迁移或 `verification` 表被删除，查询将返回空。
+
+### 如何修复
+
+* 确保您的数据库（或 Redis）在应用程序的**所有实例之间共享**。
+* 如果使用 `secondaryStorage`，请将 `verification.storeInDatabase: true` 设置为回退，或确保存储层可靠且 TTL 足够。
+* 不要在活动的 OAuth 流程期间轮换 `BETTER_AUTH_SECRET`，或在过渡窗口期间同时使用新旧密钥。
+* 如果用户 consistently 超时，请考虑切换到 `"cookie"` 策略，该策略不依赖于数据库查找。
+
+***
+
+## `state_mismatch` - auth state cookie not found (cookie strategy)
+
+当 `storeStateStrategy` 为 `"cookie"` 时，所有状态数据都会加密到 cookie 中。此错误意味着 cookie 在回调请求中不存在。
+
+### 常见原因
+
+* 浏览器阻止或剥离了 cookie（第三方 cookie 限制、Safari ITP、无痕模式）。
+* cookie 域/路径与回调路由不匹配（例如 `.vercel.app` 预览域被视为公共后缀，无法在子域之间共享 cookie）。
+* 反向代理或 CDN 丢弃了 `Cookie` 头。
+* 用户在一个标签页中启动了流程，但在另一个标签页中完成了它（不同的 cookie 存储区）。
+
+### 如何修复
+
+* 使用**稳定的自定义域** - 避免 `.vercel.app` 预览子域。
+* 验证您的 cookie 域和 `SameSite` / `Secure` 属性是否适合您的部署。
+* 在重定向之前和之后，在 DevTools → Application → Cookies 中确认 cookie 存在。
+
+***
+
+## `state_mismatch` - request expired
+
+状态数据已成功检索（来自数据库或 cookie），但其嵌入的 `expiresAt` 时间戳已过去。状态有效载荷从创建起有效期为 10 分钟。
+
+### 常见原因
+
+* 用户 simply 花费了太长时间（让提供方标签页保持打开、网络慢、MFA 提示）。
+* 生成状态的服务器与验证它的服务器之间的时钟偏差。
+
+### 如何修复
+
+* 确保**所有服务器实例都启用了 NTP**，以便时钟保持同步。
+* 如果您的用户 regularly 需要超过 10 分钟（例如具有审批工作流的企业 SSO），当前此超时不可配置 - 考虑提出功能请求。
+
+***
+
+## `state_invalid` - failed to decrypt or parse (cookie strategy)
+
+加密的状态 cookie 存在但无法解密，或者解密的 JSON 无法解析。
+
+### 常见原因
+
+* `BETTER_AUTH_SECRET` 在流程开始和回调之间进行了轮换，因此解密密钥不再匹配。
+* cookie 值在传输过程中损坏（代理重写、URL 编码问题）。
+
+### 如何修复
+
+* 避免在活动的用户流程期间轮换密钥。在低流量时段部署密钥更改。
+* 检查代理和中间件是否未修改 cookie 值。
+
+***
+
+## `state_security_mismatch` - state not persisted correctly (database strategy)
+
+在数据库中找到验证记录后，Better Auth 还会检查是否发送了**签名的状态 cookie** 及其值与回调 URL 中的状态匹配。这是第二层 CSRF 保护。此错误意味着 cookie 缺失或其值不匹配。
+
+### 常见原因
+
+* 签名的 cookie 已过期（其 `maxAge` 为 5 分钟，短于 10 分钟的数据库记录有效期）。
+* 第三方 cookie 限制或 `SameSite` 策略阻止了 cookie 的发送。
+* 跨源 POST 回调（SAML IdP 中常见）不发送 `SameSite=Lax` cookie。
+* 预览与生产域不匹配。
+* 用户打开了多个登录标签页 - 每个标签页都会覆盖状态 cookie，因此只有最后一个有效。
+
+### 如何修复
+
+* 使用**稳定的自定义域**并验证 cookie 属性。
+* 对于 SAML 流程，Better Auth 已在内部设置了 `skipStateCookieCheck`。
+* 如果您的部署需要，您可以跳过此检查：
+
+```ts title="auth.ts"
+export const auth = betterAuth({
+	account: {
+		skipStateCookieCheck: true,
+	},
+});
+```
 
 <Callout type="warn">
-  请注意，这存在安全风险，仅当你明确了解其影响时才启用。
+  跳过状态 cookie 检查会移除一层 CSRF 保护。仅当您理解安全影响并已实施其他缓解措施（例如，您的基础设施保证同源回调）时才启用此选项。
 </Callout>
 
-### 生产环境调试
+***
 
-进入你的生产网站，使用浏览器的开发者工具 → 应用程序 → Cookie，确认：
+## `state_generation_error` - unable to create verification
 
-* 在跳转前状态 cookie 是否被设置。
-* OAuth 提供商重定向回来时，该 cookie 是否仍然存在。
+此错误在 OAuth 流程的**开始**时（而非回调期间）抛出。这意味着无法将验证记录写入数据库。
+
+### 常见原因
+
+* `verification` 表不存在 - 未运行迁移。
+* 数据库连接失败或超时。
+* 数据库钩子或插件拒绝了写入。
+
+### 如何修复
+
+* 运行 `npx @better-auth/cli migrate` 以确保所有表都存在。
+* 检查您的数据库连接和凭据。
+* 审查可能阻止写入的 `verification` 模型上的任何 `databaseHooks`。
+
+***
+
+## 常见原因和修复
+
+下表按生产环境中遇到的频率对每个根本原因进行排名，说明其触发的错误代码以及应对措施。
+
+| Likelihood    | Root cause                                                            | Error code                                                      | Fix                                                                                   |
+| ------------- | --------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Very high** | Cookie blocked or missing (Safari ITP, cross-domain, preview domains) | `state_security_mismatch` or `state_mismatch` (cookie strategy) | Use a stable custom domain; verify `SameSite` / `Secure` attributes                   |
+| **High**      | Callback URL replayed (refresh, back button, redirect loop)           | `state_mismatch` (DB)                                           | Ensure your error/redirect page does not re-trigger the callback                      |
+| **High**      | User took too long (>10 min) on the provider page                     | `state_mismatch` (DB) or request expired                        | Inform users to retry; consider switching to cookie strategy                          |
+| **High**      | Multiple tabs / concurrent sign-in attempts                           | `state_security_mismatch`                                       | Only the last-opened tab's cookie is valid; earlier tabs will fail                    |
+| **Medium**    | Secondary storage (Redis) key evicted without DB fallback             | `state_mismatch` (DB)                                           | Set `verification.storeInDatabase: true` or ensure Redis persistence                  |
+| **Medium**    | Serverless / multi-instance without shared database                   | `state_mismatch` (DB)                                           | Use a shared database or external storage accessible by all instances                 |
+| **Medium**    | Signed cookie expired (5 min) while DB record is still valid (10 min) | `state_security_mismatch`                                       | The cookie has a shorter TTL than the DB record; users between 5–10 min will hit this |
+| **Low**       | Secret rotation mid-flow                                              | `state_invalid` (cookie) or `state_mismatch` (DB + hashed)      | Rotate secrets during low-traffic windows                                             |
+| **Low**       | OAuth provider altered the state parameter                            | `state_mismatch` (DB)                                           | Verify the provider preserves `state` exactly; check for URL encoding issues          |
+| **Low**       | Missing verification table / migration not run                        | `state_generation_error`                                        | Run `npx @better-auth/cli migrate`                                                    |
+| **Very low**  | Clock skew between server instances                                   | request expired                                                 | Enable NTP on all servers                                                             |
+
+***
+
+## 调试清单
+
+1. **检查错误代码。** 错误页面上的 `error` 查询参数会告诉你确切的代码
+   (`state_mismatch`, `state_security_mismatch`, `state_invalid`, 或 `state_generation_error`)。
+2. **打开 DevTools → Application → Cookies。** 确认在重定向之前状态 cookie (`better-auth.state` 或
+   `better-auth.oauth_state`) 已设置，并且在回调到达时仍然存在。
+3. **检查回调 URL。** 确认 `state` 查询参数存在且未被修改。
+4. **检查服务器日志。** 错误中的 `details` 对象包含 `state` 值 - 你可以将其与你的 `verification` 表进行交叉引用，以查看记录是否存在、是否已过期或已被删除。
+5. **验证你的部署。** 确保所有实例共享相同的数据库和密钥，并且你的域名和 cookie 配置是一致的。

@@ -2,8 +2,8 @@
 title: 入门指南
 description: 本指南将帮助您将 Better Auth 基础设施集成到您的应用程序中。
 ---
-<Steps>
 
+<Steps>
   <Step>
     ## 前提条件
 
@@ -39,9 +39,7 @@ description: 本指南将帮助您将 Better Auth 基础设施集成到您的应
       [Better Auth 基础设施仪表盘](/dashboard) 创建新项目来获取您的 API 密钥。
     </Callout>
   </Step>
-
 </Steps>
-
 
 ## 服务器设置
 
@@ -63,7 +61,7 @@ export const auth = betterAuth({
 });
 ```
 
-如果您订阅的是 **pro** 计划及以上，您可以使用 `sentinel()` 插件启用安全检查、滥用防护等功能：
+如果您订阅的是 **专业版** 计划及以上，您可以使用 `sentinel()` 插件启用安全检查、滥用防护等功能：
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -99,12 +97,31 @@ export const authClient = createAuthClient({
 });
 ```
 
+### Expo和React Native
 
+对于 **Expo** 或 **React Native** 客户端，请从 `@better-auth/infra/native` 导入，而不是 `@better-auth/infra/client`。原生入口提供 `dashClient`（与Web客户端相同的审计日志API）和 `sentinelNativeClient`。
+
+```ts
+import { createAuthClient } from "better-auth/client";
+import { dashClient, sentinelNativeClient } from "@better-auth/infra/native";
+
+export const authClient = createAuthClient({
+  baseURL: "https://your-api.example.com",
+  plugins: [
+    dashClient(),
+    sentinelNativeClient({
+      autoSolveChallenge: true,
+    }),
+  ],
+});
+```
+
+详见 [Sentinel — Expo和React Native](/docs/infrastructure/plugins/sentinel#expo-and-react-native) 了解更多详情。
 
 ### 插件概览
 
-- **`dash()`** - 启用分析追踪、审计日志、仪表盘管理 API 等功能
-- **`sentinel()`** - 启用安全检查和滥用防护
+* **`dash()`** - 启用分析跟踪、审计日志、仪表盘管理API等功能
+* **`sentinel()`** - 启用安全检查和滥用防护
 
 您可以单独使用其中任何一个插件，但同时使用两者可获得完整的 Better Auth 基础设施体验。
 
@@ -112,8 +129,8 @@ export const authClient = createAuthClient({
 
 既然您已经完成基础设置，可继续探索以下内容：
 
-- [仪表盘](/docs/infrastructure/plugins/dashboard) - 分析、活动追踪和管理 API
-- [审计日志](/docs/infrastructure/plugins/audit-logs) - 跟踪和查询认证事件
-- [Sentinel](/docs/infrastructure/plugins/sentinel) - 配置高级安全防护
-- [邮件服务](/docs/infrastructure/services/email) - 设置事务性邮件
-- [短信服务](/docs/infrastructure/services/sms) - 启用短信验证码
+* [仪表盘](/docs/infrastructure/plugins/dashboard) - 分析、活动跟踪和管理API
+* [审计日志](/docs/infrastructure/plugins/audit-logs) - 跟踪和查询认证事件
+* [Sentinel](/docs/infrastructure/plugins/sentinel) - 配置高级安全
+* [邮件服务](/docs/infrastructure/services/email) - 设置事务性邮件
+* [短信服务](/docs/infrastructure/services/sms) - 启用短信验证

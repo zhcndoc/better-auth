@@ -140,9 +140,6 @@ export async function proxy(request: NextRequest) {
         headers: await headers()
     })
 
-    // 这并不安全！
-    // 这是推荐用于乐观重定向用户的做法
-    // 建议在每个页面/路由中处理认证校验
     if(!session) {
         return NextResponse.redirect(new URL("/sign-in", request.url));
     }
@@ -196,10 +193,7 @@ export async function middleware(request: NextRequest) {
     const session = await auth.api.getSession({
         headers: await headers()
     })
-
-    // 这并不安全！
-    // 这是推荐用于乐观重定向用户的做法
-    // 建议在每个页面/路由中处理认证校验
+    
     if(!session) {
         return NextResponse.redirect(new URL("/sign-in", request.url));
     }

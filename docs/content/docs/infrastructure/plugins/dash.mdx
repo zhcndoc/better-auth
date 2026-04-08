@@ -24,11 +24,11 @@ export const auth = betterAuth({
 
 ### DashOptions
 
-| 选项 | 类型 | 说明 |
-|--------|------|-------------|
-| `apiUrl` | `string` | Better Auth 基础设施 API 地址 |
-| `kvUrl` | `string` | 用于缓存的 KV 存储地址 |
-| `apiKey` | `string` | 你的 API 密钥，用于身份认证 |
+| 选项 | 类型 | 描述 |
+| ------------------ | -------- | ---------------------------------- |
+| `apiUrl` | `string` | Better Auth Infrastructure API URL |
+| `kvUrl` | `string` | 用于缓存的 KV 存储 URL |
+| `apiKey` | `string` | 用于身份验证的 API 密钥 |
 | `activityTracking` | `object` | 活动跟踪配置 |
 
 ### 活动跟踪
@@ -52,41 +52,41 @@ dash 插件自动追踪以下事件：
 ### 用户事件
 
 | 事件 | 触发条件 |
-|-------|---------|
+| ---------------------------- | ---------------------------- |
 | `user_signed_up` | 新用户注册 |
 | `user_profile_updated` | 用户更新个人资料 |
-| `user_profile_image_updated` | 用户更换头像 |
+| `user_profile_image_updated` | 用户更改头像 |
 | `user_email_verified` | 邮箱验证完成 |
 | `user_banned` | 用户被封禁 |
 | `user_unbanned` | 用户解封 |
-| `user_deleted` | 用户账号被删除 |
+| `user_deleted` | 用户账户删除 |
 
 ### 会话事件
 
 | 事件 | 触发条件 |
-|-------|---------|
-| `user_signed_in` | 登录成功 |
+| ---------------------------- | ------------------------------- |
+| `user_signed_in` | 成功登录 |
 | `user_signed_out` | 用户登出 |
-| `session_created` | 新会话创建 |
-| `session_revoked` | 单个会话被撤销 |
-| `sessions_revoked_all` | 所有会话被撤销 |
-| `user_impersonated` | 管理员开始模拟用户操作 |
-| `user_impersonation_stopped` | 管理员停止模拟用户 |
+| `session_created` | 创建新会话 |
+| `session_revoked` | 撤销单个会话 |
+| `sessions_revoked_all` | 撤销所有会话 |
+| `user_impersonated` | 管理员开始模拟用户 |
+| `user_impersonation_stopped` | 管理员停止模拟 |
 
 ### 账户事件
 
 | 事件 | 触发条件 |
-|-------|---------|
+| ------------------ | ----------------------- |
 | `account_linked` | 社交账户关联 |
 | `account_unlinked` | 社交账户解绑 |
-| `password_changed` | 密码更新 |
+| `password_changed` | 密码已更新 |
 
 ### 验证事件
 
 | 事件 | 触发条件 |
-|-------|---------|
+| -------------------------- | ------------------------ |
 | `password_reset_requested` | 发起密码重置 |
-| `password_reset_completed` | 密码重置完成 |
+| `password_reset_completed` | 完成密码重置 |
 | `email_verification_sent` | 发送验证邮件 |
 
 ### 组织事件
@@ -94,21 +94,21 @@ dash 插件自动追踪以下事件：
 如果你使用了组织插件，也会追踪以下事件：
 
 | 事件 | 触发条件 |
-|-------|---------|
-| `organization_created` | 新组织创建 |
-| `organization_updated` | 组织设置变更 |
-| `member_added` | 添加成员到组织 |
-| `member_removed` | 从组织移除成员 |
-| `member_role_updated` | 成员角色变更 |
+| ---------------------- | -------------------------------- |
+| `organization_created` | 创建新组织 |
+| `organization_updated` | 组织设置更改 |
+| `member_added` | 成员被添加到组织 |
+| `member_removed` | 成员从组织移除 |
+| `member_role_updated` | 成员角色更改 |
 | `member_invited` | 发送邀请 |
 | `invite_accepted` | 邀请被接受 |
 | `invite_rejected` | 邀请被拒绝 |
 | `invite_cancelled` | 邀请被取消 |
-| `team_created` | 新团队创建 |
-| `team_updated` | 团队信息更新 |
-| `team_deleted` | 团队被删除 |
-| `team_member_added` | 添加成员到团队 |
-| `team_member_removed` | 从团队移除成员 |
+| `team_created` | 创建团队 |
+| `team_updated` | 团队更新 |
+| `team_deleted` | 团队删除 |
+| `team_member_added` | 成员被添加到团队 |
+| `team_member_removed` | 成员从团队移除 |
 
 ## 仪表盘端点
 
@@ -116,32 +116,32 @@ dash 插件注册了众多管理员端点供仪表盘使用：
 
 ### 用户管理
 
-| 端点 | 方法 | 说明 |
-|----------|--------|-------------|
+| 端点 | 方法 | 描述 |
+| -------------------------- | ------ | -------------------------- |
 | `/dash/users` | GET | 分页列出用户 |
-| `/dash/users/online-count` | GET | 获取在线用户数量 |
+| `/dash/users/online-count` | GET | 获取在线用户数 |
 | `/dash/user` | GET | 获取用户详情 |
 | `/dash/user` | POST | 创建新用户 |
 | `/dash/user` | PATCH | 更新用户 |
 | `/dash/user` | DELETE | 删除用户 |
 | `/dash/user/ban` | POST | 封禁用户 |
-| `/dash/user/unban` | POST | 解禁用户 |
+| `/dash/user/unban` | POST | 解封用户 |
 | `/dash/user/password` | POST | 设置用户密码 |
-| `/dash/user/impersonate` | POST | 模拟用户操作 |
+| `/dash/user/impersonate` | POST | 模拟用户 |
 
 ### 会话管理
 
-| 端点 | 方法 | 说明 |
-|----------|--------|-------------|
+| 端点 | 方法 | 描述 |
+| --------------------------- | ------ | ------------------------ |
 | `/dash/sessions` | GET | 列出所有会话 |
 | `/dash/sessions` | DELETE | 删除会话 |
 | `/dash/session/revoke` | POST | 撤销单个会话 |
-| `/dash/sessions/revoke-all` | POST | 撤销所有用户会话 |
+| `/dash/sessions/revoke-all` | POST | 撤销用户所有会话 |
 
 ### 组织管理
 
-| 端点 | 方法 | 说明 |
-|----------|--------|-------------|
+| 端点 | 方法 | 描述 |
+| -------------------------------- | ------ | ------------------------ |
 | `/dash/organizations` | GET | 列出组织 |
 | `/dash/organization` | GET | 获取组织详情 |
 | `/dash/organization` | POST | 创建组织 |
@@ -154,8 +154,8 @@ dash 插件注册了众多管理员端点供仪表盘使用：
 
 ### 团队管理
 
-| 端点 | 方法 | 说明 |
-|----------|--------|-------------|
+| 端点 | 方法 | 描述 |
+| -------------------------------- | ------ | ------------------- |
 | `/dash/organization/teams` | GET | 列出团队 |
 | `/dash/organization/team` | POST | 创建团队 |
 | `/dash/organization/team` | PATCH | 更新团队 |
@@ -165,27 +165,27 @@ dash 插件注册了众多管理员端点供仪表盘使用：
 
 ### 邀请管理
 
-| 端点 | 方法 | 说明 |
-|----------|--------|-------------|
+| 端点 | 方法 | 描述 |
+| ---------------------------------- | ------ | ----------------- |
 | `/dash/organization/invitations` | GET | 列出邀请 |
 | `/dash/organization/invite` | POST | 发送邀请 |
 | `/dash/organization/invite/cancel` | POST | 取消邀请 |
-| `/dash/organization/invite/resend` | POST | 重新发送邀请 |
+| `/dash/organization/invite/resend` | POST | 重发邀请 |
 
 ### 单点登录管理（SSO）
 
-| 端点 | 方法 | 说明 |
-|----------|--------|-------------|
-| `/dash/organization/sso-providers` | GET | 列出单点登录提供商 |
-| `/dash/organization/sso-provider` | POST | 创建单点登录提供商 |
-| `/dash/organization/sso-provider` | PATCH | 更新单点登录提供商 |
-| `/dash/organization/sso-provider` | DELETE | 删除单点登录提供商 |
+| 端点 | 方法 | 描述 |
+| ----------------------------------------------- | ------ | ------------------- |
+| `/dash/organization/sso-providers` | GET | 列出 SSO 提供商 |
+| `/dash/organization/sso-provider` | POST | 创建 SSO 提供商 |
+| `/dash/organization/sso-provider` | PATCH | 更新 SSO 提供商 |
+| `/dash/organization/sso-provider` | DELETE | 删除 SSO 提供商 |
 | `/dash/organization/sso-provider/verify-domain` | POST | 验证域名 |
 
 ### 目录同步
 
-| 端点 | 方法 | 说明 |
-|----------|--------|-------------|
+| 端点 | 方法 | 描述 |
+| ------------------------------------ | ------ | ---------------- |
 | `/dash/organization/directories` | GET | 列出目录 |
 | `/dash/organization/directory` | POST | 创建目录 |
 | `/dash/organization/directory` | DELETE | 删除目录 |
@@ -193,8 +193,8 @@ dash 插件注册了众多管理员端点供仪表盘使用：
 
 ### 日志转储管理
 
-| 端点 | 方法 | 说明 |
-|----------|--------|-------------|
+| 端点 | 方法 | 描述 |
+| ----------------------------------- | ------ | ---------------- |
 | `/dash/organization/log-drains` | GET | 列出日志转储 |
 | `/dash/organization/log-drain` | POST | 创建日志转储 |
 | `/dash/organization/log-drain` | PATCH | 更新日志转储 |
@@ -203,30 +203,30 @@ dash 插件注册了众多管理员端点供仪表盘使用：
 
 ### 事件和审计日志
 
-| 端点 | 方法 | 说明 |
-|----------|--------|-------------|
+| 端点 | 方法 | 描述 |
+| -------------------- | ------ | --------------- |
 | `/events/list` | GET | 获取用户事件 |
 | `/events/audit-logs` | GET | 获取审计日志 |
 | `/events/types` | GET | 获取事件类型 |
 
 ### 分析统计
 
-| 端点 | 方法 | 说明 |
-|----------|--------|-------------|
-| `/dash/stats` | GET | 获取用户统计数据 |
+| 端点 | 方法 | 描述 |
+| ----------------- | ------ | ------------------- |
+| `/dash/stats` | GET | 获取用户统计信息 |
 | `/dash/graph` | GET | 获取图表数据 |
-| `/dash/retention` | GET | 获取用户留存数据 |
+| `/dash/retention` | GET | 获取留存数据 |
 | `/dash/map` | GET | 获取地理数据 |
 
 ### 双因素管理
 
-| 端点 | 方法 | 说明 |
-|----------|--------|-------------|
-| `/dash/user/2fa/enable` | POST | 启用用户双因素认证 |
-| `/dash/user/2fa/disable` | POST | 禁用用户双因素认证 |
+| 端点 | 方法 | 描述 |
+| -------------------------------------- | ------ | -------------------- |
+| `/dash/user/2fa/enable` | POST | 为用户启用 2FA |
+| `/dash/user/2fa/disable` | POST | 为用户禁用 2FA |
 | `/dash/user/2fa/totp-uri` | GET | 获取 TOTP URI |
-| `/dash/user/2fa/backup-codes` | GET | 查看备份码 |
-| `/dash/user/2fa/backup-codes/generate` | POST | 生成新备份码 |
+| `/dash/user/2fa/backup-codes` | GET | 查看备份代码 |
+| `/dash/user/2fa/backup-codes/generate` | POST | 生成新代码 |
 
 ## 客户端集成
 
@@ -242,6 +242,8 @@ export const authClient = createAuthClient({
   plugins: [dashClient()],
 });
 ```
+
+**注意**：对于 **Expo** 或 **React Native**，请从 `@better-auth/infra/native` 导入 `dashClient`（API 相同），并按照 [Sentinel — Expo and React Native](/docs/infrastructure/plugins/sentinel#expo-and-react-native) 中的描述与 `sentinelNativeClient` 配对使用。
 
 ### 配置
 
@@ -274,16 +276,16 @@ console.log(logs.data?.offset);  // 当前偏移量
 
 ### 查询参数
 
-| 参数 | 类型 | 说明 |
-|-----------|------|-------------|
-| `limit` | `number` | 每页结果数 (最大 100，默认 50) |
-| `offset` | `number` | 分页偏移 (默认 0) |
-| `organizationId` | `string` | 按组织过滤 |
-| `identifier` | `string` | 按标识符过滤 |
-| `eventType` | `string` | 按事件类型过滤 |
-| `userId` | `string` | 按用户 ID 过滤 |
-| `user` | `object` | 带 ID 的用户对象 |
-| `session` | `object` | 带用户信息的会话对象 |
+| 参数 | 类型 | 描述 |
+| ---------------- | -------- | -------------------------------------- |
+| `limit` | `number` | 每页结果数（最大 100，默认 50） |
+| `offset` | `number` | 分页偏移量（默认 0） |
+| `organizationId` | `string` | 按组织筛选 |
+| `identifier` | `string` | 按标识符筛选 |
+| `eventType` | `string` | 按事件类型筛选 |
+| `userId` | `string` | 按用户 ID 筛选 |
+| `user` | `object` | 包含 ID 的用户对象 |
+| `session` | `object` | 包含用户的会话对象 |
 
 ### 分页示例
 

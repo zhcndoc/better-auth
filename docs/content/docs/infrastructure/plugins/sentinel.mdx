@@ -24,12 +24,12 @@ export const auth = betterAuth({
 
 ### SentinelOptions
 
-| 选项 | 类型 | 说明 |
-|--------|------|-------------|
-| `apiUrl` | `string` | Better Auth基础设施 API URL |
-| `kvUrl` | `string` | 用于限速数据的KV存储URL |
-| `apiKey` | `string` | 用于认证的API密钥 |
-| `security` | `SecurityOptions` | 安全功能配置 |
+| 选项     | 类型              | 描述                         |
+| --------- | ----------------- | ---------------------------- |
+| `apiUrl`   | `string`          | Better Auth 基础设施 API URL  |
+| `kvUrl`    | `string`          | 用于速率限制数据的 KV 存储 URL |
+| `apiKey`   | `string`          | 用于认证的 API 密钥           |
+| `security` | `SecurityOptions` | 安全功能配置                  |
 
 ### SecurityOptions
 
@@ -76,10 +76,11 @@ sentinel({
 ```
 
 **工作原理：**
-1. 跟踪每个访客ID的登录失败次数
-2. 达到挑战阈值时，发起工作量证明（PoW）挑战
-3. 达到封禁阈值时，完全封禁该访客
-4. 登录成功时自动清除失败次数
+
+1. 跟踪每个访客 ID 的登录失败尝试次数
+2. 达到挑战阈值后，发出工作量证明（PoW）挑战
+3. 达到封禁阈值后，完全封禁访客
+4. 登录成功后自动清除失败尝试记录
 
 ### 不可能的旅行检测
 
@@ -122,9 +123,10 @@ sentinel({
 ```
 
 **工作原理：**
-1. 跟踪每个访客指纹创建的账户数
-2. 超过阈值时阻止新账户的创建
-3. 有效防止免费套餐滥用
+
+1. 跟踪每个访客指纹的账户创建次数
+2. 当超过阈值时，阻止新账户创建
+3. 用于防止免费层滥用
 
 ### 已泄露密码检测
 
@@ -165,10 +167,11 @@ sentinel({
 }),
 ```
 
-**通知内容包括：**
-- 登录时间和地点
-- 距离上次活动的天数
-- 设备信息
+**通知包括：**
+
+* 登录时间和位置
+* 距离上次活跃的天数
+* 设备信息
 
 ### 地理封禁
 
@@ -266,9 +269,10 @@ sentinel({
 ```
 
 **严格级别：**
-- `low` - 仅封禁已知一次性邮箱域名
-- `medium` - 还会检查有效 MX 记录
-- `high` - 追加启发式检查
+
+* `low` - 仅阻止已知一次性域名
+* `medium` - 还检查有效的 MX 记录
+* `high` - 额外的启发式检查
 
 ## 工作量证明（PoW）挑战
 
@@ -315,39 +319,113 @@ export const authClient = createAuthClient({
 
 ### 配置项
 
-| 选项 | 类型 | 默认值 | 说明 |
-|--------|------|---------|-------------|
-| `autoSolveChallenge` | `boolean` | `true` | 自动解决PoW挑战 |
+| 选项               | 类型      | 默认值 | 描述                        |
+| ------------------ | --------- | ------ | --------------------------- |
+| `autoSolveChallenge` | `boolean` | `true`  | 自动解决 PoW 挑战            |
 
 ### 浏览器指纹
 
-客户端通过 `X-Visitor-ID` 请求头自动包含访客ID指纹，用于：
+客户端自动在请求中通过 `X-Visitor-Id` 头包含访客 ID。此指纹用于：
 
-- 凭证填充检测
-- 免费试用滥用防护
-- 设备追踪
+* 凭证填充检测
+* 免费试用滥用防护
+* 设备跟踪
 
 ### PoW解答请求头
 
 启用自动解决后，解答通过 `X-PoW-Solution` 头发送。
 
+### Expo and React Native
+
+对于 **Expo** 和 **React Native** 应用，使用 `@better-auth/infra/native` 中的 `sentinelNativeClient`，而不是使用 `@better-auth/infra/client`。
+
+对于 **React Native** 应用，安装以下对等依赖：
+
+```package-install
+@react-native-async-storage/async-storage react-native-get-random-values
+```
+
+`@react-native-async-storage/async-storage` 是可选的。如果未安装，客户端使用仅会话的内存访客 ID。对于生产环境，请安装它或传递自定义 `storage`（例如安全存储）。
+
+#### 示例
+
+```ts
+import { createAuthClient } from "better-auth/client";
+import { dashClient, sentinelNativeClient } from "@better-auth/infra/native";
+
+export const authClient = createAuthClient({
+  baseURL: "https://your-api.example.com",
+  plugins: [
+    dashClient(),
+    sentinelNativeClient({
+      autoSolveChallenge: true,
+    }),
+  ],
+});
+```
+
+对于 **Expo** 应用，安装以下软件包以获得更丰富的原生身份信息。
+
+<Callout type="info">
+  **Expo:** 在添加基础设施插件之前，请遵循 [Expo 集成](/docs/integrations/expo) 指南。
+</Callout>
+
+```package-install
+expo-constants expo-device expo-crypto
+```
+
+#### 示例
+
+```ts
+import { createAuthClient } from "better-auth/react";
+import { expoClient } from "@better-auth/expo/client";
+import { dashClient, sentinelNativeClient } from "@better-auth/infra/native";
+import * as SecureStore from "expo-secure-store";
+
+export const authClient = createAuthClient({
+  baseURL: "https://your-api.example.com",
+  plugins: [
+    expoClient({
+      scheme: "myapp",
+      storagePrefix: "myapp",
+      storage: SecureStore,
+    }),
+    dashClient(),
+    sentinelNativeClient({
+      autoSolveChallenge: true,
+    }),
+  ],
+});
+```
+
+#### `sentinelNativeClient` 选项
+
+| 选项                | 类型                            | 默认值                                                 | 描述                                                                 |
+| ------------------- | ------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------- |
+| `identifyUrl`       | `string`                        | `BETTER_AUTH_KV_URL`, then `https://kv.better-auth.com` | KV 识别端点基础 URL                                                  |
+| `autoSolveChallenge`| `boolean`                       | `true`                                                 | 在收到 `423` 状态码和 `X-PoW-Challenge` 头时，使用 `X-PoW-Solution` 头解决并重试一次 |
+| `onChallengeReceived`| `(reason: string) => void`      | —                                                      | 在收到 PoW 挑战时调用                                                |
+| `onChallengeSolved` | `(solveTimeMs: number) => void` | —                                                      | 成功解决后调用                                                       |
+| `onChallengeFailed` | `(error: Error) => void`        | —                                                      | 如果解决失败则调用                                                   |
+| `storage`           | `{ getItem, setItem }`          | 安装 Async Storage 时                                   | 用于稳定每安装访客 ID 的持久化异步存储                               |
+
 ## 安全事件
 
 Sentinel跟踪以下安全事件类型：
 
-| 事件类型 | 说明 |
-|------------|-------------|
-| `security_blocked` | 请求被封禁 |
-| `security_allowed` | 挑战通过后请求被允许 |
-| `security_credential_stuffing` | 检测到凭证填充 |
-| `security_impossible_travel` | 检测到不可能的旅行 |
-| `security_geo_blocked` | 地理封禁触发 |
-| `security_bot_blocked` | 机器人被检测并封禁 |
-| `security_suspicious_ip` | 检测到异常IP |
-| `security_velocity_exceeded` | 超出速率限制 |
-| `security_free_trial_abuse` | 检测到免费试用滥用 |
-| `security_compromised_password` | 检测到泄露密码 |
-| `security_stale_account` | 沉睡账户重新激活 |
+| 事件类型                      | 描述                         |
+| ----------------------------- | ---------------------------- |
+| `security_blocked`            | 请求被阻止                   |
+| `security_allowed`            | 挑战后请求被允许             |
+| `security_credential_stuffing`| 检测到凭证填充               |
+| `security_impossible_travel`  | 检测到不可能的旅行           |
+| `security_geo_blocked`        | 触发地理封禁                 |
+| `security_bot_blocked`        | 检测并阻止机器人             |
+| `security_suspicious_ip`      | 检测到可疑 IP                |
+| `security_velocity_exceeded`  | 超过速率限制                 |
+| `security_free_trial_abuse`   | 检测到免费试用滥用           |
+| `security_compromised_password`| 检测到泄露密码              |
+| `security_stale_account`      | 沉睡账户重新激活             |
 
 这些事件可在安全控制台查看，并包含在审计日志中。
 
@@ -425,7 +503,7 @@ export const auth = betterAuth({
 
 3. **先使用挑战，后使用封禁** - 挑战能阻挡自动化攻击，同时允许合法用户访问。
 
-4. **启用客户端自动解答** - 确保配置了 `sentinelClient({ autoSolveChallenge: true })` ，以优化用户体验。
+4. **启用客户端自动解决** - 在浏览器中使用 `sentinelClient({ autoSolveChallenge: true })`，或在 Expo / React Native 中使用 `sentinelNativeClient({ autoSolveChallenge: true })`。
 
 5. **监控安全事件** - 定期查看安全控制台，识别攻击趋势。
 
@@ -436,21 +514,21 @@ export const auth = betterAuth({
 ### 缺少API密钥警告
 
 ```
-[Sentinel] Missing BETTER_AUTH_API_KEY. Security checks may fall back to allow mode.
+[Sentinel] 缺少 BETTER_AUTH_API_KEY。安全检查可能回退到允许模式。
 ```
 
 请确保正确设置了API密钥环境变量。
 
 ### 挑战无法执行
+如果 PoW 挑战无法解决：
 
-如果PoW挑战无法自动完成：
-1. 确认客户端已安装 `sentinelClient()` 插件
+1. 验证正确的客户端插件：Web 使用 `sentinelClient()`（来自 `@better-auth/infra/client`），Expo / React Native 使用 `sentinelNativeClient()`（来自 `@better-auth/infra/native`）
 2. 检查 `autoSolveChallenge` 是否为 `true`
-3. 确认客户端能够访问服务器
+3. 确保客户端可以访问服务器
 
 ### 误报率过高
+如果合法用户被阻止：
 
-如果误伤合法用户：
-1. 提高阈值
-2. 将动作从“block”改为“challenge”
-3. 查看安全事件，找出误报原因
+1. 增加阈值
+2. 将操作从 "block" 改为 "challenge"
+3. 查看安全事件以识别模式

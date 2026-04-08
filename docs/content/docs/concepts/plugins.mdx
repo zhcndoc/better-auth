@@ -1,6 +1,6 @@
 ---
 title: 插件
-description: 了解如何使用和创建 Better Auth 插件，包括定义端点、schema、钩子、中间件、速率限制、受信任来源，以及使用自定义操作和原子构建客户端插件。
+description: 了解如何使用和创建 Better Auth 插件，包括定义端点、模式、钩子、中间件、速率限制、受信任来源，以及使用自定义操作和原子构建客户端插件。
 ---
 
 插件是 Better Auth 的关键部分，它们允许您扩展基础功能。您可以使用插件添加新的身份验证方法、功能，或者自定义行为。
@@ -57,7 +57,7 @@ const authClient = createAuthClient({
 
 ### 插件能做什么？
 
-* 创建自定义的`endpoint`执行任意操作。
+* 创建自定义的 `endpoint` 执行任意操作。
 * 使用自定义的 `schemas` 扩展数据库表。
 * 使用 `middleware` 针对一组路由，利用路由匹配器，仅在通过请求调用这些路由时运行。
 * 使用 `hooks` 针对特定路由或请求。如果您希望即使直接调用端点也能执行钩子。
@@ -466,7 +466,85 @@ const myPlugin = () => {
 }
 ```
 
-## 创建客户端插件
+#### `requireResourceOwnership`
+
+一个中间件，用于通过 ID 加载资源并验证其属于认证用户。在 `sessionMiddleware` 之后用于操作用户拥有的模型的端点。
+
+```ts title="plugin.ts"
+import type { BetterAuthPlugin } from "better-auth";
+import * as z from "zod";
+import {
+    createAuthEndpoint,
+    requireResourceOwnership,
+    sessionMiddleware,
+} from "better-auth/api";
+
+const myPlugin = () => {
+    return {
+        id: "my-plugin",
+        endpoints: {
+            deleteApiKey: createAuthEndpoint("/my-plugin/delete-api-key", {
+                method: "POST",
+                body: z.object({
+                    id: z.string(),
+                }),
+                use: [
+                    sessionMiddleware,
+                    requireResourceOwnership({
+                        model: "apiKey",
+                        idParam: "id",
+                        idSource: "body",
+                    }),
+                ],
+            }, async (ctx) => {
+                return ctx.json({ success: true });
+            })
+        }
+    } satisfies BetterAuthPlugin
+}
+```
+
+如果您的模型在不同字段名下存储所有者，请使用 `ownerField`，如果要返回插件特定的错误代码，请使用 `notFoundError` 或 `forbiddenError`。
+
+#### `requireOrgRole`
+
+一个中间件，用于验证认证用户是否是特定组织的成员，并且（可选）具有一组允许的角色之一。在组织范围的端点中，在 `sessionMiddleware` 之后使用。
+
+```ts title="plugin.ts"
+import type { BetterAuthPlugin } from "better-auth";
+import * as z from "zod";
+import {
+    createAuthEndpoint,
+    requireOrgRole,
+    sessionMiddleware,
+} from "better-auth/api";
+
+const myPlugin = () => {
+    return {
+        id: "my-plugin",
+        endpoints: {
+            syncDirectory: createAuthEndpoint("/my-plugin/sync-directory", {
+                method: "POST",
+                body: z.object({
+                    organizationId: z.string(),
+                }),
+                use: [
+                    sessionMiddleware,
+                    requireOrgRole({
+                        orgIdParam: "organizationId",
+                        orgIdSource: "body",
+                        allowedRoles: ["admin", "owner"],
+                    }),
+                ],
+            }, async (ctx) => {
+                return ctx.json({ success: true });
+            })
+        }
+    } satisfies BetterAuthPlugin
+}
+```
+
+如果省略 `allowedRoles`，则接受任何组织成员。具有多个角色的成员在任一角色匹配时即被授权。
 
 如果您的端点需要从客户端调用，也需创建客户端插件。Better Auth 客户端能根据服务器插件推断端点，也可添加额外的客户端逻辑。
 

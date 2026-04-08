@@ -4,41 +4,41 @@ description: Better Auth 的分布式追踪
 ---
 
 <Callout type="warning">
-  OpenTelemetry 仪器化处于实验阶段，未来版本可能发生变化。API 和 span 结构可能会更改。
+  OpenTelemetry 仪器化处于实验阶段，未来版本可能发生变化。API 和跨度结构可能会更改。
 </Callout>
 
-Better Auth 通过 [OpenTelemetry](https://opentelemetry.io/) 进行分布式追踪的仪器化。为端点、钩子、数据库操作和插件生命周期生成 spans。  
+Better Auth 通过 [OpenTelemetry](https://opentelemetry.io/) 进行分布式追踪的仪器化。为端点、钩子、数据库操作和插件生命周期生成跨度。  
 该仪器化的目标是提供关于您的 Better Auth 实例行为的更好洞察，帮助您调试问题并优化性能。
 
 ## 设置
 
-Better Auth 使用 OpenTelemetry API 来创建 spans。为了收集和导出追踪，您的应用至少需要配置一个 **TracerProvider** 和一个 **SpanExporter**。
+Better Auth 使用 OpenTelemetry API 来创建跨度。为了收集和导出追踪，您的应用至少需要配置一个 **TracerProvider** 和一个 **SpanExporter**。
 
 有关设置说明，请参阅官方 OpenTelemetry 文档：
 
 - **[Node.js 入门](https://opentelemetry.io/docs/languages/js/getting-started/nodejs/)** – Node.js 应用的核心设置
 
-## 支持的 Spans
+## 支持的跨度
 
-Better Auth 支持以下 spans：
+Better Auth 支持以下跨度：
 
-### 端点 Spans
+### 端点跨度
 
-| Span 名称              | 描述                      | 触发时机                               |
-| --------------------- | ------------------------- | -------------------------------------- |
-| `{METHOD} {path}`     | 认证端点的父级 span        | 每次认证 API 调用（例如 `GET /get-session`）|
-| `handler {path}`      | 端点处理函数执行的 span    | 在每个端点内，包裹处理函数               |
+| 跨度名称             | 描述                                      | 触发时机                                   |
+| --------------------- | ---------------------------------------- | ------------------------------------------ |
+| `{METHOD} {route}`    | 认证端点的父跨度                         | 每次认证 API 调用（例如 `GET /get-session`）|
+| `handler {route}`     | 端点处理器执行周围的跨度                 | 在每个端点内部，包装处理器                |
 
 **属性：**
-- `http.route` - 端点的规范化 HTTP 路径
+- `http.route` - **路由模板**（低基数）
 - `better_auth.operation_id` - 操作标识符（例如 `getSession`）
 
 支持以下全局钩子：
 
-| Span 名称                      | 描述                       | 触发时机                               |
-| ----------------------------- | -------------------------- | -------------------------------------- |
-| `hook before {path} {source}` | 认证端点的前置钩子          | 针对该路由执行 `before` 钩子时           |
-| `hook after {path} {source}`  | 认证端点的后置钩子          | 针对该路由执行 `after` 钩子时            |
+| 跨度名称                   | 描述                          | 触发时机                            |
+| --------------------------- | ----------------------------- | ----------------------------------- |
+| `hook before {route} {source}` | 认证端点的前置钩子            | 当路由的 `before` 钩子运行时        |
+| `hook after {route} {source}`  | 认证端点的后置钩子            | 当路由的 `after` 钩子运行时         |
 
 - **属性：**
     - `better_auth.hook.type` - 钩子类型（例如 `before` 或 `after`）
@@ -48,23 +48,23 @@ Better Auth 支持以下 spans：
 
 中间件也被支持：
 
-| Span 名称                     | 描述                      | 触发时机                      |
-| ----------------------------- | ------------------------- | ----------------------------- |
-| `onRequest {path} {pluginId}`  | 插件的 `onRequest` 钩子     | 请求处理前                    |
-| `onResponse {path} {pluginId}` | 插件的 `onResponse` 钩子    | 响应生成后                    |
-| `middleware {path} {pluginId}` | 插件中间件执行             | 中间件针对路由执行时          |
+| 跨度名称                     | 描述                     | 触发时机                     |
+| ----------------------------- | ------------------------ | ---------------------------- |
+| `onRequest {pluginId}`  | 插件的 `onRequest` 钩子   | 请求处理前                   |
+| `onResponse {pluginId}` | 插件的 `onResponse` 钩子  | 响应生成后                   |
+| `middleware {route} {pluginId}` | 插件中间件执行           | 当中间件为路由运行时         |
 
 **属性：**
-- `better_auth.hook.type` - 钩子类型: `"onRequest"`、`"onResponse"` 或 `"middleware"`
-- `better_auth.context` - 执行上下文: `"plugin:{pluginId}"`（例如 `plugin:bearer`、`plugin:test-plugin`）
-- `http.route` - **路由模板**（低基数），根据请求路径匹配；若无匹配则使用 `/**`
-- `http.response.status_code` - HTTP 响应状态码（仅限 onResponse）
+- `better_auth.hook.type` - 钩子类型：`"onRequest"`、`"onResponse"` 或 `"middleware"`
+- `better_auth.context` - 执行上下文：`"plugin:{pluginId}"`（例如 `plugin:bearer`、`plugin:test-plugin`）
+- `http.route` - **路由模板**（低基数），仅用于中间件跨度
+- `http.response.status_code` - HTTP 响应状态码（仅 onResponse）
 
-### 数据库 Spans
+### 数据库跨度
 
-| Span 名称              | 描述                      | 触发时机                                   |
+| 跨度名称              | 描述                      | 触发时机                                   |
 | ---------------------- | ------------------------- | ------------------------------------------ |
-| `db {operation} {model}` | 数据库操作的 span          | 所有适配器操作（如 create、findOne 等）    |
+| `db {operation} {model}` | 数据库操作的跨度          | 所有适配器操作（如 create、findOne 等）    |
 
 - **操作类型：** `create`、`findOne`、`findMany`、`update`、`updateMany`、`delete`、`deleteMany`、`count`
 - **模型:** 核心模型包括 `user`、`account`、`session`、`verification`，以及插件定义的模型（例如 `organization`、`rateLimit`）。
@@ -72,9 +72,9 @@ Better Auth 支持以下 spans：
     - `db.operation` - 数据库操作名称（例如 `create`）
     - `db.collection.name` - 数据库集合/模型名称（例如 `user`）
 
-此外，当定义时，数据库钩子也会生成以下 spans：
+此外，当定义时，数据库钩子也会生成以下跨度：
 
-| Span 名称                  | 描述                          | 触发时机                     |
+| 跨度名称                  | 描述                          | 触发时机                     |
 | -------------------------- | ----------------------------- | ---------------------------- |
 | `db {operation}.before {model}` | create/update/delete 的前置钩子 | 执行 `databaseHooks` 的 before 钩子时 |
 | `db {operation}.after {model}`  | create/update/delete 的后置钩子 | 执行 `databaseHooks` 的 after 钩子时  |

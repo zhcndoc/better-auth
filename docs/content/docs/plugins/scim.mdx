@@ -110,28 +110,40 @@ type generateSCIMToken = {
 此外，当注册了 `organization` 插件时，可以通过 `organizationId` 可选地将令牌限制到某个组织。
 
 <Callout>
-**重要提示：** 默认情况下，任何有权限访问您 better-auth 实例的已认证用户都可以生成 SCIM 令牌。  
-这对于您的应用特别是在多租户场景下可能构成重要安全风险。  
-强烈建议您使用[钩子](#hooks)限制该功能仅对某些角色或用户开放：
+**重要：** 个人 SCIM 连接仍可由任何经过身份验证的用户生成。组织范围连接默认限制为具有 `admin` 角色或组织创建者角色（`organization.creatorRole`，默认为 `owner`）的用户。如果您需要不同的策略，请配置 [`requiredRole`](#options) 和/或在 [hooks](#hooks) 中添加更严格的检查。
 </Callout>
 
-```ts
-const userRoles = new Set(["admin"]);
-const userAdminIds = new Set(["some-admin-user-id"]);
+#### 组织范围授权
 
-scim({
-    beforeSCIMTokenGenerated: async ({ user, member, scimToken }) => {
-        // 重要：使用此钩子限制访问某些角色或用户
-        // 至少必须限制为管理员用户（见下例）
+当提供 `organizationId` 时，Better Auth 要求当前用户是该组织的成员，并且至少拥有一个配置的 `requiredRole` 值。
 
-        const userHasAdmin = member?.role && userRoles.has(member.role);
-        const userIsAdmin = userAdminIds.size > 0 && userAdminIds.has(user.id);
+默认情况下，`requiredRole` 解析为：
 
-        if (!userHasAdmin && !userIsAdmin) {
-            throw new APIError("FORBIDDEN", { message: "用户权限不足" });
-        }
-    },
-})
+- `admin`
+- `organization.creatorRole` or `owner`
+
+相同的角色要求也用于组织范围连接的 SCIM 管理端点：
+
+- `GET /scim/list-provider-connections`
+- `GET /scim/get-provider-connection`
+- `POST /scim/delete-provider-connection`
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { scim } from "@better-auth/scim";
+
+const auth = betterAuth({
+    plugins: [
+        scim({
+            beforeSCIMTokenGenerated: async ({ user }) => {
+                // 在内置的组织角色检查之上添加更严格的规则。
+                if (!approvedScimOperators.has(user.id)) {
+                    throw new APIError("FORBIDDEN", { message: "用户权限不足" });
+                }
+            },
+        })
+    ]
+});
 ```
 
 有关支持的钩子详细信息，请参见[钩子](#hooks)文档。
@@ -168,7 +180,7 @@ const auth = betterAuth({
 
 ### SCIM 提供商连接所有权
 
-SCIM 提供商连接所有权允许您的应用通过将每个连接与生成令牌的用户关联，来跟踪并限制对 SCIM 管理端点的访问。
+SCIM 提供商连接所有权适用于个人（非组织）SCIM 连接。它允许您的应用程序跟踪谁生成了连接，并将该连接后续管理操作限制为同一用户。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -185,7 +197,13 @@ const auth = betterAuth({
 });
 ```
 
-启用后，请再次迁移数据库模式。
+启用时：
+
+- 个人连接存储创建者的 `userId`
+- 只有所有者可以重新生成、列出、检查或删除这些个人连接
+- 组织范围连接继续使用 `requiredRole` 配置的组织角色检查
+
+启用后，请确保迁移数据库架构（再次）。
 
 <Tabs items={["migrate", "generate"]}>
     <Tab value="migrate">
@@ -208,7 +226,9 @@ const auth = betterAuth({
 
 #### 列出 SCIM 提供商连接
 
-列出当前用户作为成员的组织内，或未关联组织的提供商的现有连接。
+#### 列出 SCIM 提供商连接
+
+列出当前用户可以管理的现有连接。对于组织范围连接，用户必须拥有该组织的一个配置的 `requiredRole` 角色。对于个人连接，当 `providerOwnership.enabled` 启用时，访问基于所有权。
 
 <APIMethod path="/scim/list-provider-connections" method="GET" requireSession>
 ```ts
@@ -219,7 +239,9 @@ type listSCIMProviderConnections = {
 
 #### 获取 SCIM 提供商连接详情
 
-根据 ID 获取单个连接。仅当用户为该连接所属组织的成员，或该连接未关联组织时允许访问。
+#### 按提供商 ID 获取单个连接
+
+按提供商 ID 获取单个连接。仅当用户可以管理该连接时才允许访问：要么因为他们满足配置的组织角色要求，要么因为他们拥有个人连接。
 
 <APIMethod path="/scim/get-provider-connection" method="GET" requireSession>
 ```ts
@@ -233,6 +255,8 @@ type getSCIMProviderConnection = {
 </APIMethod>
 
 #### 删除 SCIM 提供商连接
+
+#### 删除现有连接
 
 删除现有连接。此操作会立即使关联的令牌失效。
 
@@ -449,7 +473,7 @@ type getSCIMResourceType = {
 - `account.accountId`：默认为 `externalId`，无则回退为 `userName`  
 - `member.organizationId`：与提供商关联的组织
 
-## Schema
+## 模式
 
 该插件需要在 `scimProvider` 表中添加额外字段以存储提供商的配置。
 
@@ -480,7 +504,17 @@ type getSCIMResourceType = {
 
 - `providerOwnership`: `{ enabled: boolean }` — 启用时，将每个提供商连接关联至其生成令牌的用户。详见[连接所有权](#scim-提供商连接所有权)。默认 `{ enabled: false }`。
 
-```ts title="启用连接所有权（需迁移）"
+- `requiredRole`: `string[]` — 允许生成组织范围令牌和管理组织范围连接的最低组织角色。默认为 `["admin", organization.creatorRole ?? "owner"]`。
+
+```ts title="仅允许所有者管理组织范围的 SCIM 连接"
+scim({
+    requiredRole: ["owner"],
+})
+```
+
+- `providerOwnership`: `{ enabled: boolean }` — 启用时，将每个个人提供商连接链接到生成其令牌的用户。有关详细信息，请参阅[连接所有权](#scim-provider-connection-ownership)。默认为 `{ enabled: false }`。
+
+```ts title="启用连接所有权（需要迁移）"
 scim({
     providerOwnership: { enabled: true },
 })
@@ -522,13 +556,19 @@ scim({
 
 以下钩子允许拦截 `SCIM` 令牌生成的生命周期：
 
+<Callout>
+**注意**：内置的组织角色检查在这些钩子之前运行。使用钩子来添加更严格的规则，而不是绕过 `requiredRole`。
+</Callout>
+
 ```ts
+const approvedScimOperators = new Set(["some-admin-user-id"]);
+
 scim({
     beforeSCIMTokenGenerated: async ({ user, member, scimToken }) => {
-        // 令牌持久化前回调
-        // 可用于拦截生成过程
-        if (member?.role !== "admin") {
-            throw new APIError("FORBIDDEN", { message: "用户权限不足" });
+        // 对于个人连接，`member` 为 null。
+        // 在令牌持久化之前添加您需要的任何额外限制。
+        if (!approvedScimOperators.has(user.id)) {
+            throw new APIError("FORBIDDEN", { message: "User does not have enough permissions" });
         }
     },
     afterSCIMTokenGenerated: async ({ user, member, scimToken, scimProvider }) => {
