@@ -37,31 +37,34 @@ export const auth = betterAuth({
       <th>
         <p className="font-bold text-[16px] mb-1">PostgreSQL 模式生成</p>
       </th>
+
       <th>
         <p className="font-bold text-[16px] mb-1">PostgreSQL 模式迁移</p>
       </th>
     </tr>
   </thead>
+
   <tbody>
     <tr className="h-10">
-      <td>&#9989; 支持</td>
-      <td>&#9989; 支持</td>
+      <td>✅ Supported</td>
+      <td>✅ Supported</td>
     </tr>
   </tbody>
 </table>
 
-   <Tabs items={["migrate", "generate"]}>
-      <Tab value="migrate">
-      ```package-install
-      npx auth@latest migrate
-      ```
-      </Tab>
-      <Tab value="generate">
-      ```package-install
-      npx auth@latest generate
-      ```
-      </Tab>
-    </Tabs>
+<Tabs items={["migrate", "generate"]}>
+  <Tab value="migrate">
+    ```package-install
+    npx auth@latest migrate
+    ```
+  </Tab>
+
+  <Tab value="generate">
+    ```package-install
+    npx auth@latest generate
+    ```
+  </Tab>
+</Tabs>
 
 ## 连接查询（实验性）
 
@@ -79,6 +82,7 @@ export const auth = betterAuth({
   experimental: { joins: true }
 });
 ```
+
 <Callout type="warn">
   启用此功能后，可能需要执行数据库迁移。
 </Callout>
@@ -87,7 +91,7 @@ export const auth = betterAuth({
 
 在大多数情况下，默认模式是 `public`。若希望 Better Auth 使用非默认模式（例如 `auth`）存放其表，有几种方式：
 
-### 选项 1：在连接字符串中设置 search_path（推荐）
+### Option 1: Set search\_path in connection string (Recommended)
 
 在连接 URI 后追加 `options` 参数：
 
@@ -104,7 +108,7 @@ export const auth = betterAuth({
 
 需要时请进行 URL 编码：`?options=-c%20search_path%3Dauth`。
 
-### 选项 2：通过 Pool 配置设置 search_path
+### Option 2: Set search\_path using Pool options
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -152,28 +156,28 @@ ALTER USER your_user SET search_path TO auth;
 
 Better Auth CLI 迁移系统会自动检测你配置的 `search_path`：
 
-- 执行 `npx auth migrate` 时，只检查配置模式中的表
-- 其他模式（如 `public`）中的表会被忽略，避免冲突
-- 所有新表都会创建在你指定的模式中
+* When running `npx auth migrate`, it inspects only the tables in your configured schema
+* Tables in other schemas (e.g., `public`) are ignored, preventing conflicts
+* All new tables are created in your specified schema
 
 ### 故障排查
 
 <Callout type="warning">
-**问题：迁移时出现 "relation does not exist" 错误**
+  **Issue:** "relation does not exist" error during migration
 
-**解决方案：** 通常表示该模式不存在或用户权限不足。请按上述方式创建模式并授予权限。
+  **Solution:** This usually means the schema doesn't exist or the user lacks permissions. Create the schema and grant permissions as shown above.
 </Callout>
 
 <Callout type="info">
-**验证你的模式配置：**
+  **Verifying your schema configuration:**
 
-你可以通过查询 `search_path` 来检查 Better Auth 使用的模式：
+  You can verify which schema Better Auth will use by checking the `search_path`:
 
-```sql
-SHOW search_path;
-```
+  ```sql
+  SHOW search_path;
+  ```
 
-结果应显示你的自定义模式（例如 `auth`）为第一个值。
+  This should return your custom schema (e.g., `auth`) as the first value.
 </Callout>
 
 ## 其他信息

@@ -8,57 +8,61 @@ description: 电话号码插件
 ## 安装
 
 <Steps>
-    <Step>
-        ### 将插件添加到服务器
+  <Step>
+    ### 将插件添加到服务器
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
-        import { phoneNumber } from "better-auth/plugins" // [!code highlight]
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+    import { phoneNumber } from "better-auth/plugins" // [!code highlight]
 
-        const auth = betterAuth({
-            plugins: [ 
-                phoneNumber({  // [!code highlight]
-                    sendOTP: ({ phoneNumber, code }, ctx) => { // [!code highlight]
-                        // 实现通过短信发送 OTP 代码 // [!code highlight]
-                    } // [!code highlight]
-                }) // [!code highlight]
-            ] 
-        })
+    const auth = betterAuth({
+        plugins: [ 
+            phoneNumber({  // [!code highlight]
+                sendOTP: ({ phoneNumber, code }, ctx) => { // [!code highlight]
+                    // 实现通过短信发送 OTP 代码 // [!code highlight]
+                } // [!code highlight]
+            }) // [!code highlight]
+        ] 
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 迁移数据库
+
+    运行迁移或生成模式以向数据库添加必要的字段和表。
+
+    <Tabs items={["migrate", "generate"]}>
+      <Tab value="migrate">
+        ```package-install
+        npx auth migrate
         ```
-    </Step>
-    <Step>
-        ### 迁移数据库
+      </Tab>
 
-        运行迁移或生成架构，以向数据库添加必要的字段和表。
-
-        <Tabs items={["migrate", "generate"]}>
-            <Tab value="migrate">
-            ```package-install
-            npx auth migrate
-            ```
-            </Tab>
-            <Tab value="generate">
-            ```package-install
-            npx auth generate
-            ```
-            </Tab>
-        </Tabs>
-        可参阅 [架构](#schema) 部分，手动添加字段。
-    </Step>
-    <Step>
-        ### 添加客户端插件
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        import { phoneNumberClient } from "better-auth/client/plugins" // [!code highlight]
-
-        const authClient = createAuthClient({
-            plugins: [
-                phoneNumberClient() // [!code highlight]
-            ]
-        })
+      <Tab value="generate">
+        ```package-install
+        npx auth generate
         ```
-    </Step>
+      </Tab>
+    </Tabs>
+
+    请参阅 [Schema](#schema) 部分以手动添加字段。
+  </Step>
+
+  <Step>
+    ### 添加客户端插件
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    import { phoneNumberClient } from "better-auth/client/plugins" // [!code highlight]
+
+    const authClient = createAuthClient({
+        plugins: [
+            phoneNumberClient() // [!code highlight]
+        ]
+    })
+    ```
+  </Step>
 </Steps>
 
 ## 使用
@@ -68,14 +72,14 @@ description: 电话号码插件
 要向用户的电话号码发送 OTP 以进行验证，可以使用 `sendVerificationCode` 接口。
 
 <APIMethod path="/phone-number/send-otp" method="POST">
-```ts
-type sendPhoneNumberOTP = {
-    /**
-     * 用于发送 OTP 的电话号码。 
-     */
-    phoneNumber: string = "+1234567890"
-}
-```
+  ```ts
+  type sendPhoneNumberOTP = {
+      /**
+       * 要发送 OTP 的电话号码。 
+       */
+      phoneNumber: string = "+1234567890"
+  }
+  ```
 </APIMethod>
 
 ### 验证电话号码
@@ -83,27 +87,27 @@ type sendPhoneNumberOTP = {
 发送 OTP 后，用户可以通过提供验证码来验证其电话号码。
 
 <APIMethod path="/phone-number/verify" method="POST">
-```ts
-type verifyPhoneNumber = {
-    /**
-     * 需验证的电话号码。
-     */
-    phoneNumber: string = "+1234567890"
-    /**
-     * OTP 代码。
-     */
-    code: string = "123456"
-    /**
-     * 验证后禁用会话创建。
-     */
-    disableSession?: boolean = false
-    /**
-     * 更新已登录用户的电话号码。
-     * 需要有效的会话。
-     */
-    updatePhoneNumber?: boolean = false
-}
-```
+  ```ts
+  type verifyPhoneNumber = {
+      /**
+       * 要验证的电话号码。
+       */
+      phoneNumber: string = "+1234567890"
+      /**
+       * OTP 验证码。
+       */
+      code: string = "123456"
+      /**
+       * 验证后是否禁用会话创建。
+       */
+      disableSession?: boolean = false
+      /**
+       * 更新现有登录用户的电话号码。
+       * 需要活跃的会话。
+       */
+      updatePhoneNumber?: boolean = false
+  }
+  ```
 </APIMethod>
 
 ### 允许使用电话号码注册
@@ -135,7 +139,7 @@ export const auth = betterAuth({
 ```
 
 <Callout>
-强烈建议不要等待 `sendOTP` 函数完成。如果等待，将会延迟请求并可能导致时序攻击。对于无服务器平台，可以使用 `waitUntil` 确保 OTP 被发送。
+  我们强烈建议不要等待 `sendOTP` 函数。如果等待它，会减慢请求速度，并可能导致定时攻击。对于无服务器平台，可以使用 `waitUntil` 来确保 OTP 已发送。
 </Callout>
 
 如果您的用户架构中有额外的必填字段，可以在验证请求体中传递它们：
@@ -152,28 +156,32 @@ await authClient.phoneNumber.verify({
 
 除了通过发送-验证流程登录用户，您还可以使用电话号码作为标识符，通过电话号码和密码登录用户。
 
+<Callout type="warn">
+  要使用电话号码和密码登录，用户必须在 `account` 表中具有对应的记录，并且 `providerId` 必须设置为 `"credential"`。如果您是从其他身份验证提供商迁移或手动播种用户，请确保此记录存在。
+</Callout>
+
 <APIMethod path="/sign-in/phone-number" method="POST">
-```ts
-type signInPhoneNumber = {
-    /**
-     * 用于登录的电话号码。 
-     */
-    phoneNumber: string = "+1234567890"
-    /**
-     * 用于登录的密码。 
-     */
-    password: string
-    /**
-     * 记住会话。 
-     */
-    rememberMe?: boolean = true
-}
-```
+  ```ts
+  type signInPhoneNumber = {
+      /**
+       * 要登录的电话号码。 
+       */
+      phoneNumber: string = "+1234567890"
+      /**
+       * 用于登录的密码。 
+       */
+      password: string
+      /**
+       * 记住会话。 
+       */
+      rememberMe?: boolean = true
+  }
+  ```
 </APIMethod>
 
 ### 更新电话号码
 
-已经登录的用户可以将其电话号码更改为新的号码。首先，向新的电话号码发送 OTP：
+已登录用户可以将其电话号码更改为新号码。首先，向新电话号码发送 OTP：
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -214,50 +222,50 @@ const isVerified = await authClient.phoneNumber.verify({
 要使用 `phoneNumber` 启动密码重置请求流程，可以先调用客户端的 `requestPasswordReset` 接口向用户的电话号码发送 OTP 代码。
 
 <APIMethod path="/phone-number/request-password-reset" method="POST">
-```ts
-type requestPasswordResetPhoneNumber = {
-    /**
-     * 与用户关联的电话号码。 
-     */
-    phoneNumber: string = "+1234567890"
-}
-```
+  ```ts
+  type requestPasswordResetPhoneNumber = {
+      /**
+       * 与用户关联的电话号码。 
+       */
+      phoneNumber: string = "+1234567890"
+  }
+  ```
 </APIMethod>
 
 然后，您可以通过客户端调用 `resetPassword` 接口，使用 OTP 代码和新密码重置密码。
 
 <APIMethod path="/phone-number/reset-password" method="POST">
-```ts
-type resetPasswordPhoneNumber = {
-    /**
-     * 用于重置密码的一次性密码。 
-     */
-    otp: string = "123456"
-    /**
-     * 需重置密码的账户电话号码。 
-     */
-    phoneNumber: string = "+1234567890"
-    /**
-     * 新密码。 
-     */
-    newPassword: string = "new-and-secure-password"
-}
-```
+  ```ts
+  type resetPasswordPhoneNumber = {
+      /**
+       * 用于重置密码的一次性密码。 
+       */
+      otp: string = "123456"
+      /**
+       * 要重置密码的账户电话号码。 
+       */
+      phoneNumber: string = "+1234567890"
+      /**
+       * 新密码。 
+       */
+      newPassword: string = "new-and-secure-password"
+  }
+  ```
 </APIMethod>
 
 ## 选项
 
 ### `otpLength`
 
-生成 OTP 代码的长度。默认是 `6`。
+生成 OTP 代码的长度。默认为 `6`。
 
 ### `sendOTP`
 
-一个发送 OTP 代码到用户电话号码的函数。接收电话号码和 OTP 代码作为参数。
+一个将 OTP 代码发送到用户电话号码的函数。接收电话号码和 OTP 代码作为参数。
 
 ### `expiresIn`
 
-OTP 代码过期的时间，单位为秒。默认是 `300` 秒。
+OTP 代码的过期时间（以秒为单位）。默认为 `300` 秒。
 
 ### `callbackOnVerification`
 
@@ -291,7 +299,7 @@ export const auth = betterAuth({
 
 ### `verifyOTP`
 
-自定义 OTP 验证函数。提供后将替代默认内部验证逻辑。适用于需集成外部短信服务提供商（如 Twilio Verify、AWS SNS）进行 OTP 验证的场景。函数接收带有 `phoneNumber` 和 `code` 属性的对象及请求对象，返回布尔值或返回布尔值的 Promise，表示 OTP 是否有效。
+自定义 OTP 验证函数。提供后将替代默认内部验证逻辑。适用于需要集成外部短信服务提供商（如 Twilio Verify、AWS SNS）进行 OTP 验证的场景。函数接收带有 `phoneNumber` 和 `code` 属性的对象及请求对象，返回布尔值或返回布尔值的 Promise，表示 OTP 是否有效。
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -318,42 +326,44 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warn">
-使用此选项时，请确保实现了适当的验证，因为这将覆盖内部验证逻辑。
+  使用此选项时，请确保实现了适当的验证，因为会覆盖默认的内部验证逻辑。
 </Callout>
 
 ### `signUpOnVerification`
 
-一个包含以下属性的对象：
-- `getTempEmail`: 用于为用户生成临时邮箱的函数，接收电话号码为参数，返回临时邮箱字符串。
-- `getTempName`: 用于为用户生成临时名称的函数，接收电话号码为参数，返回临时名称字符串。
+包含以下属性的对象：
+
+* `getTempEmail`: 一个生成用户临时邮箱的函数。接收电话号码作为参数并返回临时邮箱。
+* `getTempName`: 一个生成用户临时名称的函数。接收电话号码作为参数并返回临时名称。
 
 ### `requireVerification`
 
-启用后，用户在验证电话号码前无法使用该电话号码登录。如果未验证用户尝试登录，服务器将返回 401 错误（PHONE_NUMBER_NOT_VERIFIED），并自动触发 OTP 发送，启动验证流程。
+启用后，用户在电话号码验证之前无法登录。如果未验证的电话号码尝试登录，服务器将返回 401 错误（PHONE_NUMBER_NOT_VERIFIED）并自动触发 OTP 发送以开始验证过程。
 
 ## 架构
 
-本插件需要向用户表中添加2个字段
+该插件需要在用户表中添加 2 个字段
 
 ### 用户表
-<DatabaseTable
-    fields={[
-        { 
-            name: "phoneNumber", 
-            type: "string", 
-            description: "用户的电话号码",
-            isUnique: true,
-            isOptional: true
-        },
-        { 
-            name: "phoneNumberVerified", 
-            type: "boolean", 
-            description: "电话号码是否已验证",
-            defaultValue: false,
-            isOptional: true
-        },
-    ]}
-    />
+
+export const phoneNumberUserTableFields = [
+	{
+		name: "phoneNumber",
+		type: "string",
+		description: "The phone number of the user",
+		isUnique: true,
+		isOptional: true,
+	},
+	{
+		name: "phoneNumberVerified",
+		type: "boolean",
+		description: "Whether the phone number is verified or not",
+		defaultValue: false,
+		isOptional: true,
+	},
+];
+
+<DatabaseTable name="user" fields={phoneNumberUserTableFields} />
 
 ### OTP 验证尝试次数限制
 
@@ -367,11 +377,13 @@ phoneNumber({
 ```
 
 当用户超过允许的验证尝试次数时：
-- OTP 代码会自动删除
-- 进一步的验证尝试会返回 403（禁止访问）状态及“尝试次数过多”提示
-- 用户需重新请求新的 OTP 代码以继续操作
 
-超出尝试次数后的示例错误响应：
+* OTP 代码将被自动删除
+* 进一步的验证尝试将返回 403（禁止）状态，附带“尝试次数过多”消息
+* 用户需要请求新的 OTP 代码才能继续
+
+超过尝试次数后的示例错误响应：
+
 ```json
 {
   "error": {
@@ -382,5 +394,5 @@ phoneNumber({
 ```
 
 <Callout type="warning">
-接收到 403 状态码时，请提示用户请求新的 OTP 代码
+  收到 403 状态时，请提示用户请求新的 OTP 代码
 </Callout>

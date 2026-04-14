@@ -15,11 +15,12 @@ description: 针对输入受限设备的 OAuth 2.0 设备授权授予
 npx auth login
 ```
 
-该命令将演示完整的设备授权流程：
-1. 从 Better Auth 演示服务器请求设备代码
-2. 显示供您输入的用户代码
-3. 打开浏览器至验证页面
-4. 轮询检查授权完成情况
+这将演示完整的设备授权流程：
+
+1. 从 Better Auth 演示服务器请求设备码
+2. 显示用户代码供您输入
+3. 打开浏览器到验证页面
+4. 轮询授权完成情况
 
 <Callout type="info">
   CLI 登录命令是一个演示功能，连接到 Better Auth 演示服务器，用以展示设备授权流程的实际运行。
@@ -28,67 +29,69 @@ npx auth login
 ## 安装
 
 <Steps>
-    <Step>
-        ### 将插件添加到您的认证配置中
-        
-        在服务器配置中添加设备授权插件。
+  <Step>
+    ### 在认证配置中添加插件
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth";
-        import { deviceAuthorization } from "better-auth/plugins"; // [!code highlight]
+    将设备授权插件添加到服务器配置中。
 
-        export const auth = betterAuth({
-          // ... 其他配置
-          plugins: [
-            deviceAuthorization({ // [!code highlight]
-              verificationUri: "/device", // [!code highlight]
-            }), // [!code highlight]
-          ],
-        });
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
+    import { deviceAuthorization } from "better-auth/plugins"; // [!code highlight]
+
+    export const auth = betterAuth({
+      // ... 其他配置
+      plugins: [
+        deviceAuthorization({ // [!code highlight]
+          verificationUri: "/device", // [!code highlight]
+        }), // [!code highlight]
+      ],
+    });
+    ```
+  </Step>
+
+  <Step>
+    ### 迁移数据库
+
+    运行迁移或生成架构以向数据库添加必要的表。
+
+    <Tabs items={["migrate", "generate"]}>
+      <Tab value="migrate">
+        ```package-install
+        npx auth migrate
         ```
-    </Step>
-    
-    <Step>
-        ### 迁移数据库
-        
-        运行迁移或生成模式以向数据库添加所需表。
-        
-        <Tabs items={["migrate", "generate"]}>
-            <Tab value="migrate">
-            ```package-install
-            npx auth migrate
-            ```
-            </Tab>
-            <Tab value="generate">
-            ```package-install
-            npx auth generate
-            ```
-            </Tab>
-        </Tabs>
-        如需手动添加字段，请参见[模式](#schema)部分。
-    </Step>
+      </Tab>
 
-    <Step>
-        ### 添加客户端插件
-        
-        在客户端中添加设备授权插件。
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client";
-        import { deviceAuthorizationClient } from "better-auth/client/plugins"; // [!code highlight]
-
-        export const authClient = createAuthClient({
-          plugins: [
-            deviceAuthorizationClient(), // [!code highlight]
-          ],
-        });
+      <Tab value="generate">
+        ```package-install
+        npx auth generate
         ```
-    </Step>
+      </Tab>
+    </Tabs>
+
+    请参见 [架构](#schema) 部分以手动添加字段。
+  </Step>
+
+  <Step>
+    ### 添加客户端插件
+
+    将设备授权插件添加到客户端。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client";
+    import { deviceAuthorizationClient } from "better-auth/client/plugins"; // [!code highlight]
+
+    export const authClient = createAuthClient({
+      plugins: [
+        deviceAuthorizationClient(), // [!code highlight]
+      ],
+    });
+    ```
+  </Step>
 </Steps>
 
 ## 工作原理
 
-设备授权流程包括以下步骤：
+设备授权流程包含以下步骤：
 
 1. **设备请求代码**：设备从授权服务器请求设备码和用户码
 2. **用户授权**：用户访问验证 URL 并输入用户码
@@ -101,25 +104,23 @@ npx auth login
 
 调用 `device.code` 并传入客户端 ID 来发起设备授权：
 
-<APIMethod
-  path="/device/code"
-  method="POST"
->
-```ts
-type deviceCode = {
-    /**
-     * OAuth 客户端标识符
-     */
-    client_id: string;
-    /**
-     * 用空格分隔的请求作用域列表（可选）
-     */
-    scope?: string;
-}
-```
+<APIMethod path="/device/code" method="POST">
+  ```ts
+  type deviceCode = {
+      /**
+       * OAuth 客户端标识符
+       */
+      client_id: string;
+      /**
+       * 可选的空格分隔的请求作用域列表
+       */
+      scope?: string;
+  }
+  ```
 </APIMethod>
 
-示例用法：
+使用示例：
+
 ```ts
 import { authClient } from "@/lib/auth-client"
 
@@ -139,29 +140,27 @@ if (data) {
 
 显示用户代码后，轮询服务器获取访问令牌：
 
-<APIMethod
-  path="/device/token"
-  method="POST"
->
-```ts
-type deviceToken = {
-    /**
-     * 必须是 "urn:ietf:params:oauth:grant-type:device_code"
-     */
-    grant_type: string;
-    /**
-     * 初始请求返回的设备代码
-     */
-    device_code: string;
-    /**
-     * OAuth 客户端标识符
-     */
-    client_id: string;
-}
-```
+<APIMethod path="/device/token" method="POST">
+  ```ts
+  type deviceToken = {
+      /**
+       * 必须为 "urn:ietf:params:oauth:grant-type:device_code"
+       */
+      grant_type: string;
+      /**
+       * 初始请求中的设备码
+       */
+      device_code: string;
+      /**
+       * OAuth 客户端标识符
+       */
+      client_id: string;
+  }
+  ```
 </APIMethod>
 
 示例轮询实现：
+
 ```ts
 let pollingInterval = 5; // 初始轮询间隔为5秒
 const pollForToken = async () => {
@@ -205,12 +204,13 @@ pollForToken();
 
 ### 用户授权流程
 
-用户授权流程包括两个步骤：
-1. **代码验证**：验证用户输入的代码是否有效
-2. **授权操作**：用户必须登录后才能批准或拒绝设备授权请求
+用户授权流程包含两个步骤：
+
+1. **代码验证**：检查输入的用户代码是否有效
+2. **授权**：用户必须已登录才能批准或拒绝设备
 
 <Callout type="warn">
-  用户必须先登录，才能批准或拒绝设备授权请求。如果未认证，则应重定向至登录页面并带上返回 URL。
+  用户必须先登录，才能批准或拒绝设备授权请求。如果未认证，应重定向到登录页面并携带返回 URL。
 </Callout>
 
 创建让用户输入代码的页面：
@@ -263,36 +263,28 @@ export default function DeviceAuthorizationPage() {
 
 #### 批准设备
 
-<APIMethod
-  path="/device/approve"
-  method="POST"
-  requireSession
->
-```ts
-type deviceApprove = {
-    /**
-     * 要批准的用户代码
-     */
-    userCode: string;
-}
-```
+<APIMethod path="/device/approve" method="POST" requireSession>
+  ```ts
+  type deviceApprove = {
+      /**
+       * 要批准的用户代码
+       */
+      userCode: string;
+  }
+  ```
 </APIMethod>
 
 #### 拒绝设备
 
-<APIMethod
-  path="/device/deny"
-  method="POST"
-  requireSession
->
-```ts
-type deviceDeny = {
-    /**
-     * 要拒绝的用户代码
-     */
-    userCode: string;
-}
-```
+<APIMethod path="/device/deny" method="POST" requireSession>
+  ```ts
+  type deviceDeny = {
+      /**
+       * 要拒绝的用户代码
+       */
+      userCode: string;
+  }
+  ```
 </APIMethod>
 
 #### 批准页面示例
@@ -406,17 +398,17 @@ deviceAuthorization({
 
 设备流程定义了具体的错误代码：
 
-| 错误代码                | 描述                           |
-|------------------------|------------------------------|
-| `authorization_pending` | 用户尚未批准（继续轮询）          |
-| `slow_down`             | 轮询频率过高（增加间隔）           |
-| `expired_token`         | 设备代码已过期                   |
-| `access_denied`         | 用户拒绝授权                    |
-| `invalid_grant`         | 设备代码或客户端 ID 无效          |
+| 错误代码                | 说明                                         |
+| ----------------------- | -------------------------------------------- |
+| `authorization_pending` | 用户尚未批准（继续轮询）                     |
+| `slow_down`             | 轮询过于频繁（增加间隔）                     |
+| `expired_token`         | 设备代码已过期                               |
+| `access_denied`         | 用户拒绝了授权                               |
+| `invalid_grant`         | 无效的设备代码或客户端 ID                    |
 
 ## 示例：CLI 应用
 
-下面是基于官方演示的 CLI 应用完整示例：
+以下是一个基于官方演示的 CLI 应用程序完整示例：
 
 <Callout type="info">
   若要使用访问令牌调用 API，请确保您的认证实例已添加了 [Bearer 插件](/docs/plugins/bearer)。
@@ -581,11 +573,11 @@ authenticateCLI().catch((err) => {
 
 无客户端特定配置选项。插件添加以下方法：
 
-- **device()**：验证用户代码有效性
-- **device.code()**：请求设备码和用户码
-- **device.token()**：轮询获取访问令牌  
-- **device.approve()**：批准设备（需身份验证）
-- **device.deny()**：拒绝设备（需身份验证）
+* **device()**: Verify user code validity
+* **device.code()**: Request device and user codes
+* **device.token()**: Poll for access token
+* **device.approve()**: Approve device (requires authentication)
+* **device.deny()**: Deny device (requires authentication)
 
 ## 模式
 
@@ -593,63 +585,63 @@ authenticateCLI().catch((err) => {
 
 表名：`deviceCode`
 
-<DatabaseTable
-    fields={[
-        { 
-            name: "id", 
-            type: "string", 
-            description: "设备授权请求的唯一标识",
-            isPrimaryKey: true
-        },
-        {
-            name: "deviceCode",
-            type: "string",
-            description: "设备验证代码",
-        },
-        {
-            name: "userCode",
-            type: "string",
-            description: "用户友好的验证代码",
-        },
-        {
-            name: "userId",
-            type: "string",
-            description: "批准/拒绝的用户 ID",
-            isOptional: true
-        },
-        {
-            name: "clientId",
-            type: "string",
-            description: "OAuth 客户端标识符",
-            isOptional: true
-        },
-        {
-            name: "scope",
-            type: "string",
-            description: "请求的 OAuth 作用域",
-            isOptional: true
-        },
-        {
-            name: "status",
-            type: "string",
-            description: "当前状态：pending（等待中）、approved（已批准）或 denied（已拒绝）",
-        },
-        {
-            name: "expiresAt",
-            type: "Date",
-            description: "设备代码过期时间",
-        },
-        {
-            name: "lastPolledAt",
-            type: "Date",
-            description: "设备最后一次轮询时间",
-            isOptional: true
-        },
-        {
-            name: "pollingInterval",
-            type: "number",
-            description: "轮询最小间隔秒数",
-            isOptional: true
-        },
-    ]}
-/>
+export const deviceCodeTableFields = [
+	{
+		name: "id",
+		type: "string",
+		description: "Unique identifier for the device authorization request",
+		isPrimaryKey: true,
+	},
+	{
+		name: "deviceCode",
+		type: "string",
+		description: "The device verification code",
+	},
+	{
+		name: "userCode",
+		type: "string",
+		description: "The user-friendly code for verification",
+	},
+	{
+		name: "userId",
+		type: "string",
+		description: "The ID of the user who approved/denied",
+		isOptional: true,
+	},
+	{
+		name: "clientId",
+		type: "string",
+		description: "The OAuth client identifier",
+		isOptional: true,
+	},
+	{
+		name: "scope",
+		type: "string",
+		description: "Requested OAuth scopes",
+		isOptional: true,
+	},
+	{
+		name: "status",
+		type: "string",
+		description: "Current status: pending, approved, or denied",
+	},
+	{
+		name: "expiresAt",
+		type: "Date",
+		description: "When the device code expires",
+	},
+	{
+		name: "lastPolledAt",
+		type: "Date",
+		description: "Last time the device polled for status",
+		isOptional: true,
+	},
+	{
+		name: "pollingInterval",
+		type: "number",
+		description: "Minimum seconds between polls",
+		isOptional: true,
+	},
+];
+
+<DatabaseTable name="deviceCode" fields={deviceCodeTableFields} />

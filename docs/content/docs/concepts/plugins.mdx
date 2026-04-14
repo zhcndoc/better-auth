@@ -36,7 +36,7 @@ const authClient = createAuthClient({
 });
 ```
 
-我们建议将 auth-client 和您的普通认证实例保存在不同的文件中。
+我们建议将认证客户端和您的常规认证实例保存在单独的文件中。
 
 <Files>
   <Folder name="auth" defaultOpen>
@@ -52,7 +52,7 @@ const authClient = createAuthClient({
 服务器插件是所有插件的核心，客户端插件提供与前端 API 的接口，便于与服务器插件协作。
 
 <Callout type="info">
-  如果您的服务器插件有需要从客户端调用的端点，还需要创建客户端插件。
+  如果您的服务器插件有需要从客户端调用的端点，您还需要创建客户端插件。
 </Callout>
 
 ### 插件能做什么？
@@ -82,7 +82,7 @@ export const myPlugin = () => {
 ```
 
 <Callout>
-  您不需要将插件写成函数，但推荐这么做。这样可以向插件传递选项，与内置插件保持一致。
+  您不必将插件定义为函数，但建议这样做。这样，您可以向插件传递选项，并且与内置插件保持一致。
 </Callout>
 
 ### 端点
@@ -117,33 +117,31 @@ const myPlugin = () => {
 
 **Context 对象**
 
-* `appName`：应用名称。默认为 "Better Auth"。
-* `options`：传入 Better Auth 实例的选项。
-* `tables`：核心表定义。是一个以表名为键、以模式定义为值的对象。
-* `baseURL`：认证服务器基本地址，包含路径。例如，如果服务器运行在 `http://localhost:3000`，则默认 `baseURL` 为 `http://localhost:3000/api/auth`，除非用户更改。
-* `session`：会话配置。包括 `updateAge` 和 `expiresIn`。
-* `secret`：用于各种目的的密钥，由用户定义。
-* `authCookie`：核心认证 Cookie 的默认配置。
-* `logger`：Better Auth 使用的日志实例。
-* `db`：Better Auth 使用的 Kysely 实例，用于数据库交互。
-* `adapter`：与 `db` 相似，但提供 ORM 风格的函数操作数据库。（推荐使用此，除非需要原始 SQL 查询或性能需求）
-* `internalAdapter`：Better Auth 内部数据库调用。例如，您可通过它创建会话，而不是直接使用 `adapter`，如 `internalAdapter.createSession(userId)`。
-* `createAuthCookie`：辅助函数，根据是否安全连接（HTTPS）或生产环境，实现了如 `__Secure-` 前缀，为设置或获取 Cookie 返回名称及配置。
-* `trustedOrigins`：您通过 `options.trustedOrigins` 配置的受信任来源列表。
-* `isTrustedOrigin`：辅助函数，用于快速判断指定 URL 或路径是否基于受信任来源配置被信任。
+* `appName`: 应用程序的名称。默认为 "Better Auth"。
+* `options`: 传递给 Better Auth 实例的选项。
+* `tables`: 核心表定义。它是一个对象，以表名为键，模式定义为值。
+* `baseURL`: 认证服务器的 baseURL。这包括路径。例如，如果服务器运行在 `http://localhost:3000`，那么 baseURL 将是 `http://localhost:3000/api/auth`，除非用户更改。
+* `session`: 会话配置。包括 `updateAge` 和 `expiresIn` 值。
+* `secret`: 用于各种目的的秘密密钥。这由用户定义。
+* `authCookie`: 核心认证 cookie 的默认配置。
+* `logger`: Better Auth 使用的日志记录器实例。
+* `db`: Better Auth 用于与数据库交互的 Kysely 实例。
+* `adapter`: 这与 db 相同，但它提供了类似 ORM 的函数来与数据库交互。（我们建议使用这个而不是 `db`，除非您需要原始 SQL 查询或出于性能原因）。
+* `internalAdapter`: 这些是 Better Auth 内部使用的数据库调用。例如，您可以使用这些调用来创建会话，而不是直接使用 `adapter`。`internalAdapter.createSession(userId)`
+* `createAuthCookie`: 这是一个帮助函数，让您获取用于 `set` 或 `get` cookie 的 cookie `name` 和 `options`。它实现了基于连接是否安全（HTTPS）或应用程序是否运行在生产模式下的 `__Secure-` 前缀等功能。
+* `trustedOrigins`: 这是您通过 `options.trustedOrigins` 指定的受信任来源列表。
+* `isTrustedOrigin`: 这是一个帮助函数，允许您快速检查给定的 URL 或路径是否基于受信任来源配置受信任。
 
-对于其他属性，您可以查看 <Link href="https://github.com/bekacru/better-call">Better Call</Link> 文档和 <Link href="https://github.com/better-auth/better-auth/blob/main/packages/better-auth/src/context/create-context.ts">源代码 </Link>。
+要查看其他属性，请参考 <Link href="https://github.com/bekacru/better-call">Better Call</Link> 文档和 <Link href="https://github.com/better-auth/better-auth/blob/main/packages/better-auth/src/context/create-context.ts">源代码 </Link>。
 
 **端点规则**
 
-* 确保端点路径采用 kebab-case（连字符小写）风格
-* 端点方法只允许使用 `POST` 或 `GET`
-* 修改数据的接口应使用 `POST`
-* 获取数据的接口应使用 `GET`
-* 必须使用 `createAuthEndpoint` 创建 API 端点
-* 端点路径应保证唯一，避免与其他插件冲突。如果使用常见路径，请在路径前加上插件名作为前缀。例如 `/my-plugin/hello-world` 而非 `/hello-world`。
-
-### Schema（数据库模式）
+* 确保端点路径使用连字符命名法（kebab-case）
+* 确保仅对端点使用 `POST` 或 `GET` 方法。
+* 任何修改数据的函数都应使用 `POST` 方法。
+* 任何获取数据的函数都应使用 `GET` 方法。
+* 确保使用 `createAuthEndpoint` 函数创建 API 端点。
+* 确保路径唯一以避免与其他插件冲突。如果使用通用路径，请在路径前添加插件名称（`/my-plugin/hello-world` 而不是 `/hello-world`）。
 
 您可以通过传入 `schema` 对象定义插件的数据库模式。`schema` 对象以表名为键，模式定义为值。
 
@@ -183,7 +181,17 @@ const myPlugin = () => {
 
 **其他 Schema 属性**
 
-* `disableMigration`：是否禁用同步更新（迁移），默认 `false`
+`unique`: if the field should be unique. (default: `false`)
+
+`references`: if the field is a reference to another table. (optional) It takes an object with the following properties:
+
+* `model`: The table name to reference.
+* `field`: The field name to reference.
+* `onDelete`: The action to take when the referenced record is deleted. (default: `cascade`)
+
+**其他 Schema 属性**
+
+`disableMigration`: if the table should not be migrated. (default: `false`)
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -229,10 +237,10 @@ const myPlugin = () => {
 这样会为 `user` 表添加 `age` 字段，所有返回 `user` 的接口也会包含此字段，且 TypeScript 会正确推断。
 
 <Callout type="warn">
-  请勿在 `user` 或 `session` 表存储敏感信息。如需存储敏感信息，请创建新表。
+  不要在 `user` 或 `session` 表中存储敏感信息。如需存储敏感信息，请创建新表。
 </Callout>
 
-### Hooks（钩子）
+### 钩子（Hooks）
 
 钩子用于在操作执行前后运行代码，无论是从客户端还是直接在服务器上执行。您可以通过传入 `hooks` 对象添加钩子，该对象须包含 `before` 和 `after` 属性。
 
@@ -296,9 +304,7 @@ const myPlugin = () => {
 }
 ```
 
-### 请求前与响应后钩子
-
-除了中间件外，您还可以钩入请求发起前和响应返回后。主要用于影响所有请求或响应。
+### On Request & On Response
 
 #### 请求前
 
@@ -306,9 +312,11 @@ const myPlugin = () => {
 
 用法示例：
 
-* **继续正常流程**：不返回任何值，请求照常进行。
-* **中断请求**：返回含有 `response` 属性的对象，`response` 为 `Response` 实例，则请求被中断，且发送对应响应。
-* **修改请求**：返回修改后的 `request` 对象以更改请求。
+Here’s how it works:
+
+* **Continue as Normal**: 如果您不返回任何内容，请求将按正常流程继续。
+* **Interrupt the Request**: 要停止请求并发送响应，请返回一个包含 `response` 属性的对象，该属性包含一个 `Response` 对象。
+* **Modify the Request**: 您还可以返回一个修改后的 `request` 对象，以在请求发送前更改请求。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -329,8 +337,8 @@ const myPlugin = () => {
 
 用法示例：
 
-* **修改响应**：返回修改后的响应对象以更改发送给客户端的内容。
-* **继续正常**：不返回任何内容，响应保持不变。
+* **Modify the Response**: 您可以返回一个修改后的响应对象以更改响应，然后再发送给客户端。
+* **Continue Normally**: 如果您不返回任何内容，响应将按原样发送。
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";
@@ -546,7 +554,9 @@ const myPlugin = () => {
 
 如果省略 `allowedRoles`，则接受任何组织成员。具有多个角色的成员在任一角色匹配时即被授权。
 
-如果您的端点需要从客户端调用，也需创建客户端插件。Better Auth 客户端能根据服务器插件推断端点，也可添加额外的客户端逻辑。
+## 创建客户端插件
+
+如果您的端点需要从客户端调用，您还需要创建一个客户端插件。Better Auth 客户端可以从服务器插件推断端点。您也可以添加额外的客户端逻辑。
 
 ```ts title="client-plugin.ts"
 import type { BetterAuthClientPlugin } from "better-auth/client";
@@ -610,14 +620,14 @@ const myPluginClient = {
 ```
 
 <Callout>
-  作为一般指导，确保每个函数只接受一个参数，第二个参数为可选的 fetchOptions，以让用户传递额外的 fetch 选项。函数应返回包含 `data` 和 `error` 键的对象。
+  一般指导原则是确保每个函数只接受一个参数，并使用第二个可选的 `fetchOptions` 参数，以便用户可以向 fetch 调用传递额外选项。该函数应返回一个包含 `data` 和 `error` 键的对象。
 
-  如您的用例不局限于 API 调用，可灵活调整此规则。
+  如果您的用例涉及超出 API 调用的操作，请随意偏离此规则。
 </Callout>
 
 ### 获取 Atom
 
-此功能仅当您想提供如 `useSession` 这类钩子时有用。
+此功能仅在您想提供如 `useSession` 这类钩子时有用。
 
 `getAtoms` 函数接收 Better Fetch 的 `fetch`，返回包含各个 Atom 的对象。Atom 应使用 <Link href="https://github.com/nanostores/nanostores">nanostores</Link> 创建。Atom 会被各框架基于 nanostores 的 `useStore` 钩子自动解析。
 

@@ -27,9 +27,9 @@ export const auth = betterAuth({
 
 默认情况下，Better Auth 使用以下 Cookies：
 
-- `session_token` 用于存储会话令牌
-- `session_data` 用于在启用 Cookie 缓存时存储会话数据
-- `dont_remember` 用于存储当 `rememberMe` 被禁用时的标志
+* `session_token` 用于存储会话令牌
+* `session_data` 用于在启用 Cookie 缓存时存储会话数据
+* `dont_remember` 用于存储当 `rememberMe` 被禁用时的标志
 
 插件也可能使用 Cookies 来存储数据。例如，双因素认证插件使用 `two_factor` Cookie 来存储双因素认证状态。
 
@@ -42,7 +42,7 @@ export const auth = betterAuth({
             session_token: {
                 name: "custom_session_token",
                 attributes: {
-                    // Set custom cookie attributes
+                    // 设置自定义 Cookie 属性
                 }
             },
         }
@@ -52,16 +52,16 @@ export const auth = betterAuth({
 
 ### 跨子域 Cookies
 
-有时您可能需要在子域间共享 Cookies。
-例如，如果您在 `auth.example.com` 进行身份验证，您可能也想在 `app.example.com` 访问相同的会话。
+有时您可能需要在子域之间共享 Cookies。
+例如，如果您对 `auth.example.com` 进行身份验证，您可能也希望在同一会话中访问 `app.example.com`。
 
 <Callout type="warn">
-`domain` 属性控制哪些域可以访问该 Cookie。将其设置为根域（例如 `example.com`）将使 Cookie 在所有子域间可访问。为了安全，请遵循以下指南：
+  `domain` 属性控制哪些域可以访问 Cookie。将其设置为根域（例如 `example.com`）会使 Cookie 在所有子域中可访问。为了安全起见，请遵循以下指南：
 
-1. 仅当必要时启用跨子域 Cookies
-2. 将域设置为所需的最具体范围（例如，使用 `app.example.com` 而非 `.example.com`）
-3. 警惕可能访问这些 Cookies 的不受信任的子域
-4. 考虑为不受信任的服务使用不同的域（例如 `status.company.com` 与 `app.company.com`）
+  1. 仅在必要时启用跨子域 Cookies
+  2. 将域设置为所需的最具体范围（例如 `app.example.com` 而不是 `.example.com`）
+  3. 小心对待可能访问这些 Cookie 的不可信子域
+  4. 考虑为不可信服务使用单独的域（例如 `status.company.com` 而不是 `app.company.com`）
 </Callout>
 
 ```ts title="auth.ts"
@@ -71,7 +71,7 @@ export const auth = betterAuth({
     advanced: {
         crossSubDomainCookies: {
             enabled: true,
-            domain: "app.example.com", // Your domain name
+            domain: "app.example.com", // 您的域名
         },
     },
     trustedOrigins: [
@@ -98,7 +98,7 @@ export const auth = betterAuth({
 
 ## Safari、ITP 与跨域设置
 
-Safari 内建了一个隐私功能，称为智能追踪防护（Intelligent Tracking Prevention，简称 ITP），会阻止第三方 Cookies。
+Safari 内置了一个隐私功能，称为智能追踪防护（Intelligent Tracking Prevention，简称 ITP），会阻止第三方 Cookies。
 
 如果您的 Better Auth API 托管在与前端不同的域名下，Safari 可能完全阻止身份验证 Cookies。
 
@@ -117,30 +117,33 @@ fetch("https://domainA.com/api/auth/get-session", {
 })
 ```
 
-Safari 会将 `domainA.com` 视为第三方，阻止其 Cookies。这可能导致会话无法持久化，
+Safari 会将 `domainA.com` 视为第三方，并阻止其 Cookies。这可能导致会话无法持久化，
 `Set-Cookie` 头被忽略，用户在登录后依然显示未登录状态，或是在 Chrome 中工作正常但 Safari 中失败。
 
-为解决此问题，有两种方案：
+要解决此问题，有两种方案：
+
 1. 使用反向代理将请求代理到 API。
-2. 使用共享的父域名。
+2. 使用共享父域名。
 
 ### 使用反向代理
 
 您可以通过与前端相同域名的反向代理来访问 API，而不是直接调用它。
 
-例如，不调用：
+例如，而不是直接调用：
+
 ```
 https://domainA.com/api/auth/*
 ```
 
-而调用：
+您可以调用：
+
 ```
 https://app.domainA.com/api/auth/*
 ```
 
 然后配置您的托管服务，将请求代理到实际的 API 服务器。
 
-这样请求在 Safari 中被视作为同源请求，从而允许 Cookies 正常工作。
+这样，请求在 Safari 中被视为同源请求，从而允许 Cookies 正常工作。
 
 #### Netlify 示例
 
@@ -189,6 +192,6 @@ export const auth = betterAuth({
 })
 ```
 
-更多关于跨子域 Cookies 的内容，请参见 [上述文档](#cross-subdomain-cookies)。
+有关跨子域 Cookies 的更多信息，请参见 [上述文档](#cross-subdomain-cookies)。
 
-这样可以避免 Safari 将 API 识别为第三方。
+这将避免 Safari 将 API 视为第三方。

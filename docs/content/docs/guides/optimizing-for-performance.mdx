@@ -46,16 +46,16 @@ export const auth = betterAuth({
     }
     ```
 
-    了解更多 NextJS use cache 指令请访问 <Link href="https://nextjs.org/docs/app/api-reference/directives/use-cache">这里</Link>。
-
+    了解更多关于 NextJS use cache 指令的信息 <Link href="https://nextjs.org/docs/app/api-reference/directives/use-cache">here</Link>。
   </Tab>
+
   <Tab value="react-router">
-    在 React Router v7 中，你可以在 loader 函数中使用 HTTP `Cache-Control` 头来缓存响应。你还必须导出 headers 函数以发送这些头信息。示例如下：
+    在 React Router v7 中，您可以通过在加载器函数中使用 HTTP `Cache-Control` 头来缓存响应。您还必须导出一个 headers 函数以发送这些头部信息。下面是一个示例：
 
     ```ts
     import { data } from 'react-router';
     import type { Route } from './+types/your-route-name';
-    
+
     export const loader = async ({ request }: Route.LoaderArgs) => {
       const { users } = await auth.api.listUsers();
       
@@ -65,16 +65,15 @@ export const auth = betterAuth({
         },
       });
     };
-    
+
     export function headers({ loaderHeaders }: Route.HeadersArgs) {
       return loaderHeaders;
     }
     ```
-
   </Tab>
 
   <Tab value="SolidStart">
-    在 SolidStart 中，你可以使用 `query` 函数来缓存数据。示例如下：
+    在 SolidStart 中，您可以使用 `query` 函数来缓存数据。示例如下：
 
     ```tsx
     const getUsers = query(
@@ -83,11 +82,11 @@ export const auth = betterAuth({
     );
     ```
 
-    了解更多关于 SolidStart `query` 函数的信息请访问 <Link href="https://docs.solidjs.com/solid-router/reference/data-apis/query">这里</Link>。
-
+    了解更多关于 SolidStart `query` 函数的信息 <Link href="https://docs.solidjs.com/solid-router/reference/data-apis/query">here</Link>。
   </Tab>
+
   <Tab value="TanStack Query">
-    使用 TanStack Query 你可以通过 `useQuery` 钩子缓存数据。示例如下：
+    使用 TanStack Query，您可以通过 `useQuery` 钩子缓存数据。示例如下：
 
     ```ts
     import { useQuery } from '@tanstack/react-query';
@@ -112,16 +111,14 @@ export const auth = betterAuth({
             </ul>
         );
     }
-    ```
 
-    了解更多关于 TanStack Query 请访问 <Link href="https://tanstack.com/query">这里</Link>。
-
+    了解更多关于 TanStack Query 的信息 <Link href="https://tanstack.com/query">here</Link>。
   </Tab>
 </Tabs>
 
 ## 后台任务
 
-在无服务器平台（如 Vercel、Cloudflare Workers）上，你可以通过将非关键工作（清理、分析、速率限制更新、邮件发送）延迟到响应发送后执行，来提升响应速度。配置 [`advanced.backgroundTasks`](/docs/reference/options#backgroundtasks) 并在钩子中使用 `ctx.context.runInBackground` 或 `ctx.context.runInBackgroundOrAwait`。
+在无服务器平台（如 Vercel、Cloudflare Workers）上，您可以通过将非关键工作（清理、分析、速率限制更新、邮件发送）延迟到响应发送后执行，来提升响应速度。配置 [`advanced.backgroundTasks`](/docs/reference/options#backgroundtasks) 并在钩子中使用 `ctx.context.runInBackground` 或 `ctx.context.runInBackgroundOrAwait`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -146,7 +143,7 @@ export const auth = betterAuth({
 
 ## SSR 优化
 
-如果你使用支持服务器端渲染的框架，通常建议在服务器上预取用户会话，并将其作为客户端的回退。
+如果您使用支持服务器端渲染的框架，通常建议在服务器上预取用户会话，并将其作为客户端的回退。
 
 ```ts
 const session = await auth.api.getSession({
@@ -170,7 +167,7 @@ const session = await auth.api.getSession({
 | invitations   | `email`, `organizationId`    | organization |
 | members       | `userId`, `organizationId`   | organization |
 | organizations | `slug`                       | organization |
-| passkey       | `userId`                     | passkey      |
+| passkey      | `userId`                     | passkey      |
 | twoFactor     | `secret`                     | twoFactor    |
 
 <Callout>
@@ -179,7 +176,7 @@ const session = await auth.api.getSession({
 
 ## 打包体积优化
 
-如果你使用自定义适配器（如 Prisma、Drizzle 或 MongoDB），可以通过使用 `better-auth/minimal` 替代 `better-auth` 来减小打包体积。该版本排除了仅在直接数据库连接时才需要的 Kysely。
+如果您使用自定义适配器（如 Prisma、Drizzle 或 MongoDB），可以通过使用 `better-auth/minimal` 替代 `better-auth` 来减小打包体积。该版本排除了仅在直接数据库连接时才需要的 Kysely。
 
 ### 使用方法
 
@@ -213,7 +210,7 @@ const session = await auth.api.getSession({
         provider: "pg", // 或 "mysql", "sqlite"
       }),
     });
-    ```
+  ```
   </Tab>
 
   <Tab value="MongoDB">
@@ -228,12 +225,13 @@ const session = await auth.api.getSession({
     export const auth = betterAuth({
       database: mongodbAdapter(db),
     });
-    ```
+  ```
   </Tab>
 </Tabs>
 
 <Callout type="warning">
-  **限制：**
-  - 不支持直接数据库连接（必须使用适配器）
-  - 不支持内置迁移。请使用外部迁移工具（如果需要内置迁移支持请使用 `better-auth`）
+  **Limitations:**
+
+  * Direct database connections are not supported (you must use an adapter)
+  * Built-in migrations are not supported. Use external migration tools (or use `better-auth` if you need built-in migration support)
 </Callout>

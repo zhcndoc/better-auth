@@ -45,8 +45,8 @@ export const Route = createFileRoute('/api/auth/$')({
 
 ### 使用技巧
 
-- 我们建议使用客户端 SDK 或 `authClient` 来处理身份认证，而不是通过 `auth.api` 使用服务器操作。
-- 当您调用需要设置 Cookie 的函数（例如 `signInEmail` 或 `signUpEmail`）时，需处理 TanStack Start 的 Cookie 设置。Better Auth 提供了 `tanstackStartCookies` 插件，可自动帮您处理。
+* 我们建议使用客户端 SDK 或 `authClient` 来处理身份验证，而不是使用带有 `auth.api` 的服务器操作。
+* 当您调用需要设置 Cookie 的函数（如 `signInEmail` 或 `signUpEmail`）时，您需要为 TanStack Start 处理 Cookie 设置。Better Auth 提供了 `tanstackStartCookies` 插件来自动为您处理此问题。
 
 React（TanStack Start + React）示例：
 
@@ -177,9 +177,12 @@ export const Route = createFileRoute('/_protected')({
     <Folder name="routes" defaultOpen>
       <Folder name="_protected" defaultOpen>
         <File name="dashboard.tsx" />
+
         <File name="settings.tsx" />
       </Folder>
+
       <File name="_protected.tsx" />
+
       <File name="login.tsx" />
     </Folder>
   </Folder>

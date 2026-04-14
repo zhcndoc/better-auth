@@ -9,7 +9,7 @@ Better Auth 提供了一个与流行前端框架（如 React、Vue、Svelte 等�
 
 如果尚未安装，请先安装 better-auth。
 
-```package-install 
+```package-install
 npm i better-auth
 ```
 
@@ -18,52 +18,58 @@ npm i better-auth
 从你所用的框架的包中导入 `createAuthClient`（例如 React 框架使用 "better-auth/react"）。调用该函数创建你的客户端。传入你身份验证服务器的基础 URL。如果身份验证服务器与客户端运行在同一域上，则可以跳过此步骤。
 
 <Callout type="info">
-If your auth server uses a different base path other than `/api/auth`, you can either pass the full URL including the path (e.g., `http://localhost:3000/custom-path/auth`), or use the `basePath` option separately.
+  If your auth server uses a different base path other than `/api/auth`, you can either pass the full URL including the path (e.g., `http://localhost:3000/custom-path/auth`), or use the `basePath` option separately.
 </Callout>
 
+<Tabs
+  items={["react", "vue", "svelte", "solid", 
+"vanilla"]}
+  defaultValue="react"
+>
+  <Tab value="vanilla">
+    ```ts title="lib/auth-client.ts" 
+    import { createAuthClient } from "better-auth/client" // [!code highlight]
+    export const authClient = createAuthClient({
+        baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+    })
+    ```
+  </Tab>
 
-<Tabs items={["react", "vue", "svelte", "solid", 
-  "vanilla"]} defaultValue="react">
-    <Tab value="vanilla">
-            ```ts  title="lib/auth-client.ts" 
-            import { createAuthClient } from "better-auth/client" // [!code highlight]
-            export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // 你的身份验证服务器的基础URL // [!code highlight]
-            })
-            ```
-    </Tab>
-    <Tab value="react" title="lib/auth-client.ts">
-            ```ts  title="lib/auth-client.ts"  
-            import { createAuthClient } from "better-auth/react" // [!code highlight]
-            export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // 你的身份验证服务器的基础URL // [!code highlight]
-            })
-            ```
-    </Tab>
-    <Tab value="vue" title="lib/auth-client.ts">
-            ```ts  title="lib/auth-client.ts" 
-            import { createAuthClient } from "better-auth/vue" // [!code highlight]
-            export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // 你的身份验证服务器的基础URL // [!code highlight]
-            })
-            ```
-    </Tab>
-    <Tab value="svelte" title="lib/auth-client.ts"> 
-            ```ts  title="lib/auth-client.ts" 
-            import { createAuthClient } from "better-auth/svelte" // [!code highlight]
-            export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // 你的身份验证服务器的基础URL // [!code highlight]
-            })
-            ```
-    </Tab>
-    <Tab value="solid" title="lib/auth-client.ts">
-            ```ts title="lib/auth-client.ts" 
-            import { createAuthClient } from "better-auth/solid" // [!code highlight]
-            export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // 你的身份验证服务器的基础URL // [!code highlight]
-            })
-            ```
-    </Tab>
+  <Tab value="react" title="lib/auth-client.ts">
+    ```ts title="lib/auth-client.ts"  
+    import { createAuthClient } from "better-auth/react" // [!code highlight]
+    export const authClient = createAuthClient({
+        baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+    })
+    ```
+  </Tab>
+
+  <Tab value="vue" title="lib/auth-client.ts">
+    ```ts title="lib/auth-client.ts" 
+    import { createAuthClient } from "better-auth/vue" // [!code highlight]
+    export const authClient = createAuthClient({
+        baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+    })
+    ```
+  </Tab>
+
+  <Tab value="svelte" title="lib/auth-client.ts">
+    ```ts title="lib/auth-client.ts" 
+    import { createAuthClient } from "better-auth/svelte" // [!code highlight]
+    export const authClient = createAuthClient({
+        baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+    })
+    ```
+  </Tab>
+
+  <Tab value="solid" title="lib/auth-client.ts">
+    ```ts title="lib/auth-client.ts" 
+    import { createAuthClient } from "better-auth/solid" // [!code highlight]
+    export const authClient = createAuthClient({
+        baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+    })
+    ```
+  </Tab>
 </Tabs>
 
 ## 使用方法
@@ -88,118 +94,117 @@ await authClient.signIn.email({
 
 **示例：useSession**
 
-
 <Tabs items={["React", "Vue","Svelte", "Solid"]} defaultValue="react">
-    <Tab value="React">
-        ```tsx title="user.tsx"
-        //确保你使用的是 react 客户端
-        import { createAuthClient } from "better-auth/react"
-        const { useSession } = createAuthClient() // [!code highlight]
-    
-        export function User() {
-            const {
-                data: session,
-                isPending, //加载状态
-                error, //错误对象 
-                refetch //重新获取 session
-            } = useSession()
-            return (
-                //...
-            )
-        }
-        ```
-    </Tab>
+  <Tab value="React">
+    ```tsx title="user.tsx"
+    //make sure you're using the react client
+    import { createAuthClient } from "better-auth/react"
+    const { useSession } = createAuthClient() // [!code highlight]
 
-    <Tab value="Vue">
-        ```vue title="user.vue"
-        <script lang="ts" setup>
-        import { authClient } from '@/lib/auth-client'
-        const session = authClient.useSession()
-        </script>
-        <template>
+    export function User() {
+        const {
+            data: session,
+            isPending, //loading state
+            error, //error object 
+            refetch //refetch the session
+        } = useSession()
+        return (
+            //...
+        )
+    }
+    ```
+  </Tab>
+
+  <Tab value="Vue">
+    ```vue title="user.vue"
+    <script lang="ts" setup>
+    import { authClient } from '@/lib/auth-client'
+    const session = authClient.useSession()
+    </script>
+    <template>
+        <div>
+            <button v-if="!session.data" @click="() => authClient.signIn.social({
+                provider: 'github'
+            })">
+                Continue with GitHub
+            </button>
             <div>
-                <button v-if="!session.data" @click="() => authClient.signIn.social({
-                    provider: 'github'
-                })">
-                    使用 GitHub 继续
+                <pre>{{ session.data }}</pre>
+                <button v-if="session.data" @click="authClient.signOut()">
+                    Sign out
                 </button>
-                <div>
-                    <pre>{{ session.data }}</pre>
-                    <button v-if="session.data" @click="authClient.signOut()">
-                        登出
-                    </button>
-                </div>
             </div>
-        </template>
-        ```
-        </Tab>
+        </div>
+    </template>
+    ```
+  </Tab>
 
-        <Tab value="Svelte">
-            ```svelte title="user.svelte"
-            <script lang="ts">
-            import { authClient } from "$lib/auth-client";
-            const session = authClient.useSession();
-            </script>
+  <Tab value="Svelte">
+    ```svelte title="user.svelte"
+    <script lang="ts">
+    import { authClient } from "$lib/auth-client";
+    const session = authClient.useSession();
+    </script>
 
-            <div
-                style="display: flex; flex-direction: column; gap: 10px; border-radius: 10px; border: 1px solid #4B453F; padding: 20px; margin-top: 10px;"
+    <div
+        style="display: flex; flex-direction: column; gap: 10px; border-radius: 10px; border: 1px solid #4B453F; padding: 20px; margin-top: 10px;"
+    >
+        <div>
+        {#if $session.data}
+            <div>
+            <p>
+                {$session.data.user.name}
+            </p>
+            <p>
+                {$session.data.user.email}
+            </p>
+            <button
+                onclick={async () => {
+                await authClient.signOut();
+                }}
             >
-                <div>
-                {#if $session.data}
-                    <div>
-                    <p>
-                        {$session.data.user.name}
-                    </p>
-                    <p>
-                        {$session.data.user.email}
-                    </p>
-                    <button
-                        onclick={async () => {
-                        await authClient.signOut();
-                        }}
-                    >
-                        登出
-                    </button>
-                    </div>
-                {:else}
-                    <button
-                    onclick={async () => {
-                        await authClient.signIn.social({
-                        provider: "github",
-                        });
-                    }}
-                    >
-                    使用 GitHub 继续
-                    </button>
-                {/if}
-                </div>
+                Signout
+            </button>
             </div>
-            ```
-        </Tab>
+        {:else}
+            <button
+            onclick={async () => {
+                await authClient.signIn.social({
+                provider: "github",
+                });
+            }}
+            >
+            Continue with GitHub
+            </button>
+        {/if}
+        </div>
+    </div>
+    ```
+  </Tab>
 
-        <Tab value="Solid">
-            ```tsx title="user.tsx"
-            import { authClient } from "~/lib/auth-client";
-            import { Show } from 'solid-js';
+  <Tab value="Solid">
+    ```tsx title="user.tsx"
+    import { authClient } from "~/lib/auth-client";
+    import { Show } from 'solid-js';
 
-            export default function Home() {
-                const session = authClient.useSession()
-                return (
-                    <Show
-                        when={session()}
-                        fallback={<button onClick={toggle}>登录</button>}
-                    >
-                        <button onClick={toggle}>登出</button>
-                    </Show>
-                ); 
-            }
-            ```
-            </Tab>
+    export default function Home() {
+        const session = authClient.useSession()
+        return (
+            <Show
+                when={session()}
+                fallback={<button onClick={toggle}>Log in</button>}
+            >
+                <button onClick={toggle}>Log out</button>
+            </Show>
+        ); 
+    }
+    ```
+  </Tab>
 </Tabs>
 
 ### 请求选项
 
-客户端使用一个名为 [better fetch](https://better-fetch.vercel.app) 的库来向服务器发起请求。
+The client uses a library called [better fetch](https://better-fetch.vercel.app) to make requests to the server.
 
 Better fetch 是对原生 fetch API 的封装，提供了更方便的请求方式。它由 Better Auth 团队创建，设计上与 Better Auth 无缝配合。
 
@@ -225,7 +230,7 @@ import { createAuthClient } from "better-auth/client"
 const authClient = createAuthClient({
     disableDefaultFetchPlugins: true,
 })
-```         
+```
 
 你也可以将 fetch 选项传递给大多数客户端函数，作为第二个参数，或者作为对象中的属性。
 
@@ -270,25 +275,25 @@ const authClient = createAuthClient({
 })
 ```
 
-<TypeTable
-  type={{
-    refetchInterval: {
-      description: "Polling interval in seconds. Set to 0 to disable",
-      type: "number",
-      default: "0",
-    },
-    refetchOnWindowFocus: {
-      description: "Automatically refetch session when the user switches back to the window/tab",
-      type: "boolean",
-      default: "true",
-    },
-    refetchWhenOffline: {
-      description: "Whether to refetch when the device has no internet access",
-      type: "boolean",
-      default: "false",
-    },
-  }}
-/>
+export const clientSessionOptionsType = {
+  refetchInterval: {
+    description: "Polling interval in seconds. Set to 0 to disable",
+    type: "number",
+    default: "0",
+  },
+  refetchOnWindowFocus: {
+    description: "Automatically refetch session when the user switches back to the window/tab",
+    type: "boolean",
+    default: "true",
+  },
+  refetchWhenOffline: {
+    description: "Whether to refetch when the device has no internet access",
+    type: "boolean",
+    default: "false",
+  },
+}
+
+<TypeTable type={clientSessionOptionsType} />
 
 ### Disable Default Fetch Plugins
 
@@ -352,14 +357,16 @@ await authClient.updateUser({
 
 ### 错误处理
 
-大多数客户端函数会返回一个响应对象，包含以下属性：
-- `data`：响应数据。
-- `error`：如果出错则包含错误对象。
+Most of the client functions return a response object with the following properties:
 
-错误对象包含以下属性：
-- `message`：错误信息。（例如："Invalid email or password"）
-- `status`：HTTP 状态码。
-- `statusText`：HTTP 状态文本。
+* `data`: The response data.
+* `error`: The error object if there was an error.
+
+The error object contains the following properties:
+
+* `message`: The error message. (e.g., "Invalid email or password")
+* `status`: The HTTP status code.
+* `statusText`: The HTTP status text.
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -412,7 +419,7 @@ if (error) {
 
 #### 错误代码
 
-客户端实例包含一个 `$ERROR_CODES` 对象，包含服务器返回的所有错误代码。你可以用它来处理错误翻译或自定义错误信息。
+The client instance contains $ERROR\_CODES object that contains all the error codes returned by the server. You can use this to handle error translations or custom error messages.
 
 ```ts title="auth-client.ts"
 const authClient = createAuthClient();
@@ -454,9 +461,10 @@ if(error?.code){
 
 ### 插件
 
-你可以通过插件扩展客户端，增加更多功能。插件可以添加新函数或修改现有函数。
+You can extend the client with plugins to add more functionality. Plugins can add new functions to the client or modify existing ones.
 
-**示例：Magic Link 插件**
+**Example: Magic Link Plugin**
+
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
 import { magicLinkClient } from "better-auth/client/plugins"

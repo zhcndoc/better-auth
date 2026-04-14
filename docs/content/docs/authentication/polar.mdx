@@ -4,59 +4,63 @@ description: Polar 提供者的设置和使用。
 ---
 
 <Steps>
-    <Step>
-        ### 获取你的 Polar 凭证
-        要使用 Polar 登录，你需要创建一个 OAuth 2.0 客户端。你可以从 [Polar 用户设置](https://polar.sh/dashboard/account/developer) 获取你的凭证。
+  <Step>
+    ### 获取 Polar 凭证
 
-        1. 访问你的 [Polar 用户设置](https://polar.sh/settings#oauth)
-        2. 点击 "创建 OAuth 客户端"
-        3. 填写必填字段：
-           - **应用名称**：在授权时展示给用户的名称
-           - **客户端类型**：选择适合你应用的客户端类型
-           - **重定向 URI**：本地开发时设置为 `http://localhost:3000/api/auth/callback/polar`。生产环境设置为 `https://yourdomain.com/api/auth/callback/polar`。如果你更改了认证路由的基础路径，请相应更新重定向 URI。
-           - **权限范围**：选择你的应用需要的权限（默认包括 openid、profile、email）
-           - **主页 URL**：你的应用主页地址
+    要使用 Polar 登录，您需要创建一个 OAuth 2.0 客户端。您可以从 [Polar 用户设置](https://polar.sh/dashboard/account/developer) 获取凭证。
 
-        4. 可选项，添加：
-           - 应用的 Logo
-           - 服务条款 URL
-           - 隐私政策 URL
+    1. 进入 [Polar 用户设置](https://polar.sh/settings#oauth)
 
-        5. 创建完成后，将客户端 ID 和客户端密钥复制到你的环境变量中。请妥善保管这些凭证。
-    </Step>
+    2. 点击“创建 OAuth 客户端”
 
-    <Step>
-        ### 配置提供者
-        要配置提供者，你需要导入该提供者并将其传递到认证实例的 `socialProviders` 选项中。
+    3. 填写所需字段：
+       * **应用名称**：授权期间显示给用户的名称
+       * **客户端类型**：为您的应用选择适当的客户端类型
+       * **重定向 URI**：本地开发设置为 `http://localhost:3000/api/auth/callback/polar`。生产环境设置为 `https://yourdomain.com/api/auth/callback/polar`。如果修改了认证路由的基础路径，请相应更新重定向 URI。
+       * **范围**：选择您的应用所需的权限（openid、profile、email 为默认值）
+       * **主页 URL**：应用的主页地址
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
+    4. 可选配置：
+       * 您的应用 Logo
+       * 服务条款 URL
+       * 隐私政策 URL
 
-        export const auth = betterAuth({
-            socialProviders: {
-                polar: { // [!code highlight]
-                    clientId: process.env.POLAR_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.POLAR_CLIENT_SECRET as string, // [!code highlight]
-                }, // [!code highlight]
-            },
+    5. 创建完成后，将客户端 ID 和客户端密钥复制到环境变量中。请妥善保管这些凭证。
+  </Step>
+
+  <Step>
+    ### 配置提供者
+
+    要配置该提供者，您需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            polar: { // [!code highlight]
+                clientId: process.env.POLAR_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.POLAR_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 使用 Polar 登录
+
+    要使用 Polar 登录，您可以使用客户端提供的 `signIn.social` 函数，其中 `provider` 应设置为 `polar`。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    const authClient = createAuthClient()
+
+    const signIn = async () => {
+        const data = await authClient.signIn.social({
+            provider: "polar"
         })
-        ```
-    </Step>
-    
-    <Step>
-        ### 使用 Polar 登录
-        要使用 Polar 登录，可以使用客户端提供的 `signIn.social` 函数，其中的 `provider` 应设置为 `polar`。
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        const authClient = createAuthClient()
-
-        const signIn = async () => {
-            const data = await authClient.signIn.social({
-                provider: "polar"
-            })
-        }
-        ```
-    </Step>
-
+    }
+    ```
+  </Step>
 </Steps>

@@ -9,71 +9,77 @@ description: 将 SCIM 集成到您的应用程序中。
 ## 安装
 
 <Steps>
-    <Step>
-        ### 安装插件
+  <Step>
+    ### 安装插件
 
+    ```package-install
+    @better-auth/scim
+    ```
+  </Step>
+
+  <Step>
+    ### 将插件添加到服务器
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+    import { scim } from "@better-auth/scim"; // [!code highlight]
+
+    const auth = betterAuth({
+        plugins: [
+            scim() // [!code highlight]
+        ]
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 启用 HTTP 方法
+
+    SCIM 需要服务器支持 `POST`、`GET`、`PUT`、`PATCH` 和 `DELETE` HTTP 方法。  
+    对于大多数框架，这开箱即用，但某些框架可能需要额外配置：
+
+    <Tabs items={["Next.js", "Solid Start"]}>
+      <Tab value="Next.js">
+        ```ts title="api/auth/[...all]/route.ts"
+        import { auth } from "@/lib/auth";
+        import { toNextJsHandler } from "better-auth/next-js";
+
+        export const { POST, GET, PUT, PATCH, DELETE } = toNextJsHandler(auth); // [!code highlight]
+        ```
+      </Tab>
+
+      <Tab value="Solid Start">
+        ```ts title="routes/api/auth/*auth.ts"
+        import { auth } from "~/lib/auth";
+        import { toSolidStartHandler } from "better-auth/solid-start";
+
+        export const { GET, POST, PUT, PATCH, DELETE } = toSolidStartHandler(auth); // [!code highlight]
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step>
+    ### 迁移数据库
+
+    运行迁移或生成架构以将必要的字段和表添加到数据库。
+
+    <Tabs items={["migrate", "generate"]}>
+      <Tab value="migrate">
         ```package-install
-        @better-auth/scim
+        npx auth migrate
         ```
-    </Step>
-    <Step>
-        ### 将插件添加到服务器
+      </Tab>
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
-        import { scim } from "@better-auth/scim"; // [!code highlight]
-
-        const auth = betterAuth({
-            plugins: [
-                scim() // [!code highlight]
-            ]
-        })
+      <Tab value="generate">
+        ```package-install
+        npx auth generate
         ```
-    </Step>
-    <Step>
-        ### 启用 HTTP 方法
+      </Tab>
+    </Tabs>
 
-        SCIM 需要您的服务器支持 `POST`、`GET`、`PUT`、`PATCH` 和 `DELETE` HTTP 方法。  
-        对于大多数框架，这些方法默认支持，但某些框架可能需要额外配置：
-
-        <Tabs items={["Next.js", "Solid Start"]}>
-            <Tab value="Next.js">
-            ```ts title="api/auth/[...all]/route.ts"
-            import { auth } from "@/lib/auth";
-            import { toNextJsHandler } from "better-auth/next-js";
-
-            export const { POST, GET, PUT, PATCH, DELETE } = toNextJsHandler(auth); // [!code highlight]
-            ```
-            </Tab>
-            <Tab value="Solid Start">
-            ```ts title="routes/api/auth/*auth.ts"
-            import { auth } from "~/lib/auth";
-            import { toSolidStartHandler } from "better-auth/solid-start";
-
-            export const { GET, POST, PUT, PATCH, DELETE } = toSolidStartHandler(auth); // [!code highlight]
-            ```
-            </Tab>
-        </Tabs>
-    </Step>
-    <Step>
-        ### 迁移数据库
-
-        运行迁移或生成模式，为数据库添加必要的字段和表。
-
-        <Tabs items={["migrate", "generate"]}>
-            <Tab value="migrate">
-            ```package-install
-            npx auth migrate
-            ```
-            </Tab>
-            <Tab value="generate">
-            ```package-install
-            npx auth generate
-            ```
-            </Tab>
-        </Tabs>
-        也可以参考 [Schema](#schema) 部分手动添加字段。
-    </Step>
+    请参考 [架构](#schema) 部分手动添加字段。
+  </Step>
 </Steps>
 
 ## 使用方法
@@ -81,36 +87,36 @@ description: 将 SCIM 集成到您的应用程序中。
 注册后，此插件将公开符合规范的 [SCIM 2.0](https://simplecloud.info/#Specification) 服务器。  
 通常，该服务器供第三方（您的身份提供商）使用，需要以下内容：
 
-- **SCIM 基础 URL**：应该是 SCIM 服务器的完整 URL（例如 `http://your-app.com/api/auth/scim/v2`）  
-- **SCIM Bearer 令牌**：请参见[生成 SCIM 令牌](#生成-scim-令牌)
+* **SCIM 基础 URL**：这应该是 SCIM 服务器的完全限定 URL（例如 `http://your-app.com/api/auth/scim/v2`）
+* **SCIM 承载令牌**：请参阅[生成 SCIM 令牌](#generating-a-scim-token)
 
 ### 生成 SCIM 令牌
 
-在身份提供商开始同步信息到您的 SCIM 服务器之前，您需要生成一个 SCIM 令牌，供身份提供商用于身份验证。
+在身份提供商开始将信息同步到您的 SCIM 服务器之前，您需要生成一个 SCIM 令牌，供身份提供商用于身份验证。
 
-SCIM 令牌是一种简单的 Bearer 令牌，可以通过以下接口生成：
+SCIM 令牌是一种简单的承载令牌，可以通过以下接口生成：
 
 <APIMethod path="/scim/generate-token" method="POST" requireSession>
-```ts
-type generateSCIMToken = {
-  /**
-  * 提供商 ID
-  */
-  providerId: string = "acme-corp"
-  /**
-   * 可选的 organization ID。指定时，必须启用 organizations 插件
-  */
-  organizationId?: string = "the-org"
-}
-```
+  ```ts
+  type generateSCIMToken = {
+    /**
+    * 提供商 ID
+    */
+    providerId: string = "acme-corp"
+    /**
+     * 可选组织 ID。指定时，必须启用组织插件
+    */
+    organizationId?: string = "the-org"
+  }
+  ```
 </APIMethod>
 
-`SCIM` 令牌总是限制于某个提供商，因此必须指定 `providerId`。  
+`SCIM` 令牌始终限制于某个提供商，因此必须指定 `providerId`。  
 这可以是您的实例支持的任意提供商（例如内置的 `credentials`，或通过外部插件如 `@better-auth/sso` 注册的外部提供商）。  
 此外，当注册了 `organization` 插件时，可以通过 `organizationId` 可选地将令牌限制到某个组织。
 
 <Callout>
-**重要：** 个人 SCIM 连接仍可由任何经过身份验证的用户生成。组织范围连接默认限制为具有 `admin` 角色或组织创建者角色（`organization.creatorRole`，默认为 `owner`）的用户。如果您需要不同的策略，请配置 [`requiredRole`](#options) 和/或在 [hooks](#hooks) 中添加更严格的检查。
+  **重要**：个人 SCIM 连接仍可由任何经过身份验证的用户生成。组织范围连接的默认限制是具有 `admin` 角色或组织创建者角色（`organization.creatorRole`，默认为 `owner`）的用户。如果需要不同的策略，请配置 [`requiredRole`](#options) 和/或在 [钩子](#hooks) 中添加更严格的检查。
 </Callout>
 
 #### 组织范围授权
@@ -119,14 +125,14 @@ type generateSCIMToken = {
 
 默认情况下，`requiredRole` 解析为：
 
-- `admin`
-- `organization.creatorRole` or `owner`
+* `admin`
+* `organization.creatorRole` 或 `owner`
 
 相同的角色要求也用于组织范围连接的 SCIM 管理端点：
 
-- `GET /scim/list-provider-connections`
-- `GET /scim/get-provider-connection`
-- `POST /scim/delete-provider-connection`
+* `GET /scim/list-provider-connections`
+* `GET /scim/get-provider-connection`
+* `POST /scim/delete-provider-connection`
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -173,9 +179,9 @@ const auth = betterAuth({
 ```
 
 <Callout type="info">
-**重要**：请注意，您必须在使用前对 `scimToken` 进行 base64 编码，格式如下：`base64(scimToken:providerId[:organizationId])`。  
+  **重要**：请注意，您必须对 `scimToken` 进行 base64 编码，才能按如下方式使用：`base64(scimToken:providerId[:organizationId])`。
 
-在上例中，您需对字符串 `some-scim-token:default-scim:the-org` 进行 base64 编码，生成的 scimToken 为：`c29tZS1zY2ltLXRva2VuOmRlZmF1bHQtc2NpbTp0aGUtb3Jn`。
+  在上面的示例中，您需要对 `some-scim-token:default-scim:the-org` 文本进行 base64 编码，得到的 scimToken 为：`c29tZS1zY2ltLXRva2VuOmRlZmF1bHQtc2NpbTp0aGUtb3Jn`
 </Callout>
 
 ### SCIM 提供商连接所有权
@@ -199,30 +205,29 @@ const auth = betterAuth({
 
 启用时：
 
-- 个人连接存储创建者的 `userId`
-- 只有所有者可以重新生成、列出、检查或删除这些个人连接
-- 组织范围连接继续使用 `requiredRole` 配置的组织角色检查
+* 个人连接存储创建用户的 `userId`
+* 仅所有者可以再生、列出、检查或删除这些个人连接
+* 组织范围连接继续使用 `requiredRole` 配置的组织角色检查
 
 启用后，请确保迁移数据库架构（再次）。
 
 <Tabs items={["migrate", "generate"]}>
-    <Tab value="migrate">
+  <Tab value="migrate">
     ```bash
     npx @better-auth/cli migrate
     ```
-    </Tab>
-    <Tab value="generate">
+  </Tab>
+
+  <Tab value="generate">
     ```bash
     npx @better-auth/cli generate
     ```
-    </Tab>
+  </Tab>
 </Tabs>
 
-请参考 [Schema](#如果通过providerownershipenabled启用了提供商所有权) 部分手动添加字段。
+请参考 [架构](#如果通过providerownershipenabled启用了提供商所有权) 部分手动添加字段。
 
 ### 管理 SCIM 提供商连接
-
-您可以通过以下端点从应用程序管理 SCIM 提供商连接：
 
 #### 列出 SCIM 提供商连接
 
@@ -231,10 +236,10 @@ const auth = betterAuth({
 列出当前用户可以管理的现有连接。对于组织范围连接，用户必须拥有该组织的一个配置的 `requiredRole` 角色。对于个人连接，当 `providerOwnership.enabled` 启用时，访问基于所有权。
 
 <APIMethod path="/scim/list-provider-connections" method="GET" requireSession>
-```ts
-type listSCIMProviderConnections = {
-}
-```
+  ```ts
+  type listSCIMProviderConnections = {
+  }
+  ```
 </APIMethod>
 
 #### 获取 SCIM 提供商连接详情
@@ -244,14 +249,14 @@ type listSCIMProviderConnections = {
 按提供商 ID 获取单个连接。仅当用户可以管理该连接时才允许访问：要么因为他们满足配置的组织角色要求，要么因为他们拥有个人连接。
 
 <APIMethod path="/scim/get-provider-connection" method="GET" requireSession>
-```ts
-type getSCIMProviderConnection = {
-  /**
-   * 提供商唯一标识
-   */
-  providerId: string = "acme-corp"
-}
-```
+  ```ts
+  type getSCIMProviderConnection = {
+    /**
+     * 唯一的提供商标识符
+     */
+    providerId: string = "acme-corp"
+  }
+  ```
 </APIMethod>
 
 #### 删除 SCIM 提供商连接
@@ -261,14 +266,14 @@ type getSCIMProviderConnection = {
 删除现有连接。此操作会立即使关联的令牌失效。
 
 <APIMethod path="/scim/delete-provider-connection" method="POST" requireSession>
-```ts
-type deleteSCIMProviderConnection = {
-  /**
-   * 提供商唯一标识
-   */
-  providerId: string = "acme-corp"
-}
-```
+  ```ts
+  type deleteSCIMProviderConnection = {
+    /**
+     * 唯一的提供商标识符
+     */
+    providerId: string = "acme-corp"
+  }
+  ```
 </APIMethod>
 
 ### SCIM 端点
@@ -279,232 +284,257 @@ type deleteSCIMProviderConnection = {
 
 获取数据库中可用用户列表。此操作限制为仅列出与您的 SCIM 令牌相同提供商和组织关联的用户。
 
-<APIMethod path="/scim/v2/Users" method="GET" requireBearerToken isExternalOnly note="返回供应的 SCIM 用户详情。参见 https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.1">
-```ts
-type listSCIMUsers = {
-    /**
-     * SCIM 合规的筛选表达式
-    */
-    filter?: string = 'userName eq "user-a"'
-}
-```
+<APIMethod path="/scim/v2/Users" method="GET" requireBearerToken isExternalOnly note="返回配置的 SCIM 用户详细信息。请参考 https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.1">
+  ```ts
+  type listSCIMUsers = {
+      /**
+       * SCIM 兼容的过滤表达式
+      */
+      filter?: string = 'userName eq "user-a"'
+  }
+  ```
 </APIMethod>
 
 #### 获取用户
 
 获取数据库中的单个用户。仅当用户属于与 SCIM 令牌相同的提供商和组织时返回。
 
-<APIMethod path="/scim/v2/Users/:userId" method="GET" forceAsParam requireBearerToken isExternalOnly note="返回供应的 SCIM 用户详情。参见 https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.1">
-```ts
-type getSCIMUser = {
-    /**
-     * 用户唯一标识
-    */
-    userId: string = "user id"
-}
-```
+<APIMethod path="/scim/v2/Users/:userId" method="GET" forceAsParam requireBearerToken isExternalOnly note="返回配置的 SCIM 用户详细信息。请参考 https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.1">
+  ```ts
+  type getSCIMUser = {
+      /**
+       * 唯一用户标识符
+      */
+      userId: string = "user id"
+  }
+  ```
 </APIMethod>
 
 #### 创建新用户
 
 向数据库配置新用户。该用户账户与相同提供商相关联，且为 SCIM 令牌对应同一组织的成员。
 
-<APIMethod path="/scim/v2/Users" method="POST" requireBearerToken isExternalOnly note="通过 SCIM 配置新用户。参见 https://datatracker.ietf.org/doc/html/rfc7644#section-3.3">
-```ts
-type createSCIMUser = {
-    /*
-     * 唯一的外部（第三方）标识
-    */
-    externalId?: string = "third party id"
-    /**
-     * 用户姓名详情
-    */
-    name?: {
-        /**
-         * 格式化姓名（优先于名和姓）
-        */
-        formatted?: string = "Daniel Perez"
-        /**
-         * 名
-         */
-        givenName?: string = "Daniel"
-        /**
-         * 姓
-         */
-        familyName?: string = "Perez"
-    }
-    /**
-     * 用户的电子邮件列表，只有一个电子邮件可以是主邮件
-    */
-    emails?: Array<{ value: string, primary?: boolean }> = [{ value: "daniel@email.com", primary: true }]
-}
-```
+<APIMethod path="/scim/v2/Users" method="POST" requireBearerToken isExternalOnly note="通过 SCIM 配置新用户。请参考 https://datatracker.ietf.org/doc/html/rfc7644#section-3.3">
+  ```ts
+  type createSCIMUser = {
+      /*
+       * 唯一的第三方（外部）标识符
+      */
+      externalId?: string = "third party id"
+      /**
+       * 用户名称详情
+      */
+      name?: {
+          /**
+           * 格式化名称（优先于 given 和 family 名称）
+          */
+          formatted?: string = "Daniel Perez"
+          /**
+           * 名字
+          */
+          givenName?: string = "Daniel"
+          /**
+           * 姓氏
+          */
+          familyName?: string = "Perez"
+      }
+      /**
+       * 与用户关联的电子邮件列表，只有一个可以是主要电子邮件
+      */
+      emails?: Array<{ value: string, primary?: boolean }> = [{ value: "daniel@email.com", primary: true }]
+  }
+  ```
 </APIMethod>
 
 #### 更新已有用户
 
 替换数据库中已有用户详情。此操作仅能更新与 SCIM 令牌相同提供商和组织的用户。
 
-<APIMethod path="/scim/v2/Users/:userId" method="PUT" requireBearerToken isExternalOnly note="通过 SCIM 更新已有用户。参见 https://datatracker.ietf.org/doc/html/rfc7644#section-3.3">
-```ts
-type updateSCIMUser = {
-    /*
-     * 唯一的外部（第三方）标识
-    */
-    externalId?: string = "third party id"
-    /**
-     * 用户姓名详情
-    */
-    name?: {
-        /**
-         * 格式化姓名（优先于名和姓）
-         */
-        formatted?: string = "Daniel Perez"
-        /**
-         * 名
-         */
-        givenName?: string = "Daniel"
-        /**
-         * 姓
-         */
-        familyName?: string = "Perez"
-    }
-    /**
-     * 用户的电子邮件列表，只有一个电子邮件可以是主邮件
-    */
-    emails?: Array<{ value: string, primary?: boolean }> = [{ value: "daniel@email.com", primary: true }]
-}
-```
+<APIMethod path="/scim/v2/Users/:userId" method="PUT" requireBearerToken isExternalOnly note="通过 SCIM 更新已有用户。请参考 https://datatracker.ietf.org/doc/html/rfc7644#section-3.3">
+  ```ts
+  type updateSCIMUser = {
+      /*
+       * 唯一的第三方（外部）标识符
+      */
+      externalId?: string = "third party id"
+      /**
+       * 用户名称详情
+      */
+      name?: {
+          /**
+           * 格式化名称（优先于 given 和 family 名称）
+          */
+          formatted?: string = "Daniel Perez"
+          /**
+           * 名字
+          */
+          givenName?: string = "Daniel"
+          /**
+           * 姓氏
+          */
+          familyName?: string = "Perez"
+      }
+      /**
+       * 与用户关联的电子邮件列表，只有一个可以是主要电子邮件
+      */
+      emails?: Array<{ value: string, primary?: boolean }> = [{ value: "daniel@email.com", primary: true }]
+  }
+  ```
 </APIMethod>
 
 #### 部分更新已有用户
 
 允许对用户详情进行部分更新。此操作仅能更新与 SCIM 令牌相同提供商和组织的用户。
 
-<APIMethod path="/scim/v2/Users/:userId" method="PATCH" requireBearerToken isExternalOnly note="部分更新用户资源。参见 https://datatracker.ietf.org/doc/html/rfc7644#section-3.5.2">
-```ts
-type patchSCIMUser = {
-    /**
-     * 必需的模式声明
-     */
-    schemas: string[] = ["urn:ietf:params:scim:api:messages:2.0:PatchOp"]
-    /**
-     * JSON 补丁操作列表
-     */
-    Operations: Array<{ op: "replace" | "add" | "remove", path?: string, value: any }> = [{ op: "replace", path: "/userName", value: "任意值" }]
-}
-```
+<APIMethod path="/scim/v2/Users/:userId" method="PATCH" requireBearerToken isExternalOnly note="部分更新用户资源。请参考 https://datatracker.ietf.org/doc/html/rfc7644#section-3.5.2">
+  ```ts
+  type patchSCIMUser = {
+      /**
+       * 必需的模式声明
+      */
+      schemas: string[] = ["urn:ietf:params:scim:api:messages:2.0:PatchOp"]
+      /**
+       * JSON Patch 操作列表
+      */
+      Operations: Array<{ op: "replace" | "add" | "remove", path?: string, value: any }> = [{ op: "replace", path: "/userName", value: "any value" }]
+  }
+  ```
 </APIMethod>
 
 #### 删除用户资源
 
 从数据库中彻底删除用户资源。此操作仅能删除与 SCIM 令牌相同提供商和组织的用户。
 
-<APIMethod path="/scim/v2/Users/:userId" method="DELETE" forceAsParam requireBearerToken isExternalOnly note="删除已有用户资源。参见 https://datatracker.ietf.org/doc/html/rfc7644#section-3.6">
-```ts
-type deleteSCIMUser = {
-    userId: string
-}
-```
+<APIMethod path="/scim/v2/Users/:userId" method="DELETE" forceAsParam requireBearerToken isExternalOnly note="删除现有的用户资源。请参考 https://datatracker.ietf.org/doc/html/rfc7644#section-3.6">
+  ```ts
+  type deleteSCIMUser = {
+      userId: string
+  }
+  ```
 </APIMethod>
 
 #### 获取服务提供商配置
 
 获取描述此服务器支持功能的 SCIM 元数据。
 
-<APIMethod path="/scim/v2/ServiceProviderConfig" method="GET" isExternalOnly note="身份提供商使用的标准 SCIM 元数据端点。参见 https://datatracker.ietf.org/doc/html/rfc7644#section-4">
-```ts
-type getSCIMServiceProviderConfig = {
-}
-```
+<APIMethod path="/scim/v2/ServiceProviderConfig" method="GET" isExternalOnly note="标准 SCIM 元数据端点，由身份提供商使用。请参考 https://datatracker.ietf.org/doc/html/rfc7644#section-4">
+  ```ts
+  type getSCIMServiceProviderConfig = {
+  }
+  ```
 </APIMethod>
 
 #### 获取 SCIM 模式列表
 
 获取支持的 SCIM 模式列表。
 
-<APIMethod path="/scim/v2/Schemas" method="GET" isExternalOnly note="身份提供商使用的标准 SCIM 元数据端点，用于获取支持的模式信息。参见 https://datatracker.ietf.org/doc/html/rfc7644#section-4">
-```ts
-type getSCIMSchemas = {
-}
-```
+<APIMethod path="/scim/v2/Schemas" method="GET" isExternalOnly note="标准 SCIM 元数据端点，由身份提供商使用以获取支持的模式信息。请参考 https://datatracker.ietf.org/doc/html/rfc7644#section-4">
+  ```ts
+  type getSCIMSchemas = {
+  }
+  ```
 </APIMethod>
 
 #### 获取 SCIM 模式详情
 
 获取某个支持的 SCIM 模式详情。
 
-<APIMethod path="/scim/v2/Schemas/:schemaId" method="GET" isExternalOnly note="身份提供商使用的标准 SCIM 元数据端点，用于获取指定模式信息。参见 https://datatracker.ietf.org/doc/html/rfc7644#section-4">
-```ts
-type getSCIMSchema = {
-}
-```
+<APIMethod path="/scim/v2/Schemas/:schemaId" method="GET" isExternalOnly note="标准 SCIM 元数据端点，由身份提供商使用以获取给定模式的信息。请参考 https://datatracker.ietf.org/doc/html/rfc7644#section-4">
+  ```ts
+  type getSCIMSchema = {
+  }
+  ```
 </APIMethod>
 
 #### 获取 SCIM 资源类型列表
 
 获取支持的 SCIM 资源类型列表。
 
-<APIMethod path="/scim/v2/ResourceTypes" method="GET" isExternalOnly note="身份提供商使用的标准 SCIM 元数据端点，用于获取服务器支持的类型列表。参见 https://datatracker.ietf.org/doc/html/rfc7644#section-4">
-```ts
-type getSCIMResourceTypes = {
-}
-```
+<APIMethod path="/scim/v2/ResourceTypes" method="GET" isExternalOnly note="标准 SCIM 元数据端点，由身份提供商使用以获取服务器支持的类型列表。请参考 https://datatracker.ietf.org/doc/html/rfc7644#section-4">
+  ```ts
+  type getSCIMResourceTypes = {
+  }
+  ```
 </APIMethod>
 
 #### 获取 SCIM 资源类型详情
 
 获取某个支持的 SCIM 资源类型详情。
 
-<APIMethod path="/scim/v2/ResourceTypes/:resourceTypeId" method="GET" isExternalOnly note="身份提供商使用的标准 SCIM 元数据端点，用于获取服务器支持的类型详情。参见 https://datatracker.ietf.org/doc/html/rfc7644#section-4">
-```ts
-type getSCIMResourceType = {
-}
-```
+<APIMethod path="/scim/v2/ResourceTypes/:resourceTypeId" method="GET" isExternalOnly note="标准 SCIM 元数据端点，由身份提供商使用以获取服务器支持的类型详情。请参考 https://datatracker.ietf.org/doc/html/rfc7644#section-4">
+  ```ts
+  type getSCIMResourceType = {
+  }
+  ```
 </APIMethod>
 
 #### SCIM 属性映射
 
 默认情况下，SCIM 配置会自动映射以下字段：
 
-- `user.email`：用户主要邮箱，若无则为第一个可用邮箱  
-- `user.name`：由 `name` （`name.formatted` 或 `name.givenName` + `name.familyName`）派生，若无则回退为用户主要邮箱  
-- `account.providerId`：与 `SCIM` 令牌关联的提供商  
-- `account.accountId`：默认为 `externalId`，无则回退为 `userName`  
-- `member.organizationId`：与提供商关联的组织
+* `user.email`：用户的主电子邮件，如果没有主电子邮件，则使用第一个可用的电子邮件
+* `user.name`：从 `name`（`name.formatted` 或 `name.givenName` + `name.familyName`）派生，如果没有则回退到用户的主电子邮件
+* `account.providerId`：与 `SCIM` 令牌关联的提供商
+* `account.accountId`：默认为 `externalId`，如果没有则回退到 `userName`
+* `member.organizationId`：与提供商关联的组织
 
 ## 模式
 
 该插件需要在 `scimProvider` 表中添加额外字段以存储提供商的配置。
 
-<DatabaseTable
-    fields={[
-        {
-            name: "id", type: "string", description: "数据库标识符", isPrimaryKey: true,
-        },
-        { name: "providerId", type: "string", description: "提供商 ID。用于标识提供商并生成重定向 URL。", isUnique: true },
-        { name: "scimToken", type: "string", description: "SCIM bearer 令牌。由您的身份提供程序用于向服务器进行身份验证", isUnique: true },
-        { name: "organizationId", type: "string", description: "组织 ID。如果提供商链接到了某个组织。", isOptional: true },
-    ]}
-/>
+export const scimProviderTableFields = [
+	{
+		name: "id",
+		type: "string",
+		description: "A database identifier",
+		isPrimaryKey: true,
+	},
+	{
+		name: "providerId",
+		type: "string",
+		description:
+			"The provider ID. Used to identify a provider and to generate a redirect URL.",
+		isUnique: true,
+	},
+	{
+		name: "scimToken",
+		type: "string",
+		description:
+			"The SCIM bearer token. Used by your identity provider to authenticate against your server",
+		isUnique: true,
+	},
+	{
+		name: "organizationId",
+		type: "string",
+		description:
+			"The organization Id. If provider is linked to an organization.",
+		isOptional: true,
+	},
+];
+
+<DatabaseTable name="scimProvider" fields={scimProviderTableFields} />
 
 ### 如果通过 `providerOwnership.enabled` 启用了提供商所有权：
 
 `scimProvider` 模式附加以下字段：
 
-<DatabaseTable
-    fields={[
-        { name: "userId", type: "string", description: "连接所有者的用户 ID。通过 API 生成令牌时自动设置。", isOptional: true },
-    ]}
-/>
+export const scimProviderOwnershipFields = [
+	{
+		name: "userId",
+		type: "string",
+		description:
+			"The user id of the connection owner. Set automatically when generating a token via the API.",
+		isOptional: true,
+	},
+];
 
-## 配置选项
+<DatabaseTable name="scimProvider" fields={scimProviderOwnershipFields} />
 
 ### 服务器
 
 - `providerOwnership`: `{ enabled: boolean }` — 启用时，将每个提供商连接关联至其生成令牌的用户。详见[连接所有权](#scim-提供商连接所有权)。默认 `{ enabled: false }`。
 
-- `requiredRole`: `string[]` — 允许生成组织范围令牌和管理组织范围连接的最低组织角色。默认为 `["admin", organization.creatorRole ?? "owner"]`。
+* `requiredRole`: `string[]` — Minimum organization role(s) allowed to generate organization-scoped tokens and manage organization-scoped connections. Defaults to `["admin", organization.creatorRole ?? "owner"]`.
 
 ```ts title="仅允许所有者管理组织范围的 SCIM 连接"
 scim({
@@ -512,7 +542,7 @@ scim({
 })
 ```
 
-- `providerOwnership`: `{ enabled: boolean }` — 启用时，将每个个人提供商连接链接到生成其令牌的用户。有关详细信息，请参阅[连接所有权](#scim-provider-connection-ownership)。默认为 `{ enabled: false }`。
+* `providerOwnership`: `{ enabled: boolean }` — 当启用时，将每个个人提供商连接与生成其令牌的用户关联。详见[连接所有权](#scim-提供商连接所有权)。默认为 `{ enabled: false }`。
 
 ```ts title="启用连接所有权（需要迁移）"
 scim({
@@ -520,8 +550,8 @@ scim({
 })
 ```
 
-- `defaultSCIM`: 默认用于测试的 SCIM 令牌列表。  
-- `storeSCIMToken`: 在数据库中存储 SCIM 令牌的方法，可选 `encrypted`、`hashed` 或 `plain` 明文，默认为明文。
+* `defaultSCIM`: 默认的 SCIM 令牌列表，用于测试。
+* `storeSCIMToken`: 存储 SCIM 令牌的方法，可以是 `encrypted`、`hashed` 或 `plain` 文本。默认为 `plain` 文本。
 
 您也可以传入自定义加密器或哈希器来存储 SCIM 令牌。
 
@@ -557,7 +587,7 @@ scim({
 以下钩子允许拦截 `SCIM` 令牌生成的生命周期：
 
 <Callout>
-**注意**：内置的组织角色检查在这些钩子之前运行。使用钩子来添加更严格的规则，而不是绕过 `requiredRole`。
+  **Note:** 内置的组织角色检查会在这些钩子之前运行。请使用钩子添加更严格的规则，而不是绕过 `requiredRole`。
 </Callout>
 
 ```ts
@@ -580,5 +610,5 @@ scim({
 ```
 
 <Callout>
-**注意**：所有钩子支持错误处理。在 before 钩子抛出错误会阻止操作继续进行。
+  **Note**: 所有钩子都支持错误处理。在 before 钩子中抛出错误将阻止操作继续执行。
 </Callout>

@@ -4,38 +4,41 @@ description: Discord 提供商的设置和使用。
 ---
 
 <Steps>
-    <Step> 
-        ### 获取你的 Discord 凭证
-        要使用 Discord 登录，你需要一个客户端 ID 和客户端密钥。你可以从 [Discord 开发者门户](https://discord.com/developers/applications) 获取它们。
+  <Step>
+    ### 获取 Discord 凭证
 
-        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/discord`，以便本地开发使用。对于生产环境，你应将其设置为你应用程序的 URL。如果你更改了认证路由的基础路径，也应相应更新重定向 URL。
-    </Step>
+    要使用 Discord 登录，您需要客户端 ID 和客户端密钥。您可以从 [Discord 开发者门户](https://discord.com/developers/applications) 获取它们。
+
+    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/discord` 用于本地开发。对于生产环境，您应将其设置为应用程序的 URL。如果更改了认证路由的基本路径，您应该相应地更新重定向 URL。
+  </Step>
 
   <Step>
-        ### 配置提供商
-        配置提供商时，你需要导入该提供商并将其传递给认证实例的 `socialProviders` 选项。
+    ### 配置提供者
 
-        ```ts title="auth.ts" 
-        import { betterAuth } from "better-auth"
-        
-        export const auth = betterAuth({ 
-            socialProviders: {
-                discord: { // [!code highlight]
-                    clientId: process.env.DISCORD_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.DISCORD_CLIENT_SECRET as string, // [!code highlight]
-                }, // [!code highlight]
-            },
-        })
-        ```
-    </Step>
+    要配置提供者，您需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
+
+    ```ts title="auth.ts" 
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({ 
+        socialProviders: {
+            discord: { // [!code highlight]
+                clientId: process.env.DISCORD_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.DISCORD_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
 </Steps>
 
 ## 使用
 
 ### 使用 Discord 登录
 
-要使用 Discord 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个对象，包含以下属性：
-- `provider`：要使用的提供商，应该设置为 `discord`。
+要使用 Discord 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
+
+* `provider`: 要使用的提供者。应设置为 `discord`。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -50,11 +53,11 @@ const signIn = async () => {
 
 ## 选项
 
-有关所有社交提供商支持的完整选项列表，请查看 [提供商选项](/docs/concepts/oauth#provider-options)。
+有关所有社交提供程序支持的完整选项列表，请查看 [提供程序选项](/docs/concepts/oauth#provider-options)。
 
 ### 机器人权限（可选）
 
-如果你在 Discord OAuth 中使用了 `bot` 范围，可以使用 `permissions` 选项指定机器人权限。它可以是一个按位值（例如 `2048 | 16384` 表示发送消息和嵌入链接）或者一个特定的权限值（例如 `16384` 表示嵌入链接）。
+如果在 Discord OAuth 中使用了 `bot` 范围，可以使用 `permissions` 选项指定机器人权限。它可以是一个按位值（例如 `2048 | 16384` 表示发送消息和嵌入链接）或一个特定的权限值（例如 `16384` 表示嵌入链接）。
 
 ```ts title="auth.ts" 
 import { betterAuth } from "better-auth"
@@ -70,4 +73,4 @@ export const auth = betterAuth({
 })
 ```
 
-**注意：** `permissions` 参数仅在你的 OAuth2 范围中包含 `bot` 时生效。更多信息请阅读 [Discord 机器人权限](https://discord.com/developers/docs/topics/permissions)。
+**注意：** `permissions` 参数仅在 OAuth2 范围中包含 `bot` 时才有效。有关 Discord 机器人权限的更多信息，请查阅 [Discord 机器人权限](https://discord.com/developers/docs/topics/permissions)。

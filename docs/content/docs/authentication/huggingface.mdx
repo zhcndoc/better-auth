@@ -4,44 +4,49 @@ description: Hugging Face 提供者的设置与使用。
 ---
 
 <Steps>
-    <Step> 
-        ### 获取你的 Hugging Face 凭据
-        要使用 Hugging Face 登录，你需要一个客户端 ID 和客户端密钥。[Hugging Face OAuth 文档](https://huggingface.co/docs/hub/oauth)。确保在 Hugging Face 上创建的 oauth 应用具备 "email" 权限范围。
+  <Step>
+    ### 获取 Hugging Face 凭证
 
-        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/huggingface` 以用于本地开发。生产环境中，你应将其设置为你的应用的 URL。如果你更改了认证路由的基本路径，也应相应更新重定向 URL。
-    </Step>
+    要使用 Hugging Face 登录，您需要客户端 ID 和客户端密钥。 [Hugging Face OAuth 文档](https://huggingface.co/docs/hub/oauth)。请确保在 Hugging Face 上创建的 OAuth 应用程序具有 "email" 作用域。
+
+    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/huggingface` 用于本地开发。对于生产环境，应将其设置为应用程序的 URL。如果更改了认证路由的基本路径，请相应地更新重定向 URL。
+  </Step>
 
   <Step>
-        ### 配置提供者
-        要配置提供者，你需要导入该提供者并将其传递给 auth 实例的 `socialProviders` 选项。
+    ### 配置提供者
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
-        
-        export const auth = betterAuth({
-            socialProviders: {
-                huggingface: { // [!code highlight]
-                    clientId: process.env.HUGGINGFACE_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.HUGGINGFACE_CLIENT_SECRET as string, // [!code highlight]
-                }, // [!code highlight]
-            },
+    要配置提供者，您需要导入提供者并将其传递给 auth 实例的 `socialProviders` 选项。
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            huggingface: { // [!code highlight]
+                clientId: process.env.HUGGINGFACE_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.HUGGINGFACE_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 使用 Hugging Face 登录
+
+    要使用 Hugging Face 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+
+    * `provider`: 要使用的提供者。应设置为 `huggingface`。
+
+    ```ts title="auth-client.ts"  
+    import { createAuthClient } from "better-auth/client"
+    const authClient =  createAuthClient()
+
+    const signIn = async () => {
+        const data = await authClient.signIn.social({
+            provider: "huggingface"
         })
-        ```
-    </Step>
-       <Step>
-        ### 使用 Hugging Face 登录
-        要使用 Hugging Face 登录，可以使用客户端提供的 `signIn.social` 方法。`signIn` 方法接收一个带有以下属性的对象：
-        - `provider`：使用的提供者，应设置为 `huggingface`。
-
-        ```ts title="auth-client.ts"  
-        import { createAuthClient } from "better-auth/client"
-        const authClient =  createAuthClient()
-        
-        const signIn = async () => {
-            const data = await authClient.signIn.social({
-                provider: "huggingface"
-            })
-        }
-        ```
-    </Step>
+    }
+    ```
+  </Step>
 </Steps>

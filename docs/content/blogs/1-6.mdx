@@ -1,0 +1,317 @@
+---
+title: "Better Auth 1.6"
+description: "OpenTelemetry 仪表化、非阻塞式 scrypt、Passkey 预认证注册、SAML 强化、新的发布流程等。"
+date: 2026-04-07
+author:
+  name: "Taesu Kim"
+  avatar: ""
+image: "/release-og/1-6.png"
+tags: ["1.6", "OpenTelemetry", "passkey", "performance", "release workflow"]
+---
+
+# Better Auth 1.6
+
+我们很高兴地宣布 Better Auth 1.6 的发布 🎉
+
+Better Auth 1.6 作为一个过渡版本，帮助我们转向更结构化的工作流程。
+
+这次发布没有塞入太多新功能，而是专注于为更坚实的项目奠定基础。也就是说，这次发布带来了新功能、性能改进和许多有意义的修复。
+
+***
+
+## 亮点
+
+<HeaderLabel variant="info">新增</HeaderLabel>
+
+### OpenTelemetry 仪表化
+
+Better Auth 现在会发出 [OpenTelemetry](https://opentelemetry.io/) 跨度（spans）用于分布式追踪。这能让你直观地看到每个认证 API 调用，包括端点执行、钩子生命周期和数据库操作。
+
+```ts title="instrumentation.ts"
+import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
+import { SimpleSpanProcessor, ConsoleSpanExporter } from "@opentelemetry/sdk-trace-base";
+
+const provider = new NodeTracerProvider({
+  spanProcessors: [new SimpleSpanProcessor(new ConsoleSpanExporter())],
+});
+provider.register();
+```
+
+一旦注册了 TracerProvider，Better Auth 会自动通过 `better-auth` 发射器发出跨度。无需在认证设置中进行额外配置。
+
+支持的跨度包括：
+
+* **端点跨度**：`GET /get-session`、`POST /sign-in/email` 等。
+* **数据库跨度**：`db create user`、`db findOne session` 等。
+* **钩子跨度**：before/after 钩子、中间件、onRequest/onResponse
+
+每个跨度都携带属性，例如 `http.route`、`db.operation.name`、`db.collection.name` 和 `better_auth.operation_id`，以便在可观测性工具中进行筛选和分组。
+
+此功能为实验性，未来版本的跨度结构可能会发生变化。有关更多信息，请参阅 [仪表化文档](https://www.better-auth.com/docs/reference/instrumentation)。
+
+***
+
+<HeaderLabel variant="info">新增</HeaderLabel>
+
+### Passkey 预认证注册
+
+Passkey 插件现在支持在用户拥有会话之前注册 Passkey。这使得 Passkey 优先的注册流程成为可能，其中 Passkey 本身就是初始认证方法。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { passkey } from "@better-auth/passkey";
+
+export const auth = betterAuth({
+  plugins: [
+    passkey({
+      registration: {
+        requireSession: false, // [!code highlight]
+        resolveUser: async ({ ctx, context }) => {
+          // 验证上下文（例如签名的令牌），然后创建或加载用户。
+          return { id: "user-id", name: "user@example.com" };
+        },
+      },
+    }),
+  ],
+});
+```
+
+该插件还增加了对注册和认证期间 WebAuthn 扩展的支持，允许你传递服务器定义的扩展，例如 `credProps`。
+
+有关更多信息，请参阅 [Passkey 文档](https://www.better-auth.com/docs/plugins/passkey)。
+
+***
+
+<HeaderLabel variant="info">新增</HeaderLabel>
+
+### 不区分大小写的查询
+
+数据库查询现在支持在所有适配器（Drizzle、Prisma、Kysely、MongoDB、内存）中对字符串进行不区分大小写的比较。
+
+这是一个内部 API，供插件作者使用，并由核心在需要时使用。查询可以在单独的 where 子句中指定 `mode: "insensitive"`：
+
+```ts
+adapter.findOne({
+  model: "user",
+  where: [{
+    field: "email",
+    value: "user@example.com",
+    mode: "insensitive", // [!code highlight]
+  }],
+});
+```
+
+在底层，每个适配器都会选择其数据库支持的最有效的不区分大小写策略。
+
+***
+
+<HeaderLabel variant="warning">破坏性变更</HeaderLabel>
+
+### 使 Fresh Age 与会话创建时间对齐
+
+`freshAge` 检查现在使用 `createdAt` 而非 `updatedAt`。之前，任何会话刷新都会重置新鲜度窗口，这意味着通过常规访问会话可以无限期保持“新鲜”。现在，新鲜度与会话创建时间挂钩，因此密码更改或支付确认等敏感操作需要最近的登录。
+
+有关更多信息，请参阅 [会话新鲜度文档](https://www.better-auth.com/docs/concepts/session-management#session-freshness)。
+
+***
+
+<HeaderLabel variant="warning">破坏性变更</HeaderLabel>
+
+### 默认启用 SAML 流程中的 InResponseTo 验证
+
+SAML `InResponseTo` 验证现在在 SP 发起流程中默认启用，以防止重放攻击（即捕获的断言被重用）。IDP 发起的单点登录不受影响。如果需要退出，可以显式禁用：
+
+```ts
+sso({
+  saml: {
+    enableInResponseToValidation: false, // [!code highlight]
+  },
+});
+```
+
+有关更多信息，请参阅 [SSO 文档](https://www.better-auth.com/docs/plugins/sso)。
+
+***
+
+<HeaderLabel variant="default">性能</HeaderLabel>
+
+### 更快速、更轻量
+
+两个影响每个 Better Auth 用户的变化：
+
+1. **非阻塞式 scrypt**
+
+   密码哈希现在使用原生 `node:crypto` scrypt 实现，在 libuv 线程池上运行，而不是阻塞主线程。在不支持 `node:crypto` 的运行时，它会回退到纯 JavaScript 实现。已有密码哈希保持完全兼容。
+
+2. **减小包体积**
+
+   发布的包现在体积显著更小，这意味着更快的安装和更少的磁盘占用。
+
+   | 包名       | v1.5.6   | v1.6.0   | 减少   |
+   | ---------- | -------- | -------- | ------ |
+   | `better-auth` | 4,236 KB | 2,265 KB | 46%    |
+
+***
+
+## 重要变更
+
+### 破坏性变更
+
+| 变更                                                   | 描述                                                                                                                                                                                     |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 使 Fresh Age 与会话创建时间对齐               | `freshAge` 现在使用 `createdAt` 而非 `updatedAt`。会话可能需要更频繁地重新认证以执行敏感操作。[详情](#使-fresh-age-与会话创建时间对齐) |
+| 默认启用 SAML 流程中的 InResponseTo 验证 | SAML `InResponseTo` 验证现已默认开启。设置 `enableInResponseToValidation: false` 可禁用。[详情](#默认启用-saml-流程中的-inresponseto-验证)                 |
+
+### 行为变更
+
+| 变更                                    | 描述                                                                                                             |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| SCIM 端点授权强制                | SCIM 管理端点现在需要适当的认证。Passkey 所有权标准化以防止跨用户访问。 |
+| 无状态 Cookie 缓存生命周期对齐 | Cookie 缓存 `maxAge` 现在与会话 `expiresIn` 匹配，以防止缓存数据过期。                                     |
+
+### 弃用
+
+| 变更               | 描述                                                                                                                                                 |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OIDC Provider 插件 | 已被 `@better-auth/oauth-provider` 替代。将在下一个次要版本中移除。 |
+
+完整的变更列表请参阅 [changelog](https://github.com/better-auth/better-auth/compare/v1.5.6...v1.6.0)。
+
+***
+
+## 迁移到 v1.6
+
+对大多数用户来说，升级很简单：
+
+```package-install
+npx auth upgrade
+```
+
+请查阅 [重要变更](#重要变更) 部分，确认是否有破坏性变更、行为变更或弃用项影响你的设置。
+
+***
+
+## 我们未来如何运行 Better Auth
+
+很长一段时间以来，各种类型的变更都在争夺相同的发布窗口。错误修复、增加性改进、大型重构、破坏性变更都共享同一个发布路径，这意味着一个小修复可能需要现在发布，却仍要等待不相关的工作。
+
+我们始终坚持的原则很简单。我们希望重要的修复能快速发布，同时不失去可预测性或向后兼容性。应该是没有意外的，并且当升级确实需要行动时，这种行动应该是易于理解和简单执行的。
+
+v1.6 是围绕这一原则构建的过渡版本。实际情况如下。
+
+### 两条发布轨道
+
+> 重要修复不应等待不相关的工作。
+
+Better Auth 的发布现在通过两条轨道而非一条进行。当采用某项变更需要现有用户更新代码、配置或架构时，该变更会先在 **beta** 轨道发布。
+
+* **`main` 是稳定轨道。** 它会发布错误修复、安全补丁、增加性改进，以及不需要用户操作的变更行为。新功能也可以在此轨道上线，前提是经过充分测试、非破坏性且可安全立即采用。
+* **`next` 是测试轨道。** 它会发布新功能、重构和破坏性变更，经过测试周期让用户有时间适应。
+
+这种分离的存在，是为了重要修复能快速推进，同时确保破坏性变更不会无预警地发布。如同以往，`npm install better-auth` 仍将获取最新的稳定版本。要尝试最新的测试版本，可以使用 `@beta` 标签安装。
+
+对于贡献者，发布决策现在会在拉取请求本身上进行。每个 PR 上的 changeset 会声明其发布意向，我们的自动化流程会将 PR 路由到正确的分支。
+
+### 新功能请求
+
+> 讨论优先于代码。
+
+今后，每个新功能请求都应从 [Feature request issue 模板](https://github.com/better-auth/better-auth/issues/new?template=feature_request.yml) 开始，而不是直接打开拉取请求。
+
+直接提交大型 PR 难以在保持现有系统稳定的同时进行安全审查。从一个问题开始讨论，能让我们有机会梳理范围、对齐 API 形态，并针对其所属的发布轨道安排工作。这也为我们提供了更清晰传达路线图的方式，让贡献者和用户都能了解某个功能将走向何方以及何时可能落地。
+
+错误修复、文档改进和小的增加性变更仍可直接提交拉取请求，如以往一样。
+
+### 重构发布说明
+
+> 清晰与完整同样重要。
+
+发布说明现在按包分组，而不是作为一个平坦的变更日志呈现。这能让你更快找到你实际使用的包，并判断某个变更是否会影响你。
+
+这由 **Better Release** 实现，这是我们为内部发布流程构建的自动化工具。在维护者方面，它减少了发布准备中容易出现的人为错误；在用户方面，它生成更一致、更易读的发布沟通内容。
+
+### 可信发布
+
+> 信任与速度同样重要。
+
+我们发布的每个 npm 包现在都通过 GitHub Actions 使用 OIDC 可信发布。没有长期存在的发布令牌存放在 CI 中等待被盗，每个发布的工件都包含可追溯性，证明其源自生成它的确切源提交和工作流。
+
+这很重要，因为 npm 生态系统中大多数重大事件都源于凭证被盗和供应链攻击，而不是被审查提交中的恶意代码。提交签名和贡献者身份仍然重要，但对于包消费者来说，可验证的工件可追溯性是更强的保障。
+
+你可以在本地验证 Better Auth 包：
+
+```bash title="终端"
+npm audit signatures
+```
+
+***
+
+## 贡献者
+
+感谢所有为本次发布做出贡献的贡献者！
+
+export const releaseContributorUsernames = [
+	// cspell:disable
+	"aarmful",
+	"abdirahmanmahamoud",
+	"abris96",
+	"AliiiBenn",
+	"Bekacru",
+	"Bekione",
+	"bodadotsh",
+	"bytaesu",
+	"cb-alish",
+	"DevDuki",
+	"dipan2003",
+	"dvanmali",
+	"enguerrand",
+	"Eric-Song-Nop",
+	"FaryalRizwan",
+	"florianamette",
+	"formatlos",
+	"frankeld",
+	"GautamBytes",
+	"gideonofori",
+	"GoPro16",
+	"gustavovalverde",
+	"harshitsharmaa",
+	"himself65",
+	"isardmart",
+	"IvanCernja",
+	"jamalavedra",
+	"JoBurgard",
+	"jonathansamines",
+	"jsolano",
+	"kadumedim",
+	"kgray1497",
+	"lapstjup",
+	"Mnigos",
+	"mrgrauel",
+	"MuzzaiyyaN",
+	"NathanColosimo",
+	"okisdev",
+	"olliethedev",
+	"OscarCornish",
+	"pbacza",
+	"periakteon",
+	"ping-maxwell",
+	"qamarq",
+	"raihanbrillmark",
+	"rosano",
+	"ruban-s",
+	"Rudraksh88",
+	"rurruur",
+	"SandyDev00076",
+	"sicarius97",
+	"Sigmabrogz",
+	"TerryHenrard",
+	"tobithedev",
+	"wobedi",
+	"YevheniiKotyrlo",
+	"yzong",
+	"zeke",
+	"zfrankz",
+	// cspell:enable
+];
+
+<Contributors usernames={releaseContributorUsernames} />

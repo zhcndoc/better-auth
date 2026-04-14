@@ -39,11 +39,7 @@ export const auth = betterAuth({
 
 对于 MongoDB，我们不需要生成或迁移模式。
 
-## 连接查询（实验性）
-
-数据库连接查询在 Better-Auth 需要从多个表中一次性获取相关数据时非常有用。
-像 `/get-session`、`/get-full-organization` 等端点非常受益于这一功能，
-根据数据库延迟，可实现 2 倍至 3 倍以上的性能提升。
+## Joins（实验性）
 
 MongoDB 适配器从版本 `1.4.0` 起开箱即用支持连接查询。
 要启用此功能，需要在您的 auth 配置中将 `experimental.joins` 选项设置为 `true`。
@@ -55,6 +51,7 @@ export const auth = betterAuth({
   experimental: { joins: true }
 });
 ```
-## 其他信息
 
-- 如果您想了解性能提升或优化技巧，请查看我们的 <Link href="/docs/guides/optimizing-for-performance">性能优化指南</Link>。
+## 更多信息
+
+* 如果您正在寻找性能改进或优化建议，请查看我们的 <Link href="/docs/guides/optimizing-for-performance">性能优化</Link>指南。

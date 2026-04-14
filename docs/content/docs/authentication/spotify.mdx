@@ -4,57 +4,62 @@ description: Spotify 提供者的设置和使用。
 ---
 
 <Steps>
-    <Step> 
-        ### 获取你的 Spotify 凭证
-        使用 Spotify 登录，你需要一个客户端 ID 和客户端密钥。你可以从 [Spotify 开发者门户](https://developer.spotify.com/dashboard/applications) 获取它们。
+  <Step>
+    ### 获取 Spotify 凭证
 
-        **重要：** Spotify 不再支持 `localhost` 作为重定向 URI。你必须使用 `127.0.0.1` 进行本地开发。
+    要使用 Spotify 登录，你需要一个客户端 ID 和客户端密钥。你可以从 [Spotify 开发者门户](https://developer.spotify.com/dashboard/applications) 获取它们。
 
-        请确保在你的 Spotify 控制台中将重定向 URL 设置为 `http://127.0.0.1:3000/api/auth/callback/spotify`。
-        
-        因此，确保你通过 `http://127.0.0.1:3000`（而不是 `localhost:3000`）访问本地应用，以确保浏览器 URL 完全匹配重定向 URI。
+    **重要提示**：Spotify 不再支持 `localhost` 作为重定向 URI。在本地开发中，你必须使用 `127.0.0.1`。
 
-        对于生产环境，应该将其设置为你的应用程序 URL（必须是 HTTPS）。如果你更改了认证路由的基础路径，也应该相应更新重定向 URL。
-    </Step>
+    确保在 Spotify 仪表板中将重定向 URL 设置为 `http://127.0.0.1:3000/api/auth/callback/spotify`。
+
+    因此，请确保通过 `http://127.0.0.1:3000`（而不是 `localhost:3000`）访问本地应用，以便浏览器 URL 与重定向 URI 完全匹配。
+
+    对于生产环境，你应该将其设置为应用程序的 URL（必须使用 HTTPS）。如果更改了认证路由的基本路径，请相应更新重定向 URL。
+  </Step>
 
   <Step>
-        ### 配置提供者
-        要配置提供者，你需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
+    ### 配置提供者
 
-        你还必须确保环境变量使用正确的回环IP以匹配重定向 URI。更新你的 `.env` 文件：
-        
-        ```bash title=".env"
-        BETTER_AUTH_URL=http://127.0.0.1:3000
-        ```
+    要配置该提供者，你需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
 
-        ```ts title="auth.ts"  
-        import { betterAuth } from "better-auth"
+    你还需要确保环境变量使用正确的回环 IP 以匹配重定向 URI。更新你的 `.env` 文件：
+
+    ```bash title=".env"
+    BETTER_AUTH_URL=http://127.0.0.1:3000
+    ```
+
+    ```ts title="auth.ts"  
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
         
-        export const auth = betterAuth({
-            
-            socialProviders: {
-                spotify: { // [!code highlight]
-                    clientId: process.env.SPOTIFY_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string, // [!code highlight]
-                }, // [!code highlight]
-            },
+        socialProviders: {
+            spotify: { // [!code highlight]
+                clientId: process.env.SPOTIFY_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 使用 Spotify 登录
+
+    要使用 Spotify 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+
+    * `provider`：要使用的提供者，应设置为 `spotify`。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    const authClient =  createAuthClient()
+
+    const signIn = async () => {
+        const data = await authClient.signIn.social({
+            provider: "spotify"
         })
-        ```
-    </Step>
-       <Step>
-        ### 使用 Spotify 登录
-        要使用 Spotify 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个带有以下属性的对象：
-        - `provider`：要使用的提供者，应该设置为 `spotify`。
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        const authClient =  createAuthClient()
-        
-        const signIn = async () => {
-            const data = await authClient.signIn.social({
-                provider: "spotify"
-            })
-        }
-        ```
-    </Step>
+    }
+    ```
+  </Step>
 </Steps>

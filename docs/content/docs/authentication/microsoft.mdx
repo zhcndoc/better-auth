@@ -3,21 +3,23 @@ title: Microsoft
 description: Microsoft 提供商的设置与使用。
 ---
 
-启用 Microsoft Azure Entra ID（前称 Active Directory）OAuth，允许您的用户使用其 Microsoft 账号登录和注册您的应用。
+启用 Microsoft Azure Entra ID（曾称 Active Directory）OAuth，允许您的用户使用其 Microsoft 账号登录和注册您的应用。
 
 <Steps>
-    <Step> 
-        ### 获取您的 Microsoft 凭据
-        若要使用 Microsoft 作为社交提供商，您需要获取您的 Microsoft 凭据。这涉及通过 Microsoft Entra ID 仪表盘账户生成自己的客户端 ID 和客户端密钥。
+  <Step>
+    ### 获取 Microsoft 凭据
 
-        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/microsoft` 以支持本地开发。生产环境中，您应将其更改为您的应用的 URL。如果您更改了认证路由的基路径，也应相应更新重定向 URL。
+    要将 Microsoft 用作社交提供商，您需要获取 Microsoft 凭据。这涉及使用您的 Microsoft Entra ID 仪表板账户生成自己的客户端 ID 和客户端密钥。
 
-        更多信息请参见 [Microsoft Entra ID 文档](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app)。
-    </Step>
+    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/microsoft` 用于本地开发。对于生产环境，请将其更改为您的应用程序 URL。如果更改了认证路由的基础路径，请相应更新重定向 URL。
 
-    <Step>
+    有关更多信息，请参阅 [Microsoft Entra ID 文档](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app)。
+  </Step>
+
+  <Step>
     ### 配置提供商
-    要配置提供商，您需要在认证配置中，将 `clientId` 和 `clientSecret` 传递给 `socialProviders.microsoft`。
+
+    要配置提供商，您需要在认证配置中将 `clientId` 和 `clientSecret` 传递给 `socialProviders.microsoft`。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
@@ -35,18 +37,16 @@ description: Microsoft 提供商的设置与使用。
         },
     })
     ```
-    
-    **授权 URL**：对于标准 Entra ID 场景，使用默认的 `https://login.microsoftonline.com`，对于 CIAM（客户身份和访问管理）场景，使用 `https://<tenant-id>.ciamlogin.com`。
-    
-    </Step>
 
+    **Authority URL**：对于标准 Entra ID 场景，请使用默认值 `https://login.microsoftonline.com`；对于 CIAM（客户身份与访问管理）场景，请使用 `https://<tenant-id>.ciamlogin.com`。
+  </Step>
 </Steps>
 
 ## 使用 Microsoft 登录
 
 要使用 Microsoft 登录，您可以调用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
 
-- `provider`：所使用的提供商，应设置为 `microsoft`。
+* `provider`：要使用的提供商，应设置为 `microsoft`。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client";

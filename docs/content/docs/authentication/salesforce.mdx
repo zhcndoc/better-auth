@@ -4,41 +4,42 @@ description: Salesforce 提供者的设置和使用。
 ---
 
 <Steps>
-    <Step>
-        ### 获取你的 Salesforce 凭证
-       1. 登录到你的 Salesforce 组织（生产环境或开发者版）
-    2. 导航到 **设置 > 应用程序管理器**
-    3. 点击 **新建已连接的应用**
+  <Step>
+    ### 获取 Salesforce 凭证
+
+    1. 登录您的 Salesforce 组织（生产版或开发者版）
+    2. 导航至 **Setup > App Manager**
+    3. 点击 **New Connected App**
     4. 填写基本信息：
-       - 已连接应用名称：你的应用名称
-       - API 名称：从应用名称自动生成
-       - 联系邮箱：你的邮箱地址
+       * Connected App Name：您的应用名称
+       * API Name：根据应用名称自动生成
+       * Contact Email：您的电子邮件地址
     5. 启用 OAuth 设置：
-       - 勾选 **启用 OAuth 设置**
-       - 设置 **回调 URL** 为你的重定向 URI（例如，开发环境使用 `http://localhost:3000/api/auth/callback/salesforce`）
-       - 选择所需的 OAuth 范围：
-         - 访问你的基本信息 (id)
-         - 访问你的身份 URL 服务 (openid)
-         - 访问你的邮箱地址 (email)
-         - 随时代表你执行请求 (refresh_token，offline_access)
-    6. 启用 **要求代码交换的证明密钥 (PKCE)**（必需）
-    7. 保存并记录你的 **消费者密钥**（客户端 ID）和 **消费者密钥密文**（客户端密钥）
+       * 勾选 **Enable OAuth Settings**
+       * 将 **Callback URL** 设置为您的重定向 URI（例如开发环境使用 `http://localhost:3000/api/auth/callback/salesforce`）
+       * 选择所需的 OAuth 范围：
+         * 访问基本信息（id）
+         * 访问身份 URL 服务（openid）
+         * 访问电子邮件地址（email）
+         * 随时代表您发起请求（refresh_token, offline_access）
+    6. 启用 **Require Proof Key for Code Exchange (PKCE)**（必需）
+    7. 保存并记录您的 **Consumer Key**（客户端 ID）和 **Consumer Secret**（客户端密钥）
 
     <Callout type="info">
-        - 开发阶段可以使用 `http://localhost:3000` URL，生产环境需使用 HTTPS
-        - 回调 URL 必须与 Better Auth 中配置的完全一致
-        - Salesforce 要求 PKCE（代码交换证明密钥），该提供者会自动处理
+      * 开发环境中可以使用 `http://localhost:3000` 网址，但生产环境需要 HTTPS
+      * 回调 URL 必须与 Better Auth 中的配置完全匹配
+      * PKCE（代码交换证明密钥）由 Salesforce 要求此提供程序自动处理
     </Callout>
 
     <Callout type="warning">
-        在沙盒测试时，你可以在沙盒组织中创建该已连接应用，或者使用相同的已连接应用，但在提供者配置中指定 `environment: "sandbox"`。
+      对于沙盒测试，您可以在沙盒组织中创建连接应用，或使用相同的连接应用并在提供程序配置中指定 `environment: "sandbox"`。
     </Callout>
-
-    </Step>
+  </Step>
 
   <Step>
-  ### 配置提供者
-    配置提供者时，你需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
+    ### 配置提供程序
+
+    要配置提供程序，您需要导入提供程序并将其传递给认证实例的 `socialProviders` 选项。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
@@ -56,11 +57,11 @@ description: Salesforce 提供者的设置和使用。
 
     #### 配置选项
 
-    - `clientId`：你的已连接应用的消费者密钥
-    - `clientSecret`：你的已连接应用的消费者密钥密文  
-    - `environment`：`"production"`（默认）或 `"sandbox"`
-    - `loginUrl`：自定义的 My Domain URL（不带 `https://`）—覆盖环境设置
-    - `redirectURI`：如有需要，自定义覆盖自动生成的重定向 URI
+    * `clientId`：连接应用的消费者密钥
+    * `clientSecret`：连接应用的消费者密钥
+    * `environment`：`"production"`（默认）或 `"sandbox"`
+    * `loginUrl`：自定义 My Domain URL（不含 `https://`）- 覆盖环境设置
+    * `redirectURI`：如需覆盖则手动生成重定向 URI
 
     #### 高级配置
 
@@ -79,34 +80,38 @@ description: Salesforce 提供者的设置和使用。
     ```
 
     <Callout type="info">
-        - 使用 `environment: "sandbox"` 进行 Salesforce 沙盒组织测试
-        - `loginUrl` 选项适用于启用了 My Domain 的组织
-        - `redirectURI` 选项有助于解决重定向 URI 不匹配错误
+      * 使用 `environment: "sandbox"` 进行 Salesforce 沙盒组织测试
+      * `loginUrl` 选项适用于启用了 My Domain 的组织
+      * `redirectURI` 选项有助于解决重定向 URI 不匹配错误
     </Callout>
-    </Step>
-        
-   <Step>
+  </Step>
+
+  <Step>
     ### 环境变量
-    将以下环境变量添加到你的 `.env.local` 文件中：
+
+    将以下环境变量添加到您的 `.env.local` 文件中：
 
     ```bash title=".env.local"
-    SALESFORCE_CLIENT_ID=your_consumer_key_here
-    SALESFORCE_CLIENT_SECRET=your_consumer_secret_here
+    SALESFORCE_CLIENT_ID=您的消费者密钥
+    SALESFORCE_CLIENT_SECRET=您的消费者密钥
     BETTER_AUTH_URL=http://localhost:3000 # 对重定向 URI 生成很重要
     ```
 
-    生产环境：
-    ```bash title=".env"
-    SALESFORCE_CLIENT_ID=your_consumer_key_here
-    SALESFORCE_CLIENT_SECRET=your_consumer_secret_here
-    BETTER_AUTH_URL=https://yourdomain.com
-    ```
-    </Step>
+    对于生产环境：
 
-    <Step>
+    ```bash title=".env"
+    SALESFORCE_CLIENT_ID=您的消费者密钥
+    SALESFORCE_CLIENT_SECRET=您的消费者密钥
+    BETTER_AUTH_URL=https://您的域名.com
+    ```
+  </Step>
+
+  <Step>
     ### 使用 Salesforce 登录
-    使用 Salesforce 登录时，可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含下列属性的对象：
-    - `provider`：使用的提供者，应设置为 `salesforce`。
+
+    要使用 Salesforce 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收以下属性的对象：
+
+    * `provider`：要使用的提供程序，应设置为 `salesforce`。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -118,14 +123,16 @@ description: Salesforce 提供者的设置和使用。
         })
     }
     ```
-</Step>
-<Step>
-    ### 故障排查
+  </Step>
+
+  <Step>
+    ### 故障排除
 
     #### 重定向 URI 不匹配错误
+
     如果遇到 `redirect_uri_mismatch` 错误：
 
-    1. **检查回调 URL**：确保你的 Salesforce 已连接应用中的回调 URL 与 Better Auth 的回调 URL 完全匹配
+    1. **检查回调 URL**：确保 Salesforce 已连接应用中的回调 URL 与 Better Auth 的回调 URL 完全匹配
     2. **协议**：确认使用相同的协议（`http://` 与 `https://`）
     3. **端口**：确认端口号匹配（例如 `:3000`）
     4. **如有必要覆盖**：使用 `redirectURI` 选项明确设置回调 URI
@@ -138,16 +145,18 @@ description: Salesforce 提供者的设置和使用。
     }
     ```
 
-    #### 环境相关问题
-    - **生产环境**：使用 `environment: "production"`（默认）和 `login.salesforce.com`
-    - **沙盒环境**：使用 `environment: "sandbox"` 和 `test.salesforce.com`
-    - **My Domain**：为自定义域使用 `loginUrl: "yourcompany.my.salesforce.com"`
+    #### 环境问题
+
+    * **生产环境**：使用 `environment: "production"`（默认）配合 `login.salesforce.com`
+    * **沙盒**：使用 `environment: "sandbox"` 配合 `test.salesforce.com`
+    * **My Domain**：使用 `loginUrl: "yourcompany.my.salesforce.com"` 用于自定义域名
 
     #### PKCE 要求
-    Salesforce 需要 PKCE（代码交换的证明密钥），此提供者自动处理。确保你的已连接应用设置中启用了 PKCE。
+
+    Salesforce 要求 PKCE（代码交换证明密钥），此提供程序会自动处理。确保在连接应用设置中启用了 PKCE。
 
     <Callout type="info">
-        默认请求的权限范围为 `openid`、`email` 和 `profile`。提供者会自动包含访问基本用户信息的 `id` 权限。
+      默认请求的范围为 `openid`、`email` 和 `profile`。该提供程序会自动包含 `id` 范围以访问基本用户信息。
     </Callout>
-</Step>
+  </Step>
 </Steps>

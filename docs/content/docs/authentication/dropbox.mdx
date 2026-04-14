@@ -4,47 +4,51 @@ description: Dropbox 提供商设置和使用。
 ---
 
 <Steps>
-    <Step> 
-        ### 获取您的 Dropbox 凭证
-        要使用 Dropbox 登录，您需要客户端 ID 和客户端密钥。您可以从 [Dropbox 开发者门户](https://www.dropbox.com/developers) 获取它们。您可以在应用控制台中为应用程序允许 “隐式授权 & PKCE”。
-        
-        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/dropbox`，以便本地开发。对于生产环境，您应将其设置为您的应用程序的 URL。如果您更改了认证路由的基础路径，也应相应更新重定向 URL。
-    </Step>
+  <Step>
+    ### 获取您的 Dropbox 凭据
 
-    如果您需要更深入了解 Dropbox 身份验证，可以查看 [官方文档](https://developers.dropbox.com/oauth-guide)。
+    要使用 Dropbox 登录，您需要客户端 ID 和客户端密钥。您可以在 [Dropbox 开发者门户](https://www.dropbox.com/developers) 获取它们。您可以在应用控制台中为应用程序启用“隐式授权与 PKCE”。
+
+    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/dropbox` 用于本地开发。生产环境应将其设置为应用程序的 URL。如果更改了认证路由的基本路径，请相应更新重定向 URL。
+  </Step>
+
+  如果您需要更深入地了解 Dropbox 认证，可以查阅 [官方文档](https://developers.dropbox.com/oauth-guide)。
 
   <Step>
-        ### 配置提供商
-        要配置提供商，您需要导入提供商并将其传递给身份验证实例的 `socialProviders` 选项。
+    ### 配置提供程序
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
+    要配置提供程序，您需要导入提供程序并将其传递给认证实例的 `socialProviders` 选项。
 
-        export const auth = betterAuth({
-            socialProviders: {
-                dropbox: { // [!code highlight]
-                    clientId: process.env.DROPBOX_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.DROPBOX_CLIENT_SECRET as string, // [!code highlight]
-                }, // [!code highlight]
-            },
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            dropbox: { // [!code highlight]
+                clientId: process.env.DROPBOX_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.DROPBOX_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 使用 Dropbox 登录
+
+    要使用 Dropbox 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+
+    * `provider`: 要使用的提供程序。应设置为 `dropbox`。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    const authClient =  createAuthClient()
+
+    const signIn = async () => {
+        const data = await authClient.signIn.social({
+            provider: "dropbox"
         })
-        ```
-    </Step>
-       <Step>
-        ### 使用 Dropbox 登录
-        要使用 Dropbox 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个对象，包含以下属性：
-        - `provider`：要使用的提供商，应设置为 `dropbox`。
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        const authClient =  createAuthClient()
-
-        const signIn = async () => {
-            const data = await authClient.signIn.social({
-                provider: "dropbox"
-            })
-        }
-        ```
-    </Step>
-
+    }
+    ```
+  </Step>
 </Steps>

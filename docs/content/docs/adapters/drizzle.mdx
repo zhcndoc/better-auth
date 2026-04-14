@@ -46,18 +46,17 @@ npx auth@latest generate
 
 <Tabs items={["generate", "migrate"]}>
   <Tab value="generate">
-  ```package-install
-  npx drizzle-kit generate # 生成迁移文件
-  ```
+    ```package-install
+    npx drizzle-kit generate # generate the migration file
+    ```
   </Tab>
+
   <Tab value="migrate">
-  ```package-install
-  npx drizzle-kit migrate # 应用迁移
-  ```
+    ```package-install
+    npx drizzle-kit migrate # apply the migration
+    ```
   </Tab>
 </Tabs>
-
-## 关联查询（实验性）
 
 数据库关联查询在 Better Auth 需要从多个表中一次性获取相关数据时非常有用。
 像 `/get-session`、`/get-full-organization` 等端点都能从此功能获得显著提升，
@@ -73,6 +72,7 @@ export const auth = betterAuth({
   experimental: { joins: true }
 });
 ```
+
 <Callout type="warn">
   请确保你的 Drizzle 模式定义了必要的关联关系。
   如果你在 Drizzle 模式中没有看到任何关联关系，可以使用 [`relation`](https://orm.drizzle.team/docs/relations) 函数手动添加关联，
@@ -173,4 +173,4 @@ export const auth = betterAuth({
 
 ## 额外信息
 
-- 若你正在寻找性能提升建议或技巧，请查看我们的 <Link href="/docs/guides/optimizing-for-performance">性能优化指南</Link>。
+* 如果你在寻找性能改进或优化建议，可以查阅我们的指南 <Link href="/docs/guides/optimizing-for-performance">性能优化</Link>。

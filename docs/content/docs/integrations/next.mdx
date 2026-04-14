@@ -17,10 +17,10 @@ export const { GET, POST } = toNextJsHandler(auth);
 ```
 
 <Callout type="info">
- 你可以在 Better Auth 的配置中更改路径，但建议保持为 `/api/auth/[...all]`
+  你可以在 Better Auth 配置中更改路径，但建议保持为 `/api/auth/[...all]`
 </Callout>
 
-对于 `pages` 路由，你需要使用 `toNodeHandler` 代替 `toNextJsHandler`，并在 `config` 对象中将 `bodyParser` 设置为 `false`。示例如下：
+对于 `pages` 路由，你需要使用 `toNodeHandler` 而不是 `toNextJsHandler`，并且在 `config` 对象中将 `bodyParser` 设置为 `false`。示例如下：
 
 ```ts title="pages/api/auth/[...all].ts"
 import { toNodeHandler } from "better-auth/node"
@@ -49,11 +49,9 @@ export const authClient =  createAuthClient({
 
 客户端还使用 [better-fetch](https://github.com/bekacru/better-fetch) 来发起请求，你可以将 fetch 配置传递给客户端。
 
-## RSC 和服务器 Actions
+## RSC 和服务器操作
 
-从 auth 实例导出的 `api` 对象包含了所有可在服务器上执行的操作。Better Auth 内的每个端点都可作为函数调用，包括插件端点。
-
-**示例：在服务器 Action 中获取 Session**
+**示例：在服务器操作中获取 Session**
 
 ```tsx title="server.ts"
 import { auth } from "@/lib/auth"
@@ -90,9 +88,9 @@ export async function ServerComponent() {
 
 <Callout type="warn">由于 RSC 无法设置 Cookie，[Cookie 缓存](/docs/concepts/session-management#cookie-cache) 不会被刷新，除非通过服务器 Actions 或路由处理器从客户端与服务器交互。</Callout>
 
-### 服务器 Action 中的 Cookie
+### 服务器操作中的 Cookie
 
-当你在服务器 Action 调用需要设置 Cookie 的函数，如 `signInEmail` 或 `signUpEmail`，Cookie 不会被自动设置。因为服务器 Actions 需要使用 Next.js 的 `cookies` 助手来设置 Cookie。
+当你在服务器操作中调用需要设置 Cookie 的函数，如 `signInEmail` 或 `signUpEmail`，Cookie 不会被自动设置。因为服务器操作需要使用 Next.js 的 `cookies` 助手来设置 Cookie。
 
 为简化操作，你可以使用 `nextCookies` 插件，它会在响应头中包含 `Set-Cookie` 时自动设置 Cookie。
 
@@ -177,7 +175,7 @@ export const config = {
 ```
 
 <Callout type="info">
-**从中间件迁移：**将 `middleware.ts` 重命名为 `proxy.ts`，函数名 `middleware` 改为 `proxy`。所有 Better Auth 方法保持不变。
+  **迁移自中间件（Migration from middleware）：** 将 `middleware.ts` 重命名为 `proxy.ts`，并将 `middleware` 函数重命名为 `proxy`。所有 Better Auth 方法保持不变。
 </Callout>
 
 ### Next.js 15.2.0+（Node.js 运行时中间件）
@@ -208,7 +206,7 @@ export const config = {
 ```
 
 <Callout type="warn">
-Node.js 运行时中间件在 Next.js 16 之前版本仍属实验性质。建议升级到 Next.js 16+ 以获得稳定的代理支持。
+  Node.js 运行时在 Next.js 16 之前的中间件中是实验性的。建议升级到 Next.js 16+ 以获得稳定的代理支持。
 </Callout>
 
 ### Next.js 13-15.1.x（Edge 运行时中间件）
@@ -216,7 +214,7 @@ Node.js 运行时中间件在 Next.js 16 之前版本仍属实验性质。建议
 旧版本 Next.js 的中间件运行在 Edge 运行时，无法执行数据库调用。使用基于 Cookie 的校验实现乐观重定向：
 
 <Callout type="warn">
-`getSessionCookie()` 函数不会自动引用 `auth.ts` 中指定的 auth 配置。因此，如果你自定义了 Cookie 名称或前缀，需要确保 `getSessionCookie()` 的配置与 `auth.ts` 中定义的配置一致。
+  `getSessionCookie()` 函数不会自动引用 `auth.ts` 中指定的 auth 配置。因此，如果你自定义了 Cookie 名称或前缀，你需要确保 `getSessionCookie()` 中的配置与 `auth.ts` 中定义的配置相匹配。
 </Callout>
 
 #### Next.js 版本 `15.1.7` 及以下
@@ -224,7 +222,7 @@ Node.js 运行时中间件在 Next.js 16 之前版本仍属实验性质。建议
 如果你需要完整的 session 对象，必须从 `/api/auth/get-session` API 路由获取。由于 Next.js 中间件不能直接执行 Node.js API，你必须发起 HTTP 请求。
 
 <Callout>
-  示例如使用 [better-fetch](https://better-fetch.vercel.app)，你也可以使用任何其他 fetch 库。
+  示例使用 [better-fetch](https://better-fetch.vercel.app)，你也可以使用任何其他 fetch 库。
 </Callout>
 
 ```ts title="middleware.ts"
@@ -256,7 +254,7 @@ export const config = {
 
 #### Next.js 版本 `15.2.0` 及以后
 
-从 Next.js 15.2.0 起，你可在中间件中使用 Node.js 运行时，进行完整的带数据库验证的会话校验：
+从 Next.js 15.2.0 起，你可以在中间件中使用 Node.js 运行时，进行完整的带数据库验证的会话校验：
 
 <Callout type="warn">
   请参考 [Next.js 文档](https://nextjs.org/docs/app/building-your-application/routing/middleware#runtime) 了解运行时配置及开启方法。  
@@ -311,20 +309,21 @@ export const config = {
 ```
 
 <Callout type="warn">
-	**安全警告：**`getSessionCookie` 只检测会话 Cookie 是否存在；并不验证其有效性。仅依赖此检测进行安全保护非常危险，因为任何人都可以手动制造 Cookie 绕过。你必须在服务器端对会话进行验证，才能保护受限制的操作或页面。
+  **安全警告：** `getSessionCookie` 函数仅检查会话 Cookie 是否存在；它**不**会验证 Cookie。**仅依赖此检查存在安全风险**，任何人都可以手动创建 Cookie 来绕过它。你必须始终在服务器端验证会话，以保护任何受保护的资源或操作。
 </Callout>
 
 <Callout type="info">
-如果你使用自定义的 Cookie 名称或前缀，可以通过参数传递给 `getSessionCookie`：
-```ts
-const sessionCookie = getSessionCookie(request, {
-    cookieName: "my_session_cookie",
-    cookiePrefix: "my_prefix"
-});
-```
+  如果你使用了自定义的 Cookie 名称或前缀，你可以将它们传递给 `getSessionCookie` 函数。
+
+  ```ts
+  const sessionCookie = getSessionCookie(request, {
+      cookieName: "my_session_cookie",
+      cookiePrefix: "my_prefix"
+  });
+  ```
 </Callout>
 
-你也可以使用 `getCookieCache` 助手从 Cookie 缓存获取 session 对象。
+你也可以使用 `getCookieCache` 助手从 Cookie 缓存中获取 session 对象。
 
 ```ts title="middleware.ts"
 import { getCookieCache } from "better-auth/cookies";
@@ -340,7 +339,7 @@ export async function middleware(request: NextRequest) {
 
 ### 如何在每个页面/路由中处理认证校验
 
-此示例中，我们在服务器组件内使用 `auth.api.getSession` 获取 session 对象，然后验证其有效性。如果无效，跳转至登录页面。
+此示例中，我们在服务器组件中使用 `auth.api.getSession` 获取 session 对象，然后验证其有效性。如果无效，跳转至登录页面。
 
 ```tsx title="app/dashboard/page.tsx"
 import { auth } from "@/lib/auth";
@@ -362,17 +361,19 @@ export default async function DashboardPage() {
 
 ## Next.js 16 兼容性
 
-Better Auth 完全兼容 Next.js 16。主要变化是“middleware”改为“proxy”。详见上文[认证保护](#auth-protection)章节中的 Next.js 16+ 代理示例。
+Better Auth 与 Next.js 16 完全兼容。主要变化是“中间件”改为“代理”。详见上文[认证保护](#auth-protection)章节中的 Next.js 16+ 代理示例。
 
 ### 迁移指南
 
-可使用 Next.js 提供的 codemod 自动迁移：
+使用 Next.js codemod 进行自动迁移：
+
 ```bash
 npx @next/codemod@canary middleware-to-proxy .
 ```
 
-或手动迁移：  
-- 重命名 `middleware.ts` 为 `proxy.ts`  
-- 函数名由 `middleware` 改为 `proxy`
+或者手动操作：
 
-所有 Better Auth 方法保持不变。详情参见 [Next.js 迁移指南](https://nextjs.org/docs/app/api-reference/file-conventions/proxy#migration-to-proxy)。
+* 将 `middleware.ts` 重命名为 `proxy.ts`
+* 将函数名从 `middleware` 改为 `proxy`
+
+所有 Better Auth 方法保持不变。详细内容请参考 [Next.js 迁移指南](https://nextjs.org/docs/app/api-reference/file-conventions/proxy#migration-to-proxy)。

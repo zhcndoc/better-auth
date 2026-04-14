@@ -4,63 +4,68 @@ description: TikTok 提供者设置和使用说明。
 ---
 
 <Steps>
-    <Step>
-        ### 获取您的 TikTok 凭证
-        要与 TikTok 集成，您需要通过在 [TikTok 开发者门户](https://developers.tiktok.com/apps) 创建应用程序来获取 API 凭证。
+  <Step>
+    ### 获取您的 TikTok 凭证
 
-        请按照以下步骤操作：
-        1. 在 TikTok 开发者门户创建账号
-        2. 创建一个新应用
-        3. 设置沙箱环境进行测试
-        4. 配置重定向 URL（必须是 HTTPS）
-        5. 记下您的客户端密钥（Client Secret）和客户端键（Client Key）
+    要与 TikTok 集成，您需要通过在 [TikTok 开发者门户](https://developers.tiktok.com/apps) 创建应用程序来获取 API 凭证。
 
-        <Callout type="info">
-            - TikTok API 不支持 localhost。您需要使用公开域名作为重定向 URL，并且本地测试时必须使用 HTTPS。您可以使用 [NGROK](https://ngrok.com/) 或其他类似工具。
-            - 测试时，您需要使用 [沙箱模式](https://developers.tiktok.com/blog/introducing-sandbox)，可在 TikTok 开发者门户启用。
-            - 默认权限范围是 `user.info.profile`。如需其他权限范围，请参考 [可用权限范围](https://developers.tiktok.com/doc/tiktok-api-scopes/) 文档。
-        </Callout>
+    请按照以下步骤操作：
 
-        请确保本地开发时将重定向 URL 设置为有效的 HTTPS 域名。生产环境中，应该将其设置为您应用的 URL。如果您更改了认证路由的基础路径，应相应更新重定向 URL。
+    1. 在 TikTok 开发者门户创建账户
+    2. 创建一个新的应用程序
+    3. 设置沙盒环境用于测试
+    4. 配置重定向 URL（必须为 HTTPS）
+    5. 记下您的客户端密钥和客户端密钥
 
-        <Callout type="info">
-            - TikTok API 不提供邮箱地址。作为解决方案，此实现使用用户的 `username` 作为 `email` 字段，因此需要 `user.info.profile` 权限范围，而非仅 `user.info.basic`。
-            - 生产环境使用时，需要向 TikTok 申请使用相关权限的审批。
-        </Callout>
-    </Step>
+    <Callout type="info">
+      * TikTok API 不支持 localhost。您需要在重定向 URL 中使用公开域名，并在本地测试时使用 HTTPS。您可以使用 [NGROK](https://ngrok.com/) 或其他类似工具来实现。
+      * 对于测试，您需要使用 [沙盒模式](https://developers.tiktok.com/blog/introducing-sandbox)，并在 TikTok 开发者门户中启用它。
+      * 默认作用域为 `user.info.profile`。如需其他作用域，请参考 [可用作用域](https://developers.tiktok.com/doc/tiktok-api-scopes/) 文档。
+    </Callout>
+
+    确保将重定向 URL 设置为本地开发的有效 HTTPS 域名。对于生产环境，应将其设置为应用程序的 URL。如果更改了认证路由的基本路径，请相应更新重定向 URL。
+
+    <Callout type="info">
+      * TikTok API 不提供电子邮件地址。作为变通方案，此实现使用用户的 `username` 值作为 `email` 字段的值，因此需要 `user.info.profile` 作用域，而不仅仅是 `user.info.basic`。
+      * 对于生产使用，您需要向 TikTok 请求批准您打算使用的范围。
+    </Callout>
+  </Step>
 
   <Step>
-        ### 配置提供者
-        配置提供者时，您需要导入该提供者并将其传递给认证实例的 `socialProviders` 选项。
+    ### 配置提供者
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
+    要配置提供者，您需要导入提供者，并将其传递给认证实例的 `socialProviders` 选项。
 
-        export const auth = betterAuth({
-            socialProviders: {
-                tiktok: { // [!code highlight]
-                    clientSecret: process.env.TIKTOK_CLIENT_SECRET as string, // [!code highlight]
-                    clientKey: process.env.TIKTOK_CLIENT_KEY as string, // [!code highlight]
-                }, // [!code highlight]
-            },
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            tiktok: { // [!code highlight]
+                clientSecret: process.env.TIKTOK_CLIENT_SECRET as string, // [!code highlight]
+                clientKey: process.env.TIKTOK_CLIENT_KEY as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 使用 TikTok 登录
+
+    要使用 TikTok 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
+
+    * `provider`：要使用的提供者。应设置为 `tiktok`。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    const authClient =  createAuthClient()
+
+    const signIn = async () => {
+        const data = await authClient.signIn.social({
+            provider: "tiktok"
         })
-        ```
-    </Step>
-       <Step>
-        ### 使用 TikTok 登录
-        要使用 TikTok 登录，可以调用客户端提供的 `signIn.social` 函数。该 `signIn` 函数接收一个带有以下属性的对象：
-        - `provider`：使用的提供者，应该设置为 `tiktok`。
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        const authClient =  createAuthClient()
-
-        const signIn = async () => {
-            const data = await authClient.signIn.social({
-                provider: "tiktok"
-            })
-        }
-        ```
-    </Step>
-
+    }
+    ```
+  </Step>
 </Steps>

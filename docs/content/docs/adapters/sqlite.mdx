@@ -45,7 +45,8 @@ export const auth = betterAuth({
 });
 ```
 
-使用 Node.js SQLite 运行您的应用：
+要运行您的应用程序，请使用以下命令：
+
 ```bash
 node your-app.js
 ```
@@ -77,30 +78,33 @@ export const auth = betterAuth({
       <th>
         <p className="font-bold text-[16px] mb-1">SQLite 架构生成</p>
       </th>
+
       <th>
         <p className="font-bold text-[16px] mb-1">SQLite 架构迁移</p>
       </th>
     </tr>
   </thead>
+
   <tbody>
     <tr className="h-10">
-      <td>&#9989; 支持</td>
-      <td>&#9989; 支持</td>
+      <td>✅ Supported</td>
+      <td>✅ Supported</td>
     </tr>
   </tbody>
 </table>
 
 <Tabs items={["migrate", "generate"]}>
-   <Tab value="migrate">
-   ```package-install
-   npx auth@latest migrate
-   ```
-   </Tab>
-   <Tab value="generate">
-   ```package-install
-   npx auth@latest generate
-   ```
-   </Tab>
+  <Tab value="migrate">
+    ```package-install
+    npx auth@latest migrate
+    ```
+  </Tab>
+
+  <Tab value="generate">
+    ```package-install
+    npx auth@latest generate
+    ```
+  </Tab>
 </Tabs>
 
 ## 联结（实验性）

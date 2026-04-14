@@ -4,45 +4,46 @@ description: Zoom 提供者的设置和使用。
 ---
 
 <Steps>
-  <Step> 
-    ### 从市场创建一个 Zoom 应用
+  <Step>
+    ### 从 Marketplace 创建 Zoom 应用
+
     1. 访问 [Zoom Marketplace](https://marketplace.zoom.us)。
 
-    1. 将鼠标悬停在 `Develop` 按钮上，选择 `Build App`
+    2. 悬停在 `Develop` 按钮上并选择 `Build App`
 
-    1. 选择 `General App`，然后点击 `Create`
-
+    3. 选择 `General App` 并点击 `Create`
   </Step>
 
-  <Step> 
+  <Step>
     ### 配置你的 Zoom 应用
-    
+
     确保你处于应用设置的 `Basic Information` 页面。
 
     1. 在 `Select how the app is managed` 中，选择 `User-managed`
 
-    1. 在 `App Credentials` 中，复制你的 `Client ID` 和 `Client Secret` 并妥善保存
+    2. 在 `App Credentials` 下，复制你的 `Client ID` 和 `Client Secret` 并存储在安全的位置
 
-    1. 在 `OAuth Information` -> `OAuth Redirect URL` 中，添加你的回调 URL。例如，
+    3. 在 `OAuth Information` -> `OAuth Redirect URL` 中，添加你的回调 URL。例如，
 
        ```
        http://localhost:3000/api/auth/callback/zoom
        ```
 
        <Callout>
-       在生产环境中，你应将其设置为你应用的 URL。如果你更改了认证路由的基础路径，也应相应更新重定向 URL。
+         对于生产环境，你应该将其设置为应用程序的 URL。如果更改了认证路由的基本路径，你需要相应地更新重定向 URL。
        </Callout>
 
     跳转到 `Scopes` 部分，然后
-    1. 点击 `Add Scopes` 按钮
-    1. 搜索 `user:read:user`（查看用户）并选择它
-    1. 添加应用所需的其他权限范围，点击 `Done`
 
+    1. 点击 `Add Scopes` 按钮
+    2. 搜索 `user:read:user`（查看用户）并选择它
+    3. 添加你的应用程序需要的其他范围并点击 `Done`
   </Step>
 
   <Step>
     ### 配置提供者
-    配置提供者时，需要导入提供者并传入认证实例的 `socialProviders` 选项。
+
+    要配置提供者，你需要导入该提供者并将其传递给认证实例的 `socialProviders` 选项。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
@@ -56,12 +57,12 @@ description: Zoom 提供者的设置和使用。
       },
     })
     ```
-
   </Step>
 
   <Step>
     ### 使用 Zoom 登录
-    要使用 Zoom 登录，可以使用客户端提供的 `signIn.social` 函数。
+
+    要使用 Zoom 登录，你可以使用客户端提供的 `signIn.social` 函数。
     你需要指定 `zoom` 作为提供者。
 
     ```ts title="auth-client.ts"
@@ -74,6 +75,5 @@ description: Zoom 提供者的设置和使用。
       })
     }
     ```
-
   </Step>
 </Steps>

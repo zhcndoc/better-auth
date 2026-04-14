@@ -4,59 +4,64 @@ description: Reddit 提供者的设置与使用。
 ---
 
 <Steps>
-    <Step> 
-        ### 获取你的 Reddit 凭证
-        要使用 Reddit 登录，你需要客户端 ID 和客户端密钥。你可以从 [Reddit 开发者门户](https://www.reddit.com/prefs/apps) 获取它们。
+  <Step>
+    ### 获取 Reddit 凭证
 
-        1. 点击“Create App”或“Create Another App”
-        2. 选择“web app”作为应用类型
-        3. 将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/reddit` 用于本地开发
-        4. 对于生产环境，设置为你的应用域名（例如 `https://example.com/api/auth/callback/reddit`）
-        5. 创建应用后，你会获得客户端 ID（在应用名称下方）和客户端密钥
+    要使用 Reddit 登录，您需要一个客户端 ID 和客户端密钥。您可以从 [Reddit 开发者门户](https://www.reddit.com/prefs/apps) 获取它们。
 
-        如果你更改了认证路由的基础路径，请确保相应地更新重定向 URL。
-    </Step>
+    1. 点击 "Create App" 或 "Create Another App"
+    2. 选择 "web app" 作为应用程序类型
+    3. 将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/reddit` 用于本地开发
+    4. 对于生产环境，将其设置为应用程序的域名（例如：`https://example.com/api/auth/callback/reddit`）
+    5. 创建应用后，您将获得客户端 ID（位于应用名称下方）和客户端密钥
 
-    <Step>
-        ### 配置提供者
-        要配置提供者，你需要导入该提供者并将其传递给认证实例的 `socialProviders` 选项。
+    如果更改了认证路由的基本路径，请确保相应更新重定向 URL。
+  </Step>
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
-        
-        export const auth = betterAuth({
-            socialProviders: {
-                reddit: {
-                    clientId: process.env.REDDIT_CLIENT_ID as string,
-                    clientSecret: process.env.REDDIT_CLIENT_SECRET as string,
-                },
+  <Step>
+    ### 配置提供者
+
+    要配置提供者，您需要导入提供者并将其传递给 `socialProviders` 选项。
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            reddit: {
+                clientId: process.env.REDDIT_CLIENT_ID as string,
+                clientSecret: process.env.REDDIT_CLIENT_SECRET as string,
             },
+        },
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 使用 Reddit 登录
+
+    要使用 Reddit 登录，可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
+
+    * `provider`: 要使用的提供者，应设置为 `reddit`。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    const authClient = createAuthClient()
+
+    const signIn = async () => {
+        const data = await authClient.signIn.social({
+            provider: "reddit"
         })
-        ```
-    </Step>
-
-    <Step>
-        ### 使用 Reddit 登录
-        要使用 Reddit 登录，你可以调用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
-        - `provider`：要使用的提供者。应设置为 `reddit`。
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        const authClient = createAuthClient()
-        
-        const signIn = async () => {
-            const data = await authClient.signIn.social({
-                provider: "reddit"
-            })
-        }
-        ```
-    </Step>
+    }
+    ```
+  </Step>
 </Steps>
 
 ## 额外配置
 
 ### 权限范围（Scopes）
-默认情况下，Reddit 提供基本的用户信息。如果你需要更多权限，可以在认证配置中指定 scopes：
+
+默认情况下，Reddit 提供基本的用户信息。如果需要额外权限，可以在认证配置中指定权限范围：
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
@@ -72,10 +77,11 @@ export const auth = betterAuth({
 ```
 
 常见的 Reddit 权限范围包括：
-- `identity`：访问基本账户信息
-- `read`：访问帖子和评论
-- `submit`：提交帖子和评论
-- `subscribe`：管理子板块订阅
-- `history`：访问投票历史
+
+* `identity`: 访问基本账户信息
+* `read`: 访问帖子和评论
+* `submit`: 提交帖子和评论
+* `subscribe`: 管理子版块订阅
+* `history`: 访问投票历史
 
 完整的权限范围列表，请参阅 [Reddit OAuth2 文档](https://www.reddit.com/dev/api/oauth)。

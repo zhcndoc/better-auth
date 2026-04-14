@@ -4,38 +4,38 @@ description: LINE 提供者的设置和使用。
 ---
 
 <Steps>
-    <Step>
-        ### 获取你的 LINE 凭证
+  <Step>
+    ### 获取你的 LINE 凭证
 
-        1. 在 LINE 开发者控制台创建一个频道。
-        2. 记录你的频道 ID（client_id）和频道密钥（client_secret）。
-        3. 在频道设置中添加你的重定向 URI，例如本地开发时使用 `http://localhost:3000/api/auth/callback/line`。
-        4. 启用所需的权限范围（至少 `openid`；如果需要姓名、头像、邮箱，添加 `profile` 和 `email`）。
+    1. 在 LINE Developers Console 中创建一个频道。
+    2. 记下你的 Channel ID（client\_id）和 Channel secret（client\_secret）。
+    3. 在频道设置中，添加你的 Redirect URI，例如 `http://localhost:3000/api/auth/callback/line` 用于本地开发。
+    4. 启用所需的作用域（至少 `openid`；如果需要名称、头像或电子邮件，则添加 `profile`、`email`）。
 
-        详情请参阅 LINE Login v2.1 参考文档：[`https://developers.line.biz/en/reference/line-login/#issue-access-token`]
-    </Step>
+    详细信息请参考 [LINE Login v2.1 参考文档](https://developers.line.biz/en/reference/line-login/#issue-access-token)。
+  </Step>
 
-    <Step>
-        ### 配置提供者
+  <Step>
+    ### 配置提供者
 
-        将你的 LINE 凭证添加到认证配置中的 `socialProviders.line`。
+    将你的 LINE 凭证添加到 `socialProviders.line` 的身份验证配置中。
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth";
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
 
-        export const auth = betterAuth({
-          socialProviders: {
-            line: {
-              clientId: process.env.LINE_CLIENT_ID as string,
-              clientSecret: process.env.LINE_CLIENT_SECRET as string,
-              // redirectURI: "https://your.app/api/auth/callback/line", // 取消注释以使用自定义重定向 URI
-              // scope: ["custom"], // 取消注释以添加额外权限范围
-              // disableDefaultScope: true, // 取消注释以替换默认权限范围 [`openid`, `profile`, `email`]
-            },
-          },
-        });
-        ```
-    </Step>
+    export const auth = betterAuth({
+      socialProviders: {
+        line: {
+          clientId: process.env.LINE_CLIENT_ID as string,
+          clientSecret: process.env.LINE_CLIENT_SECRET as string,
+          // redirectURI: "https://your.app/api/auth/callback/line", // 取消注释以使用自定义重定向 URI
+          // scope: ["custom"], // 取消注释以添加额外作用域
+          // disableDefaultScope: true, // 取消注释以替换默认作用域 [`openid`, `profile`, `email`]
+        },
+      },
+    });
+    ```
+  </Step>
 </Steps>
 
 ## 使用方法
@@ -55,7 +55,7 @@ async function signInWithLINE() {
 
 ### 使用 LINE ID Token 登录（可选）
 
-如果你在客户端取得了 LINE 的 ID Token，可以直接使用它登录，无需重定向。
+如果你在客户端获得了 LINE 的 ID Token，可以直接使用它登录，无需重定向。
 
 ```ts title="auth-client.ts"
 await authClient.signIn.social({
@@ -69,11 +69,11 @@ await authClient.signIn.social({
 
 ### 注意事项
 
-- 默认权限范围包含 `openid profile email`。根据需要通过提供者选项调整。
-- 请确保重定向 URI 与 LINE 开发者控制台配置的值完全匹配。
-- LINE ID Token 的验证使用官方端点，并按照规范检查受众和可选的 nonce。
+* 默认作用域包括 `openid profile email`。可根据需要通过提供者选项进行调整。
+* 确保重定向 URI 与 LINE Developers Console 中配置的值完全匹配。
+* LINE ID Token 验证使用官方端点，并按照规范检查受众（audience）和可选的 nonce。
 
-设计登录按钮？请遵循 LINE 的按钮[指南](https://developers.line.biz/en/docs/line-login/login-button/)。
+要设计登录按钮？请遵循 LINE 按钮的[指南](https://developers.line.biz/en/docs/line-login/login-button/)。
 
 ## 多频道支持
 

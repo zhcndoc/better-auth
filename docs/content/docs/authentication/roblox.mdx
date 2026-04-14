@@ -4,48 +4,53 @@ description: Roblox 提供程序的设置和使用。
 ---
 
 <Steps>
-    <Step> 
-        ### 获取您的 Roblox 凭据
-        从 [Roblox 创作者中心](https://create.roblox.com/dashboard/credentials?activeTab=OAuthTab) 获取您的 Roblox 凭据。
+  <Step>
+    ### 获取 Roblox 凭证
 
-        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/roblox` 用于本地开发。对于生产环境，您应将其设置为您的应用程序的 URL。如果您更改了身份认证路由的基础路径，应相应地更新重定向 URL。
-        
-        <Callout type="info">
-            Roblox API 不提供电子邮件地址。作为替代，用户的 `email` 字段将使用 `preferred_username` 的值。
-        </Callout>
-    </Step>
+    从 [Roblox Creator Hub](https://create.roblox.com/dashboard/credentials?activeTab=OAuthTab) 获取 Roblox 凭证。
+
+    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/roblox` 用于本地开发。在生产环境中，应将其设置为应用程序的 URL。如果更改了认证路由的基本路径，需要相应地更新重定向 URL。
+
+    <Callout type="info">
+      Roblox API 不提供电子邮件地址。作为变通方法，用户的 `email` 字段使用 `preferred_username` 值代替。
+    </Callout>
+  </Step>
 
   <Step>
-        ### 配置提供程序
-        要配置提供程序，您需要导入提供程序模块并将其传递给身份认证实例的 `socialProviders` 选项。
+    ### 配置提供程序
 
-        ```ts title="auth.ts"  
-        import { betterAuth } from "better-auth" 
-        
-        export const auth = betterAuth({
-            socialProviders: {
-                roblox: { // [!code highlight]
-                    clientId: process.env.ROBLOX_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.ROBLOX_CLIENT_SECRET as string, // [!code highlight]
-                }, // [!code highlight]
-            },
+    要配置提供程序，需要导入提供程序并将其传递给 `socialProviders` 选项。
+
+    ```ts title="auth.ts"  
+    import { betterAuth } from "better-auth" 
+
+    export const auth = betterAuth({
+        socialProviders: {
+            roblox: { // [!code highlight]
+                clientId: process.env.ROBLOX_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.ROBLOX_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 使用 Roblox 登录
+
+    要使用 Roblox 登录，可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+
+    * `provider`: 要使用的提供程序，应设置为 `roblox`。
+
+    ```ts title="auth-client.ts"  
+    import { createAuthClient } from "better-auth/client"
+    const authClient =  createAuthClient()
+
+    const signIn = async () => {
+        const data = await authClient.signIn.social({
+            provider: "roblox"
         })
-        ```
-    </Step>
-       <Step>
-        ### 使用 Roblox 登录 
-        要使用 Roblox 登录，您可以通过客户端使用 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
-        - `provider`：要使用的提供程序。应设置为 `roblox`。
-
-        ```ts title="auth-client.ts"  
-        import { createAuthClient } from "better-auth/client"
-        const authClient =  createAuthClient()
-        
-        const signIn = async () => {
-            const data = await authClient.signIn.social({
-                provider: "roblox"
-            })
-        }
-        ```
-    </Step>
+    }
+    ```
+  </Step>
 </Steps>

@@ -9,15 +9,13 @@ description: 关于如何为 BetterAuth 贡献代码的简明指南
 
 在开始之前，这里有一些重要资源：
 
-* 浏览我们现有的 <Link href="https://github.com/better-auth/better-auth/issues">问题</Link> 和 <Link href="https://github.com/better-auth/better-auth/pulls">拉取请求</Link>
-* 加入我们的 <Link href="https://discord.gg/better-auth">Discord 社区讨论</Link>
-
-## 开发环境搭建
+* 查看我们的现有 <Link href="https://github.com/better-auth/better-auth/issues">问题</Link> 和 <Link href="https://github.com/better-auth/better-auth/pulls">拉取请求</Link>
+* 在 <Link href="https://discord.gg/better-auth">Discord</Link> 中参与社区讨论
 
 开始开发前：
 
 <Callout type="warn">
-  请确保你已安装 <Link href="https://nodejs.org/en/download">Node.JS</Link> ，建议使用 LTS 版本。
+  请确保你已安装 <Link href="https://nodejs.org/en/download">Node.JS</Link>，建议使用 LTS 版本。
 </Callout>
 
 <Steps>
@@ -26,14 +24,14 @@ description: 关于如何为 BetterAuth 贡献代码的简明指南
 
     访问 [https://github.com/better-auth/better-auth](https://github.com/better-auth/better-auth)
 
-    点击右上角的 “Fork” 按钮。
+    点击右上角“Fork”按钮。
   </Step>
 
   <Step>
     ### 2. 克隆你的 Fork
 
     ```bash
-    # 用你的 GitHub 用户名替换 YOUR-USERNAME
+    # 将 YOUR-USERNAME 替换为你的 GitHub 用户名
     git clone https://github.com/YOUR-USERNAME/better-auth.git
     cd better-auth
     ```
@@ -42,7 +40,7 @@ description: 关于如何为 BetterAuth 贡献代码的简明指南
   <Step>
     ### 3. 安装依赖
 
-    请确保你已经安装了 <Link href="https://pnpm.io/installation">pnpm</Link>！
+    确保已安装 <Link href="https://pnpm.io/installation">pnpm</Link>！
 
     ```bash
     pnpm install
@@ -50,9 +48,9 @@ description: 关于如何为 BetterAuth 贡献代码的简明指南
   </Step>
 
   <Step>
-    ### 4. 准备环境变量文件
+    ### 4. 准备环境文件
 
-    复制示例 env 文件创建新的 `.env` 文件。
+    复制示例环境文件以创建新的 `.env` 文件。
 
     ```bash
     cp -n ./docs/.env.example ./docs/.env
@@ -69,10 +67,10 @@ description: 关于如何为 BetterAuth 贡献代码的简明指南
     ### 1. 创建新分支
 
     ```bash
-    # 添加上游远程（如果未添加）
+    # 添加上游远程仓库（如果尚未添加）
     git remote add upstream https://github.com/better-auth/better-auth.git
 
-    # 确保你在 main 分支上
+    # 确保你在 main 分支
     git checkout main
 
     # 拉取最新更改
@@ -102,21 +100,19 @@ description: 关于如何为 BetterAuth 贡献代码的简明指南
   <Step>
     ### 3. 进行更改
 
-    * 修改代码库。
+    * 对代码库进行更改。
 
-    * 如需要，编写测试。（关于测试的更多内容请见 <Link href="/docs/reference/contributing#testing">这里</Link>）
+    * 如有需要，编写测试。（阅读有关测试的更多信息 <Link href="/docs/reference/contributing#testing">这里</Link>）
 
-    * 更新文档。（关于文档的更多内容请见 <Link href="/docs/reference/contributing#documentation">这里</Link>）
+    * 更新文档。（阅读有关文档的更多信息 <Link href="/docs/reference/contributing#documentation">这里</Link>）
   </Step>
 </Steps>
 
-### 问题和 Bug 修复
+### 问题与错误修复
 
-* 查看我们的 [GitHub issues](https://github.com/better-auth/better-auth/issues) 中标注为 `good first issue` 的任务
-* 报告 Bug 时请包含复现步骤和预期行为
-* 在你希望参与的问题上留言，以避免重复工作
-
-### 框架集成
+* 查看我们的 [GitHub 问题](https://github.com/better-auth/better-auth/issues)，寻找标记为 `good first issue` 的问题
+* 报告错误时，请包含重现步骤和预期行为
+* 在你希望处理的问题上留言，以避免重复工作
 
 欢迎为更多框架贡献支持：
 
@@ -124,21 +120,23 @@ description: 关于如何为 BetterAuth 贡献代码的简明指南
 * 保持集成方案简洁且易于维护
 * 所有集成目前都在主包中
 
-### 插件开发
+* 重点关注尽可能与框架无关的解决方案
+* 保持集成简洁且易于维护
+* 所有集成目前都位于主包中
 
 * 核心插件：请先开 issue 讨论你的想法
 * 社区插件：可独立开发
 * 遵循我们的插件架构指南
 
-### 文档
-
 * 修正拼写和错误
 * 添加示例，澄清现有内容
 * 确保文档与代码更改同步更新
 
-## 测试
+* 修正拼写和错误
+* 添加示例并澄清现有内容
+* 确保文档随着代码更改而更新
 
-我们使用 Vitest 作为测试工具。请将测试文件放置在对应源码文件旁：
+我们使用 Vitest 作为测试工具。请将测试文件放置在对应的源代码文件旁边：
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -147,7 +145,7 @@ import { getTestInstance } from "./test-utils/test-instance";
 describe("Feature", () => {
     it("should work as expected", async () => {
         const { client } = await getTestInstance();
-        // 这里写测试代码
+        // 在这里编写测试代码
         expect(result).toBeDefined();
     });
 });
@@ -177,17 +175,17 @@ await runWithDefaultUser(async (headers) => {
 ### 测试最佳实践
 
 * 编写清晰的提交信息
-* 更新文档以反映更改
-* 为新功能添加测试
-* 遵循我们的编码规范
+* 更新文档以反映你的更改
+* 为新功能编写测试
+* 遵循我们的编码标准
 * 保持拉取请求专注于单一更改
 
 ## 需要帮助？
 
 请随时寻求帮助！你可以：
 
-* 提交 <Link href="https://github.com/better-auth/better-auth/issues">issue</Link> 提问
+* 提出 <Link href="https://github.com/better-auth/better-auth/issues">问题</Link>
 * 加入我们的 <Link href="https://discord.gg/better-auth">社区讨论</Link>
 * 联系项目维护者
 
-感谢你为 Better Auth 做出的贡献！
+感谢你为 Better Auth 贡献代码！

@@ -39,4 +39,5 @@ Better Auth 期望回调路由的格式为 `/api/auth/callback/<provider>`。
 
 ## 需要注意的边缘情况
 
-* 尾部斜杠规范化可能会影响路由，比如某些框架将 `/callback/google/` 和 `/callback/google` 视为不同路径，需配置行为一致。
+* Trailing slash normalization may alter routing if your framework treats `/callback/google/` differently
+  from `/callback/google`. Configure consistent behavior.

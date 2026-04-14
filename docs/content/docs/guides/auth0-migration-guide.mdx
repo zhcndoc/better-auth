@@ -6,680 +6,699 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
 在本指南中，我们将介绍如何将项目从 Auth0 迁移到 Better Auth —— 包括支持适当哈希的邮箱/密码、社交/外部账户、双因素认证等。
 
 <Callout type="warn">
-此迁移将使所有活动会话失效。当前本指南未展示如何迁移组织（Organizations），但通过额外步骤和 [Organization](/docs/plugins/organization) 插件应可实现。
+  此迁移将使所有活跃会话失效。当前本指南未展示如何迁移组织，但可以通过额外步骤和 [组织](/docs/plugins/organization) 插件实现。
 </Callout>
 
 ## 迁移前准备
 
-开始迁移流程前，请先在项目中设置 Better Auth。请参照[安装指南](/docs/installation)开始。
+在开始迁移流程之前，请先在项目中设置 Better Auth。请参照[安装指南](/docs/installation)开始。
 
 <Steps>
-<Step>
-### 连接数据库
+  <Step>
+    ### 连接到数据库
 
-你需要连接数据库以迁移用户和账户。你可以使用任何数据库，但本示例使用 PostgreSQL。
+    你需要连接到数据库以迁移用户和账户。可以使用任意数据库，但本示例使用 PostgreSQL。
 
-```package-install
-npm install pg
-```
+    ```package-install
+    npm install pg
+    ```
 
-然后你可以使用以下代码连接数据库。
+    然后可以使用以下代码连接到数据库。
 
-```ts title="auth.ts"
-import { Pool } from "pg";
+    ```ts title="auth.ts"
+    import { Pool } from "pg";
 
-export const auth = betterAuth({
-    database: new Pool({ 
-        connectionString: process.env.DATABASE_URL 
-    }),
-})
-```
-</Step>
-<Step>
-### 启用邮箱和密码（可选）
+    export const auth = betterAuth({
+        database: new Pool({ 
+            connectionString: process.env.DATABASE_URL 
+        }),
+    })
+    ```
+  </Step>
 
-在你的认证配置中启用邮箱和密码，并实现发送验证邮件、重置密码邮件等自定义逻辑。
+  <Step>
+    ### 启用邮箱和密码（可选）
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
+    在你的认证配置中启用邮箱和密码，并自行实现发送验证邮件、重置密码邮件等逻辑。
 
-export const auth = betterAuth({
-    database: new Pool({ 
-        connectionString: process.env.DATABASE_URL 
-    }),
-    emailAndPassword: { // [!code highlight]
-        enabled: true, // [!code highlight]
-    }, // [!code highlight]
-    emailVerification: {
-      sendVerificationEmail: async({ user, url })=>{
-        // 在此实现发送邮箱验证的逻辑
-      }
-    },
-})
-```
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
 
-更多配置选项请查看[邮箱和密码](/docs/authentication/email-password)。
-</Step>
-<Step>
-### 设置社交登录提供者（可选）
-
-在你的认证配置中添加你在 Auth0 项目中启用的社交提供者。
-
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-
-export const auth = betterAuth({
-    database: new Pool({ 
-        connectionString: process.env.DATABASE_URL 
-    }),
-    emailAndPassword: { 
-        enabled: true,
-    },
-    socialProviders: { // [!code highlight]
-        google: { // [!code highlight]
-            clientId: process.env.GOOGLE_CLIENT_ID, // [!code highlight]
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET, // [!code highlight]
+    export const auth = betterAuth({
+        database: new Pool({ 
+            connectionString: process.env.DATABASE_URL 
+        }),
+        emailAndPassword: { // [!code highlight]
+            enabled: true, // [!code highlight]
         }, // [!code highlight]
-        github: { // [!code highlight]
-            clientId: process.env.GITHUB_CLIENT_ID, // [!code highlight]
-            clientSecret: process.env.GITHUB_CLIENT_SECRET, // [!code highlight]
-        } // [!code highlight]
-    } // [!code highlight]
-})
-```
-</Step>
-<Step>
-### 添加插件（可选）
-
-根据需要，你可以在认证配置中添加以下插件。
-
-[Admin](/docs/plugins/admin) 插件允许你管理用户、用户模拟及应用级角色和权限。
-
-[Two Factor](/docs/plugins/2fa) 插件允许你为应用添加双因素认证。
-
-[Username](/docs/plugins/username) 插件允许你为应用添加用户名认证。
-
-```ts title="auth.ts"
-import { Pool } from "pg";
-import { betterAuth } from "better-auth";
-import { admin, twoFactor, username } from "better-auth/plugins";
-
-export const auth = betterAuth({
-    database: new Pool({ 
-        connectionString: process.env.DATABASE_URL 
-    }),
-    emailAndPassword: { 
-        enabled: true,
-        password: {
-            verify: (data) => {
-                // 处理密码验证时可能遇到的特殊情况
-            }
-        }
-    },
-    socialProviders: {
-        google: {
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        emailVerification: {
+          sendVerificationEmail: async({ user, url })=>{
+            // 在这里实现发送邮箱验证的逻辑
+          }
         },
-        github: {
-            clientId: process.env.GITHUB_CLIENT_ID!,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-        }
-    },
-    plugins: [admin(), twoFactor(), username()], // [!code highlight]
-})
-```
-</Step>
-<Step>
-### 生成 Schema
+    })
+    ```
 
-如果你使用自定义数据库适配器，生成 schema：
+    请参考 [邮箱和密码](/docs/authentication/email-password) 获取更多配置选项。
+  </Step>
 
-```sh
-npx auth generate
-```
+  <Step>
+    ### 设置社交登录提供者（可选）
 
-如果使用默认适配器，可以执行：
+    在你的认证配置中添加已在 Auth0 项目中启用的社交提供者。
 
-```sh
-npx auth migrate
-```
-</Step>
-<Step>
-### 安装依赖
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
 
-安装迁移所需的依赖：
+    export const auth = betterAuth({
+        database: new Pool({ 
+            connectionString: process.env.DATABASE_URL 
+        }),
+        emailAndPassword: { 
+            enabled: true,
+        },
+        socialProviders: { // [!code highlight]
+            google: { // [!code highlight]
+                clientId: process.env.GOOGLE_CLIENT_ID, // [!code highlight]
+                clientSecret: process.env.GOOGLE_CLIENT_SECRET, // [!code highlight]
+            }, // [!code highlight]
+            github: { // [!code highlight]
+                clientId: process.env.GITHUB_CLIENT_ID, // [!code highlight]
+                clientSecret: process.env.GITHUB_CLIENT_SECRET, // [!code highlight]
+            } // [!code highlight]
+        } // [!code highlight]
+    })
+    ```
+  </Step>
 
-```bash
-npm install auth0
-```
-</Step>
-<Step>
-### 创建迁移脚本
+  <Step>
+    ### 添加插件（可选）
 
-在 `scripts` 文件夹下创建新文件 `migrate-auth0.ts`，添加以下代码：
+    可以根据需要向认证配置中添加以下插件。
 
-<Callout type="info">
-你可以不使用 Management API，而是利用 Auth0 的批量用户导出功能，直接将导出的 JSON 数据赋值给 `auth0Users` 数组。这在需要迁移密码哈希和完整用户数据时非常有用，这些数据 Management API 无法获取。
+    [管理](/docs/plugins/admin) 插件可用于管理用户、用户模拟、应用级角色和权限。
 
-**重要说明：**
-- 密码哈希导出仅对 Auth0 企业用户开放
-- 免费计划用户无法导出密码哈希，需提交支持工单
-- 详细信息请参阅 [Auth0 批量用户导出文档](https://auth0.com/docs/manage-users/user-migration/bulk-user-exports)
-- 密码哈希导出详情请参考 [导出密码哈希](https://auth0.com/docs/troubleshoot/customer-support/manage-subscriptions/export-data#user-passwords)
+    [双因素认证](/docs/plugins/2fa) 插件可用于为应用添加双因素认证。
 
-示例：
-```ts
-// 用你的导出用户 JSON 数据替换此处
-const auth0Users = [
-  {
-    "email": "helloworld@gmail.com",
-    "email_verified": false,
-    "name": "Hello world",
-    // 注意：密码哈希仅企业用户可见
-    "password_hash": "$2b$10$w4kfaZVjrcQ6ZOMiG.M8JeNvnVQkPKZV03pbDUHbxy9Ug0h/McDXi",
-    // ... 其他用户数据
-  }
-];
-```
-</Callout>
+    [用户名](/docs/plugins/username) 插件可用于为应用添加用户名认证。
 
-```ts title="scripts/migrate-auth0.ts"
-import { ManagementClient } from 'auth0';
-import { generateRandomString, symmetricEncrypt } from "better-auth/crypto";
-import { auth } from '@/lib/auth';
+    ```ts title="auth.ts"
+    import { Pool } from "pg";
+    import { betterAuth } from "better-auth";
+    import { admin, twoFactor, username } from "better-auth/plugins";
 
-const auth0Client = new ManagementClient({
-    domain: process.env.AUTH0_DOMAIN!,
-    clientId: process.env.AUTH0_CLIENT_ID!,
-    clientSecret: process.env.AUTH0_SECRET!,
-});
-
-function safeDateConversion(timestamp?: string | number): Date {
-    if (!timestamp) return new Date();
-
-    const numericTimestamp = typeof timestamp === 'string' ? Date.parse(timestamp) : timestamp;
-
-    const milliseconds = numericTimestamp < 1000000000000 ? numericTimestamp * 1000 : numericTimestamp;
-
-    const date = new Date(milliseconds);
-
-    if (isNaN(date.getTime())) {
-        console.warn(`无效时间戳: ${timestamp}，回退到当前日期`);
-        return new Date();
-    }
-
-    // 检查不合理的日期（2000 年前或 2100 年后）
-    const year = date.getFullYear();
-    if (year < 2000 || year > 2100) {
-        console.warn(`可疑年份: ${year}，回退到当前日期`);
-        return new Date();
-    }
-
-    return date;
-}
-
-// 生成双因素认证备份码的辅助函数
-async function generateBackupCodes(secret: string) {
-    const key = secret;
-    const backupCodes = Array.from({ length: 10 })
-        .fill(null)
-        .map(() => generateRandomString(10, "a-z", "0-9", "A-Z"))
-        .map((code) => `${code.slice(0, 5)}-${code.slice(5)}`);
-
-    const encCodes = await symmetricEncrypt({
-        data: JSON.stringify(backupCodes),
-        key: key,
-    });
-    return encCodes;
-}
-
-function mapAuth0RoleToBetterAuthRole(auth0Roles: string[]) {
-    if (typeof auth0Roles === 'string') return auth0Roles;
-    if (Array.isArray(auth0Roles)) return auth0Roles.join(',');
-}
-// 迁移密码的辅助函数，支持自定义哈希和算法
-async function migratePassword(auth0User: any) {
-    if (auth0User.password_hash) {
-        if (auth0User.password_hash.startsWith('$2a$') || auth0User.password_hash.startsWith('$2b$')) {
-            return auth0User.password_hash;
-        }
-    }
-
-    if (auth0User.custom_password_hash) {
-        const customHash = auth0User.custom_password_hash;
-
-        if (customHash.algorithm === 'bcrypt') {
-            const hash = customHash.hash.value;
-            if (hash.startsWith('$2a$') || hash.startsWith('$2b$')) {
-                return hash;
+    export const auth = betterAuth({
+        database: new Pool({ 
+            connectionString: process.env.DATABASE_URL 
+        }),
+        emailAndPassword: { 
+            enabled: true,
+            password: {
+                verify: (data) => {
+                    // 用于验证密码时的边缘情况处理
+                }
             }
-        }
-
-        return JSON.stringify({
-            algorithm: customHash.algorithm,
-            hash: {
-                value: customHash.hash.value,
-                encoding: customHash.hash.encoding || 'utf8',
-                ...(customHash.hash.digest && { digest: customHash.hash.digest }),
-                ...(customHash.hash.key && {
-                    key: {
-                        value: customHash.hash.key.value,
-                        encoding: customHash.hash.key.encoding || 'utf8'
-                    }
-                })
+        },
+        socialProviders: {
+            google: {
+                clientId: process.env.GOOGLE_CLIENT_ID!,
+                clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
             },
-            ...(customHash.salt && {
-                salt: {
-                    value: customHash.salt.value,
-                    encoding: customHash.salt.encoding || 'utf8',
-                    position: customHash.salt.position || 'prefix'
-                }
-            }),
-            ...(customHash.password && {
-                password: {
-                    encoding: customHash.password.encoding || 'utf8'
-                }
-            }),
-            ...(customHash.algorithm === 'scrypt' && {
-                keylen: customHash.keylen,
-                cost: customHash.cost || 16384,
-                blockSize: customHash.blockSize || 8,
-                parallelization: customHash.parallelization || 1
-            })
-        });
-    }
-
-    return null;
-}
-
-async function migrateMFAFactors(auth0User: any, userId: string | undefined, ctx: any) {
-    if (!userId || !auth0User.mfa_factors || !Array.isArray(auth0User.mfa_factors)) {
-        return;
-    }
-
-    for (const factor of auth0User.mfa_factors) {
-        try {
-            if (factor.totp && factor.totp.secret) {
-                await ctx.adapter.create({
-                    model: "twoFactor",
-                    data: {
-                        userId: userId,
-                        secret: factor.totp.secret,
-                        backupCodes: await generateBackupCodes(factor.totp.secret)
-                    }
-                });
+            github: {
+                clientId: process.env.GITHUB_CLIENT_ID!,
+                clientSecret: process.env.GITHUB_CLIENT_SECRET!,
             }
-        } catch (error) {
-            console.error(`迁移用户 ${userId} 的 MFA 因子失败:`, error);
+        },
+        plugins: [admin(), twoFactor(), username()], // [!code highlight]
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 生成数据库结构
+
+    如果你使用的是自定义数据库适配器，请生成数据库结构：
+
+    ```sh
+    npx auth generate
+    ```
+
+    或者如果你使用的是默认适配器，可以使用以下命令：
+
+    ```sh
+    npx auth migrate
+    ```
+  </Step>
+
+  <Step>
+    ### 安装迁移依赖
+
+    安装迁移所需的依赖：
+
+    ```bash
+    npm install auth0
+    ```
+  </Step>
+
+  <Step>
+    ### 创建迁移脚本
+
+    在 `scripts` 文件夹中创建一个名为 `migrate-auth0.ts` 的新文件，并添加以下代码：
+
+    <Callout type="info">
+      你可以使用 Auth0 的批量用户导出功能，而不是使用管理 API，直接将导出的 JSON 数据传递给 `auth0Users` 数组。这在需要迁移密码哈希和完整用户数据时尤其有用，而这些数据无法通过管理 API 获取。
+
+      **重要说明：**
+
+      * 密码哈希导出仅适用于 Auth0 企业用户
+      * 免费计划用户无法导出密码哈希，需要申请支持工单
+      * 关于批量用户导出的详细信息，请参见 [Auth0 批量用户导出文档](https://auth0.com/docs/manage-users/user-migration/bulk-user-exports)
+      * 关于密码哈希导出的详细信息，请参见 [导出密码哈希](https://auth0.com/docs/troubleshoot/customer-support/manage-subscriptions/export-data#user-passwords)
+
+      示例：
+
+      ```ts
+      // 将此处替换为导出的用户 JSON 数据
+      const auth0Users = [
+        {
+          "email": "helloworld@gmail.com",
+          "email_verified": false,
+          "name": "Hello world",
+          // 注意：password_hash 仅适用于企业用户
+          "password_hash": "$2b$10$w4kfaZVjrcQ6ZOMiG.M8JeNvnVQkPKZV03pbDUHbxy9Ug0h/McDXi",
+          // ... 其他用户数据
+        }
+      ];
+      ```
+    </Callout>
+
+    ```ts title="scripts/migrate-auth0.ts"
+    import { ManagementClient } from 'auth0';
+    import { generateRandomString, symmetricEncrypt } from "better-auth/crypto";
+    import { auth } from '@/lib/auth';
+
+    const auth0Client = new ManagementClient({
+        domain: process.env.AUTH0_DOMAIN!,
+        clientId: process.env.AUTH0_CLIENT_ID!,
+        clientSecret: process.env.AUTH0_SECRET!,
+    });
+
+
+
+    function safeDateConversion(timestamp?: string | number): Date {
+        if (!timestamp) return new Date();
+
+        const numericTimestamp = typeof timestamp === 'string' ? Date.parse(timestamp) : timestamp;
+
+        const milliseconds = numericTimestamp < 1000000000000 ? numericTimestamp * 1000 : numericTimestamp;
+
+        const date = new Date(milliseconds);
+
+        if (isNaN(date.getTime())) {
+            console.warn(`Invalid timestamp: ${timestamp}, falling back to current date`);
+            return new Date();
+        }
+
+        // Check for unreasonable dates (before 2000 or after 2100)
+        const year = date.getFullYear();
+        if (year < 2000 || year > 2100) {
+            console.warn(`Suspicious date year: ${year}, falling back to current date`);
+            return new Date();
+        }
+
+        return date;
+    }
+
+    // Helper function to generate backup codes for 2FA
+    async function generateBackupCodes(secret: string) {
+        const key = secret;
+        const backupCodes = Array.from({ length: 10 })
+            .fill(null)
+            .map(() => generateRandomString(10, "a-z", "0-9", "A-Z"))
+            .map((code) => `${code.slice(0, 5)}-${code.slice(5)}`);
+
+        const encCodes = await symmetricEncrypt({
+            data: JSON.stringify(backupCodes),
+            key: key,
+        });
+        return encCodes;
+    }
+
+    function mapAuth0RoleToBetterAuthRole(auth0Roles: string[]) {
+        if (typeof auth0Roles === 'string') return auth0Roles;
+        if (Array.isArray(auth0Roles)) return auth0Roles.join(',');
+    }
+    // Helper function to migrate password from Auth0 to Better Auth for custom hashes and algorithms
+    async function migratePassword(auth0User: any) {
+        if (auth0User.password_hash) {
+            if (auth0User.password_hash.startsWith('$2a$') || auth0User.password_hash.startsWith('$2b$')) {
+                return auth0User.password_hash;
+            }
+        }
+
+        if (auth0User.custom_password_hash) {
+            const customHash = auth0User.custom_password_hash;
+
+            if (customHash.algorithm === 'bcrypt') {
+                const hash = customHash.hash.value;
+                if (hash.startsWith('$2a$') || hash.startsWith('$2b$')) {
+                    return hash;
+                }
+            }
+
+            return JSON.stringify({
+                algorithm: customHash.algorithm,
+                hash: {
+                    value: customHash.hash.value,
+                    encoding: customHash.hash.encoding || 'utf8',
+                    ...(customHash.hash.digest && { digest: customHash.hash.digest }),
+                    ...(customHash.hash.key && {
+                        key: {
+                            value: customHash.hash.key.value,
+                            encoding: customHash.hash.key.encoding || 'utf8'
+                        }
+                    })
+                },
+                ...(customHash.salt && {
+                    salt: {
+                        value: customHash.salt.value,
+                        encoding: customHash.salt.encoding || 'utf8',
+                        position: customHash.salt.position || 'prefix'
+                    }
+                }),
+                ...(customHash.password && {
+                    password: {
+                        encoding: customHash.password.encoding || 'utf8'
+                    }
+                }),
+                ...(customHash.algorithm === 'scrypt' && {
+                    keylen: customHash.keylen,
+                    cost: customHash.cost || 16384,
+                    blockSize: customHash.blockSize || 8,
+                    parallelization: customHash.parallelization || 1
+                })
+            });
+        }
+
+        return null;
+    }
+
+    async function migrateMFAFactors(auth0User: any, userId: string | undefined, ctx: any) {
+        if (!userId || !auth0User.mfa_factors || !Array.isArray(auth0User.mfa_factors)) {
+            return;
+        }
+
+        for (const factor of auth0User.mfa_factors) {
+            try {
+                if (factor.totp && factor.totp.secret) {
+                    await ctx.adapter.create({
+                        model: "twoFactor",
+                        data: {
+                            userId: userId,
+                            secret: factor.totp.secret,
+                            backupCodes: await generateBackupCodes(factor.totp.secret)
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error(`Failed to migrate MFA factor for user ${userId}:`, error);
+            }
         }
     }
-}
 
-async function migrateOAuthAccounts(auth0User: any, userId: string | undefined, ctx: any) {
-    if (!userId || !auth0User.identities || !Array.isArray(auth0User.identities)) {
-        return;
-    }
+    async function migrateOAuthAccounts(auth0User: any, userId: string | undefined, ctx: any) {
+        if (!userId || !auth0User.identities || !Array.isArray(auth0User.identities)) {
+            return;
+        }
 
-    for (const identity of auth0User.identities) {
-        try {
-            const providerId = identity.provider === 'auth0' ? "credential" : identity.provider.split("-")[0];
-            await ctx.adapter.create({
-                model: "account",
-                data: {
-                    id: `${auth0User.user_id}|${identity.provider}|${identity.user_id}`,
-                    userId: userId,
-                    password: await migratePassword(auth0User),
-                    providerId: providerId || identity.provider,
-                    accountId: identity.user_id,
-                    accessToken: identity.access_token,
-                    tokenType: identity.token_type,
-                    refreshToken: identity.refresh_token,
-                    accessTokenExpiresAt: identity.expires_in ? new Date(Date.now() + identity.expires_in * 1000) : undefined,
-                    // 企业用户可以获取刷新令牌或所有令牌集 - auth0Client.users.getAllTokensets 
-                    refreshTokenExpiresAt: identity.refresh_token_expires_in ? new Date(Date.now() + identity.refresh_token_expires_in * 1000) : undefined,
-
-                    scope: identity.scope,
-                    idToken: identity.id_token,
-                    createdAt: safeDateConversion(auth0User.created_at),
-                    updatedAt: safeDateConversion(auth0User.updated_at)
-                },
-                forceAllowId: true
-            }).catch((error: Error) => {
-                console.error(`为用户 ${userId} 使用提供者 ${providerId} 创建 OAuth 账户失败:`, error);
-                return ctx.adapter.create({
-                    // 如果第一次尝试失败，则尝试不带可选字段创建
+        for (const identity of auth0User.identities) {
+            try {
+                const providerId = identity.provider === 'auth0' ? "credential" : identity.provider.split("-")[0];
+                await ctx.adapter.create({
                     model: "account",
                     data: {
                         id: `${auth0User.user_id}|${identity.provider}|${identity.user_id}`,
                         userId: userId,
-                        password: migratePassword(auth0User),
-                        providerId: providerId,
+                        password: await migratePassword(auth0User),
+                        providerId: providerId || identity.provider,
                         accountId: identity.user_id,
                         accessToken: identity.access_token,
                         tokenType: identity.token_type,
                         refreshToken: identity.refresh_token,
                         accessTokenExpiresAt: identity.expires_in ? new Date(Date.now() + identity.expires_in * 1000) : undefined,
+                        // If you are an enterprise user, you can obtain refresh tokens or all tokensets - auth0Client.users.getAllTokensets 
                         refreshTokenExpiresAt: identity.refresh_token_expires_in ? new Date(Date.now() + identity.refresh_token_expires_in * 1000) : undefined,
+
                         scope: identity.scope,
                         idToken: identity.id_token,
                         createdAt: safeDateConversion(auth0User.created_at),
                         updatedAt: safeDateConversion(auth0User.updated_at)
                     },
                     forceAllowId: true
+                }).catch((error: Error) => {
+                    console.error(`Failed to create OAuth account for user ${userId} with provider ${providerId}:`, error);
+                    return ctx.adapter.create({
+                        // Try creating without optional fields if the first attempt failed
+                        model: "account",
+                        data: {
+                            id: `${auth0User.user_id}|${identity.provider}|${identity.user_id}`,
+                            userId: userId,
+                            password: migratePassword(auth0User),
+                            providerId: providerId,
+                            accountId: identity.user_id,
+                            accessToken: identity.access_token,
+                            tokenType: identity.token_type,
+                            refreshToken: identity.refresh_token,
+                            accessTokenExpiresAt: identity.expires_in ? new Date(Date.now() + identity.expires_in * 1000) : undefined,
+                            refreshTokenExpiresAt: identity.refresh_token_expires_in ? new Date(Date.now() + identity.refresh_token_expires_in * 1000) : undefined,
+                            scope: identity.scope,
+                            idToken: identity.id_token,
+                            createdAt: safeDateConversion(auth0User.created_at),
+                            updatedAt: safeDateConversion(auth0User.updated_at)
+                        },
+                        forceAllowId: true
+                    });
                 });
-            });
 
-            console.log(`成功迁移用户 ${userId} 的 OAuth 账户，提供者: ${providerId}`);
-        } catch (error) {
-            console.error(`迁移用户 ${userId} 的 OAuth 账户失败:`, error);
+                console.log(`Successfully migrated OAuth account for user ${userId} with provider ${providerId}`);
+            } catch (error) {
+                console.error(`Failed to migrate OAuth account for user ${userId}:`, error);
+            }
         }
     }
-}
 
-async function migrateOrganizations(ctx: any) {
-    try {
-        const organizations = await auth0Client.organizations.getAll();
-        for (const org of organizations.data || []) {
-            try {
-                await ctx.adapter.create({
-                    model: "organization",
-                    data: {
-                        id: org.id,
-                        name: org.display_name || org.id,
-                        slug: (org.display_name || org.id).toLowerCase().replace(/[^a-z0-9]/g, '-'),
-                        logo: org.branding?.logo_url,
-                        metadata: JSON.stringify(org.metadata || {}),
-                        createdAt: safeDateConversion(org.created_at),
-                    },
-                    forceAllowId: true
-                });
-                const members = await auth0Client.organizations.getMembers({ id: org.id });
-                for (const member of members.data || []) {
-                    try {
-                        const userRoles = await auth0Client.organizations.getMemberRoles({
+    async function migrateOrganizations(ctx: any) {
+        try {
+            const organizations = await auth0Client.organizations.getAll();
+            for (const org of organizations.data || []) {
+                try {
+                    await ctx.adapter.create({
+                        model: "organization",
+                        data: {
                             id: org.id,
-                            user_id: member.user_id
-                        });
-                        const role = mapAuth0RoleToBetterAuthRole(userRoles.data?.map(r => r.name) || []);
-                        await ctx.adapter.create({
-                            model: "member",
-                            data: {
-                                id: `${org.id}|${member.user_id}`,
-                                organizationId: org.id,
-                                userId: member.user_id,
-                                role: role,
-                                createdAt: new Date()
-                            },
-                            forceAllowId: true
-                        });
+                            name: org.display_name || org.id,
+                            slug: (org.display_name || org.id).toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                            logo: org.branding?.logo_url,
+                            metadata: JSON.stringify(org.metadata || {}),
+                            createdAt: safeDateConversion(org.created_at),
+                        },
+                        forceAllowId: true
+                    });
+                    const members = await auth0Client.organizations.getMembers({ id: org.id });
+                    for (const member of members.data || []) {
+                        try {
+                            const userRoles = await auth0Client.organizations.getMemberRoles({
+                                id: org.id,
+                                user_id: member.user_id
+                            });
+                            const role = mapAuth0RoleToBetterAuthRole(userRoles.data?.map(r => r.name) || []);
+                            await ctx.adapter.create({
+                                model: "member",
+                                data: {
+                                    id: `${org.id}|${member.user_id}`,
+                                    organizationId: org.id,
+                                    userId: member.user_id,
+                                    role: role,
+                                    createdAt: new Date()
+                                },
+                                forceAllowId: true
+                            });
 
-                        console.log(`成功迁移成员 ${member.user_id}，所属组织 ${org.display_name || org.id}`);
-                    } catch (error) {
-                        console.error(`迁移成员 ${member.user_id}（组织 ${org.display_name || org.id}）失败:`, error);
+                            console.log(`Successfully migrated member ${member.user_id} for organization ${org.display_name || org.id}`);
+                        } catch (error) {
+                            console.error(`Failed to migrate member ${member.user_id} for organization ${org.display_name || org.id}:`, error);
+                        }
                     }
+
+                    console.log(`Successfully migrated organization: ${org.display_name || org.id}`);
+                } catch (error) {
+                    console.error(`Failed to migrate organization ${org.display_name || org.id}:`, error);
                 }
-
-                console.log(`成功迁移组织：${org.display_name || org.id}`);
-            } catch (error) {
-                console.error(`迁移组织 ${org.display_name || org.id} 失败:`, error);
             }
+            console.log('Organization migration completed');
+        } catch (error) {
+            console.error('Failed to migrate organizations:', error);
         }
-        console.log('组织迁移完成');
-    } catch (error) {
-        console.error('迁移组织失败:', error);
     }
-}
 
-async function migrateFromAuth0() {
-    try {
-        const ctx = await auth.$context;
-        const isAdminEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "admin");
-        const isUsernameEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "username");
-        const isOrganizationEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "organization");
-        const perPage = 100;
-        const auth0Users: any[] = [];
-        let pageNumber = 0;
+    async function migrateFromAuth0() {
+        try {
+            const ctx = await auth.$context;
+            const isAdminEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "admin");
+            const isUsernameEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "username");
+            const isOrganizationEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "organization");
+            const perPage = 100;
+            const auth0Users: any[] = [];
+            let pageNumber = 0;
 
-        while (true) {
-            try {
-                const params = {
-                    per_page: perPage,
-                    page: pageNumber,
-                    include_totals: true,
-                };
-                const response = (await auth0Client.users.getAll(params)).data as any;
-                const users = response.users || [];
-                if (users.length === 0) break;
-                auth0Users.push(...users);
-                pageNumber++;
+            while (true) {
+                try {
+                    const params = {
+                        per_page: perPage,
+                        page: pageNumber,
+                        include_totals: true,
+                    };
+                    const response = (await auth0Client.users.getAll(params)).data as any;
+                    const users = response.users || [];
+                    if (users.length === 0) break;
+                    auth0Users.push(...users);
+                    pageNumber++;
 
-                if (users.length < perPage) break;
-            } catch (error) {
-                console.error('获取用户时出错:', error);
-                break;
-            }
-        }
-
-
-        console.log(`找到 ${auth0Users.length} 个用户待迁移`);
-
-        for (const auth0User of auth0Users) {
-            try {
-                // 判断是否为基于密码或 OAuth 用户
-                const isOAuthUser = auth0User.identities?.some((identity: any) => identity.provider !== 'auth0');
-                // 两类用户共有的基础数据
-                const baseUserData = {
-                    id: auth0User.user_id,
-                    email: auth0User.email,
-                    emailVerified: auth0User.email_verified || false,
-                    name: auth0User.name || auth0User.nickname,
-                    image: auth0User.picture,
-                    createdAt: safeDateConversion(auth0User.created_at),
-                    updatedAt: safeDateConversion(auth0User.updated_at),
-                    ...(isAdminEnabled ? {
-                        banned: auth0User.blocked || false,
-                        role: mapAuth0RoleToBetterAuthRole(auth0User.roles || []),
-                    } : {}),
-
-                    ...(isUsernameEnabled ? {
-                        username: auth0User.username || auth0User.nickname,
-                    } : {}),
-
-                };
-
-                const createdUser = await ctx.adapter.create({
-                    model: "user",
-                    data: {
-                        ...baseUserData,
-                    },
-                    forceAllowId: true
-                });
-
-                if (!createdUser?.id) {
-                    throw new Error('用户创建失败');
+                    if (users.length < perPage) break;
+                } catch (error) {
+                    console.error('Error fetching users:', error);
+                    break;
                 }
-
-
-                await migrateOAuthAccounts(auth0User, createdUser.id, ctx)
-                console.log(`成功迁移用户: ${auth0User.email}`);
-            } catch (error) {
-                console.error(`迁移用户 ${auth0User.email} 失败:`, error);
             }
+
+
+            console.log(`Found ${auth0Users.length} users to migrate`);
+
+            for (const auth0User of auth0Users) {
+                try {
+                    // Determine if this is a password-based or OAuth user
+                    const isOAuthUser = auth0User.identities?.some((identity: any) => identity.provider !== 'auth0');
+                    // Base user data that's common for both types
+                    const baseUserData = {
+                        id: auth0User.user_id,
+                        email: auth0User.email,
+                        emailVerified: auth0User.email_verified || false,
+                        name: auth0User.name || auth0User.nickname,
+                        image: auth0User.picture,
+                        createdAt: safeDateConversion(auth0User.created_at),
+                        updatedAt: safeDateConversion(auth0User.updated_at),
+                        ...(isAdminEnabled ? {
+                            banned: auth0User.blocked || false,
+                            role: mapAuth0RoleToBetterAuthRole(auth0User.roles || []),
+                        } : {}),
+
+                        ...(isUsernameEnabled ? {
+                            username: auth0User.username || auth0User.nickname,
+                        } : {}),
+
+                    };
+
+                    const createdUser = await ctx.adapter.create({
+                        model: "user",
+                        data: {
+                            ...baseUserData,
+                        },
+                        forceAllowId: true
+                    });
+
+                    if (!createdUser?.id) {
+                        throw new Error('Failed to create user');
+                    }
+
+
+                    await migrateOAuthAccounts(auth0User, createdUser.id, ctx)
+                    console.log(`Successfully migrated user: ${auth0User.email}`);
+                } catch (error) {
+                    console.error(`Failed to migrate user ${auth0User.email}:`, error);
+                }
+            }
+            if (isOrganizationEnabled) {
+                await migrateOrganizations(ctx);
+            }
+            // the reset of migration will be here.
+            console.log('Migration completed successfully');
+        } catch (error) {
+            console.error('Migration failed:', error);
+            throw error;
         }
-        if (isOrganizationEnabled) {
-            await migrateOrganizations(ctx);
-        }
-        // 其余迁移逻辑待补充。
-        console.log('迁移成功完成');
-    } catch (error) {
-        console.error('迁移失败:', error);
-        throw error;
     }
-}
 
-migrateFromAuth0()
-    .then(() => {
-        console.log('迁移完成');
-        process.exit(0);
-    })
-    .catch((error) => {
-        console.error('迁移失败:', error);
-        process.exit(1);
-    }); 
-```
+    migrateFromAuth0()
+        .then(() => {
+            console.log('Migration completed');
+            process.exit(0);
+        })
+        .catch((error) => {
+            console.error('Migration failed:', error);
+            process.exit(1);
+        }); 
+    ```
 
-请确保用你自己的环境变量替换 Auth0 配置：
-- `AUTH0_DOMAIN`
-- `AUTH0_CLIENT_ID`
-- `AUTH0_SECRET`
-</Step>
+    请确保将 Auth0 环境变量替换为你自己的值：
 
-<Step>
-### 运行迁移
+    * `AUTH0_DOMAIN`
+    * `AUTH0_CLIENT_ID`
+    * `AUTH0_SECRET`
+  </Step>
 
-运行迁移脚本：
+  <Step>
+    ### 运行迁移
 
-```sh
-bun run scripts/migrate-auth0.ts # 或使用你喜欢的运行时
-```
+    运行迁移脚本：
 
-<Callout type="warning">
-重要事项：
-1. 先在开发环境测试迁移
-2. 监控迁移过程中的错误
-3. 迁移后验证 Better Auth 中数据的正确性
-4. 迁移完成前保持 Auth0 已安装和配置
-5. 脚本默认处理 bcrypt 密码哈希。对自定义哈希算法，需要修改 `migratePassword` 函数
-</Callout>
+    ```sh
+    bun run scripts/migrate-auth0.ts # or use your preferred runtime
+    ```
 
-</Step>
+    <Callout type="warning">
+      重要注意事项：
 
-<Step>
-### 更改密码哈希算法
+      1. 请先在开发环境中测试迁移
+      2. 监控迁移过程中的错误
+      3. 在迁移完成之前验证 Better Auth 中的数据
+      4. 在迁移完成之前保持 Auth0 安装和配置
+      5. 默认情况下该脚本会处理 bcrypt 密码哈希。对于自定义密码哈希算法，你需要修改 `migratePassword` 函数
+    </Callout>
+  </Step>
 
-Better Auth 默认使用 `scrypt` 算法进行密码哈希。由于 Auth0 使用 `bcrypt`，你需要配置 Better Auth 使用 bcrypt 进行密码验证。
+  <Step>
+    ### 更改密码哈希算法
 
-先安装 bcrypt：
+    默认情况下，Better Auth 使用 `scrypt` 算法来哈希密码。由于 Auth0 使用 `bcrypt`，你需要配置 Better Auth 使用 bcrypt 进行密码验证。
 
-```bash
-npm install bcrypt
-npm install -D @types/bcrypt
-```
+    首先安装 bcrypt：
 
-然后更新你的认证配置：
+    ```bash
+    npm install bcrypt
+    npm install -D @types/bcrypt
+    ```
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import bcrypt from "bcrypt";
+    然后更新你的认证配置：
 
-export const auth = betterAuth({
-   emailAndPassword: {
-       password: {
-           hash: async (password) => {
-               return await bcrypt.hash(password, 10);
-           },
-           verify: async ({ hash, password }) => {
-               return await bcrypt.compare(password, hash);
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
+    import bcrypt from "bcrypt";
+
+    export const auth = betterAuth({
+       emailAndPassword: {
+           password: {
+               hash: async (password) => {
+                   return await bcrypt.hash(password, 10);
+               },
+               verify: async ({ hash, password }) => {
+                   return await bcrypt.compare(password, hash);
+               }
            }
        }
-   }
-})
-```
-</Step>
-<Step>
-### 验证迁移
+    })
+    ```
+  </Step>
 
-迁移完成后，请确认：
-1. 所有用户均已正确迁移
-2. 社交登录连接正常
-3. 基于密码的认证功能可用
-4. 双因素认证设置保持不变（如已启用）
-5. 用户角色与权限映射正确
-</Step>
-<Step>
-### 更新组件
+  <Step>
+    ### 验证迁移
 
-数据迁移完毕后，更新你的组件以使用 Better Auth。以下是登录组件示例：
+    迁移完成后，请验证：
 
-```tsx title="components/auth/sign-in.tsx"
-import { authClient } from "better-auth/client";
+    1. 所有用户都已正确迁移
+    2. 社交登录功能正常
+    3. 基于密码的登录功能正常
+    4. 双因素认证设置已保留（如已启用）
+    5. 用户角色和权限已正确映射
+  </Step>
 
-export const SignIn = () => {
-  const handleSignIn = async () => {
-    const { data, error } = await authClient.signIn.email({
-      email: "helloworld@gmail.com",
-      password: "helloworld",
-    });
-    
-    if (error) {
-      console.error(error);
-      return;
+  <Step>
+    ### 更新组件
+
+    现在数据已迁移，请更新你的组件以使用 Better Auth。以下是一个登录组件的示例：
+
+    ```tsx title="components/auth/sign-in.tsx"
+    import { authClient } from "better-auth/client";
+
+    export const SignIn = () => {
+      const handleSignIn = async () => {
+        const { data, error } = await authClient.signIn.email({
+          email: "helloworld@gmail.com",
+          password: "helloworld",
+        });
+        
+        if (error) {
+          console.error(error);
+          return;
+        }
+        // 处理成功登录
+      };
+
+      return (
+        <form onSubmit={handleSignIn}>
+          <button type="submit">Sign in</button>
+        </form>
+      );
+    };
+    ```
+  </Step>
+
+  <Step>
+    ### 更新中间件
+
+    将你的 Auth0 中间件替换为 Better Auth 的中间件：
+
+    ```ts title="middleware.ts"
+    import { NextRequest, NextResponse } from "next/server";
+    import { getSessionCookie } from "better-auth/cookies";
+
+    export async function middleware(request: NextRequest) {
+      const sessionCookie = getSessionCookie(request);
+      const { pathname } = request.nextUrl;
+
+      if (sessionCookie && ["/login", "/signup"].includes(pathname)) {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+
+      if (!sessionCookie && pathname.startsWith("/dashboard")) {
+        return NextResponse.redirect(new URL("/login", request.url));
+      }
+
+      return NextResponse.next();
     }
-    // 处理登录成功
-  };
 
-  return (
-    <form onSubmit={handleSignIn}>
-      <button type="submit">登录</button>
-    </form>
-  );
-};
-```
-</Step>
-<Step>
-### 更新中间件
+    export const config = {
+      matcher: ["/dashboard", "/login", "/signup"],
+    };
+    ```
+  </Step>
 
-将你的 Auth0 中间件替换为 Better Auth 中间件：
+  <Step>
+    ### 移除 Auth0 依赖
 
-```ts title="middleware.ts"
-import { NextRequest, NextResponse } from "next/server";
-import { getSessionCookie } from "better-auth/cookies";
+    一旦你验证一切在 Better Auth 中正常工作，请移除 Auth0 依赖：
 
-export async function middleware(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request);
-  const { pathname } = request.nextUrl;
-
-  if (sessionCookie && ["/login", "/signup"].includes(pathname)) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  if (!sessionCookie && pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  return NextResponse.next();
-}
-
-export const config = {
-  matcher: ["/dashboard", "/login", "/signup"],
-};
-```
-</Step>
-<Step>
-### 移除 Auth0 依赖
-
-确认 Better Auth 一切正常后，移除 Auth0 相关依赖：
-
-```bash
-npm remove @auth0/auth0-react @auth0/auth0-spa-js @auth0/nextjs-auth0
-```
-</Step>
+    ```bash
+    npm remove @auth0/auth0-react @auth0/auth0-spa-js @auth0/nextjs-auth0
+    ```
+  </Step>
 </Steps>
 
 ## 额外注意事项
 
 ### 密码迁移
-迁移脚本默认处理 bcrypt 密码哈希。如果你在 Auth0 中使用了自定义密码哈希算法，请根据实际情况修改迁移脚本中的 `migratePassword` 函数。
+
+迁移脚本默认处理 bcrypt 密码哈希。如果你在 Auth0 中使用了自定义密码哈希算法，需要修改迁移脚本中的 `migratePassword` 函数以处理你的具体情况。
 
 ### 角色映射
-脚本包含了基础的角色映射函数（`mapAuth0RoleToBetterAuthRole`）。请根据你的 Auth0 角色定义和 Better Auth 角色需求自定义此函数。
+
+脚本包含一个基本的角色映射函数（`mapAuth0RoleToBetterAuthRole`）。请根据你的 Auth0 角色和 Better Auth 角色需求自定义此函数。
 
 ### 速率限制
-迁移脚本支持分页以处理大量用户。你可以根据需要和 Auth0 的速率限制调整 `perPage` 参数。
+
+迁移脚本包含分页功能，用于处理大量用户。请根据你的需求和 Auth0 的速率限制调整 `perPage` 值。
 
 ## 总结
 
 现在！你已成功从 Auth0 迁移到了 Better Auth。
 
-Better Auth 提供了更灵活和丰富的功能 —— 记得深入阅读[文档](/docs)，充分发挥它的潜力。
+Better Auth 提供更大的灵活性和更多功能——请务必探索[文档](/docs)，以充分发挥其潜力。

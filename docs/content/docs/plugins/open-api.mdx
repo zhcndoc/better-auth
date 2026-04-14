@@ -3,17 +3,18 @@ title: 开放 API
 description: Better Auth 的开放 API 参考。
 ---
 
-这是一个提供 Better Auth 开放 API 参考的插件。它展示了由插件和核心添加的所有端点，同时也提供了测试端点的方式。它使用 [Scalar](https://scalar.com/) 来展示开放 API 参考。
+这是一个为 Better Auth 提供开放 API 参考的插件。它会展示所有由插件和核心添加的端点，同时也提供测试端点的方法。该插件使用 [Scalar](https://scalar.com/) 来展示开放 API 参考。
 
 <Callout>
-此插件仍处于开发早期阶段。我们正在努力添加更多功能并完善细节。
+  该插件仍处于开发初期。我们正在为其添加更多功能并填补空白。
 </Callout>
 
 ## 安装
 
 <Steps>
-    <Step>
-    ### 将插件添加到你的 **auth** 配置中
+  <Step>
+    ### 在 **auth** 配置中添加插件
+
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
     import { openAPI } from "better-auth/plugins" // [!code highlight]
@@ -24,27 +25,24 @@ description: Better Auth 的开放 API 参考。
         ]
     })
     ```
-    </Step>
-    <Step>
+  </Step>
+
+  <Step>
     ### 访问 `/api/auth/reference` 查看开放 API 参考
-    
-    每个插件的端点按插件名称分组，核心端点归为 `Default` 组，模型的 Schema 归为 `Models` 组。
+
+    每个插件的端点会按插件名称分组。核心端点会归到 `Default` 组下。模型架构会归到 `Models` 组下。
 
     ![开放 API 参考](/open-api-reference.png)
-    </Step>
-</Steps>    
+  </Step>
+</Steps>
 
 ## 使用
-
-开放 API 参考基于 [OpenAPI 3.0](https://swagger.io/specification/) 规范生成。你可以使用该参考来生成客户端库、文档等。
-
-该参考使用 [Scalar](https://scalar.com/) 库生成。Scalar 提供了查看和测试端点的方式。你可以点击 `Try it out` 按钮并填写所需参数来测试端点。
 
 ![开放 API 参考](/open-api-reference.png)
 
 ### 生成的 Schema
 
-若要直接以 JSON 格式获取生成的开放 API Schema，可以调用 `auth.api.generateOpenAPISchema()`，它会返回一个 JSON 对象格式的开放 API Schema。
+若要以 JSON 格式直接获取生成的开放 API Schema，可以调用 `auth.api.generateOpenAPISchema()`，它将返回一个 JSON 格式的开放 API Schema。
 
 ```ts
 import { auth } from "@/lib/auth"
@@ -55,16 +53,16 @@ console.log(openAPISchema)
 
 ### 在 Scalar 中使用多个来源
 
-如果你使用 Scalar 来做 API 文档，可以将 Better Auth 作为除主 API 外的额外数据来源：
+如果你使用 Scalar 来构建 API 文档，可以将 Better Auth 作为除主 API 外的额外数据来源：
 
-当你使用 Hono 和 Scalar 来做 OpenAPI 文档时，可以通过添加 Better Auth 作为一个来源来集成：
+当你使用 Hono 和 Scalar 来构建 OpenAPI 文档时，可以通过添加 Better Auth 作为来源来集成：
 
 ```ts
 app.get("/docs", Scalar({
   pageTitle: "API Documentation", 
   sources: [
     { url: "/api/open-api", title: "API" },
-    // Better Auth schema 生成端点
+    // Better Auth 架构生成端点
     { url: "/api/auth/open-api/generate-schema", title: "Auth" },
   ],
 }));
@@ -72,12 +70,12 @@ app.get("/docs", Scalar({
 
 ## 配置
 
-`path` - 开放 API 参考服务的路径。默认是 `/api/auth/reference`。你可以改成任何你想要的路径，但请注意它会附加到你的认证服务器的基础路径上。
+`path` - 开放 API 参考服务的路径。默认是 `/api/auth/reference`。你可以修改为你想要的任何路径，但请注意它会附加到你的认证服务器的基础路径上。
 
-`disableDefaultReference` - 若设置为 `true`，将禁用 Scalar 自带的默认开放 API 参考 UI。默认是 `false`。
+`disableDefaultReference` - 如果设置为 `true`，将禁用 Scalar 自带的默认开放 API 参考 UI。默认值为 `false`。
 
-该设置允许你在统一文档界面中同时展示你应用的 API 和 Better Auth 的认证端点。
+此设置允许你在一个统一的文档界面中同时展示你应用的 API 和 Better Auth 的认证端点。
 
 `theme` - 允许你更改开放 API 参考页面的主题。默认是 `default`。
 
-`nonce` - 允许你为内联脚本传递 nonce 字符串，以满足内容安全策略（CSP）的要求。默认是 `undefined`。
+`nonce` - 允许你为内联脚本传递 nonce 字符串，以满足内容安全策略（CSP）的要求。默认值为 `undefined`。

@@ -8,78 +8,79 @@ description: Better Auth 的以太坊登录插件
 ## 安装
 
 <Steps>
-    <Step>
-        ### 添加服务器插件
+  <Step>
+    ### 添加服务器插件
 
-        将 SIWE 插件添加到你的认证配置中：
+    将 SIWE 插件添加到你的认证配置中：
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth";
-        import { siwe } from "better-auth/plugins"; // [!code highlight]
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
+    import { siwe } from "better-auth/plugins"; // [!code highlight]
 
-        export const auth = betterAuth({
-            plugins: [
-                siwe({
-                    domain: "example.com",
-                    emailDomainName: "example.com", // 可选
-                    anonymous: false, // 可选，默认值为 true
-                    getNonce: async () => {
-                        // 在此实现你的 nonce 生成逻辑
-                        return "your-secure-random-nonce";
-                    },
-                    verifyMessage: async (args) => {
-                        // 在此实现你的 SIWE 消息验证逻辑
-                        // 应对消息的签名进行验证
-                        return true; // 签名有效时返回 true
-                    },
-                    ensLookup: async (args) => {
-                        // 可选：实现 ENS 名称和头像查询
-                        return {
-                            name: "user.eth",
-                            avatar: "https://example.com/avatar.png"
-                        };
-                    },
-                }),
-            ],
-        });
-        ```
-    </Step>
-
-    <Step>
-        ### 数据库迁移
-
-        运行迁移或生成 schema，以向数据库中添加必要的字段和表。
-
-        <Tabs items={["migrate", "generate"]}>
-            <Tab value="migrate">
-            ```package-install
-            npx auth migrate
-            ```
-            </Tab>
-            <Tab value="generate">
-            ```package-install
-            npx auth generate
-            ```
-            </Tab>
-        </Tabs>
-        请参考 [Schema](#schema) 部分，手动添加字段。
-    </Step>
-
-    <Step>
-        ### 添加客户端插件
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client";
-        import { siweClient } from "better-auth/client/plugins"; // [!code highlight]
-
-        export const authClient = createAuthClient({
+    export const auth = betterAuth({
         plugins: [
-            siweClient() // [!code highlight]
-        ]
-        });
-        ```
-    </Step>
+            siwe({
+                domain: "example.com",
+                emailDomainName: "example.com", // 可选
+                anonymous: false, // 可选，默认为 true
+                getNonce: async () => {
+                    // 在这里实现你的 nonce 生成逻辑
+                    return "your-secure-random-nonce";
+                },
+                verifyMessage: async (args) => {
+                    // 在这里实现你的 SIWE 消息验证逻辑
+                    // 这应该验证签名是否与消息匹配
+                    return true; // 如果签名有效则返回 true
+                },
+                ensLookup: async (args) => {
+                    // 可选：实现 ENS 查询以获取用户名和头像
+                    return {
+                        name: "user.eth",
+                        avatar: "https://example.com/avatar.png"
+                    };
+                },
+            }),
+        ],
+    });
+    ```
+  </Step>
 
+  <Step>
+    ### 迁移数据库
+
+    运行迁移或生成模式以向数据库添加必要的字段和表。
+
+    <Tabs items={["migrate", "generate"]}>
+      <Tab value="migrate">
+        ```package-install
+        npx auth migrate
+        ```
+      </Tab>
+
+      <Tab value="generate">
+        ```package-install
+        npx auth generate
+        ```
+      </Tab>
+    </Tabs>
+
+    请参阅 [Schema](#schema) 部分以手动添加字段。
+  </Step>
+
+  <Step>
+    ### 添加客户端插件
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client";
+    import { siweClient } from "better-auth/client/plugins"; // [!code highlight]
+
+    export const authClient = createAuthClient({
+    plugins: [
+        siweClient() // [!code highlight]
+    ]
+    });
+    ```
+  </Step>
 </Steps>
 
 ## 使用方法
@@ -93,7 +94,7 @@ import { authClient } from "@/lib/auth-client";
 
 const { data, error } = await authClient.siwe.nonce({
   walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
-  chainId: 1, // Ethereum 主网可选，其他链必填。默认值为 1
+  chainId: 1, // 以太坊主网可选，其他链必填。默认值为 1
 });
 
 if (data) {
@@ -112,7 +113,7 @@ const { data, error } = await authClient.siwe.verify({
   message: "Your SIWE message string",
   signature: "0x...", // 用户钱包签名
   walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
-  chainId: 1, // Ethereum 主网可选，其他链必填，必须与 SIWE 消息中的链 ID 保持一致
+  chainId: 1, // 以太坊主网可选，其他链必填，必须与 SIWE 消息中的链 ID 保持一致
   email: "user@example.com", // 可选，anonymous 为 false 时必填
 });
 
@@ -183,12 +184,12 @@ const { data, error } = await authClient.siwe.verify({
 
 SIWE 插件接受以下配置选项：
 
-- **domain**：你的应用域名（SIWE 消息生成时必填）
-- **emailDomainName**：创建用户账户时的邮箱域名（非匿名模式时使用）。默认取基地址域名
-- **anonymous**：是否允许匿名登录（无需邮箱）。默认值为 `true`
-- **getNonce**：生成每次登录唯一 nonce 的函数。必须返回加密安全的随机字符串，返回类型为 `Promise<string>`
-- **verifyMessage**：验证签署的 SIWE 消息的函数。接收消息详情，需返回 `Promise<boolean>`
-- **ensLookup**：可选，查询以太坊地址对应的 ENS 名称和头像的函数
+* **domain**: 你的应用程序域名（生成 SIWE 消息时必需）
+* **emailDomainName**: 创建用户账户时的电子邮件域名（不使用匿名模式时）。默认为基础 URL 的域名
+* **anonymous**: 是否允许匿名登录（无需电子邮件）。默认值为 `true`
+* **getNonce**: 生成每个登录尝试的唯一 nonce 的函数。你必须实现此函数以返回加密安全的随机字符串。必须返回 `Promise<string>`
+* **verifyMessage**: 验证已签名 SIWE 消息的函数。接收消息详情并应返回 `Promise<boolean>`
+* **ensLookup**: 可选函数，用于查询以太坊地址的 ENS 名称和头像
 
 ### 客户端配置
 

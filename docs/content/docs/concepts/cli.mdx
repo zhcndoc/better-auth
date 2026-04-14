@@ -1,80 +1,79 @@
 ---
 title: CLI
-description: Learn about the Better Auth CLI commands for generating and migrating database schemas, initializing projects, generating secret keys, and gathering diagnostic info.
+description: 了解 Better Auth CLI 命令，用于生成和迁移数据库架构、初始化项目、生成密钥以及收集诊断信息。
 ---
 
-Better Auth 配备了一个内置的 CLI，帮助你管理数据库架构、初始化项目、为应用生成密钥，并收集你的设置的诊断信息。
+Better Auth 内置了一个 CLI，帮助你管理数据库架构、初始化项目、为应用生成密钥，并收集设置的诊断信息。
 
 ## 生成 (Generate)
 
-`generate` 命令创建 Better Auth 所需的架构。如果你使用的是 Prisma 或 Drizzle 等数据库适配器，该命令会为你的 ORM 生成正确的架构。如果你使用内置的 Kysely 适配器，它会生成一个 SQL 文件，你可以直接在数据库上执行。
+`generate` 命令创建 Better Auth 所需的数据库架构。如果你使用的是 Prisma 或 Drizzle 等数据库适配器，该命令会为你的 ORM 生成正确的架构。如果你使用的是内置的 Kysely 适配器，它会生成一个 SQL 文件，可以直接在数据库上执行。
 
-```package-install title="Terminal"
+```package-install title="终端"
 npx auth@latest generate
 ```
 
 ### 选项
 
-- `--output` - 生成的架构保存位置。Prisma 会保存到 prisma/schema.prisma；Drizzle 会保存到项目根目录下的 schema.ts；Kysely 会生成 SQL 文件，保存为项目根目录下的 schema.sql。
-- `--config` - Better Auth 配置文件路径。默认情况下，CLI 会在 **./**、**./utils**、**./lib** 或 `src` 目录下的这些路径中搜索 auth.ts 文件。
-- `--yes` - 跳过确认提示，直接生成架构。
+* `--output` - 生成架构的保存位置。对于 Prisma，会保存在 prisma/schema.prisma；对于 Drizzle，会保存在项目根目录下的 schema.ts；对于 Kysely，会保存为项目根目录下的 schema.sql 文件。
+* `--config` - Better Auth 配置文件的路径。默认情况下，CLI 会在 **./**、**./utils**、**./lib** 或 `src` 目录下的这些目录中搜索 auth.ts 文件。
+* `--yes` - 跳过确认提示并直接生成架构。
 
-## 迁移 (Migrate)
+`migrate` 命令直接将 Better Auth 架构应用到数据库。此功能适用于使用内置 Kysely 适配器的情况。其他适配器需要使用对应 ORM 的迁移工具来应用架构。
 
-`migrate` 命令直接将 Better Auth 架构应用到你的数据库。此功能适用于使用内置 Kysely 适配器的情况。其他适配器需要使用对应 ORM 的迁移工具应用架构。
-
-```package-install title="Terminal"
+```package-install title="终端"
 npx auth@latest migrate
 ```
 
 ### 选项
 
-- `--config` - Better Auth 配置文件路径。默认情况下，CLI 会在 **./**、**./utils**、**./lib** 或 `src` 目录下的这些路径中搜索 auth.ts 文件。
-- `--yes` - 跳过确认提示，直接应用架构。
+* `--config` - Better Auth 配置文件的路径。默认情况下，CLI 会在 **./**、**./utils**、**./lib** 或 `src` 目录下的这些目录中搜索 auth.ts 文件。
+* `--yes` - 跳过确认提示并直接应用架构。
 
 <Callout type="info">
-**使用 PostgreSQL 非默认 schema？**
+  **使用非默认架构的 PostgreSQL？**
 
-migrate 命令会自动检测你配置的 `search_path`，并在正确的 schema 中创建表。详情请参阅 [PostgreSQL 适配器文档](/docs/adapters/postgresql#use-a-non-default-schema)。
+  migrate 命令会自动检测你配置的 `search_path`，并在正确的架构中创建表。配置详情请参见 [PostgreSQL 适配器文档](/docs/adapters/postgresql#use-a-non-default-schema)。
 </Callout>
 
 ## 初始化 (Init)
 
 `init` 命令允许你在项目中初始化 Better Auth。
 
-```package-install title="Terminal"
+```package-install title="终端"
 npx auth@latest init
 ```
 
 ### 选项
 
-- `--name` - 应用名称。（默认为 `package.json` 中的 `name` 属性）
-- `--framework` - 代码库使用的框架。目前仅支持 `Next.js`。
-- `--plugins` - 你想使用的插件。可以用逗号分隔多个插件。
-- `--database` - 你想使用的数据库。目前仅支持 `SQLite`。
-- `--package-manager` - 你想使用的包管理器。目前支持 `npm`、`pnpm`、`yarn`、`bun`（默认为初始化 CLI 时使用的管理器）。
+* `--name` - 应用程序名称（默认为 `package.json` 中的 `name` 属性）。
+* `--framework` - 代码库使用的框架。目前唯一支持的框架是 `Next.js`。
+* `--plugins` - 要使用的插件，可以通过逗号分隔指定多个插件。
+* `--database` - 要使用的数据库。目前唯一支持的数据库是 `SQLite`。
+* `--package-manager` - 要使用的包管理器。目前唯一支持的包管理器是 `npm`、`pnpm`、`yarn`、`bun`（默认为初始化 CLI 时使用的包管理器）。
 
 ## 信息 (Info)
 
-`info` 命令提供 Better Auth 设置和环境的诊断信息，适合调试和寻求支持时共享。
+`info` 命令提供 Better Auth 设置和环境的诊断信息，适合调试和寻求帮助时共享。
 
-```package-install title="Terminal"
+```package-install title="终端"
 npx auth@latest info
 ```
 
 ### 输出内容
 
-该命令显示：
-- **系统**：操作系统、CPU、内存、Node.js 版本
-- **包管理器**：检测到的管理器及版本
-- **Better Auth**：版本及配置（敏感数据自动屏蔽）
-- **框架**：检测到的框架（Next.js、React、Vue 等）
-- **数据库**：数据库客户端及 ORM（Prisma、Drizzle 等）
+该命令会显示以下信息：
+
+* **系统**: 操作系统、CPU、内存、Node.js 版本
+* **包管理器**: 检测到的管理器及其版本
+* **Better Auth**: 版本和配置（敏感数据自动脱敏）
+* **框架**: 检测到的框架（Next.js、React、Vue 等）
+* **数据库**: 数据库客户端和 ORM（Prisma、Drizzle 等）
 
 ### 选项
 
-- `--config` - Better Auth 配置文件路径
-- `--json` - 以 JSON 格式输出，方便共享或程序使用
+* `--config` - Better Auth 配置文件的路径
+* `--json` - 以 JSON 格式输出，便于共享或程序化处理
 
 ### 示例
 
@@ -89,13 +88,13 @@ npx auth@latest info --config ./config/auth.ts
 npx auth@latest info --json > auth-info.json
 ```
 
-敏感数据如密钥、API Key、数据库 URL 会被自动替换为 `[REDACTED]`，确保安全共享。
+敏感数据（如密钥、API 密钥、数据库 URL）会被自动替换为 `[REDACTED]`，确保安全共享。
 
 ## 密钥 (Secret)
 
 CLI 还提供了生成 Better Auth 实例密钥的方法。
 
-```package-install title="Terminal"
+```package-install title="终端"
 npx auth@latest secret
 ```
 
@@ -105,4 +104,4 @@ npx auth@latest secret
 
 如果出现此错误，说明 CLI 无法解析 Better Auth 配置文件中的导入模块。我们正在修复许多此类问题，但在此之前，你可以尝试：
 
-- 移除配置文件中的任何导入别名，改用相对路径。运行完 CLI 后，可以再恢复使用别名。
+* 移除配置文件中的任何导入别名，改用相对路径。运行 CLI 后，可以恢复使用别名。

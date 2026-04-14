@@ -175,11 +175,12 @@ const client = hc<AppType>("http://localhost:8787/", {
 const response = await client.someProtectedEndpoint.$get();
 ```
 
-此配置适用于以下情况：
-- 开发时客户端和服务器处于不同域或端口
-- 生产中执行跨域请求
-- 需要随请求发送认证 Cookie
+这在以下情况下是必要的：
+
+* 你的客户端和服务器在开发期间位于不同的域/端口
+* 你正在进行跨域请求
+* 你需要发送认证 Cookie
 
 `credentials: "include"` 选项告诉 fetch 客户端即使是跨域请求也要发送 Cookie。这需要服务器端的 CORS 配置允许凭证，即设置了 `credentials: true`。
 
-> **注意：** 确保服务器端的 CORS 配置中的 `origin` 值匹配客户端域名，并且在服务器和客户端的配置中都设定了 `credentials: true`。
+> **注意：** 确保你的服务器端 CORS 配置与客户端域名匹配，并且 `credentials: true` 在服务器的 CORS 配置和客户端的 fetch 配置中都已设置。

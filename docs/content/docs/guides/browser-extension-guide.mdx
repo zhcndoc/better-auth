@@ -15,207 +15,198 @@ description: 使用 Better Auth 创建浏览器扩展的逐步指南。
 </Callout>
 
 <Steps>
+  <Step>
+    ## 设置与安装
 
-    <Step>
-        ## 设置与安装
+    使用 TailwindCSS 和 src 目录初始化一个新的 Plasmo 项目。
 
-        使用 TailwindCSS 和 src 目录初始化一个新的 Plasmo 项目。
+    ```bash
+    pnpm create plasmo --with-tailwindcss --with-src
+    ```
 
-        ```bash
-        pnpm create plasmo --with-tailwindcss --with-src
-        ```
+    然后，安装 Better Auth 包。
 
-        然后，安装 Better Auth 包。
+    ```bash
+    pnpm add better-auth
+    ```
 
-        ```bash
-        pnpm add better-auth
-        ```
+    要启动 Plasmo 开发服务器，请运行以下命令。
 
-        启动 Plasmo 开发服务器，运行以下命令。
+    ```bash
+    pnpm dev
+    ```
+  </Step>
 
-        ```bash
-        pnpm dev
-        ```
-    </Step>
+  <Step>
+    ## 配置 tsconfig
 
+    将 `tsconfig.json` 文件配置为包含 `strict` 模式。
 
-    <Step>
-        ## 配置 tsconfig
+    对于此演示，我们还将导入别名从 `~` 改为 `@`，并将其设置为 `src` 目录。
 
-        配置 `tsconfig.json` 文件以启用 `strict` 模式。
-
-        本演示中，我们还将导入路径别名从 `~` 改为 `@` 并指向 `src` 目录。
-
-        ```json title="tsconfig.json"
-        {
-            "compilerOptions": {
-                "paths": {
-                    "@/_": [
-                        "./src/_"
-                    ]
-                },
-                "strict": true,
-                "baseUrl": "."
-            }
-        }
-        ```
-    </Step>
-
-
-    <Step>
-        ## 创建客户端认证实例
-
-        在 `src/auth/auth-client.ts` 新建一个文件并添加以下代码。
-
-       <Files>
-            <Folder name="src" defaultOpen>
-                <Folder name="auth" defaultOpen>
-                    <File name="auth-client.ts" />
-                </Folder>
-            </Folder>
-       </Files>
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/react"
-
-        export const authClient = createAuthClient({
-            baseURL: "http://localhost:3000" /* 你的 Better Auth 后端基础 URL。 */,
-            plugins: [],
-        });
-        ```
-    </Step>
-
-    <Step>
-        ## 配置 manifest
-
-        我们必须确保扩展知道 Better Auth 后端的 URL。
-
-        打开你的 package.json 文件，添加以下内容。
-
-        ```json title="package.json"
-        {
-            //...
-            "manifest": {
-                "host_permissions": [
-                    "https://URL_TO_YOUR_BACKEND" // 本地地址同样可用（例如 http://localhost:3000）
+    ```json title="tsconfig.json"
+    {
+        "compilerOptions": {
+            "paths": {
+                "@/_": [
+                    "./src/_"
                 ]
-            }
+            },
+            "strict": true,
+            "baseUrl": "."
         }
-        ```
-    </Step>
+    }
+    ```
+  </Step>
 
+  <Step>
+    ## 创建客户端认证实例
 
-    <Step>
-        ## 你现在准备好了！
+    在 `src/auth/auth-client.ts` 创建一个新文件，并添加以下代码。
 
-        你已经为浏览器扩展设置好了 Better Auth。
+    <Files>
+      <Folder name="src" defaultOpen>
+        <Folder name="auth" defaultOpen>
+          <File name="auth-client.ts" />
+        </Folder>
+      </Folder>
+    </Files>
 
-        添加你想要的 UI，创造你的理想扩展！
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/react"
 
-        想了解更多客户端 Better Auth API，请查看 <Link href="/docs/concepts/client">客户端文档</Link>。
+    export const authClient = createAuthClient({
+        baseURL: "http://localhost:3000" /* 您的 Better Auth 后端的基础 URL。*/,
+        plugins: [],
+    });
+    ```
+  </Step>
 
-        这里有个快速示例 😎
+  <Step>
+    ## 配置清单文件
 
-        ```tsx title="src/popup.tsx"
-        import { authClient } from "./auth/auth-client"
+    我们必须确保扩展程序知道 Better Auth 后端的 URL。
 
+    打开 package.json 文件，并添加以下代码。
 
-        function IndexPopup() {
-            const {data, isPending, error} = authClient.useSession();
-            if(isPending){
-                return <>加载中...</>
-            }
-            if(error){
-                return <>错误: {error.message}</>
-            }
-            if(data){
-                return <>已登录为 {data.user.name}</>
-            }
+    ```json title="package.json"
+    {
+        //...
+        "manifest": {
+            "host_permissions": [
+                "https://URL_TO_YOUR_BACKEND" // localhost 也可以（例如 http://localhost:3000）
+            ]
         }
+    }
+    ```
+  </Step>
 
-        export default IndexPopup;
-        ```
+  <Step>
+    ## 现在准备就绪！
 
-    </Step>
+    您已经为浏览器扩展设置了 Better Auth。
 
+    添加您想要的 UI 并创建您梦想中的扩展！
 
-    <Step>
-        ## 打包你的扩展
+    要了解更多关于客户端 Better Auth API，请查看 <Link href="/docs/concepts/client">客户端文档</Link>。
 
-        若要获得生产构建，运行以下命令。
+    这里有一个快速示例 😎
 
-        ```bash
-        pnpm build
-        ```
-
-        访问 <Link href="chrome://extensions" target="_blank">chrome://extensions</Link> 并启用开发者模式。
-
-        <img src="https://docs.plasmo.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fdeveloper_mode.76f090f7.png&w=1920&q=75" />
-
-        点击“加载已解压的扩展程序”，导航至你的扩展的 `build/chrome-mv3-dev`（或 `build/chrome-mv3-prod`）目录。
-
-        若要查看你的弹出窗口，点击 Chrome 工具栏的拼图图标，然后点击你的扩展。
-
-        了解更多关于 <Link href="https://docs.plasmo.com/framework#loading-the-extension-in-chrome">打包扩展</Link> 的内容。
-    </Step>
-
-    <Step>
-        ## 配置服务器认证实例
-
-        首先，我们需要你的扩展 URL。
-        
-        扩展 URL 格式如下：`chrome-extension://YOUR_EXTENSION_ID`。
-
-        你可以在 <Link href="chrome://extensions" target="_blank">chrome://extensions</Link> 找到你的扩展 ID。
-
-        <img src="/extension-id.png" width={500} />
-
-        打开服务器的 auth 文件，确保你的扩展 URL 已添加到 `trustedOrigins` 列表中。
+    ```tsx title="src/popup.tsx"
+    import { authClient } from "./auth/auth-client"
 
 
-        ```ts title="server.ts"
-        import { betterAuth } from "better-auth"
-        import { auth } from "@/auth/auth"
+    function IndexPopup() {
+        const {data, isPending, error} = authClient.useSession();
+        if(isPending){
+            return <>Loading...</>
+        }
+        if(error){
+            return <>Error: {error.message}</>
+        }
+        if(data){
+            return <>Signed in as {data.user.name}</>
+        }
+    }
 
-        export const auth = betterAuth({
-            trustedOrigins: ["chrome-extension://YOUR_EXTENSION_ID"],
-        })
-        ```
+    export default IndexPopup;
+    ```
+  </Step>
 
-        如果你开发多个扩展或需要支持不同 ID 的浏览器扩展，可以使用通配符模式：
+  <Step>
+    ## 打包您的扩展
 
-        ```ts title="server.ts"
-        export const auth = betterAuth({
-            trustedOrigins: [
-                // 支持特定扩展 ID
-                "chrome-extension://YOUR_EXTENSION_ID",
-                
-                // 或使用通配符支持多个扩展（安全性较低）
-                "chrome-extension://*"
-            ],
-        })
-        ```
+    要获取生产构建，请运行以下命令。
 
-        <Callout type="warn">
-          使用通配符（例如 `chrome-extension://*`）会降低安全性，因为它信任所有扩展。 
-          更安全的做法是明确列出你信任的每个扩展 ID。仅在开发和测试时使用通配符。
-        </Callout>
-    </Step>
+    ```bash
+    pnpm build
+    ```
 
-    <Step>
-        ## 就这样！
+    打开 <Link href="chrome://extensions" target="_blank">chrome://extensions</Link> 并启用开发者模式。
 
-        所有设置完成！你现在可以开始开发你的扩展了。 🎉
-    </Step>
+    <img src="https://docs.plasmo.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fdeveloper_mode.76f090f7.png&w=1920&q=75" />
 
+    点击“加载已解压的扩展程序”，然后导航到扩展的 `build/chrome-mv3-dev`（或 `build/chrome-mv3-prod`）目录。
+
+    要查看弹出窗口，请点击 Chrome 工具栏上的拼图图标，然后点击您的扩展程序。
+
+    了解更多关于 <Link href="https://docs.plasmo.com/framework#loading-the-extension-in-chrome">在此打包您的扩展</Link>。
+  </Step>
+
+  <Step>
+    ## 配置服务器认证实例
+
+    首先，我们需要您的扩展 URL。
+
+    扩展 URL 格式如下：`chrome-extension://YOUR_EXTENSION_ID`。
+
+    您可以在 <Link href="chrome://extensions" target="_blank">chrome://extensions</Link> 找到您的扩展 ID。
+
+    <img src="/extension-id.png" width={500} />
+
+    转到服务器的认证文件，并确保已将扩展的 URL 添加到 `trustedOrigins` 列表中。
+
+    ```ts title="server.ts"
+    import { betterAuth } from "better-auth"
+    import { auth } from "@/auth/auth"
+
+    export const auth = betterAuth({
+        trustedOrigins: ["chrome-extension://YOUR_EXTENSION_ID"],
+    })
+    ```
+
+    如果您正在开发多个扩展或需要支持不同浏览器扩展的不同 ID，可以使用通配符模式：
+
+    ```ts title="server.ts"
+    export const auth = betterAuth({
+        trustedOrigins: [
+            // 支持特定扩展 ID
+            "chrome-extension://YOUR_EXTENSION_ID",
+            
+            // 或使用通配符支持多个扩展（安全性较低）
+            "chrome-extension://*"
+        ],
+    })
+    ```
+
+    <Callout type="warn">
+      使用通配符作为扩展来源（`chrome-extension://*`）会降低安全性，因为它会信任所有扩展。
+      建议明确列出您信任的每个扩展 ID。仅在开发或测试中使用通配符。
+    </Callout>
+  </Step>
+
+  <Step>
+    ## 完成！
+
+    一切就绪！现在您可以开始开发您的扩展了。🎉
+  </Step>
 </Steps>
-
 
 ## 总结
 
-恭喜！你已成功使用 Better Auth 和 Plasmo 创建了一个浏览器扩展。
-强烈建议你访问 <Link href="https://docs.plasmo.com/">Plasmo 文档</Link>，了解更多该框架的信息。
+恭喜！您已成功使用 Better Auth 和 Plasmo 创建了一个浏览器扩展。
+强烈建议您访问 <Link href="https://docs.plasmo.com/">Plasmo 文档</Link>，了解更多该框架的信息。
 
-如果你想查看完整示例，可以参考 <Link href="https://github.com/better-auth/examples/tree/main/browser-extension-example">浏览器扩展示例</Link>。
+如果您想查看完整示例，可以参考 <Link href="https://github.com/better-auth/examples/tree/main/browser-extension-example">浏览器扩展示例</Link>。
 
-如果你有任何问题，欢迎在我们的 <Link href="https://github.com/better-auth/better-auth/issues">GitHub 仓库</Link> 提交 issue，或加入我们的 <Link href="https://discord.gg/better-auth">Discord 服务器</Link> 进行支持。
+如果您有任何问题，欢迎在我们的 <Link href="https://github.com/better-auth/better-auth/issues">GitHub 仓库</Link> 提交 issue，或加入我们的 <Link href="https://discord.gg/better-auth">Discord 服务器</Link> 获取支持。

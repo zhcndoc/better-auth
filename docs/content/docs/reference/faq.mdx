@@ -6,250 +6,250 @@ description: 关于 Better Auth 的常见问题解答。
 此页面包含有关 Better Auth 的常见问题、常见问题及其他有用信息。
 
 <Accordions>
-  <Accordion id="auth-client-not-working" title="认证客户端不工作">
-  遇到 `createAuthClient` 相关错误时，请确保导入路径正确，因为它会根据环境有所不同。
+  <Accordion id="auth-client-not-working" title="Auth client not working">
+    当遇到 `createAuthClient` 相关错误时，请确保使用正确的导入路径，因为其会根据环境而有所不同。
 
-如果你在 React 前端使用认证客户端，需要从 `/react` 导入：
+    如果你在 React 前端使用认证客户端，你需要从 `/react` 导入它：
 
-```ts title="component.ts"
-import { createAuthClient } from "better-auth/react";
-```
+    ```ts title="component.ts"
+    import { createAuthClient } from "better-auth/react";
+    ```
 
-而如果你在 Next.js 的中间件、服务器动作、服务器组件或其他服务器相关的地方使用认证客户端，很可能需要从 `/client` 导入：
+    而如果你在 Next.js 中间件、服务器操作、服务器组件或任何与服务器相关的地方使用认证客户端，你可能需要从 `/client` 导入它：
 
-```ts title="server.ts"
-import { createAuthClient } from "better-auth/client";
-```
+    ```ts title="server.ts"
+    import { createAuthClient } from "better-auth/client";
+    ```
+  </Accordion>
 
-</Accordion>
+  <Accordion id="getsession-not-working" title="getSession not working">
+    如果尝试在服务器环境（例如 Next.js 服务器组件）中调用 `authClient.getSession`，它是无法工作的，因为它无法访问 Cookie。你可以使用 `auth.api.getSession` 并传入请求头。
 
-<Accordion id="getsession-not-working" title="getSession 不工作">
-如果你尝试在服务器环境（例如 Next.js 服务器组件）调用 `authClient.getSession`，它无法工作，因为无法访问 cookie。你可以改用 `auth.api.getSession` 并传递请求头给它。
+    ```tsx title="server.tsx"
+    import { auth } from "./auth";
+    import { headers } from "next/headers";
 
-```tsx title="server.tsx"
-import { auth } from "./auth";
-import { headers } from "next/headers";
+    const session = await auth.api.getSession({
+        headers: await headers()
+    })
+    ```
 
-const session = await auth.api.getSession({
-    headers: await headers()
-})
-```
+    如果你需要出于其他目的在服务器上使用认证客户端，你仍然可以传入请求头：
 
-如果你需要在服务器上出于其他目的使用认证客户端，也可以传递请求头：
+    ```tsx title="server.tsx"
+    import { authClient } from "./auth-client";
+    import { headers } from "next/headers";
 
-```tsx title="server.tsx"
-import { authClient } from "./auth-client";
-import { headers } from "next/headers";
+    const session = await authClient.getSession({
+        fetchOptions:{
+          headers: await headers()
+        }
+    })
+    ```
+  </Accordion>
 
-const session = await authClient.getSession({
-    fetchOptions:{
-      headers: await headers()
+  <Accordion id="corporate-proxy-configuration" title="如何配置企业代理以用于服务器端请求">
+    如果你需要为 Better Auth 的出站请求（例如 OAuth 提供商请求）配置企业代理，可以使用 undici 的 ProxyAgent 来设置全局的 fetch 代理。
+
+    ```typescript title="auth.ts"
+    import { betterAuth } from "better-auth";
+    import { ProxyAgent, setGlobalDispatcher } from "undici";
+
+    const proxyAgent = new ProxyAgent("http://your-proxy.example.com:8080");
+    setGlobalDispatcher(proxyAgent);
+
+    export const auth = betterAuth({
+      // 你的配置
+    });
+    ```
+
+    由于 Better Auth 在服务器端运行，你可以通过 undici 的全局调度器完全控制 Node.js 的 fetch 行为。这种方法可以让 Better Auth 的所有出站请求都通过你的企业代理。
+
+    <Callout type="info">
+      了解更多关于 undici ProxyAgent 的信息，请参考 [undici 文档](https://github.com/nodejs/undici/blob/main/docs/docs/api/ProxyAgent.md)。
+    </Callout>
+  </Accordion>
+
+  <Accordion id="adding-custom-fields-to-the-users-table" title="向用户表添加自定义字段">
+    Better Auth 提供了一种类型安全的方式来扩展用户和会话模式，请查看我们关于<Link href="/docs/concepts/database#extending-core-schema">扩展核心模式</Link>的文档。
+  </Accordion>
+
+  <Accordion id="difference-between-getsession-and-usesession" title="getSession 与 useSession 的区别">
+    `useSession` 和 `getSession` 实例在使用方式上存在根本区别，具体取决于场景。
+
+    `useSession` 是一个 Hook，这意味着每当会话数据发生变化时，它都可以触发重新渲染。
+
+    如果你有需要根据用户或会话数据来改变的 UI，你可以使用这个 Hook。
+
+    <Callout type="warn">
+      出于性能考虑，不要在 `layout.tsx` 文件中使用此 Hook。
+      我们建议使用 RSC，并通过服务器认证实例使用 `auth.api.getSession` 来获取会话数据。
+    </Callout>
+
+    `getSession` 返回一个包含数据和错误的 Promise。
+
+    在你不应该使用 `useSession` 的其他所有情况下，都应该使用 `getSession`。
+
+    <Callout type="info">
+      `getSession` 在服务器和客户端认证实例上都可用。
+      不仅仅是在后者。
+    </Callout>
+  </Accordion>
+
+  <Accordion id="common-typescript-errors" title="常见的 TypeScript 错误">
+    如果你遇到 TypeScript 错误，请确保你的 tsconfig 中将 `strict` 设置为 `true`：
+
+    ```json title="tsconfig.json"
+    {
+      "compilerOptions": {
+        "strict": true,
+      }
     }
-})
-```
-</Accordion>
+    ```
 
-<Accordion id="corporate-proxy-configuration" title="如何为服务器端请求配置公司代理">
-如果需要为 Better Auth 的外发请求（例如 OAuth 提供者请求）配置公司代理，可以使用 undici 的 ProxyAgent 来设置全局 fetch 代理。
+    如果无法将 strict 设置为 true，可以启用 `strictNullChecks`：
 
-```typescript title="auth.ts"
-import { betterAuth } from "better-auth";
-import { ProxyAgent, setGlobalDispatcher } from "undici";
+    ```json title="tsconfig.json"
+    {
+      "compilerOptions": {
+        "strictNullChecks": true,
+      }
+    }
+    ```
 
-const proxyAgent = new ProxyAgent("http://your-proxy.example.com:8080");
-setGlobalDispatcher(proxyAgent);
+    你可以在我们的 <Link href="/docs/concepts/typescript#typescript-config">TypeScript 文档</Link> 中了解更多信息。
+  </Accordion>
 
-export const auth = betterAuth({
-  // 你的配置
-});
-```
+  <Accordion id="can-i-remove-name-image-or-email-fields-from-the-user-table" title="我可以从用户表中移除 `name`、`image` 或 `email` 字段吗？">
+    目前，你无法从用户表中移除 `name`、`image` 或 `email` 字段。
 
-由于 Better Auth 运行在服务器端，你可以通过 undici 的全局调度器完全控制 Node.js 的 fetch 行为。这种方法允许所有 Better Auth 的外发请求通过你的公司代理。
+    我们计划在未来对此提供更多的自定义灵活性，但目前你还无法移除这些字段。
+  </Accordion>
 
-<Callout type="info">
-  了解更多 undici ProxyAgent，请参阅 [undici 文档](https://github.com/nodejs/undici/blob/main/docs/docs/api/ProxyAgent.md)。
-</Callout>
-</Accordion>
+  <Accordion id="dual-module-hazard-issue" title="双模块风险问题">
+    如果你遇到类似如下的错误：
 
-<Accordion id="adding-custom-fields-to-the-users-table" title="给用户表添加自定义字段">
+    ```
+    No request state found. Please make sure you are calling this function within a `runWithRequestState` callback.
+    ```
 
-Better Auth 提供了类型安全的方式来扩展用户和会话的模式，请查看我们的 <Link href="/docs/concepts/database#extending-core-schema">扩展核心模式</Link> 文档。
+    这通常是由**双模块风险**引起的——当 `better-auth` 或 `@better-auth/core` 的多个版本存在于你的依赖树中时。这在升级到 v1.4+ 后很常见，尤其是在 Cloudflare Workers、Nuxt 或使用 `oauthProvider` 插件时。
 
-</Accordion>
+    ### 如何诊断
 
-<Accordion id="difference-between-getsession-and-usesession" title="getSession 和 useSession 的区别">
-`useSession` 和 `getSession` 根据使用场景根本不同。
+    检查你是否安装了重复的 Better Auth 包：
 
-`useSession` 是一个 Hook，意味着当会话数据改变时它可以触发重渲染。
+    ```bash
+    # 对于 pnpm 用户
+    pnpm why @better-auth/core
+    pnpm why better-auth
 
-如果你需要基于用户或会话数据改变 UI，可以使用这个 Hook。
+    # 对于 npm 用户
+    npm ls @better-auth/core
+    npm ls better-auth
 
-<Callout type="warn">
-  出于性能考虑，不要在你的 `layout.tsx` 文件中使用此 Hook。
-  我们推荐使用 RSC，并通过你的服务器认证实例调用 `auth.api.getSession` 来获取会话数据。
-</Callout>
+    # 对于 yarn 用户
+    yarn why @better-auth/core
+    yarn why better-auth
+    ```
 
-`getSession` 返回一个包含数据和错误的 Promise。
+    如果看到列出了多个版本，说明存在双模块风险。
 
-在所有不适合使用 `useSession` 的情况，应改用 `getSession`。
+    ### 如何修复
 
-<Callout type="info">
-   `getSession` 在服务器端和客户端的认证实例上都可用。
-   不仅仅是后者。
-</Callout>
-</Accordion>
+    #### 基本步骤
 
-<Accordion id="common-typescript-errors" title="常见 TypeScript 错误">
-如果遇到 TypeScript 错误，请确保你的 tsconfig 中 `strict` 设置为 `true`：
-```json title="tsconfig.json"
-{
-  "compilerOptions": {
-    "strict": true,
-  }
-}
-```
+    首先确保依赖关系干净，并且所有 Better Auth 包都使用兼容的版本。
 
-如果不能将 strict 设置为 true，也可以启用 strictNullChecks：
-```json title="tsconfig.json"
-{
-  "compilerOptions": {
-    "strictNullChecks": true,
-  }
-}
-```
+    <Callout type="tip">
+      **重新干净安装：**
 
-你可以在我们的 <Link href="/docs/concepts/typescript#typescript-config">TypeScript 文档</Link> 中了解更多。
-</Accordion>
-<Accordion id="can-i-remove-name-image-or-email-fields-from-the-user-table" title="我能移除用户表中的 `name`、`image` 或 `email` 字段吗？">
-目前，你不能移除用户表中的 `name`、`image` 或 `email` 字段。
+      ```bash
+      # 移除 node_modules 和锁文件
+      rm -rf node_modules
+      rm pnpm-lock.yaml # 或 package-lock.json 或 yarn.lock
 
-我们计划未来能提供更多自定义选项，但现在还不能移除这些字段。
-</Accordion>
+      # 重新安装依赖
+      pnpm install # 或 npm install 或 yarn install
+      ```
 
-<Accordion id="dual-module-hazard-issue" title="双模块危害问题">
-如果你遇到如下错误：
+      检查你的 `package.json`，确保所有与 Better Auth 相关的包（`better-auth`、`@better-auth/core`、`@better-auth/oauth-provider` 等）都使用兼容的版本。
+    </Callout>
 
-```
-No request state found. Please make sure you are calling this function within a `runWithRequestState` callback.
-```
+    #### 包管理器解析问题
 
-这通常是由**双模块危害**引起的——当你的依赖树中存在多个版本的 `better-auth` 或 `@better-auth/core`。这种情况常见于升级到 v1.4+ 后，特别是在 Cloudflare Workers、Nuxt 或使用类似 `oauthProvider` 插件时。
+    如果你使用的是 Yarn v1（Classic）或 pnpm v9，可能需要强制 `better-call` 解析为单个实例。
 
-### 如何诊断
+    <Callout type="warn">
+      **对于 Yarn v1 / pnpm v9 用户：**
 
-检查是否存在重复版本的 Better Auth 包：
+      手动安装 `better-call` 并将其同时添加到 `dependencies` 和 `resolutions` 中，以强制它提升到顶层：
 
-```bash
-# pnpm 用户
-pnpm why @better-auth/core
-pnpm why better-auth
+      ```json title="package.json"
+      {
+        "dependencies": {
+          "better-call": "^1.1.8",
+          // ... 其他依赖
+        },
+        "resolutions": {
+          "better-call": "^1.1.8"
+        }
+      }
+      ```
 
-# npm 用户
-npm ls @better-auth/core
-npm ls better-auth
+      然后重新安装依赖：
 
-# yarn 用户
-yarn why @better-auth/core
-yarn why better-auth
-```
+      ```bash
+      yarn install # 或 pnpm install
+      ```
 
-如果列出了多个版本，则存在双模块危害。
+      注意：Yarn v3 和 pnpm v10 通常不会出现此问题。
+    </Callout>
 
-### 如何修复
+    <Callout type="error">
+      **重要：** 确保将 `better-auth` 和相关包安装到 `dependencies`，而不是 `devDependencies`。
+    </Callout>
 
-#### 基础步骤
+    #### 打包器解析问题
 
-确保依赖清洁且所有 Better Auth 包使用兼容版本。
+    这是一个打包器层面的问题，其中同一模块被解析为不同的实例。目标是让打包器将模块解析为同一实例。
 
-<Callout type="tip">
-**清理重装：**
+    <Callout type="info">
+      **对于 Next.js 用户：**
 
-```bash
-# 删除 node_modules 和锁文件
-rm -rf node_modules
-rm pnpm-lock.yaml # 或 package-lock.json 或 yarn.lock
+      在 `next.config.js` 中将 `better-auth` 添加到 `serverExternalPackages`：
 
-# 重新安装依赖
-pnpm install # 或 npm install 或 yarn install
-```
+      ```ts title="next.config.js"
+      const config = {
+        serverExternalPackages: ['better-auth']
+      };
+      ```
+    </Callout>
 
-检查你的 `package.json`，确保所有 Better Auth 相关包（`better-auth`、`@better-auth/core`、`@better-auth/oauth-provider` 等）使用兼容版本。
-</Callout>
+    <Callout type="info">
+      **对于 Cloudflare Workers 用户：**
 
-#### 包管理器解析问题
+      确保在 `wrangler.toml` 中启用了 `nodejs_compat` 兼容标志：
 
-如果你使用 Yarn v1（Classic）或可能是 pnpm v9，需要强制 `better-call` 解析成单一实例。
+      ```toml title="wrangler.toml"
+      compatibility_flags = ["nodejs_compat"]
+      ```
+    </Callout>
 
-<Callout type="warn">
-**Yarn v1 / pnpm v9 用户：**
+    #### 验证修复
 
-请手动安装 `better-call` 并将其添加到 `dependencies` 和 `resolutions` 以强制其提升到顶层：
+    运行诊断命令以确认每个包只存在一个版本：
 
-```json title="package.json"
-{
-  "dependencies": {
-    "better-call": "^1.1.8",
-    // ... 其他依赖
-  },
-  "resolutions": {
-    "better-call": "^1.1.8"
-  }
-}
-```
+    ```bash
+    pnpm why @better-auth/core
+    pnpm why better-auth
+    pnpm why better-call
+    ```
 
-然后重新安装依赖：
+    你应该看到每个包只列出一个版本。
 
-```bash
-yarn install # 或 pnpm install
-```
-
-注意：Yarn v3 和 pnpm v10 通常不存在此问题。
-</Callout>
-
-<Callout type="error">
-**重要提示：** 确保将 `better-auth` 及相关包安装在 `dependencies` 中，而非 `devDependencies`。
-</Callout>
-
-#### 打包工具解析问题
-
-这是打包层面的问题，源于同一模块被解析成不同实例。目标是让打包工具将模块解析为同一实例。
-
-<Callout type="info">
-**Next.js 用户：**
-
-在你的 `next.config.js` 中将 `better-auth` 添加到 `serverExternalPackages`：
-
-```ts title="next.config.js"
-const config = {
-  serverExternalPackages: ['better-auth']
-};
-```
-</Callout>
-
-<Callout type="info">
-**Cloudflare Workers 用户：**
-
-确保在你的 `wrangler.toml` 中启用了 `nodejs_compat` 兼容标志：
-
-```toml title="wrangler.toml"
-compatibility_flags = ["nodejs_compat"]
-```
-</Callout>
-
-#### 验证修复
-
-再次运行诊断命令，确认每个包只有一个版本：
-
-```bash
-pnpm why @better-auth/core
-pnpm why better-auth
-pnpm why better-call
-```
-
-你应该只看到每个包的单一版本。
-
-<Callout type="info">
-  相关问题：[#6613](https://github.com/better-auth/better-auth/issues/6613)、[yjs#438](https://github.com/yjs/yjs/issues/438)
-</Callout>
-</Accordion>
+    <Callout type="info">
+      相关问题：[#6613](https://github.com/better-auth/better-auth/issues/6613)、[yjs#438](https://github.com/yjs/yjs/issues/438)
+    </Callout>
+  </Accordion>
 </Accordions>

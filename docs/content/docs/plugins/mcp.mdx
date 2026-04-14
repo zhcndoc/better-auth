@@ -6,66 +6,69 @@ description: 用于 Better Auth 的 MCP 提供者插件
 `OAuth` `MCP`
 
 <Callout type="warn">
-此插件即将被弃用，推荐改用 [OAuth Provider Plugin](/docs/plugins/oauth-provider)。
+  该插件很快将被弃用，转而使用 [OAuth 提供者插件](/docs/plugins/oauth-provider)。
 </Callout>
 
 **MCP** 插件让你的应用可以作为 MCP 客户端的 OAuth 提供者。它处理认证，并简化了为 MCP 应用颁发和管理访问令牌的流程。
 
 <Callout type="warn">
-此插件基于 OIDC Provider 插件。未来将移至 OAuth Provider 插件。
+  该插件基于 OIDC 提供者插件。将来它会迁移到 OAuth 提供者插件。
 </Callout>
 
 ## 安装
 
 <Steps>
-    <Step>
-        ### 添加插件
+  <Step>
+    ### 添加插件
 
-        在你的认证配置中添加 MCP 插件，并指定登录页面路径。
+    将 MCP 插件添加到你的认证配置中，并指定登录页面路径。
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth";
-        import { mcp } from "better-auth/plugins"; // [!code highlight]
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
+    import { mcp } from "better-auth/plugins"; // [!code highlight]
 
-        export const auth = betterAuth({
-            plugins: [
-                mcp({ // [!code highlight]
-                    loginPage: "/sign-in" // 你的登录页面路径 // [!code highlight]
-                }) // [!code highlight]
-            ]
-        });
+    export const auth = betterAuth({
+        plugins: [
+            mcp({ // [!code highlight]
+                loginPage: "/sign-in" // 登录页面路径 // [!code highlight]
+            }) // [!code highlight]
+        ]
+    });
+    ```
+
+    <Callout>
+      此插件没有客户端插件，因此无需对 authClient 进行任何更改。
+    </Callout>
+  </Step>
+
+  <Step>
+    ### 生成架构
+
+    运行迁移或生成架构，以向数据库添加必要的字段和表。
+
+    <Tabs items={["migrate", "generate"]}>
+      <Tab value="migrate">
+        ```package-install
+        npx auth migrate
         ```
-        <Callout>
-            此插件无客户端插件，因此你无需更改 authClient。
-        </Callout>
-    </Step>
+      </Tab>
 
-    <Step>
-        ### 生成数据库 Schema
+      <Tab value="generate">
+        ```package-install
+        npx auth generate
+        ```
+      </Tab>
+    </Tabs>
 
-        运行迁移或生成 Schema，将必要的字段和表添加到数据库。
-
-        <Tabs items={["migrate", "generate"]}>
-            <Tab value="migrate">
-            ```package-install
-            npx auth migrate
-            ```
-            </Tab>
-            <Tab value="generate">
-            ```package-install
-            npx auth generate
-            ```
-            </Tab>
-        </Tabs>
-        MCP 插件使用与 OIDC Provider 插件相同的 Schema。详情请参阅[OIDC Provider Schema](/docs/plugins/oidc-provider#schema)。
-    </Step>
+    MCP 插件使用与 OIDC 提供者插件相同的架构。请参阅 [OIDC 提供者架构](/docs/plugins/oidc-provider#schema) 部分了解详细信息。
+  </Step>
 </Steps>
 
 ## 使用
 
 ### OAuth 发现元数据
 
-Better Auth 已自动处理 `/api/auth/.well-known/oauth-authorization-server` 路由，但有些客户端可能无法解析 `WWW-Authenticate` 头而默认访问 `/.well-known/oauth-authorization-server`（例如，当 CORS 配置未暴露 `WWW-Authenticate` 时）。因此，建议添加路由来暴露 MCP 客户端的 OAuth 元数据：
+Better Auth 已自动处理 `/api/auth/.well-known/oauth-authorization-server` 路由，但有些客户端可能无法解析 `WWW-Authenticate` 头，而是默认访问 `/.well-known/oauth-authorization-server`（例如，当 CORS 配置未暴露 `WWW-Authenticate` 时）。因此，建议添加路由以公开 MCP 客户端的 OAuth 元数据：
 
 ```ts title=".well-known/oauth-authorization-server/route.ts"
 import { oAuthDiscoveryMetadata } from "better-auth/plugins";
@@ -76,7 +79,7 @@ export const GET = oAuthDiscoveryMetadata(auth);
 
 ### OAuth 受保护资源元数据
 
-Better Auth 同样自动处理 `/api/auth/.well-known/oauth-protected-resource` 路由，但某些客户端同样可能无法解析 `WWW-Authenticate` 头而默认访问 `/.well-known/oauth-protected-resource`。因此建议添加路由暴露 MCP 客户端的 OAuth 元数据：
+Better Auth 同样自动处理 `/api/auth/.well-known/oauth-protected-resource` 路由，但某些客户端也可能无法解析 `WWW-Authenticate` 头，而是默认访问 `/.well-known/oauth-protected-resource`。因此，建议添加路由以公开 MCP 客户端的 OAuth 元数据：
 
 ```ts title="/.well-known/oauth-protected-resource/route.ts"
 import { oAuthProtectedResourceMetadata } from "better-auth/plugins";
@@ -86,8 +89,6 @@ export const GET = oAuthProtectedResourceMetadata(auth);
 ```
 
 ### MCP 会话处理
-
-你可以使用辅助函数 `withMcpAuth` 来获取会话，并自动处理未认证调用。
 
 ```ts title="api/[transport]/route.ts"
 import { auth } from "@/lib/auth";
@@ -131,7 +132,7 @@ const handler = withMcpAuth(auth, (req, session) => {
 export { handler as GET, handler as POST, handler as DELETE };
 ```
 
-你也可以使用 `auth.api.getMcpSession` 来通过 MCP 客户端发送的访问令牌获取会话：
+你也可以使用 `auth.api.getMcpSession` 通过 MCP 客户端发送的访问令牌获取会话：
 
 ```ts title="api/[transport]/route.ts"
 import { auth } from "@/lib/auth";
@@ -187,270 +188,121 @@ export { handler as GET, handler as POST, handler as DELETE };
 
 MCP 插件接受以下配置选项：
 
-<TypeTable
-  type={{
-    loginPage: {
-        description: "用户将被重定向到的登录页面路径",
-        type: "string",
-        required: true
-    },
-    resource: {
-        description: "受保护资源元数据端点应返回的资源标识",
-        type: "string",
-        required: false
-    },
-    oidcConfig: {
-        description: "可选的 OIDC 配置项",
-        type: "object",
-        required: false
-    }
-  }}
-/>
+export const mcpPluginOptionsType = {
+  loginPage: {
+    description: "Path to the login page where users will be redirected for authentication",
+    type: "string",
+    required: true,
+  },
+  resource: {
+    description: "The resource that should be returned by the protected resource metadata endpoint",
+    type: "string",
+    required: false,
+  },
+  oidcConfig: {
+    description: "Optional OIDC configuration options",
+    type: "object",
+    required: false,
+  },
+}
+
+<TypeTable type={mcpPluginOptionsType} />
 
 ### OIDC 配置
 
 通过 `oidcConfig` 参数，插件支持额外的 OIDC 配置选项：
 
-<TypeTable
-  type={{
-    codeExpiresIn: {
-        description: "授权代码有效时长，单位为秒",
-        type: "number",
-        default: 600
-    },
-    accessTokenExpiresIn: {
-        description: "访问令牌有效时长，单位为秒",
-        type: "number",
-        default: 3600
-    },
-    refreshTokenExpiresIn: {
-        description: "刷新令牌有效时长，单位为秒",
-        type: "number",
-        default: 604800
-    },
-    defaultScope: {
-        description: "OAuth 请求的默认作用域",
-        type: "string",
-        default: "openid"
-    },
-    scopes: {
-        description: "支持的附加作用域",
-        type: "string[]",
-        default: '["openid", "profile", "email", "offline_access"]'
-    }
-  }}
-/>
+export const mcpOidcConfigOptionsType = {
+  codeExpiresIn: {
+    description: "Expiration time for authorization codes in seconds",
+    type: "number",
+    default: 600,
+  },
+  accessTokenExpiresIn: {
+    description: "Expiration time for access tokens in seconds",
+    type: "number",
+    default: 3600,
+  },
+  refreshTokenExpiresIn: {
+    description: "Expiration time for refresh tokens in seconds",
+    type: "number",
+    default: 604800,
+  },
+  defaultScope: {
+    description: "Default scope for OAuth requests",
+    type: "string",
+    default: "openid",
+  },
+  scopes: {
+    description: "Additional scopes to support",
+    type: "string[]",
+    default: '["openid", "profile", "email", "offline_access"]',
+  },
+}
 
-## 远程 MCP 客户端
+<TypeTable type={mcpOidcConfigOptionsType} />
 
-上面的示例使用 `withMcpAuth`，要求 Better Auth 实例与 MCP 服务器在**同一进程**中运行。如果你的 MCP 服务器作为独立服务运行（不同仓库、不同时运行时环境、不同语言），你可以使用 **MCP 客户端** — 一个轻量、框架无关的 HTTP 客户端，用于验证发送给远程 Better Auth 服务器的 Bearer 令牌。
+export const mcpClientOptionsType = {
+  authURL: {
+    description: "Full URL to Better Auth endpoints (baseURL + basePath)",
+    type: "string",
+    required: true,
+  },
+  resource: {
+    description: "Resource identifier for the protected resource metadata. Defaults to the origin of the server URL.",
+    type: "string",
+    required: false,
+  },
+  allowedOrigin: {
+    description: "Allowed CORS origin. Defaults to the authURL origin. Set to '*' to allow all origins (not recommended for production).",
+    type: "string",
+    required: false,
+  },
+  fetch: {
+    description: "Custom fetch implementation. Defaults to global fetch.",
+    type: "typeof fetch",
+    required: false,
+  },
+}
 
-<Callout>
-    无需额外安装包 — MCP 客户端已包含在 `better-auth` 中。
-</Callout>
-
-### 设置
-
-<Steps>
-    <Step>
-        ### 创建客户端
-
-        指向你的 Better Auth 服务器地址（与你的认证配置中的 `baseURL` + `basePath` 相同）：
-
-        ```ts title="mcp-server.ts"
-        import { createMcpAuthClient } from "better-auth/plugins/mcp/client" // [!code highlight]
-
-        const mcpAuth = createMcpAuthClient({ // [!code highlight]
-            authURL: "http://localhost:3000/api/auth" // [!code highlight]
-        }) // [!code highlight]
-        ```
-    </Step>
-
-    <Step>
-        ### 保护你的 MCP 路由
-
-        使用 `handler` 包装 Web 标准的 `Request`/`Response`（适用于 Deno、Bun、Cloudflare Workers 等）：
-
-        ```ts title="mcp-server.ts"
-        const handler = mcpAuth.handler(async (req, session) => { // [!code highlight]
-            // session.userId, session.scopes, session.clientId
-            return new Response(JSON.stringify({
-                jsonrpc: "2.0",
-                result: { userId: session.userId },
-                id: 1
-            }))
-        }) // [!code highlight]
-
-        Deno.serve(handler)
-        ```
-    </Step>
-
-    <Step>
-        ### 挂载发现端点
-
-        MCP 客户端需要发现你的 OAuth 服务器。请在 MCP 服务器根路径挂载：
-
-        ```ts title="mcp-server.ts"
-        const discovery = mcpAuth.discoveryHandler() // [!code highlight]
-        const protectedResource = mcpAuth.protectedResourceHandler("http://localhost:4000") // [!code highlight]
-
-        // GET /.well-known/oauth-authorization-server → 代理转发自 Better Auth
-        // GET /.well-known/oauth-protected-resource → 指向 MCP 客户端的 Better Auth
-        ```
-
-        这些代理并缓存来自 Better Auth 服务器的元数据，使 MCP 客户端能够自动发现授权、令牌和注册端点。
-    </Step>
-</Steps>
-
-### 框架适配器
-
-<Tabs items={["Hono", "Express", "Official MCP SDK", "mcp-use"]}>
-    <Tab value="Hono">
-        ```ts title="mcp-server.ts"
-        import { Hono } from "hono"
-        import { mcpAuthHono } from "better-auth/plugins/mcp/client/adapters" // [!code highlight]
-
-        const app = new Hono()
-        const { middleware, discoveryRoutes } = mcpAuthHono({ // [!code highlight]
-            authURL: "http://localhost:3000/api/auth" // [!code highlight]
-        }) // [!code highlight]
-
-        // 挂载 OAuth 发现端点（MCP 规范要求）
-        discoveryRoutes(app, "http://localhost:4000") // [!code highlight]
-
-        // 保护 MCP 路由
-        app.use("/mcp/*", middleware) // [!code highlight]
-
-        app.post("/mcp", (c) => {
-            const session = c.get("mcpSession") // [!code highlight]
-            // session.userId, session.scopes 等
-        })
-        ```
-    </Tab>
-
-    <Tab value="Express">
-        ```ts title="mcp-server.ts"
-        import express from "express"
-        import { createMcpAuthClient } from "better-auth/plugins/mcp/client" // [!code highlight]
-
-        const app = express()
-        const mcpAuth = createMcpAuthClient({ // [!code highlight]
-            authURL: "http://localhost:3000/api/auth" // [!code highlight]
-        }) // [!code highlight]
-
-        app.use("/mcp", mcpAuth.middleware()) // [!code highlight]
-
-        app.post("/mcp", (req, res) => {
-            const session = req.mcpSession // [!code highlight]
-            // session.userId, session.scopes 等
-        })
-        ```
-    </Tab>
-
-    <Tab value="Official MCP SDK">
-        ```ts title="mcp-server.ts"
-        import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
-        import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js"
-        import { mcpAuthOfficial } from "better-auth/plugins/mcp/client/adapters" // [!code highlight]
-
-        const auth = mcpAuthOfficial({ // [!code highlight]
-            authURL: "http://localhost:3000/api/auth" // [!code highlight]
-        }) // [!code highlight]
-
-        const mcpServer = new McpServer({ name: "my-server", version: "1.0.0" })
-        const app = express() // 你的 HTTP 框架
-
-        app.post("/mcp", auth.handler(async (req, session) => { // [!code highlight]
-            const transport = new StreamableHTTPServerTransport({
-                sessionIdGenerator: () => crypto.randomUUID()
-            })
-            await mcpServer.connect(transport)
-            return transport.handleRequest(req)
-        }))
-        ```
-    </Tab>
-
-    <Tab value="mcp-use">
-        完全替代 `oauthWorkOSProvider`、`oauthSupabaseProvider` 等：
-
-        ```ts title="mcp-server.ts"
-        import { MCPServer } from "mcp-use/server"
-        import { mcpAuthMcpUse } from "better-auth/plugins/mcp/client/adapters" // [!code highlight]
-
-        const server = new MCPServer({
-            name: "my-server",
-            version: "1.0.0",
-            oauth: mcpAuthMcpUse({ // [!code highlight]
-                authURL: "http://localhost:3000/api/auth" // [!code highlight]
-            }) // [!code highlight]
-        })
-        ```
-    </Tab>
-</Tabs>
-
-### 选项
-
-<TypeTable
-  type={{
-    authURL: {
-        description: "Better Auth 端点的完整 URL（baseURL + basePath）",
-        type: "string",
-        required: true
-    },
-    resource: {
-        description: "受保护资源元数据标识符，默认为服务器 URL 的 origin。",
-        type: "string",
-        required: false
-    },
-    allowedOrigin: {
-        description: "允许的 CORS 来源。默认为 authURL 的 origin。设置为 '*' 可以允许所有来源（生产环境不建议）。",
-        type: "string",
-        required: false
-    },
-    fetch: {
-        description: "自定义 fetch 实现，默认为全局 fetch。",
-        type: "typeof fetch",
-        required: false
-    }
-  }}
-/>
+<TypeTable type={mcpClientOptionsType} />
 
 ### 会话对象
 
 `verifyToken` 返回并传递给处理函数的会话对象包含：
 
-<TypeTable
-  type={{
-    accessToken: {
-        description: "不透明的访问令牌",
-        type: "string"
-    },
-    refreshToken: {
-        description: "刷新令牌",
-        type: "string"
-    },
-    accessTokenExpiresAt: {
-        description: "访问令牌过期时间",
-        type: "string"
-    },
-    refreshTokenExpiresAt: {
-        description: "刷新令牌过期时间",
-        type: "string"
-    },
-    clientId: {
-        description: "请求令牌的 OAuth 客户端 ID",
-        type: "string"
-    },
-    userId: {
-        description: "已认证用户的 ID",
-        type: "string"
-    },
-    scopes: {
-        description: "授权作用域列表，空格分隔",
-        type: "string"
-    }
-  }}
-/>
+export const mcpSessionObjectType = {
+  accessToken: {
+    description: "The opaque access token",
+    type: "string",
+  },
+  refreshToken: {
+    description: "The refresh token",
+    type: "string",
+  },
+  accessTokenExpiresAt: {
+    description: "When the access token expires",
+    type: "string",
+  },
+  refreshTokenExpiresAt: {
+    description: "When the refresh token expires",
+    type: "string",
+  },
+  clientId: {
+    description: "The OAuth client ID that requested the token",
+    type: "string",
+  },
+  userId: {
+    description: "The authenticated user's ID",
+    type: "string",
+  },
+  scopes: {
+    description: "Space-separated list of granted scopes",
+    type: "string",
+  },
+}
+
+<TypeTable type={mcpSessionObjectType} />
 
 ## Schema
 

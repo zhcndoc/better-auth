@@ -4,71 +4,76 @@ description: GitLab 提供者的设置与使用。
 ---
 
 <Steps>
-    <Step> 
-        ### 获取你的 GitLab 凭证
-        要使用 GitLab 登录，你需要一个客户端 ID 和客户端密钥。[GitLab OAuth 文档](https://docs.gitlab.com/ee/api/oauth2.html)。
+  <Step>
+    ### 获取 GitLab 凭证
 
-        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/gitlab`，以便本地开发。上线环境中，应将其设置为你的应用程序 URL。如果你更改了认证路由的基础路径，也需要相应地更新重定向 URL。
-    </Step>
+    要使用 GitLab 登录，您需要一个客户端 ID 和客户端密钥。参考 [GitLab OAuth 文档](https://docs.gitlab.com/ee/api/oauth2.html)。
+
+    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/gitlab` 用于本地开发。生产环境中，应将其设置为应用程序的 URL。如果修改了认证路由的基础路径，需要相应地更新重定向 URL。
+  </Step>
 
   <Step>
-        ### 配置提供者
-        配置提供者时，你需要导入该提供者，并将其传递给认证实例的 `socialProviders` 选项。
+    ### 配置提供者
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
-        
-        export const auth = betterAuth({
-            socialProviders: {
-                gitlab: { // [!code highlight]
-                    clientId: process.env.GITLAB_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.GITLAB_CLIENT_SECRET as string, // [!code highlight]
-                    issuer: process.env.GITLAB_ISSUER as string, // [!code highlight]
-                }, // [!code highlight]
+    要配置该提供者，需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            gitlab: { // [!code highlight]
+                clientId: process.env.GITLAB_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.GITLAB_CLIENT_SECRET as string, // [!code highlight]
+                issuer: process.env.GITLAB_ISSUER as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+
+    #### 配置选项
+
+    * `clientId`：您的 GitLab 应用程序的客户端 ID
+    * `clientSecret`：您的 GitLab 应用程序的客户端密钥
+    * `issuer`：（可选）您的 GitLab 实例的 URL。用于自托管的 GitLab 服务器。
+      * 默认值：`"https://gitlab.com"`（GitLab.com）
+      * 示例：`"https://gitlab.company.com"`
+
+    <Callout type="info">
+      当使用自托管的 GitLab 实例时，`issuer` 选项非常有用。如果您使用的是 GitLab.com，可以省略此选项，因为它默认值为 `https://gitlab.com`。
+    </Callout>
+
+    #### 自托管 GitLab 示例
+
+    ```ts title="auth.ts"
+    export const auth = betterAuth({
+        socialProviders: {
+            gitlab: {
+                clientId: process.env.GITLAB_CLIENT_ID as string,
+                clientSecret: process.env.GITLAB_CLIENT_SECRET as string,
+                issuer: "https://gitlab.company.com", // 您的自托管 GitLab URL // [!code highlight]
             },
+        },
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 使用 GitLab 登录
+
+    要使用 GitLab 登录，可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
+
+    * `provider`：要使用的提供者，应设置为 `gitlab`。
+
+    ```ts title="auth-client.ts"  
+    import { createAuthClient } from "better-auth/client"
+    const authClient =  createAuthClient()
+
+    const signIn = async () => {
+        const data = await authClient.signIn.social({
+            provider: "gitlab"
         })
-        ```
-
-        #### 配置选项
-
-        - `clientId`：你的 GitLab 应用的客户端 ID
-        - `clientSecret`：你的 GitLab 应用的客户端密钥  
-        - `issuer`：(可选) 你的 GitLab 实例的 URL。用于自托管的 GitLab 服务器。
-            - 默认值：`"https://gitlab.com"`（GitLab.com）
-            - 示例：`"https://gitlab.company.com"`
-
-        <Callout type="info">
-            `issuer` 选项在使用自托管 GitLab 实例时非常有用。如果使用 GitLab.com，可以省略此选项，因为默认值即为 `https://gitlab.com`。
-        </Callout>
-
-        #### 自托管 GitLab 示例
-
-        ```ts title="auth.ts"
-        export const auth = betterAuth({
-            socialProviders: {
-                gitlab: {
-                    clientId: process.env.GITLAB_CLIENT_ID as string,
-                    clientSecret: process.env.GITLAB_CLIENT_SECRET as string,
-                    issuer: "https://gitlab.company.com", // 你的自托管 GitLab 地址 // [!code highlight]
-                },
-            },
-        })
-        ```
-    </Step>
-       <Step>
-        ### 使用 GitLab 登录
-        若要使用 GitLab 登录，可以调用客户端提供的 `signIn.social` 函数。该 `signIn` 函数接收一个包含以下属性的对象：
-        - `provider`：要使用的提供者，应设置为 `gitlab`。
-
-        ```ts title="auth-client.ts"  
-        import { createAuthClient } from "better-auth/client"
-        const authClient =  createAuthClient()
-        
-        const signIn = async () => {
-            const data = await authClient.signIn.social({
-                provider: "gitlab"
-            })
-        }
-        ```
-    </Step>
+    }
+    ```
+  </Step>
 </Steps>

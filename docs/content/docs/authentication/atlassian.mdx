@@ -4,56 +4,61 @@ description: Atlassian 提供者的设置和使用。
 ---
 
 <Steps>
-    <Step>
-        ### 获取您的凭据
-        1. 登录到您的 Atlassian 账户并访问 [Atlassian 开发者控制台](https://developer.atlassian.com/console/myapps/)
-        2. 点击“创建新应用”
-        3. 填写应用详情
-        4. 配置您的重定向 URI（例如，`https://yourdomain.com/api/auth/callback/atlassian`）
-        5. 记录您的客户端 ID 和客户端密钥
+  <Step>
+    ### 获取凭证
 
-        <Callout type="info">
-            - 默认的权限范围是 `read:jira-user` 和 `offline_access`。若需额外权限，请参考 [Atlassian OAuth 文档](https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/)。
-        </Callout>
+    1. 登录您的 Atlassian 账户，并访问 [Atlassian 开发者控制台](https://developer.atlassian.com/console/myapps/)
+    2. 点击“创建新应用”
+    3. 填写应用详情
+    4. 配置重定向 URI（例如：`https://yourdomain.com/api/auth/callback/atlassian`）
+    5. 记录您的客户端 ID 和客户端密钥
 
-        请确保将重定向 URI 设置为与您的应用回调 URL 相匹配。如果您更改了身份验证路由的基础路径，也需要相应更新重定向 URI。
-    </Step>
+    <Callout type="info">
+      * 默认范围是 `read:jira-user` 和 `offline_access`。如需其他范围，请参考 [Atlassian OAuth 文档](https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/)。
+    </Callout>
+
+    请确保将重定向 URI 设置为与应用回调 URL 匹配。如果更改了认证路由的基本路径，请相应地更新重定向 URI。
+  </Step>
 
   <Step>
-        ### 配置提供者
-        要配置提供者，您需要导入该提供者并将其传递给身份认证实例的 `socialProviders` 选项。
+    ### 配置提供者
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
+    要配置该提供者，您需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
 
-        export const auth = betterAuth({
-            socialProviders: {
-                atlassian: { // [!code highlight]
-                    clientId: process.env.ATLASSIAN_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.ATLASSIAN_CLIENT_SECRET as string, // [!code highlight]
-                }, // [!code highlight]
-            },
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            atlassian: { // [!code highlight]
+                clientId: process.env.ATLASSIAN_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.ATLASSIAN_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 使用 Atlassian 登录
+
+    要使用 Atlassian 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+
+    * `provider`：要使用的提供者，应设置为 `atlassian`。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    const authClient =  createAuthClient()
+
+    const signIn = async () => {
+        const data = await authClient.signIn.social({
+            provider: "atlassian"
         })
-        ```
-    </Step>
-       <Step>
-        ### 使用 Atlassian 登录
-        要使用 Atlassian 登录，可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
-        - `provider`：使用的提供者，应设置为 `atlassian`。
+    }
+    ```
 
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        const authClient =  createAuthClient()
-
-        const signIn = async () => {
-            const data = await authClient.signIn.social({
-                provider: "atlassian"
-            })
-        }
-        ```
-        <Callout type="info">
-        关于 Atlassian OAuth 权限和 API 功能的更多信息，请参考 [官方 Atlassian OAuth 2.0 (3LO) 应用文档](https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/)。
-        </Callout>
-    </Step>
-
+    <Callout type="info">
+      有关 Atlassian OAuth 范围和 API 功能的更多信息，请参考 [Atlassian 官方 OAuth 2.0 (3LO) 应用文档](https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/)。
+    </Callout>
+  </Step>
 </Steps>

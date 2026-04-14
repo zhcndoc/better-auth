@@ -4,39 +4,41 @@ description: Railway 提供者的设置和使用。
 ---
 
 <Steps>
-    <Step> 
-        ### 获取您的 Railway 凭据
-        要使用 Railway 登录，您需要一个客户端 ID 和客户端密钥。您可以从 [Railway 开发者设置](https://railway.com/workspace/developer) 获取它们。
+  <Step>
+    ### 获取您的 Railway 凭证
 
-        1. 进入您的 Railway 账户的开发者设置页面
-        2. 点击“创建 OAuth 应用”
-        3. 将应用类型设置为“Web 应用”
-        4. 将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/railway`，用于本地开发。生产环境中，您应将其设置为您应用的 URL。
+    要使用 Railway 登录，您需要客户端 ID 和客户端密钥。您可以从 [Railway 开发者设置](https://railway.com/workspace/developer) 获取它们。
 
-        请确保安全地保存您的客户端 ID 和客户端密钥。如果您更改了认证路由的基本路径，需要相应更新重定向 URL。
+    1. 进入您的 Railway 账户的开发者设置
+    2. 点击“创建 OAuth 应用”
+    3. 将应用程序类型设置为“Web 应用程序”
+    4. 将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/railway`（本地开发），或生产环境中的应用 URL
 
-        <Callout type="info">
-            Railway 使用 PKCE（Proof Key for Code Exchange）来加强安全性。Better Auth 会自动处理这部分。
-        </Callout>
-    </Step>
+    请务必安全地保存您的客户端 ID 和客户端密钥。如果更改了认证路由的基础路径，请相应更新重定向 URL。
 
-    <Step>
-        ### 配置提供者
-        要配置该提供者，您需要导入提供者并将其传递给身份验证实例的 `socialProviders` 选项。
+    <Callout type="info">
+      Railway 使用 PKCE（代码交换的密钥）来增强安全性。此功能由 Better Auth 自动处理。
+    </Callout>
+  </Step>
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
-        
-        export const auth = betterAuth({
-            socialProviders: {
-                railway: { // [!code highlight]
-                    clientId: process.env.RAILWAY_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.RAILWAY_CLIENT_SECRET as string, // [!code highlight]
-                }, // [!code highlight]
-            },
-        })
-        ```
-    </Step>
+  <Step>
+    ### 配置提供者
+
+    要配置该提供者，您需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            railway: { // [!code highlight]
+                clientId: process.env.RAILWAY_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.RAILWAY_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
 </Steps>
 
 ## 使用方法
@@ -45,7 +47,7 @@ description: Railway 提供者的设置和使用。
 
 要使用 Railway 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
 
-- `provider`：要使用的提供者，应该设置为 `railway`。
+* `provider`: 要使用的提供者，应设置为 `railway`
 
 ```ts title="auth-client.ts"  
 import { createAuthClient } from "better-auth/client"
@@ -66,17 +68,17 @@ const signIn = async () => {
 
 Railway OAuth 支持以下权限范围：
 
-| 权限范围 | 描述 |
-|----------|------|
-| `openid` | 所有请求都必须包含（默认包括） |
-| `email` | 访问用户的电子邮件地址（默认包括） |
-| `profile` | 访问用户的姓名和头像（默认包括） |
-| `offline_access` | 获取刷新令牌以便长期访问 |
-| `workspace:viewer` | 对用户选择的工作区具有查看权限 |
-| `workspace:member` | 对用户选择的工作区具有成员权限 |
-| `workspace:admin` | 对用户选择的工作区具有管理员权限 |
-| `project:viewer` | 对用户选择的项目具有查看权限 |
-| `project:member` | 对用户选择的项目具有成员权限 |
+| Scope              | 描述                                          |
+| ------------------ | -------------------------------------------- |
+| `openid`           | 所有请求必需（默认包含）                      |
+| `email`            | 访问用户的电子邮件地址（默认包含）            |
+| `profile`          | 访问用户的姓名和头像（默认包含）              |
+| `offline_access`   | 接收刷新令牌以实现长期访问                    |
+| `workspace:viewer` | 查看用户选择的工作区                          |
+| `workspace:member` | 成员权限访问用户选择的工作区                  |
+| `workspace:admin`  | 管理员权限访问用户选择的工作区                |
+| `project:viewer`   | 查看用户选择的项目                            |
+| `project:member`   | 成员权限访问用户选择的项目                    |
 
 当请求工作区或项目权限时，用户将在授权同意界面选择具体要共享的工作区或项目。
 
@@ -97,16 +99,16 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warn">
-    请求 `offline_access` 权限时，Railway 要求在授权 URL 中设置 `prompt=consent`：
+  当请求 `offline_access` 权限范围时，Railway 要求在授权 URL 中设置 `prompt=consent`：
 
-    ```ts
-    railway: {
-        clientId: process.env.RAILWAY_CLIENT_ID as string,
-        clientSecret: process.env.RAILWAY_CLIENT_SECRET as string,
-        scope: ["offline_access"],
-        prompt: "consent", // [!code highlight]
-    }
-    ```
+  ```ts
+  railway: {
+      clientId: process.env.RAILWAY_CLIENT_ID as string,
+      clientSecret: process.env.RAILWAY_CLIENT_SECRET as string,
+      scope: ["offline_access"],
+      prompt: "consent", // [!code highlight]
+  }
+  ```
 </Callout>
 
 有关 Railway OAuth 实现的更多信息，请参阅 [Railway 官方文档](https://docs.railway.com/reference/oauth/login-with-railway)。

@@ -41,29 +41,32 @@ export const auth = betterAuth({
       <th>
         <p className="font-bold text-[16px] mb-1">MySQL 架构生成</p>
       </th>
+
       <th>
         <p className="font-bold text-[16px] mb-1">MySQL 架构迁移</p>
       </th>
     </tr>
   </thead>
+
   <tbody>
     <tr className="h-10">
-      <td>&#9989; 支持</td>
-      <td>&#9989; 支持</td>
+      <td>✅ Supported</td>
+      <td>✅ Supported</td>
     </tr>
   </tbody>
 </table>
 
 <Tabs items={["migrate", "generate"]}>
   <Tab value="migrate">
-  ```package-install
-  npx auth@latest migrate
-  ```
+    ```package-install
+    npx auth@latest migrate
+    ```
   </Tab>
+
   <Tab value="generate">
-  ```package-install
-  npx auth@latest generate
-  ```
+    ```package-install
+    npx auth@latest generate
+    ```
   </Tab>
 </Tabs>
 
@@ -83,6 +86,7 @@ export const auth = betterAuth({
   experimental: { joins: true }
 });
 ```
+
 <Callout type="warn">
   启用此功能后，可能需要运行数据库迁移。
 </Callout>

@@ -14,119 +14,117 @@ description: 了解如何为 Better-Auth 创建自定义数据库适配器
 ## 快速开始
 
 <Steps>
-<Step>
-### 准备工作
+  <Step>
+    ### 准备工作
 
-1. 导入 `createAdapterFactory`。
-2. 创建表示适配器配置选项的 `CustomAdapterConfig` 接口。
-3. 创建适配器！
+    1. 导入 `createAdapterFactory`。
+    2. 创建 `CustomAdapterConfig` 接口，代表您的适配器配置选项。
+    3. 创建适配器！
 
-```ts
-import { createAdapterFactory, type DBAdapterDebugLogOption } from "better-auth/adapters";
+    ```ts
+    import { createAdapterFactory, type DBAdapterDebugLogOption } from "better-auth/adapters";
 
-// 你的自定义适配器配置选项
-interface CustomAdapterConfig {
-  /**
-   * 帮助你调试适配器问题。
-   */
-  debugLogs?: DBAdapterDebugLogOption;
-  /**
-   * 模式中的表名是否为复数形式。
-   */
-  usePlural?: boolean;
-}
+    // 您的自定义适配器配置选项
+    interface CustomAdapterConfig {
+      /**
+       * 帮助您调试适配器问题。
+       */
+      debugLogs?: DBAdapterDebugLogOption;
+      /**
+       * 架构中的表名是否为复数形式。
+       */
+      usePlural?: boolean;
+    }
 
-export const myAdapter = (config: CustomAdapterConfig = {}) =>
-  createAdapterFactory({
+    export const myAdapter = (config: CustomAdapterConfig = {}) =>
+      createAdapterFactory({
+        // ...
+      });
+    ```
+  </Step>
+
+  <Step>
+    ### 配置适配器
+
+    `config` 对象主要用于向 Better-Auth 提供适配器相关信息。
+    我们尽量减少在适配器函数中需要编写的代码量，这些 `config` 选项用于帮助我们实现这一点。
+
+    ```ts
     // ...
-  });
-```
-
-</Step>
-
-<Step>
-### 配置适配器
-
-`config` 对象主要用于向 Better-Auth 提供关于适配器的信息。  
-我们尽量减少您在适配器函数中需要编写的代码量，而这些 `config` 选项帮助我们实现这一点。
-
-```ts
-// ...
-export const myAdapter = (config: CustomAdapterConfig = {}) =>
-  createAdapterFactory({
-    config: {
-      adapterId: "custom-adapter", // 适配器的唯一标识符。
-      adapterName: "Custom Adapter", // 适配器名称。
-      usePlural: config.usePlural ?? false, // 模式中的表名是否为复数形式。
-      debugLogs: config.debugLogs ?? false, // 是否启用调试日志。
-      supportsJSON: false, // 数据库是否支持 JSON。（默认：false）
-      supportsDates: true, // 数据库是否支持日期。（默认：true）
-      supportsBooleans: true, // 数据库是否支持布尔值。（默认：true）
-      supportsNumericIds: true, // 数据库是否支持自增数字 ID。（默认：true）
-    },
-    // ...
-  });
-```
-</Step>
-
-<Step>
-### 创建适配器
-
-`adapter` 函数是你编写与数据库交互代码的地方。
-
-```ts
-// ...
-export const myAdapter = (config: CustomAdapterConfig = {}) =>
-  createAdapterFactory({
-    config: {
-      // ...
-    },
-    adapter: ({}) => {
-      return {
-        create: async ({ data, model, select }) => {
-          // ...
-        },
-        update: async ({ data, model, select }) => {
-          // ...
-        },
-        updateMany: async ({ data, model, select }) => {
-          // ...
-        },
-        delete: async ({ data, model, select }) => {
-          // ...
+    export const myAdapter = (config: CustomAdapterConfig = {}) =>
+      createAdapterFactory({
+        config: {
+          adapterId: "custom-adapter", // 适配器的唯一标识符。
+          adapterName: "Custom Adapter", // 适配器的名称。
+          usePlural: config.usePlural ?? false, // 架构中的表名是否为复数。
+          debugLogs: config.debugLogs ?? false, // 是否启用调试日志。
+          supportsJSON: false, // 数据库是否支持 JSON。（默认：false）
+          supportsDates: true, // 数据库是否支持日期。（默认：true）
+          supportsBooleans: true, // 数据库是否支持布尔值。（默认：true）
+          supportsNumericIds: true, // 数据库是否支持自动递增的数字 ID。（默认：true）
         },
         // ...
-      };
-    },
-  });
-```
+      });
+    ```
+  </Step>
 
-<Callout>
-了解更多关于 `adapter` 的内容请点击[这里](/docs/concepts/database#adapters)。
-</Callout>
-</Step>
+  <Step>
+    ### 创建适配器
 
+    `adapter` 函数是您编写与数据库交互代码的地方。
+
+    ```ts
+    // ...
+    export const myAdapter = (config: CustomAdapterConfig = {}) =>
+      createAdapterFactory({
+        config: {
+          // ...
+        },
+        adapter: ({}) => {
+          return {
+            create: async ({ data, model, select }) => {
+              // ...
+            },
+            update: async ({ data, model, select }) => {
+              // ...
+            },
+            updateMany: async ({ data, model, select }) => {
+              // ...
+            },
+            delete: async ({ data, model, select }) => {
+              // ...
+            },
+            // ...
+          };
+        },
+      });
+    ```
+
+    <Callout>
+      在这里了解更多关于 `adapter` 的信息 [here](/docs/concepts/database#adapters)。
+    </Callout>
+  </Step>
 </Steps>
 
 ## 适配器
 
-`adapter` 函数是你编写与数据库交互代码的地方。
+`adapter` 函数是您编写与数据库交互代码的地方。
 
-如果你还没有，建议先查看[配置部分](#config)中的 `options` 对象，它对你的适配器可能非常有用。
+如果您还没有，建议先查看[配置部分](#config)中的 `options` 对象，它对您的适配器可能非常有用。
 
 在深入适配器函数之前，让我们先了解可用的参数。
 
-- `options`：Better Auth 的选项。
-- `schema`：用户 Better Auth 实例的模式。
-- `debugLog`：调试日志函数。
-- `getFieldName`：获取数据库中字段转换后的名称的函数。
-- `getModelName`：获取数据库中模型转换后的名称的函数。
-- `getDefaultModelName`：从模式中获取默认模型名称的函数。
-- `getDefaultFieldName`：从模式中获取默认字段名称的函数。
-- `getFieldAttributes`：获取特定模型和字段的字段属性的函数。
-- `transformInput`：保存到数据库之前转换输入数据的函数。
-- `transformOutput`：从数据库取出后转换输出数据的函数。
-- `transformWhereClause`：转换数据库查询的 where 条件的函数。
+* `options`: Better Auth 的选项。
+* `schema`: 用户 Better Auth 实例的架构。
+* `debugLog`: 调试日志函数。
+* `getFieldName`: 获取数据库转换后的字段名的函数。
+* `getModelName`: 获取数据库转换后的模型名的函数。
+* `getDefaultModelName`: 从架构中获取默认模型名的函数。
+* `getDefaultFieldName`: 从架构中获取默认字段名的函数。
+* `getFieldAttributes`: 获取特定模型和字段的字段属性的函数。
+* `transformInput`: 在保存到数据库之前转换输入数据的函数。
+* `transformOutput`: 从数据库检索后转换输出数据的函数。
+* `transformWhereClause`: 转换数据库查询的 where 子句的函数。
 
 ```ts title="示例"
 adapter: ({
@@ -150,25 +148,25 @@ adapter: ({
 
 ### 适配器方法
 
-- 所有的 `model` 值已根据最终用户的模式配置，转换为数据库正确的模型名称。
-  - 这也意味着如果你需要访问给定模型的 `schema` 版本，你不能直接使用此 `model` 值，需要使用 `getDefaultModelName` 函数将 `model` 转换为 `schema` 版本。
-- 我们会自动根据用户的 `schema` 配置，填充你返回的任何缺失字段。
-- 任何包含 `select` 参数的方法，仅用于更高效地从数据库获取数据。你无需担心严格按照 `select` 参数返回数据，我们会帮你处理。
+* 所有 `model` 值都会根据用户的架构配置自动转换为正确的数据库模型名称。
+  * 这也意味着，如果您需要访问给定模型的 `schema` 版本，则不能直接使用此 `model` 值，您需要使用 `getDefaultModelName` 函数将 `model` 转换为 `schema` 版本。
+* 我们会根据用户的 `schema` 配置自动填充您返回中缺失的任何字段。
+* 任何包含 `select` 参数的方法仅用于更高效地从数据库获取数据。您不需要担心只返回 `select` 参数指定的内容，因为我们会为您处理。
 
 ### `create` 方法
 
-`create` 方法用于在数据库中新建记录。
+`create` 方法用于在数据库中创建新记录。
 
 <Callout>
-可以向 `create` 方法传递 `forceAllowId` 参数，允许在 `data` 对象中提供 `id`。  
-我们会内部处理 `forceAllowId`，你无需担心。
+  可以将 `forceAllowId` 作为参数传递给 `create` 方法，这允许在 `data` 对象中提供 `id`。
+  我们在内部处理 `forceAllowId`，因此您不需要担心它。
 </Callout>
 
 参数：
 
-- `model`：将插入新数据的模型/表名称。
-- `data`：插入数据库的数据。
-- `select`：从数据库返回的字段数组。
+* `model`: 新数据将插入的模型/表名。
+* `data`: 要插入数据库的数据。
+* `select`: 要从数据库返回的字段数组。
 
 <Callout>
 确保返回插入到数据库中的数据。
@@ -187,9 +185,9 @@ create: async ({ model, data, select }) => {
 
 参数：
 
-- `model`：将更新记录的模型/表名称。
-- `where`：更新记录的筛选条件。
-- `update`：用来更新记录的数据。
+* `model`: 记录将更新的模型/表名。
+* `where`: 用于更新记录的 `where` 子句。
+* `update`: 用于更新记录的数据。
 
 <Callout>
 确保返回被更新的整条数据，包括未变更的字段。
@@ -208,9 +206,9 @@ update: async ({ model, where, update }) => {
 
 参数：
 
-- `model`：将更新记录的模型/表名称。
-- `where`：更新记录的筛选条件。
-- `update`：用来更新记录的数据。
+* `model`: 记录将更新的模型/表名。
+* `where`: 用于更新记录的 `where` 子句。
+* `update`: 用于更新记录的数据。
 
 <Callout>确保返回更新的记录数。</Callout>
 
@@ -227,8 +225,8 @@ updateMany: async ({ model, where, update }) => {
 
 参数：
 
-- `model`：将删除记录的模型/表名称。
-- `where`：删除记录的筛选条件。
+* `model`: 记录将从其中删除的模型/表名。
+* `where`: 用于删除记录的 `where` 子句。
 
 ```ts title="示例"
 delete: async ({ model, where }) => {
@@ -243,8 +241,8 @@ delete: async ({ model, where }) => {
 
 参数：
 
-- `model`：将删除记录的模型/表名称。
-- `where`：删除记录的筛选条件。
+* `model`: 记录将从其中删除的模型/表名。
+* `where`: 用于删除记录的 `where` 子句。
 
 <Callout>确保返回删除的记录数。</Callout>
 
@@ -261,10 +259,10 @@ deleteMany: async ({ model, where }) => {
 
 参数：
 
-- `model`：查找记录的模型/表名称。
-- `where`：查找记录的筛选条件。
-- `select`：返回字段的筛选条件。
-- `join`：可选的连接配置，用于在单次查询中获取关联记录。
+* `model`: 记录将查找的模型/表名。
+* `where`: 用于查找记录的 `where` 子句。
+* `select`: 要返回的选择子句。
+* `join`: 可选的连接配置，用于在一个查询中获取相关记录。
 
 <Callout>确保返回查询到的数据。</Callout>
 
@@ -281,12 +279,12 @@ findOne: async ({ model, where, select, join }) => {
 
 参数：
 
-- `model`：查找记录的模型/表名称。
-- `where`：查找记录的筛选条件。
-- `limit`：返回记录的数量限制。
-- `sortBy`：排序条件。
-- `offset`：偏移数量。
-- `join`：可选的连接配置，用于在单次查询中获取关联记录。
+* `model`: 记录将查找的模型/表名。
+* `where`: 用于查找记录的 `where` 子句。
+* `limit`: 要返回的记录数限制。
+* `sortBy`: 用于排序记录的 `sortBy` 子句。
+* `offset`: 要返回的记录偏移量。
+* `join`: 可选的连接配置，用于在一个查询中获取相关记录。
 
 <Callout>
 确保返回查询到的数据数组。
@@ -311,8 +309,8 @@ findMany: async ({ model, where, limit, sortBy, offset, join }) => {
 
 参数：
 
-- `model`：统计记录的模型/表名称。
-- `where`：统计记录的筛选条件。
+* `model`: 记录将统计的模型/表名。
+* `where`: 用于统计记录的 `where` 子句。
 
 <Callout>确保返回统计出的记录数。</Callout>
 
@@ -347,8 +345,8 @@ const myAdapter = (config: CustomAdapterConfig) =>
 
 参数：
 
-- `tables`：用户 Better-Auth 实例模式中的表，预期生成进模式文件。
-- `file`：用户传入 `generate` 命令的期望模式文件输出路径。
+* `tables`: 用户 Better-Auth 实例架构中的表；期望生成到架构文件中。
+* `file`: 用户在 `generate` 命令中可能传入的文件，作为预期的架构文件输出路径。
 
 ```ts title="示例"
 createSchema: async ({ file, tables }) => {
@@ -356,9 +354,9 @@ createSchema: async ({ file, tables }) => {
 };
 ```
 
-## 测试你的适配器
+## 测试您的适配器
 
-我们提供了一个通过 `@better-auth/test-utils` 包的测试套件，你可以用它来测试你的适配器。它需要你使用 `vitest`。
+我们提供了一个通过 `@better-auth/test-utils` 包的测试套件，您可以用它来测试您的适配器。它需要您使用 `vitest`。
 
 首先安装测试工具：
 
@@ -374,13 +372,13 @@ import { myAdapter } from "./my-adapter";
 
 const normalTestSuite = createTestSuite("Normal", ({ test, adapter }) => [
   test("should create and find a user", async () => {
-    // 在这里使用 adapter 实例编写你的适配器测试
+    // 在这里使用 adapter 实例编写您的适配器测试
   }),
 ]);
 
 const { execute } = await testAdapter({
   adapter: (options) => {
-    return myAdapter(/* 你的适配器配置 */);
+    return myAdapter(/* 您的适配器配置 */);
   },
   runMigrations: async (options) => {
     // 在这里运行数据库迁移
@@ -396,7 +394,7 @@ const { execute } = await testAdapter({
 execute();
 ```
 
-`testAdapter` 函数为你处理测试生命周期，包括在测试前运行迁移和测试完成后清理所有表。
+`testAdapter` 函数为您处理测试生命周期，包括在测试前运行迁移和测试完成后清理所有表。
 
 <Callout type="info">
   在 v1.4 版本中，适配器测试使用了 `better-auth/adapters/test` 中的 `runAdapterTest` 和 `runNumberIdAdapterTest`，该导出在 v1.5 中已移除。请改用 `@better-auth/test-utils/adapter`。
@@ -522,7 +520,15 @@ mapKeysTransformOutput: {
   如果你启用了 `supportsJSON`、`supportsDates` 或 `supportsBooleans`，这些转换会在调用你的 `customTransformInput` 函数之前执行。
 </Callout>
 
-`customTransformInput` 函数接受以下参数：
+`customTransformInput` 函数接收以下参数：
+
+* `data`: 需要转换的数据。
+* `field`: 当前转换的字段。
+* `fieldAttributes`: 该字段的属性。
+* `action`: 调用的适配器动作（`create` 或 `update`）。
+* `model`: 当前模型。
+* `schema`: 当前模式。
+* `options`: Better Auth 选项。
 
 - `data`：需转换的数据。
 - `field`：当前转换的字段。

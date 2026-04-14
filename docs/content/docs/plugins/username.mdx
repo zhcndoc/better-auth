@@ -8,59 +8,63 @@ description: 用户名插件
 ## 安装
 
 <Steps>
-    <Step>
-        ### 将插件添加到服务器
+  <Step>
+    ### 将插件添加到服务器
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
-        import { username } from "better-auth/plugins" // [!code highlight]
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+    import { username } from "better-auth/plugins" // [!code highlight]
 
-        export const auth = betterAuth({
-            emailAndPassword: { // [!code highlight]
-                enabled: true, // [!code highlight]
-            }, // [!code highlight]
-            plugins: [ // [!code highlight]
-                username() // [!code highlight]
-            ] // [!code highlight]
-        })
+    export const auth = betterAuth({
+        emailAndPassword: { // [!code highlight]
+            enabled: true, // [!code highlight]
+        }, // [!code highlight]
+        plugins: [ // [!code highlight]
+            username() // [!code highlight]
+        ] // [!code highlight]
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 迁移数据库
+
+    运行迁移或生成架构以向数据库添加必要的字段和表。
+
+    <Tabs items={["migrate", "generate"]}>
+      <Tab value="migrate">
+        ```package-install
+        npx auth migrate
         ```
-    </Step>
-    <Step>
-        ### 运行数据库迁移
+      </Tab>
 
-        运行迁移或生成架构，以向数据库添加所需的字段和表。
-
-        <Tabs items={["migrate", "generate"]}>
-            <Tab value="migrate">
-            ```package-install
-            npx auth migrate
-            ```
-            </Tab>
-            <Tab value="generate">
-            ```package-install
-            npx auth generate
-            ```
-            </Tab>
-        </Tabs>
-        更多详情请参见 [Schema](#schema) 部分，手动添加字段。
-    </Step>
-    <Step>
-        ### 添加客户端插件
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        import { usernameClient } from "better-auth/client/plugins" // [!code highlight]
-
-        export const authClient = createAuthClient({
-            plugins: [ // [!code highlight]
-                usernameClient() // [!code highlight]
-            ] // [!code highlight]
-        })
+      <Tab value="generate">
+        ```package-install
+        npx auth generate
         ```
-    </Step>
+      </Tab>
+    </Tabs>
+
+    有关手动添加字段的说明，请参见[架构](#schema)部分。
+  </Step>
+
+  <Step>
+    ### 添加客户端插件
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    import { usernameClient } from "better-auth/client/plugins" // [!code highlight]
+
+    export const authClient = createAuthClient({
+        plugins: [ // [!code highlight]
+            usernameClient() // [!code highlight]
+        ] // [!code highlight]
+    })
+    ```
+  </Step>
 </Steps>
 
-## 使用方法
+## 用法
 
 ### 注册
 
@@ -68,35 +72,34 @@ description: 用户名插件
 `signUp` 函数接受一个新增的 `username` 属性。
 
 <APIMethod path="/sign-up/email" method="POST">
-```ts
-type signUpEmail = {
-    /**
-     * 用户的电子邮件。
-    */
-    email: string = "email@domain.com"
-    /**
-     * 用户的名字。
-    */
-    name: string = "Test User"
-    /**
-     * 用户的密码。
-    */
-    password: string = "password1234"
-    /**
-     * 用户的用户名。
-    */
-    username?: string = "test"
-    /**
-     * 用户的可选显示用户名。
-    */
-    displayUsername?: string = "Test User123"
-}
-```
+  ```ts
+  type signUpEmail = {
+      /**
+       * 用户的电子邮件。
+      */
+      email: string = "email@domain.com"
+      /**
+       * 用户的姓名。
+      */
+      name: string = "Test User"
+      /**
+       * 用户的密码。
+      */
+      password: string = "password1234"
+      /**
+       * 用户的用户名。
+      */
+      username?: string = "test"
+      /**
+       * 可选的用户名显示名称。
+      */
+      displayUsername?: string = "Test User123"
+  }
+  ```
 </APIMethod>
 
-
 <Callout type="info">
-    如果只提供了 `username`，则 `displayUsername` 会被设为该用户名的预标准化版本。更多详情请参见 [用户名标准化](#username-normalization) 和 [显示用户名标准化](#display-username-normalization) 部分。
+  如果仅提供 `username`，则 `displayUsername` 将设置为 `username` 的预标准化版本。你可以在[用户名标准化](#username-normalization)和[显示用户名标准化](#display-username-normalization)部分获取更多详细信息。
 </Callout>
 
 ### 登录
@@ -104,18 +107,18 @@ type signUpEmail = {
 要使用用户名登录用户，可以使用客户端提供的 `signIn.username` 函数。
 
 <APIMethod path="/sign-in/username" method="POST">
-```ts
-type signInUsername = {
-    /**
-     * 用户名。
-    */
-    username: string = "test"
-    /**
-     * 密码。
-    */
-    password: string = "password1234"
-}
-```
+  ```ts
+  type signInUsername = {
+      /**
+       * 用户的用户名。
+      */
+      username: string = "test"
+      /**
+       * 用户的密码。
+      */
+      password: string = "password1234"
+  }
+  ```
 </APIMethod>
 
 ### 更新用户名
@@ -123,14 +126,14 @@ type signInUsername = {
 要更新用户的用户名，可以使用客户端提供的 `updateUser` 函数。
 
 <APIMethod path="/update-user" method="POST">
-```ts
-type updateUser = {
-    /**
-     * 要更新的用户名。
-    */
-    username?: string = "new-username"
-}
-```
+  ```ts
+  type updateUser = {
+      /**
+       * 要更新的用户名。
+      */
+      username?: string = "new-username"
+  }
+  ```
 </APIMethod>
 
 ### 检查用户名是否可用
@@ -138,20 +141,20 @@ type updateUser = {
 要检查用户名是否可用，可以使用客户端提供的 `isUsernameAvailable` 函数。
 
 <APIMethod path="/is-username-available" method="POST" resultVariable="response">
-```ts
-type isUsernameAvailable = {
-    /**
-     * 要检查的用户名。
-    */
-    username: string = "new-username"
-}
+  ```ts
+  type isUsernameAvailable = {
+      /**
+       * 要检查的用户名。
+      */
+      username: string = "new-username"
+  }
 
-if (response?.available) {
-    console.log("用户名可用");
-} else {
-    console.log("用户名不可用");
-}
-```
+  if (response?.available) {
+      console.log("用户名可用");
+  } else {
+      console.log("用户名不可用");
+  }
+  ```
 </APIMethod>
 
 ## 选项
@@ -223,7 +226,7 @@ const auth = betterAuth({
 
 ### 显示用户名验证器
 
-一个验证显示用户名的函数。如果显示用户名无效，该函数应返回 `false`。默认情况下，对显示用户名不进行验证。
+一个验证显示用户名的函数。如果显示用户名无效，该函数应返回 `false`。默认情况下，不对显示用户名进行验证。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -248,7 +251,7 @@ const auth = betterAuth({
 
 一个用于标准化用户名的函数，或者设置为 `false` 以禁用标准化。
 
-默认情况下，用户名被标准化为小写，比如 "TestUser" 和 "testuser" 被视为相同的用户名。`username` 字段包含标准化（小写）的用户名，而 `displayUsername` 保持原始的用户名。
+默认情况下，用户名被标准化为小写，例如 "TestUser" 和 "testuser" 被视为相同的用户名。`username` 字段包含标准化（小写）的用户名，而 `displayUsername` 保持原始的用户名。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -339,20 +342,20 @@ const auth = betterAuth({
 
 该插件需要在用户表中添加 2 个字段：
 
-<DatabaseTable
-    fields={[
-        {
-            name: "username",
-            type: "string",
-            description: "用户的用户名",
-            isUnique: true,
-            isOptional: true
-        },
-        {
-            name: "displayUsername",
-            type: "string",
-            description: "用户的非标准化用户名",
-            isOptional: true
-        },
-    ]}
-/>
+export const usernameUserTableFields = [
+	{
+		name: "username",
+		type: "string",
+		description: "The username of the user",
+		isUnique: true,
+		isOptional: true,
+	},
+	{
+		name: "displayUsername",
+		type: "string",
+		description: "Non normalized username of the user",
+		isOptional: true,
+	},
+];
+
+<DatabaseTable name="user" fields={usernameUserTableFields} />

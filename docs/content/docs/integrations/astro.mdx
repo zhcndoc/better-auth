@@ -23,47 +23,52 @@ export const ALL: APIRoute = async (ctx) => {
 ```
 
 <Callout>
-    你可以在 better-auth 配置中更改该路径，但建议保持为 `/api/auth/[...all]`
+  你可以更改 better-auth 配置中的路径，但建议保持为 `/api/auth/[...all]`
 </Callout>
 
 ## 创建客户端
 
 Astro 支持多种前端框架，因此你可以根据所使用的框架方便地导入客户端。
 
-如果你不使用前端框架，也可以导入原生（vanilla）客户端。
+<Tabs
+  items={[ "vanilla", "react", "vue", "svelte", "solid",
+]}
+  defaultValue="react"
+>
+  <Tab value="vanilla">
+    ```ts title="lib/auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    export const authClient =  createAuthClient()
+    ```
+  </Tab>
 
-<Tabs items={[ "vanilla", "react", "vue", "svelte", "solid",
- ]} defaultValue="react">
-    <Tab value="vanilla">
-            ```ts  title="lib/auth-client.ts"
-            import { createAuthClient } from "better-auth/client"
-            export const authClient =  createAuthClient()
-            ```
-    </Tab>
-    <Tab value="react" title="lib/auth-client.ts">
-            ```ts  title="lib/auth-client.ts"
-            import { createAuthClient } from "better-auth/react"
-            export const authClient =  createAuthClient()
-            ```
-    </Tab>
-    <Tab value="vue" title="lib/auth-client.ts">
-            ```ts  title="lib/auth-client.ts"
-            import { createAuthClient } from "better-auth/vue"
-            export const authClient =  createAuthClient()
-            ```
-    </Tab>
-    <Tab value="svelte" title="lib/auth-client.ts">
-            ```ts  title="lib/auth-client.ts"
-            import { createAuthClient } from "better-auth/svelte"
-            export const authClient =  createAuthClient()
-            ```
-    </Tab>
-    <Tab value="solid" title="lib/auth-client.ts">
-            ```ts title="lib/auth-client.ts"
-            import { createAuthClient } from "better-auth/solid"
-            export const authClient =  createAuthClient()
-            ```
-    </Tab>
+  <Tab value="react" title="lib/auth-client.ts">
+    ```ts title="lib/auth-client.ts"
+    import { createAuthClient } from "better-auth/react"
+    export const authClient =  createAuthClient()
+    ```
+  </Tab>
+
+  <Tab value="vue" title="lib/auth-client.ts">
+    ```ts title="lib/auth-client.ts"
+    import { createAuthClient } from "better-auth/vue"
+    export const authClient =  createAuthClient()
+    ```
+  </Tab>
+
+  <Tab value="svelte" title="lib/auth-client.ts">
+    ```ts title="lib/auth-client.ts"
+    import { createAuthClient } from "better-auth/svelte"
+    export const authClient =  createAuthClient()
+    ```
+  </Tab>
+
+  <Tab value="solid" title="lib/auth-client.ts">
+    ```ts title="lib/auth-client.ts"
+    import { createAuthClient } from "better-auth/solid"
+    export const authClient =  createAuthClient()
+    ```
+  </Tab>
 </Tabs>
 
 ## 认证中间件

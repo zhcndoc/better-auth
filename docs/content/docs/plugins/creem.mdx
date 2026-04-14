@@ -14,19 +14,18 @@ description: 使用 Creem 的支付和订阅管理的更好认证插件
   需要帮助？随时在 Discord 上联系我们的团队。
 </Card>
 
+## 功能特性
 
-## 功能
-
-- **数据库持久化** - 自动同步客户和订阅数据到您的数据库
-- **访问管理** - 根据用户订阅状态自动授予或撤销访问权限
-- **客户同步** - 将 Creem 客户 ID 与数据库用户同步
-- **结账集成** - 为已认证用户自动或为未认证用户手动创建结账会话
-- **客户门户** - 允许用户管理订阅、查看发票、更新支付方式
-- **订阅管理** - 为已认证用户自动或为未认证用户手动取消、检索和跟踪订阅详情
-- **交易历史** - 为已认证用户自动或为未认证用户手动搜索和过滤交易记录
-- **Webhook 处理** - 通过签名验证安全处理 Creem webhook
-- **灵活架构** - 可使用 Better Auth 端点或直接调用服务器端函数
-- **试用滥用防护** - 在数据库模式下，用户整个账户所有计划仅能享受一次试用
+* **数据库持久化** - 自动同步客户和订阅数据到您的数据库
+* **访问管理** - 根据订阅状态自动授予或撤销用户访问权限
+* **客户同步** - 将 Creem 客户 ID 与数据库中的用户同步
+* **结账集成** - 为已认证用户自动创建结账会话，或为未认证用户手动创建
+* **客户门户** - 允许用户管理订阅、查看发票和更新支付方式
+* **订阅管理** - 取消、检索和跟踪订阅详情（适用于已认证或未认证用户）
+* **交易历史** - 为已认证用户搜索和过滤交易记录，或为未认证用户手动操作
+* **Webhook 处理** - 通过签名验证安全处理 Creem Webhook
+* **灵活架构** - 使用 Better Auth 端点或直接使用服务端函数
+* **试用防滥用** - 每个账户在所有计划中只能获得一次试用（使用数据库模式时）
 
 ## 安装
 
@@ -39,14 +38,14 @@ description: 使用 Creem 的支付和订阅管理的更好认证插件
     ```
 
     <Callout>
-      若您采用前后端分离的架构，请确保在项目的客户端和服务端部分都安装此插件。
+      如果您采用前后端分离的架构，请确保在项目的客户端和服务端部分都安装此插件。
     </Callout>
   </Step>
 
   <Step>
     ### 获取 API Key
 
-    在 [Creem 控制面板](https://creem.io/dashboard/developers) 的“Developers”菜单下获取您的 API Key， 并将其添加到环境变量：
+    在 [Creem 控制面板](https://creem.io/dashboard/developers) 的“Developers”菜单下获取您的 API Key，并将其添加到环境变量中：
 
     ```bash
     # .env
@@ -57,7 +56,6 @@ description: 使用 Creem 的支付和订阅管理的更好认证插件
       测试模式和生产环境使用不同的 API Key，请确保所用的密钥对应正确的环境。
     </Callout>
   </Step>
-
 </Steps>
 
 ## 配置
@@ -125,17 +123,18 @@ export const authClient = createCreemAuthClient({
 
 如果启用数据库持久化（`persistSubscriptions: true`），请生成并运行数据库模式：
 
-<Tabs items={["迁移", "生成"]}>
-    <Tab value="migrate">
+<Tabs items={["migrate", "generate"]}>
+  <Tab value="migrate">
     ```package-install
     npx auth migrate
     ```
-    </Tab>
-    <Tab value="generate">
+  </Tab>
+
+  <Tab value="generate">
     ```package-install
     npx auth generate
     ```
-    </Tab>
+  </Tab>
 </Tabs>
 
 <Callout type="info">
@@ -252,13 +251,13 @@ export function SubscribeButton({ productId }: { productId: string }) {
 
 #### 结账参数说明
 
-- `productId`（必需）- Creem 产品 ID
-- `units` - 订购数量（默认：1）
-- `successUrl` - 支付成功后跳转地址
-- `discountCode` - 使用的折扣码
-- `customer` - 客户信息（自动从会话填充）
-- `metadata` - 附加元数据（自动包含用户 ID 作为 `referenceId`）
-- `requestId` - 防止重复请求的幂等性 key
+* `productId` (required) - The Creem product ID
+* `units` - Number of units (default: 1)
+* `successUrl` - Redirect URL after successful payment
+* `discountCode` - Discount code to apply
+* `customer` - Customer information (auto-populated from session)
+* `metadata` - Additional metadata (auto-includes user ID as `referenceId`)
+* `requestId` - Idempotency key for duplicate prevention
 
 ### 客户门户
 
@@ -354,19 +353,20 @@ if (data?.transactions) {
 
 这些处理器提供最简单且强大的用户访问管理方式。它们自动处理所有支付场景及订阅状态，无需单独管理每个订阅事件。
 
-  <strong>需要数据库持久化：</strong>此类处理器需在插件配置中启用数据库持久化选项。
+<strong> Database Persistence Required:</strong> These handlers require the database persistence option to be enabled in your plugin configuration.
 
-  | 处理器名称           | 数据参数类型              | 描述                                                                                      |
-  |----------------------|--------------------------|------------------------------------------------------------------------------------------|
-  | **`onGrantAccess`**  | **`GrantAccessContext`** | **当应授予用户访问权限时调用。**自动处理支付成功、活动订阅及试用期。可用于启用功能、加入用户组或更新权限。 |
-  | **`onRevokeAccess`** | **`RevokeAccessContext`**| **当应撤销用户访问权限时调用。**自动处理取消、过期、退款及支付失败等情况。可用于禁用功能、移除用户组或撤销权限。   |
+| 处理器名称         | 数据参数类型       | 描述                                                                                                                                                                                    |
+| -------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`onGrantAccess`**  | **`GrantAccessContext`**  | **当应授予用户访问权限时调用。** 处理成功的支付、活动订阅和试用期。使用此功能启用功能、添加用户到组或更新权限。 |
+| **`onRevokeAccess`** | **`RevokeAccessContext`** | **当应撤销用户访问权限时调用。** 处理取消、到期、退款和支付失败。使用此功能禁用功能、从组中移除或撤销权限。  |
 
-**为何选择这些处理器？**
-- 访问控制的单一真相来源
-- 自动处理所有支付及订阅场景
-- 降低代码复杂度及潜在错误
-- 适用于一次性购买及订阅
-- 考虑当前账期及访问过期时间
+**为什么使用这些处理器？**
+
+* 访问控制的单一真实来源
+* 自动处理所有支付场景
+* 减少代码复杂性和潜在错误
+* 适用于一次性购买和订阅
+* 考虑当前计费周期和访问过期日期
 
 ```typescript
 // lib/auth.ts
@@ -414,41 +414,41 @@ export const auth = betterAuth({
       },
     }),
   ],
-})
+});
 ```
 
 ### 授权访问的原因
 
-- `subscription_active` - 订阅处于激活状态
-- `subscription_trialing` - 订阅处于试用期
-- `subscription_paid` - 收到订阅付款
+* `subscription_active` - 订阅处于活动状态
+* `subscription_trialing` - 订阅处于试用期内
+* `subscription_paid` - 订阅付款已收到
 
-### 收回访问的原因
+### 撤销访问的原因
 
-- `subscription_paused` - 用户或管理员暂停订阅
-- `subscription_expired` - 订阅到期未续费
-- `subscription_period_end` - 当前订阅周期结束未续订
+* `subscription_paused` - 订阅被用户或管理员暂停
+* `subscription_expired` - 订阅到期未续订
+* `subscription_period_end` - 当前订阅周期结束未续订
 
----
+***
 
 ### 细粒度事件处理器
 
 高级用例需要对特定事件进行精细控制时，使用以下处理器：
 
-  | 处理器名称                | 数据参数类型             | 描述                                     |
-  |--------------------------|-------------------------|------------------------------------------|
-  | `onCheckoutCompleted`    | `FlatCheckoutCompleted` | 结账成功完成时调用。                      |
-  | `onRefundCreated`        | `FlatRefundCreated`     | 退款操作发生时触发。                      |
-  | `onDisputeCreated`       | `FlatDisputeCreated`    | 支付争议或退单创建时触发。                |
-  | `onSubscriptionActive`   | `FlatSubscriptionEvent` | 订阅激活时触发。                          |
-  | `onSubscriptionTrialing` | `FlatSubscriptionEvent` | 订阅进入试用期时触发。                    |
-  | `onSubscriptionCanceled` | `FlatSubscriptionEvent` | 订阅取消时触发。                          |
-  | `onSubscriptionPaid`     | `FlatSubscriptionEvent` | 收到订阅付款时触发。                      |
-  | `onSubscriptionExpired`  | `FlatSubscriptionEvent` | 订阅到期(无续费/付款)时触发。             |
-  | `onSubscriptionUnpaid`   | `FlatSubscriptionEvent` | 订阅付款失败或欠费时触发。                 |
-  | `onSubscriptionUpdate`   | `FlatSubscriptionEvent` | 订阅设置或详情更新时触发。                 |
-  | `onSubscriptionPastDue`  | `FlatSubscriptionEvent` | 订阅付款逾期时触发。                      |
-  | `onSubscriptionPaused`   | `FlatSubscriptionEvent` | 订阅被暂停（用户或管理员）时触发。         |
+| 处理器名称             | 数据参数类型     | 描述                                           |
+| ------------------------ | ----------------- | ---------------------------------------------- |
+| `onCheckoutCompleted`    | `FlatCheckoutCompleted` | 结账成功完成时调用。                             |
+| `onRefundCreated`        | `FlatRefundCreated`     | 为付款生成退款时触发。                           |
+| `onDisputeCreated`       | `FlatDisputeCreated`    | 创建付款争议/拒付时调用。                       |
+| `onSubscriptionActive`   | `FlatSubscriptionEvent` | 订阅变为活动状态时触发。                         |
+| `onSubscriptionTrialing` | `FlatSubscriptionEvent` | 订阅进入试用期时触发。                           |
+| `onSubscriptionCanceled` | `FlatSubscriptionEvent` | 订阅被取消时调用。                               |
+| `onSubscriptionPaid`     | `FlatSubscriptionEvent` | 订阅付款已收到时触发。                           |
+| `onSubscriptionExpired`  | `FlatSubscriptionEvent` | 订阅已过期（未续订/未付款）时触发。              |
+| `onSubscriptionUnpaid`   | `FlatSubscriptionEvent` | 订阅付款失败或未付款时触发。                     |
+| `onSubscriptionUpdate`   | `FlatSubscriptionEvent` | 订阅设置/详情更新时触发。                        |
+| `onSubscriptionPastDue`  | `FlatSubscriptionEvent` | 订阅付款逾期或拖欠时触发。                       |
+| `onSubscriptionPaused`   | `FlatSubscriptionEvent` | 订阅被用户或管理员暂停时触发。                   |
 
 ### 如何使用 Webhook 处理器
 
@@ -504,7 +504,6 @@ export const auth = betterAuth({
   ],
 });
 ```
-
 
 ### 自定义 Webhook 处理器
 
@@ -696,8 +695,7 @@ const days = getDaysUntilRenewal(subscription.current_period_end_date);
 console.log(`距离续订还有 ${days} 天`);
 ```
 
-
-### 数据库模式与 API 模式
+### 数据库模式 vs API 模式
 
 插件支持两种运行模式：
 
@@ -705,12 +703,13 @@ console.log(`距离续订还有 ${days} 天`);
 
 当 `persistSubscriptions: true`（默认）时，订阅数据存储在您的数据库中。
 
-**优势:**
-- 检查访问权限时无需调用 API，响应更快
-- 离线访问订阅数据
-- 使用 SQL 进行订阅查询
-- 通过 webhook 自动同步数据
-- 防止试用滥用
+**Benefits:**
+
+* Fast access checks without API calls
+* Offline access to subscription data
+* Query subscriptions with SQL
+* Automatic synchronization via webhooks
+* Trial abuse prevention
 
 **用法:**
 
@@ -725,14 +724,16 @@ creem({
 
 当 `persistSubscriptions: false`，所有数据均直接来自 Creem API。
 
-**优势:**
-- 无需数据库模式定义
-- 初次设置更简单
+**Benefits:**
 
-**限制:**
-- 每次访问检查都需 API 调用
-- 部分功能需自行实现
-- 无内置试用滥用防范
+* No database schema required
+* Simpler initial setup
+
+**Limitations:**
+
+* Requires API call for each access check
+* Some features require custom implementation
+* No built-in trial abuse prevention
 
 **用法:**
 
@@ -751,45 +752,46 @@ creem({
 
 ### 服务端类型
 
-| 类型名称                 | 描述                                                                                       | 典型用法                                      |
-|-------------------------|--------------------------------------------------------------------------------------------|------------------------------------------------|
-| `CreemOptions`          | Creem 插件的配置选项，如 API Key 和持久化设置。                                         | 用于服务器端插件配置。                          |
-| `GrantAccessContext`    | 授予用户访问权限时传递给自定义访问钩子的上下文。                                        | 用于自定义访问逻辑。                            |
-| `RevokeAccessContext`   | 撤销用户访问权限时钩子传递的上下文。                                                     | 用于自定义访问逻辑。                            |
-| `GrantAccessReason`     | 表示授予访问权限原因的枚举或类型（例如支付成功、试用激活）。                           | 访问相关钩子和事件返回。                        |
-| `RevokeAccessReason`    | 表示撤销访问权限原因的枚举或类型（例如取消、支付失败）。                               | 访问相关钩子和事件返回。                        |
-| `FlatCheckoutCompleted` | 结账完成 webhook 负载的事件对象类型。                                                  | 用于 webhook 处理器和事件监听。                 |
-| `FlatRefundCreated`     | 退款创建 webhook 负载事件对象类型。                                                   | 用于 webhook 处理器和事件监听。                 |
-| `FlatDisputeCreated`    | 支付争议创建 webhook 负载事件对象类型。                                               | 用于 webhook 处理器和事件监听。                 |
-| `FlatSubscriptionEvent` | 通用订阅事件（创建、更新、取消等）的事件对象类型。                                    | 用于 webhook 处理器和事件监听。                 |
+| Type Name               | Description                                                                                    | Typical Usage                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `CreemOptions`          | Configuration options for the Creem plugin, such as API keys and persistence settings.         | Used to configure the plugin on the server.   |
+| `GrantAccessContext`    | Context passed to custom access control hooks when granting access to a user.                  | Used in custom access logic.                  |
+| `RevokeAccessContext`   | Context passed to hooks when revoking user access due to subscription status changes.          | Used in custom access logic.                  |
+| `GrantAccessReason`     | Enum or type describing reasons for granting access (e.g., payment received, trial activated). | Returned in access-related hooks and events.  |
+| `RevokeAccessReason`    | Enum or type describing reasons for revoking access (e.g., canceled, payment failed).          | Returned in access-related hooks and events.  |
+| `FlatCheckoutCompleted` | Event object type for webhook payload when a checkout completes successfully.                  | Used in webhook handlers and event listeners. |
+| `FlatRefundCreated`     | Event object type for webhook payload when a refund is created.                                | Used in webhook handlers and event listeners. |
+| `FlatDisputeCreated`    | Event object type for webhook payload when a dispute is created.                               | Used in webhook handlers and event listeners. |
+| `FlatSubscriptionEvent` | Event object type for generic subscription events (created, updated, canceled, etc).           | Used in webhook handlers and event listeners. |
 
 ### 客户端类型
 
-| 类型名称                     | 描述                                                                                   |
-|------------------------------|----------------------------------------------------------------------------------------|
-| `CreateCheckoutInput`        | 创建结账会话时的输入参数类型。                                                        |
-| `CreateCheckoutResponse`     | 创建结账会话请求的响应数据类型。                                                      |
-| `CheckoutCustomer`           | 结账会话中客户信息类型。                                                              |
-| `CreatePortalInput`          | 创建客户门户会话时的输入参数类型。                                                   |
-| `CreatePortalResponse`       | 创建客户门户请求的响应数据类型。                                                     |
-| `CancelSubscriptionInput`    | 取消订阅时的输入参数类型。                                                           |
-| `CancelSubscriptionResponse` | 取消订阅请求的响应数据类型。                                                         |
-| `RetrieveSubscriptionInput`  | 获取特定订阅详情的输入类型。                                                         |
-| `SubscriptionData`           | API 返回的订阅信息类型。                                                              |
-| `SearchTransactionsInput`    | 搜索交易时的筛选条件及参数类型。                                                     |
-| `SearchTransactionsResponse` | 交易搜索查询的响应结构类型。                                                         |
-| `TransactionData`            | 单笔交易（支付、退款等）相关数据类型。                                               |
-| `HasAccessGrantedResponse`   | 指示用户基于订阅状态/规则是否拥有访问权限的响应数据结构。                            |
+| Type Name                    | Description                                                                                        |
+| ---------------------------- | -------------------------------------------------------------------------------------------------- |
+| `CreateCheckoutInput`        | Input parameters for creating a checkout session.                                                  |
+| `CreateCheckoutResponse`     | Response shape for a checkout session creation request.                                            |
+| `CheckoutCustomer`           | Customer information type used in a checkout session.                                              |
+| `CreatePortalInput`          | Input parameters for creating a customer portal session.                                           |
+| `CreatePortalResponse`       | Response data for a request to create a customer portal.                                           |
+| `CancelSubscriptionInput`    | Input parameters when cancelling a subscription.                                                   |
+| `CancelSubscriptionResponse` | Response data for a subscription cancellation request.                                             |
+| `RetrieveSubscriptionInput`  | Input for retrieving a specific subscription's details.                                            |
+| `SubscriptionData`           | Subscription information structure as returned by the API.                                         |
+| `SearchTransactionsInput`    | Filters and parameters for searching transactions.                                                 |
+| `SearchTransactionsResponse` | Response structure for a transaction search query.                                                 |
+| `TransactionData`            | Data relating to individual transactions (e.g., payment, refund, etc).                             |
+| `HasAccessGrantedResponse`   | The shape of the response indicating whether a user has access based on subscription status/rules. |
 
 ## 试用滥用防护
 
 启用数据库模式（`persistSubscriptions: true`）时，插件将自动防止试用滥用。用户整个账户内所有订阅计划仅能获得一次试用机会。
 
-**示例场景：**
-1. 用户订阅 “Starter” 计划并享受 7 天试用
-2. 试用期间用户取消订阅
-3. 用户尝试订阅 “Premium” 计划
-4. 不再提供试用，立即收费
+**Example Scenario:**
+
+1. User subscribes to "Starter" plan with 7-day trial
+2. User cancels subscription during the trial period
+3. User attempts to subscribe to "Premium" plan
+4. No trial is offered - user is charged immediately
 
 该防护为自动且不可配置，试用资格在创建订阅时判断，无法覆盖。
 
@@ -828,25 +830,25 @@ Webhook 无法正确处理时：
 
 部分功能仅数据库模式支持或者需额外参数：
 
-- `checkSubscriptionAccess` 需传入 `userId`
-- `getActiveSubscriptions` 需传入 `userId`
-- 无自动试用滥用防护
-- 无客户端 `hasAccessGranted` 方法
+* `checkSubscriptionAccess` requires passing the `userId` parameter
+* `getActiveSubscriptions` requires passing the `userId` parameter
+* No automatic trial abuse prevention
+* No access to `hasAccessGranted` client method
 
 使用时建议启用数据库模式，或自行用 Creem SDK 实现自定义逻辑。
 
 ## 额外资源
 
-- [Creem 文档](https://docs.creem.io)
-- [Creem 控制面板](https://creem.io/dashboard)
-- [Better Auth 文档](https://better-auth.com)
-- [插件 GitHub 额外文档](https://github.com/armitage-labs/creem-betterauth)
+* [Creem Documentation](https://docs.creem.io)
+* [Creem Dashboard](https://creem.io/dashboard)
+* [Better Auth Documentation](https://better-auth.com)
+* [Plugin GitHub Repository Additional Documentation](https://github.com/armitage-labs/creem-betterauth)
 
 ## 支持
 
 遇到问题或有疑问：
 
-- 在 [GitHub](https://github.com/armitage-labs/creem-betterauth/issues) 提交 issue
-- 发送邮件至 Creem 支持：[support@creem.io](mailto:support@creem.io)
-- 加入我们的 [Discord 社区](https://discord.gg/q3GKZs92Av) 获得实时支持与讨论
-- 在 [Creem 控制面板](https://creem.io/dashboard) 使用应用内实时聊天与我们交流
+* Open an issue on [GitHub](https://github.com/armitage-labs/creem-betterauth/issues)
+* Contact Creem support at [support@creem.io](mailto:support@creem.io)
+* Join our [Discord community](https://discord.gg/q3GKZs92Av) for real-time support and discussion.
+* Chat with us directly using the in-app live chat on the [Creem dashboard](https://creem.io/dashboard).

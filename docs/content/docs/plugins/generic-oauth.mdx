@@ -64,83 +64,81 @@ description: 使用任何 OAuth 提供商进行用户身份验证
 启动 OAuth 登录流程：
 
 <APIMethod path="/sign-in/oauth2" method="POST">
-```ts
-type signInWithOAuth2 = {
-    /**
-     * OAuth 提供商的 ID。 
-     */
-    providerId: string = "provider-id"
-    /**
-     * 登录后重定向的 URL。 
-     */
-    callbackURL?: string = "/dashboard"
-    /**
-     * 发生错误时重定向的 URL。 
-     */
-    errorCallbackURL?: string = "/error-page"
-    /**
-     * 新用户登录后重定向的 URL。 
-     */
-    newUserCallbackURL?: string = "/welcome"
-    /**
-     * 禁用重定向。 
-     */
-    disableRedirect?: boolean = false
-    /**
-     * 授权请求中传递给提供商的作用域。 
-     */
-    scopes?: string[] = ["my-scope"]
-    /**
-     * 显式请求注册。当该提供商启用 disableImplicitSignUp 时有用。 
-     */
-    requestSignUp?: boolean = false
-}
-```
+  ```ts
+  type signInWithOAuth2 = {
+      /**
+       * The provider ID for the OAuth provider. 
+       */
+      providerId: string = "provider-id"
+      /**
+       * The URL to redirect to after sign in. 
+       */
+      callbackURL?: string = "/dashboard"
+      /**
+       * The URL to redirect to if an error occurs. 
+       */
+      errorCallbackURL?: string = "/error-page"
+      /**
+       * The URL to redirect to after login if the user is new. 
+       */
+      newUserCallbackURL?: string = "/welcome"
+      /**
+       * Disable redirect. 
+       */
+      disableRedirect?: boolean = false
+      /**
+       * Scopes to be passed to the provider authorization request. 
+       */
+      scopes?: string[] = ["my-scope"]
+      /**
+       * Explicitly request sign-up. Useful when disableImplicitSignUp is true for this provider. 
+       */
+      requestSignUp?: boolean = false
+  }
+  ```
 </APIMethod>
 
 ### 关联 OAuth 账号
 
 将 OAuth 账号关联到现有用户：
 
-<APIMethod
-  path="/oauth2/link"
-  method="POST"
-  requireSession
->
-```ts
-type oAuth2LinkAccount = {
-    /**
-     * OAuth 提供商 ID。 
-     */
-    providerId: string = "my-provider-id"
-    /**
-     * 账号关联完成后重定向的 URL。 
-     */
-    callbackURL: string = "/successful-link"
-}
-```
+<APIMethod path="/oauth2/link" method="POST" requireSession>
+  ```ts
+  type oAuth2LinkAccount = {
+      /**
+       * The OAuth provider ID. 
+       */
+      providerId: string = "my-provider-id"
+      /**
+       * The URL to redirect to once the account linking was complete. 
+       */
+      callbackURL: string = "/successful-link"
+  }
+  ```
 </APIMethod>
 
 ### 处理 OAuth 回调
 
 插件挂载了一个用于处理 OAuth 回调的路由 `/oauth2/callback/:providerId`。默认情况下，回调 URL 是 `${baseURL}/api/auth/oauth2/callback/:providerId`。请确保你的 OAuth 提供商配置了此回调 URL。
 
-## 预配置的提供商助手
+Unlike built-in providers, the `:providerId` parameter is required and must match your configured provider ID.
+
+## 预配置的提供程序助手
 
 Better Auth 提供了针对流行 OAuth 提供商的预配置辅助函数。这些助手处理特定提供商的配置，包括发现 URL 和用户信息端点。
 
-### 支持的提供商
+### 支持的提供程序
 
-- **Auth0** - `auth0(options)`
-- **HubSpot** - `hubspot(options)`
-- **Keycloak** - `keycloak(options)`
-- **LINE** - `line(options)`
-- **Microsoft Entra ID (Azure AD)** - `microsoftEntraId(options)`
-- **Okta** - `okta(options)`
-- **Slack** - `slack(options)`
-- **Patreon** - `patreon(options)`
+* **Auth0** - `auth0(options)`
+* **HubSpot** - `hubspot(options)`
+* **Keycloak** - `keycloak(options)`
+* **LINE** - `line(options)`
+* **Microsoft Entra ID (Azure AD)** - `microsoftEntraId(options)`
+* **Okta** - `okta(options)`
+* **Slack** - `slack(options)`
+* **Patreon** - `patreon(options)`
 
-### 例子：使用预配置提供商
+### 使用预配置提供程序的示例
 
 ```ts title="auth.ts"
 import { betterAuth } from 'better-auth';
@@ -219,26 +217,27 @@ export const auth = betterAuth({
 
 每个提供商助手接受通用 OAuth 选项（扩展自 `BaseOAuthProviderOptions`）以及提供商特定字段：
 
-- **Auth0**：需要 `domain`（例如 `dev-xxx.eu.auth0.com`）
-- **HubSpot**：没有额外必需字段。可选 `scopes`（默认 `["oauth"]`）
-- **Keycloak**：需要 `issuer`（例如 `https://my-domain/realms/MyRealm`）
-- **LINE**：可选 `providerId`（默认为 `"line"`）。LINE 需要为不同国家（日本、泰国、台湾等）使用单独渠道，因此你可以多次调用 `line()`，使用不同的 `providerId` 和凭证来支持多个国家
-- **Microsoft Entra ID**：需要 `tenantId`（可以为 GUID、`"common"`、`"organizations"` 或 `"consumers"`）
-- **Okta**：需要 `issuer`（例如 `https://dev-xxxxx.okta.com/oauth2/default`）
-- **Slack**：没有额外必需字段
-- **Patreon**：没有额外必需字段
+* **Auth0**: 需要 `domain` (例如 `dev-xxx.eu.auth0.com`)
+* **HubSpot**: 不需要额外必填字段。可选 `scopes`（默认为 `["oauth"]`）
+* **Keycloak**: 需要 `issuer`（例如 `https://my-domain/realms/MyRealm`）
+* **LINE**: 可选 `providerId`（默认为 `"line"`）。LINE 需要为不同国家/地区使用不同的渠道（日本、泰国、台湾等），因此你可以多次调用 `line()` 并使用不同的 `providerId` 和凭证来支持多个国家
+* **Microsoft Entra ID**: 需要 `tenantId`（可以是 GUID、`"common"`、`"organizations"` 或 `"consumers"`）
+* **Okta**: 需要 `issuer`（例如 `https://dev-xxxxx.okta.com/oauth2/default`）
+* **Slack**: 不需要额外必填字段
+* **Patreon**: 不需要额外必填字段
 
-所有提供商支持相同的可选字段：
-- `scopes?: string[]` - 请求的 OAuth 作用域数组
-- `redirectURI?: string` - 自定义重定向 URI
-- `pkce?: boolean` - 启用 PKCE（默认为 `false`）
-- `disableImplicitSignUp?: boolean` - 禁用新用户自动注册
-- `disableSignUp?: boolean` - 完全禁用注册
-- `overrideUserInfo?: boolean` - 登录时覆盖用户信息
+所有提供程序都支持相同的可选字段：
+
+* `scopes?: string[]` - 要请求的 OAuth 作用域数组
+* `redirectURI?: string` - 自定义重定向 URI
+* `pkce?: boolean` - 启用 PKCE（默认为 `false`）
+* `disableImplicitSignUp?: boolean` - 禁用新用户的隐式注册
+* `disableSignUp?: boolean` - 完全禁用新用户注册
+* `overrideUserInfo?: boolean` - 登录时用提供商信息更新数据库中的用户信息
 
 ## 配置
 
-将插件添加到身份验证配置时，可以配置多个 OAuth 提供商。可以使用上面介绍的预配置提供商助手，也可以手动创建自定义配置。
+将插件添加到身份验证配置时，可以配置多个 OAuth 提供程序。可以使用上面介绍的预配置提供商助手，也可以手动创建自定义配置。
 
 ### 手动配置
 
@@ -287,7 +286,7 @@ interface GenericOAuthConfig {
 
 **scopes**：（可选）请求的作用域数组（例如 `["openid", "email", "profile"]`）。
 
-**redirectURI**：（可选）OAuth 流程使用的重定向 URI。如果未设置，则基于你的应用基础 URL 构造默认值。
+**redirectURI**: (可选) 用于 OAuth 流程的重定向 URI。如果未设置，则根据应用程序的基本 URL 构造默认值。必须包含 `:providerId` 占位符（例如 `https://example.com/api/auth/oauth2/callback/my-provider`）。
 
 **responseType**：（可选）OAuth 响应类型，授权码流程默认为 `"code"`。
 
@@ -297,19 +296,17 @@ interface GenericOAuthConfig {
 
 **pkce**：（可选）是否启用 PKCE（Proof Key for Code Exchange）以增强安全性。默认为 `false`。
 
-**accessType**：（可选）授权请求的访问类型。使用 `"offline"` 以请求刷新令牌。
-
-**getToken**：（可选）自定义函数，用于用授权码交换令牌。如果提供，将替代默认的令牌交换逻辑。适用于使用 GET 请求或自定义参数的非标准令牌端点。
+**accessType**: (可选) 授权请求中的访问类型。使用 `"offline"` 以请求刷新令牌。
 
 **getUserInfo**：（可选）自定义函数，使用 OAuth 令牌从提供商获取用户信息。如果未提供，则使用默认的获取方式。
 
-**mapProfileToUser**：（可选）函数，用于将提供商的用户资料映射到应用的用户对象。适用于自定义字段映射或转换。
+**mapProfileToUser**：（可选）函数，用于将提供商的用户资料映射到应用程序的用户对象。适用于自定义字段映射或转换。
 
 **authorizationUrlParams**：（可选）添加到授权 URL 的额外查询参数，可覆盖默认参数。也可以提供一个返回参数的函数。
 
 **tokenUrlParams**：（可选）添加到令牌 URL 的额外查询参数，可覆盖默认参数。也可以提供一个返回参数的函数。
 
-**disableImplicitSignUp**：（可选）为 true 时，禁用新用户自动注册。必须显式请求带注册意图的登录。
+**disableImplicitSignUp**：（可选）为 true 时，禁用新用户自动注册。必须显式请求带有注册意图的登录。
 
 **disableSignUp**：（可选）为 true 时，完全禁用新用户注册。只能登录已有用户。
 
@@ -331,7 +328,10 @@ Better Auth 验证 OAuth 提供商的发行者，以防止混淆攻击（[RFC 92
 
 ### 配置示例
 
-**自动发现（推荐给 OIDC 提供商）：**
+### 配置示例
+
+**自动发现（推荐用于 OIDC 提供商）：**
+
 ```ts
 genericOAuth({
   config: [{
@@ -344,7 +344,8 @@ genericOAuth({
 })
 ```
 
-**手动配置发行者：**
+**手动指定发行者：**
+
 ```ts
 genericOAuth({
   config: [{
@@ -358,7 +359,8 @@ genericOAuth({
 })
 ```
 
-**严格模式（推荐现代提供商）：**
+**严格模式（推荐用于现代提供程序）：**
+
 ```ts
 genericOAuth({
   config: [{
@@ -373,15 +375,15 @@ genericOAuth({
 
 ### 验证行为
 
-| 场景                  | `requireIssuerValidation` | 结果                |
-|-----------------------|---------------------------|---------------------|
-| `iss` 匹配预期         | -                         | 成功                |
-| `iss` 不匹配           | -                         | 抛出 `issuer_mismatch` 错误  |
-| `iss` 缺失             | `false`（默认）           | 成功（向后兼容）     |
-| `iss` 缺失             | `true`                    | 抛出 `issuer_missing` 错误   |
+| 场景 | `requireIssuerValidation` | 结果 |
+|------|---------------------------|------|
+| `iss` 匹配预期 | - | 成功 |
+| `iss` 不匹配 | - | `issuer_mismatch` 错误 |
+| `iss` 缺失 | `false`（默认） | 成功（向后兼容） |
+| `iss` 缺失 | `true` | `issuer_missing` 错误 |
 
 <Callout>
-为实现最高安全性（适用于 Google、Auth0、Okta 等现代 OAuth/OIDC 提供商），推荐启用 `requireIssuerValidation: true`。
+  对于 Google、Auth0、Okta 等现代 OAuth/OIDC 提供商，我们建议启用 `requireIssuerValidation: true` 以获得最大安全性。
 </Callout>
 
 ## 高级用法

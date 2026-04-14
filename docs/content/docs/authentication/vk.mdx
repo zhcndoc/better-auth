@@ -4,44 +4,49 @@ description: VK ID 提供者
 ---
 
 <Steps>
-    <Step>
-        ### 获取您的 VK ID 凭证
-        要使用 VK ID 登录，您需要一个客户端 ID 和客户端密钥。您可以从 [VK ID 开发者门户](https://id.vk.com/about/business/go/docs) 获取它们。
+  <Step>
+    ### 获取您的 VK ID 凭证
 
-        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/vk` 以进行本地开发。对于生产环境，您应将其设置为您的应用程序的 URL。如果更改了认证路由的基础路径，您也应该相应地更新重定向 URL。
-    </Step>
+    要使用 VK ID 登录，您需要客户端 ID 和客户端密钥。您可以从 [VK ID 开发者门户](https://id.vk.com/about/business/go/docs) 获取它们。
 
-    <Step>
-        ### 配置提供者
-        要配置提供者，您需要导入该提供者并将其传递给认证实例的 `socialProviders` 选项。
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth";
+    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/vk` 用于本地开发。生产环境中应将其设置为应用程序的 URL。如果更改了认证路由的基本路径，请相应更新重定向 URL。
+  </Step>
 
-        export const auth = betterAuth({
-          socialProviders: {
-            vk: { // [!code highlight]
-              clientId: process.env.VK_CLIENT_ID as string, // [!code highlight]
-              clientSecret: process.env.VK_CLIENT_SECRET as string, // [!code highlight]
-            },
-          },
-        });
-        ```
-    </Step>
-    <Step>
-        ### 使用 VK 登录
-        要使用 VK 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个带有以下属性的对象：
-        - `provider`：要使用的提供者，应设置为 `vk`。
+  <Step>
+    ### 配置提供者
 
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client";
-        const authClient = createAuthClient();
+    要配置提供者，您需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
 
-        const signIn = async () => {
-          const data = await authClient.signIn.social({
-            provider: "vk",
-          });
-        };
-        ```
-    </Step>
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
 
+    export const auth = betterAuth({
+      socialProviders: {
+        vk: { // [!code highlight]
+          clientId: process.env.VK_CLIENT_ID as string, // [!code highlight]
+          clientSecret: process.env.VK_CLIENT_SECRET as string, // [!code highlight]
+        },
+      },
+    });
+    ```
+  </Step>
+
+  <Step>
+    ### 使用 VK 登录
+
+    要使用 VK 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
+
+    * `provider`: 要使用的提供者。应设置为 `vk`。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client";
+    const authClient = createAuthClient();
+
+    const signIn = async () => {
+      const data = await authClient.signIn.social({
+        provider: "vk",
+      });
+    };
+    ```
+  </Step>
 </Steps>

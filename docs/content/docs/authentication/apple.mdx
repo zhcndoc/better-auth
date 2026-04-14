@@ -5,68 +5,68 @@ description: Apple 提供者的设置与使用。
 
 <Steps>
   <Step>
-    ### 获取您的 OAuth 凭证
+    ### 获取 OAuth 凭证
 
-    使用 Apple 登录，您需要一个客户端 ID 和客户端密钥。您可以从 [Apple 开发者门户](https://developer.apple.com/account/resources/authkeys/list) 获取它们。
+    要使用 Apple 登录，您需要一个客户端 ID 和客户端密钥。您可以从 [Apple 开发者门户](https://developer.apple.com/account/resources/authkeys/list) 获取它们。
 
-    您需要一个有效的 **Apple 开发者账号** 来访问开发者门户并生成这些凭证。
+    您需要一个有效的 **Apple 开发者账户** 才能访问开发者门户并生成这些凭证。
 
-    按照以下步骤设置您的 App ID、Service ID，并生成客户端密钥所需的密钥：
+    按照以下步骤设置您的 App ID、服务 ID 并生成客户端密钥所需的密钥：
 
-    1. **进入证书、标识符与描述文件（Certificates, Identifiers & Profiles）：**
-       进入 Apple 开发者门户，访问“证书、标识符与描述文件”部分。
+    1. **导航到证书、标识符与配置文件：**
+       在 Apple 开发者门户中，转到“证书、标识符与配置文件”部分。
 
     2. **创建 App ID：**
-       * 进入 `Identifiers` 标签页。
-       * 点击“Identifiers”旁边的 `+` 图标。
-       * 选择 `App IDs`，然后点击 “Continue”。
-       * 选择 `App` 类型，然后点击 “Continue”。
-       * **描述（Description）：** 输入您的应用名称（例如，“My Awesome App”）。该名称可能会在用户登录时展示给用户。
-       * **Bundle ID：** 设置一个 Bundle ID。推荐格式为反向域名（例如，`com.yourcompany.yourapp`）。使用类似 `.ai` 的后缀（表示应用标识符）有助于分类，但非必需（例如，`com.yourcompany.yourapp.ai`）。
-       * 向下滚动到 **Capabilities** 部分。勾选 `Sign In with Apple`。
-       * 点击“Continue”，然后点击“Register”。
+       * 进入“标识符”标签页。
+       * 点击标识符旁边的 `+` 图标。
+       * 选择 `App IDs`，然后点击 `继续`。
+       * 选择 `App` 作为类型，然后点击 `继续`。
+       * **描述：** 输入您的应用名称（例如，“我的出色应用”）。此名称在用户登录时可能会显示给用户。
+       * **捆绑标识符：** 设置一个捆绑标识符。推荐的格式是反向域名（例如，`com.yourcompany.yourapp`）。使用 `.ai`（用于应用标识符）等后缀有助于组织，但不是必需的（例如，`com.yourcompany.yourapp.ai`）。
+       * 向下滚动到 **功能**。选择 `使用 Apple 登录` 的复选框。
+       * 点击 `继续`，然后点击 `注册`。
 
-    3. **创建 Service ID：**
-       * 返回 `Identifiers` 标签页。
+    3. **创建服务 ID：**
+       * 返回“标识符”标签页。
        * 点击 `+` 图标。
-       * 选择 `Service IDs`，然后点击 “Continue”。
-       * **描述（Description）：** 输入此服务的描述（例如，再次输入您的应用名）。
-       * **标识符（Identifier）：** 设置服务的唯一标识符。使用反向域名格式，且要与您的 App ID 区分开（例如 `com.yourcompany.yourapp.si`，其中 `.si` 表示服务标识符——仅为您组织的标识，非必需）。**该 Service ID 将作为您的 `clientId`。**
-       * 点击“Continue”，然后“Register”。
+       * 选择 `服务 ID`，然后点击 `继续`。
+       * **描述：** 输入此服务的描述（例如，再次输入您的应用名称）。
+       * **标识符：** 为服务设置一个唯一标识符。将其设置为与您的 App ID 不同的反向域名格式（例如，`com.yourcompany.yourapp.si`，其中 `.si` 表示服务标识符 - 这仅用于您的组织，并非必需）。**此服务 ID 将作为您的 `clientId`。**
+       * 点击 `继续`，然后点击 `注册`。
 
-    4. **配置 Service ID：**
-       * 在 `Identifiers` 列表中找到刚创建的 Service ID，点击进入。
-       * 勾选 `Sign In with Apple` 功能，然后点击“Configure”。
-       * 在 **Primary App ID** 下，选择之前创建的 App ID（例如 `com.yourcompany.yourapp.ai`）。
-       * 在 **Domains and Subdomains** 下，列出您将用于 Apple 登录的所有根域名（例如，`example.com`，`anotherdomain.com`）。
-       * 在 **Return URLs** 中，输入回调 URL，如 `https://yourdomain.com/api/auth/callback/apple`。添加所有必要的返回 URL。
-       * 点击“Next”，然后点击“Done”。
-       * 点击“Continue”，然后“Save”。
+    4. **配置服务 ID：**
+       * 在 `标识符` 列表中找到您刚刚创建的服务 ID 并点击它。
+       * 勾选 `使用 Apple 登录` 的功能，然后点击 `配置`。
+       * 在 **主 App ID** 下，选择您之前创建的 App ID（例如，`com.yourcompany.yourapp.ai`）。
+       * 在 **域和子域** 下，列出您将用于 Apple 登录的所有根域（例如，`example.com`、`anotherdomain.com`）。
+       * 在 **返回 URL** 中，输入回调 URL。`https://yourdomain.com/api/auth/callback/apple`。添加所有必要的返回 URL。
+       * 点击 `下一步`，然后点击 `完成`。
+       * 点击 `继续`，然后点击 `保存`。
 
-    5. **创建客户端密钥（Client Secret Key）：**
-       * 进入 `Keys` 标签页。
-       * 点击 `+` 图标创建新密钥。
-       * **密钥名称（Key Name）：** 输入密钥名称（例如，“Sign In with Apple Key”）。
-       * 向下滚动，勾选 `Sign In with Apple`。
-       * 点击 `Sign In with Apple` 旁的 “Configure” 按钮。
-       * 选择之前创建的 **Primary App ID**。
-       * 点击“Save”，然后“Continue”，再点击“Register”。
-       * **下载密钥：** 立即下载 `.p8` 密钥文件。**该文件仅能下载一次。** 记下密钥 ID（创建后在 Keys 页面可见）和您的团队 ID（Team ID，位于 Apple 开发者账户设置中）。
+    5. **创建客户端密钥：**
+       * 进入 `密钥` 标签页。
+       * 点击 `+` 图标以创建新密钥。
+       * **密钥名称：** 输入密钥名称（例如，“使用 Apple 登录密钥”）。
+       * 向下滚动并选择 `使用 Apple 登录` 的复选框。
+       * 点击 `使用 Apple 登录` 旁边的 `配置` 按钮。
+       * 选择 **主 App ID** 您之前创建的。
+       * 点击 `保存`，然后点击 `继续`，再点击 `注册`。
+       * **下载密钥：** 立即下载 `.p8` 密钥文件。**此文件只能下载一次。** 记下密钥 ID（在创建密钥后可在密钥页面找到）和您的团队 ID（在 Apple 开发者账户设置中可用）。
 
     6. **生成客户端密钥（JWT）：**
-       Apple 要求用下载的 `.p8` 密钥、密钥 ID 和团队 ID 动态生成 JSON Web Token（JWT）。该 JWT 作为您的 `clientSecret`。
+       Apple 要求使用下载的 `.p8` 密钥、密钥 ID 和团队 ID 动态生成 JSON Web 令牌（JWT）。此 JWT 作为您的 `clientSecret`。
 
-       您可以参考 [Apple 官方文档](https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret) 了解如何生成此客户端密钥。您也可以使用我们内置的生成器 [下面](#generate-apple-client-secret-jwt) 生成 Apple 登录所需的客户端密钥 JWT。
+       您可以参考 [Apple 文档](https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret) 了解如何生成此客户端密钥。您也可以使用我们内置的生成器 [下方](#generate-apple-client-secret-jwt) 来生成所需的客户端密钥 JWT。
 
-       **注意：** Apple 允许客户端密钥 JWT 最长有效期为 6 个月（180 天）。您需要在过期前重新生成客户端密钥，以确保身份验证不中断。
+       **注意：** Apple 允许客户端密钥 JWT 的最大有效期为 6 个月（180 天）。您需要在过期前重新生成客户端密钥，以保持不间断的身份验证。
   </Step>
 
   <Step>
-    Apple 的 OAuth 实现要求将 JWT（JSON Web Token）作为 `clientSecret`，而不是静态密钥字符串。
+    Apple 的 OAuth 实现需要 JWT（JSON Web Token）作为 `clientSecret`，而不是静态密钥字符串。
 
-    根据 [Apple 的文档](https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret)，这些 JWT：
+    根据 [Apple 文档](https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret)，这些 JWT：
 
-    * 最长有效期为 6 个月
+    * 最大有效期为 6 个月
     * 必须使用您的私钥进行加密签名
 
     安装 `jose` 包以生成客户端密钥 JWT。
@@ -79,15 +79,15 @@ description: Apple 提供者的设置与使用。
   <Step>
     ### 配置提供者
 
-    要配置提供者，您需要将其添加到 auth 实例的 `socialProviders` 选项中。
+    要配置提供者，您需要将其添加到身份验证实例的 `socialProviders` 选项中。
 
-    同时，您需要将 `https://appleid.apple.com` 添加到 auth 实例配置中的 `trustedOrigins` 数组，以允许与 Apple 身份验证服务器的通信。
+    您还需要在身份验证实例配置中将 `https://appleid.apple.com` 添加到 `trustedOrigins` 数组中，以允许与 Apple 的身份验证服务器通信。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
     import { importPKCS8, SignJWT } from "jose";
 
-    // 生成 'Sign in with Apple' 所需的客户端密钥 JWT。
+    // 生成 '使用 Apple 登录' 所需的客户端密钥 JWT。
     async function generateAppleClientSecret(clientId, teamId, keyId, privateKey) {
         const key = await importPKCS8(privateKey, "ES256");
         const now = Math.floor(Date.now() / 1000);
@@ -115,35 +115,35 @@ description: Apple 提供者的设置与使用。
                 appBundleIdentifier: process.env.APPLE_APP_BUNDLE_IDENTIFIER as string, // [!code highlight]
             }, // [!code highlight]
         },
-        // 在 trustedOrigins 中添加 appleid.apple.com 用于 Apple 登录流程
+        // 为 Apple 登录流程添加 appleid.apple.com 到受信任来源
         trustedOrigins: ["https://appleid.apple.com"], // [!code highlight]
     })
     ```
 
-    在原生 iOS 上，它不使用 Service ID，而是使用 App ID（Bundle ID）作为 client ID，因此，如果在 `signIn.social` 中使用 Service ID 作为 `clientId` 并传入 `idToken`，会抛出错误：`JWTClaimValidationFailed: unexpected "aud" claim value`。因此，当您想用 ID Token 进行 Apple 登录时，需要提供 `appBundleIdentifier`。
+    在原生 iOS 上，它不使用服务 ID，而是使用应用 ID（捆绑标识符）作为客户端 ID，因此如果在 `signIn.social` 中使用服务 ID 作为 `clientId` 并传递 `idToken`，会抛出错误：`JWTClaimValidationFailed: unexpected "aud" claim value`。因此，当您想使用 ID 令牌进行 Apple 登录时，需要提供 `appBundleIdentifier`。
   </Step>
 </Steps>
 
 <Callout type="warn">
   **本地主机和非 TLS 限制**
 
-  Apple 登录**不支持** `localhost` 或非 HTTPS URL。在开发期间：
+  Apple 登录不支持 `localhost` 或非 HTTPS URL。开发期间：
 
-  * 不能使用 `http://localhost` 作为回调 URL
-  * 必须使用带有有效 HTTPS/TLS 证书的域名
+  * 您不能使用 `http://localhost` 作为返回 URL
+  * 您必须使用具有有效 HTTPS/TLS 证书的域
 
-  这一限制是 Apple 的安全要求强制执行的，无法绕过。
+  此限制由 Apple 的安全要求强制执行，无法绕过。
 </Callout>
 
 ## 使用方法
 
 ### Apple 登录
 
-使用 Apple 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+要使用 Apple 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
 
-* `provider`：要使用的提供者，应设置为 `apple`。
+* `provider`：要使用的提供者。应设置为 `apple`。
 
-```ts title="auth-client.ts"  /
+```ts title="auth-client.ts" /
 import { createAuthClient } from "better-auth/client"
 const authClient =  createAuthClient()
 
@@ -154,21 +154,21 @@ const signIn = async () => {
 }
 ```
 
-### 使用 ID Token 登录 Apple
+### 使用 ID 令牌进行 Apple 登录
 
-若想用 Apple 的 ID Token 登录，可以在 `signIn.social` 函数中传入 ID Token。
+要使用 ID 令牌进行 Apple 登录，您可以使用 `signIn.social` 函数传递 ID 令牌。
 
-当您在客户端已有 Apple 的 ID Token，并希望用于服务器端登录时，这非常有用。
+当您在客户端拥有 Apple 的 ID 令牌并希望在服务器端使用它进行登录时，这非常有用。
 
 <Callout>
-  如果提供了 ID Token，流程不会跳转，用户会直接登录。
+  如果提供了 ID 令牌，则不会发生重定向，用户将直接登录。
 </Callout>
 
 ```ts title="auth-client.ts"
 await authClient.signIn.social({
     provider: "apple",
     idToken: {
-        token: // Apple ID Token,
+        token: // Apple ID 令牌,
         nonce: // 随机数（可选）
         accessToken: // 访问令牌（可选）
     }

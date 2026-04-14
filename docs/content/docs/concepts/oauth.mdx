@@ -129,7 +129,7 @@ const requestAdditionalScopes = async () => {
 ```
 
 <Callout>
-确保你使用的 Better Auth 版本在 1.2.7 及以上。早期版本（例如 1.2.2）在尝试为已有账户关联追加权限时可能会出现 "Social account already linked" 错误。
+  Make sure you're running Better Auth version 1.2.7 or later. Earlier versions (like 1.2.2) may show a "Social account already linked" error when trying to link with an existing provider for additional scopes.
 </Callout>
 
 ### 通过 OAuth 流传递额外数据
@@ -173,7 +173,7 @@ await auth.api.signInSocial({
 额外数据可以通过 `getOAuthState` 在 OAuth 回调时钩子中访问。
 
 <Callout>
-这通常适用于 `/callback/:id` 路径以及通用 OAuth 插件的回调路径（`/oauth2/callback/:providerId`）。
+  This usually works for `/callback/:id` paths and the generic OAuth plugin callback path (`/oauth2/callback/:providerId`).
 </Callout>
 
 使用 after 钩子的示例：
@@ -254,15 +254,16 @@ export const auth = betterAuth({
 ```
 
 <Callout>
-默认情况下，OAuth 状态包含以下数据：
-- `callbackURL` - OAuth 流的回调 URL
-- `codeVerifier` - OAuth 流的代码校验器
-- `errorURL` - OAuth 流的错误 URL
-- `newUserURL` - OAuth 流中新用户的 URL
-- `link` - OAuth 流的链接信息（邮箱和用户 ID）
-- `requestSignUp` - 是否请求注册
-- `expiresAt` - OAuth 状态的过期时间
-- `[key: string]`: 你在 OAuth 流中传入的任何额外数据
+  By default OAuth state includes the following data:
+
+  * `callbackURL` - the callback URL for the OAuth flow
+  * `codeVerifier` - the code verifier for the OAuth flow
+  * `errorURL` - the error URL for the OAuth flow
+  * `newUserURL` - the new user URL for the OAuth flow
+  * `link` - the link for the OAuth flow (email and user id)
+  * `requestSignUp` - whether to request sign up for the OAuth flow
+  * `expiresAt` - the expiration time of the OAuth state
+  * `[key: string]`: any additional data you pass in the OAuth flow
 </Callout>
 
 ## 提供商选项

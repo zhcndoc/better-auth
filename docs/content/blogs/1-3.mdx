@@ -20,7 +20,7 @@ tags: ["1.3", "身份验证", "oidc", "mcp", "sso", "organization"]
 npm install better-auth@1.3
 ```
 
----
+***
 
 ## 🚀 亮点
 
@@ -55,7 +55,7 @@ export const auth = betterAuth({
 });
 ```
 
----
+***
 
 ### **OIDC 和 MCP 插件 — 现已稳定**
 
@@ -83,13 +83,11 @@ export const auth = betterAuth({
 });
 ```
 
----
+***
 
 ### **Stripe 插件现已生产就绪**
 
 Stripe 插件现已稳定，基于使用量的计费很快上线。
-
-👉 [阅读 Stripe 文档](/docs/plugins/stripe)
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -120,7 +118,7 @@ export const auth = betterAuth({
 });
 ```
 
----
+***
 
 ### **新增社交登录提供者**
 
@@ -139,7 +137,7 @@ export const auth = betterAuth({
 });
 ```
 
----
+***
 
 ### **SvelteKit Cookie 辅助插件**
 
@@ -159,7 +157,7 @@ export const auth = betterAuth({
 });
 ```
 
----
+***
 
 ### **登录时的邮箱验证**
 
@@ -171,7 +169,7 @@ export const auth = betterAuth({
 });
 ```
 
----
+***
 
 ### **多团队支持**
 
@@ -200,7 +198,7 @@ export const authClient = createAuthClient({
 });
 ```
 
----
+***
 
 ### **组织额外字段**
 
@@ -225,7 +223,7 @@ export const auth = betterAuth({
 * `maximumMembersPerTeam` — 设置团队成员上限
 * `listUserInvitations` — 列出用户的所有邀请
 
----
+***
 
 ### **通用 OAuth 改进**
 
@@ -242,21 +240,21 @@ export const auth = betterAuth({
 });
 ```
 
----
+***
 
 ### **API 密钥**
 
 * 新增 `requireName` 选项，用于创建密钥时必须填写名称
 * `verifyKey` 现在支持异步函数
 
----
+***
 
 ### **用户名**
 
 * 可检查用户名可用性
 * 支持自定义规范化处理
 
----
+***
 
 ### ✨ 更多功能
 
@@ -269,7 +267,7 @@ export const auth = betterAuth({
 * 正确支持 `freshAge` 和自定义 `errorURL`
 * OAuth2 令牌现包含 `refresh_token_expires_in`
 
----
+***
 
 ### 🐛 修复与改进
 
@@ -336,9 +334,9 @@ export const auth = betterAuth({
 * OIDC `offline_access` 不再强制 `prompt=consent`
 * 修复令牌校验时的错误 base64 编码
 
----
+***
 
 大量改进使体验更流畅、更快速、更可靠。
 👉 [查看完整变更日志](https://github.com/better-auth/better-auth/releases/tag/v1.3.0)
 
----
+***

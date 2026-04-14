@@ -4,41 +4,42 @@ description: Slack 提供者的设置和使用说明。
 ---
 
 <Steps>
-    <Step> 
-        ### 获取你的 Slack 凭证
-        要使用 Slack 作为社交提供者，你需要创建一个 Slack 应用并获取凭证。
+  <Step>
+    ### 获取你的 Slack 凭证
 
-        1. 访问 [Slack API 上的你的应用](https://api.slack.com/apps)，点击“Create New App”
-        2. 选择“From scratch”，为你的应用命名并选择一个开发工作区
-        3. 在你的应用设置中，导航到“Oauth & Permissions”
-        4. 在“Redirect URLs”下，添加你的重定向 URL：
-           - 本地开发：`http://localhost:3000/api/auth/callback/slack`
-           - 生产环境：`https://yourdomain.com/api/auth/callback/slack`
-        5. 复制“Basic Information”页面上的客户端 ID 和客户端密钥
+    要使用 Slack 作为社交提供者，你需要创建一个 Slack 应用并获取你的凭证。
 
-        <Callout>
-            生产环境中 Slack 要求重定向 URL 使用 HTTPS。本地开发时，可以使用 [ngrok](https://ngrok.com/) 等工具创建安全隧道。
-        </Callout>
-    </Step>
+    1. 前往 [Slack API 的应用页面](https://api.slack.com/apps) 并点击“创建新应用”
+    2. 选择“从零开始”，为你的应用命名并选择一个开发工作区
+    3. 在应用设置中，导航到“OAuth & Permissions”
+    4. 在“重定向 URL”下，添加你的重定向 URL：
+       * 开发环境：`http://localhost:3000/api/auth/callback/slack`
+       * 生产环境：`https://yourdomain.com/api/auth/callback/slack`
+    5. 从“基本信息”页面复制你的客户端 ID 和客户端密钥
 
-    <Step>
-        ### 配置提供者
-        要配置提供者，需要将 `clientId` 和 `clientSecret` 传递给认证配置中的 `socialProviders.slack`。
+    <Callout>
+      生产环境中，Slack 要求重定向 URL 使用 HTTPS。在本地开发时，你可以使用 [ngrok](https://ngrok.com/) 等工具创建安全隧道。
+    </Callout>
+  </Step>
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
+  <Step>
+    ### 配置提供者
 
-        export const auth = betterAuth({
-            socialProviders: {
-                slack: { // [!code highlight]
-                    clientId: process.env.SLACK_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.SLACK_CLIENT_SECRET as string, // [!code highlight]
-                }, // [!code highlight]
-            },
-        })
-        ```
-    </Step>
+    要配置该提供者，需要将 `clientId` 和 `clientSecret` 传递给 `socialProviders.slack`：
 
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            slack: { // [!code highlight]
+                clientId: process.env.SLACK_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.SLACK_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
 </Steps>
 
 ## 使用
@@ -47,7 +48,7 @@ description: Slack 提供者的设置和使用说明。
 
 要使用 Slack 登录，可以调用客户端提供的 `signIn.social` 函数。`signIn` 接受一个包含以下属性的对象：
 
-- `provider`：要使用的提供者，应设为 `slack`。
+* `provider`：要使用的提供者，应设置为 `slack`。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client";
@@ -60,7 +61,7 @@ const signIn = async () => {
 
 ### 请求额外权限范围
 
-默认情况下，Slack 使用 OpenID Connect 权限范围：`openid`、`profile` 和 `email`。你可以在登录时请求额外的 Slack 权限：
+默认情况下，Slack 使用 OpenID Connect 的权限范围：`openid`、`profile` 和 `email`。你可以在登录时请求额外的 Slack 权限：
 
 ```ts title="auth-client.ts"
 const signInWithSlack = async () => {
@@ -87,7 +88,7 @@ socialProviders: {
 
 ### 登录后使用 Slack API
 
-认证成功后，你可以通过会话访问用户的 Slack 信息。访问令牌可用于对 Slack API 的请求：
+认证成功后，你可以通过会话访问用户的 Slack 信息。访问令牌可用于向 Slack API 发起请求：
 
 ```ts
 const session = await authClient.getSession();
@@ -99,5 +100,5 @@ if (session?.user) {
 ```
 
 <Callout>
-  Slack 提供者默认使用 OpenID Connect，这提供了基础的用户信息。如果需要访问其他 Slack API，确保在登录时请求相应的权限范围。
+  Slack 提供者默认使用 OpenID Connect，这提供了基础的用户信息。如果需要访问其他 Slack API，请确保在登录时请求相应的权限范围。
 </Callout>

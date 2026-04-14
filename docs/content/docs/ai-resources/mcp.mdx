@@ -25,9 +25,9 @@ npx auth@latest mcp
     npx auth@latest mcp --cursor
     ```
 
-    这将打开 Cursor，并通过 deeplink 将服务器添加到你的 MCP 配置中。
+    这会在 Cursor 中打开一个深度链接，以便将服务器添加到你的 MCP 配置中。
 
-    你也可以在本网站上使用一键控制：
+    你也可以使用此网站上的单击控件：
 
     <AddToCursor />
   </Tab>
@@ -37,7 +37,7 @@ npx auth@latest mcp
     npx auth@latest mcp --claude-code
     ```
 
-    这会使用 Better Auth URL 运行 `claude mcp add`。如果失败，CLI 会打印出你需要手动运行的确切命令。
+    这会使用 Better Auth URL 运行 `claude mcp add`。如果失败，CLI 会打印出确切的命令供你手动运行。
   </Tab>
 
   <Tab value="Open Code">
@@ -45,7 +45,7 @@ npx auth@latest mcp
     npx auth@latest mcp --open-code
     ```
 
-    这会将一个 `better-auth` 条目合并到当前目录中的 `opencode.json`（远程传输，使用上面的 URL）。
+    这会在当前目录的 `opencode.json` 中合并一个 `better-auth` 条目（远程传输，使用上方的 URL）。
   </Tab>
 
   <Tab value="Manual">
@@ -53,7 +53,7 @@ npx auth@latest mcp
     npx auth@latest mcp --manual
     ```
 
-    在当前工作目录中写入或合并 `mcp.json`，内容如下：
+    在当前工作目录中写入或合并 `mcp.json`，内容为：
 
     ```json
     {
@@ -63,8 +63,8 @@ npx auth@latest mcp
     }
     ```
 
-    对于 **Cursor**，你可以将相同的 `better-auth` 条目添加到 MCP 配置中——通常是 `~/.cursor/mcp.json`（用户）或 `.cursor/mcp.json`（项目）——并使用你的 Cursor 版本对 HTTP 服务器所期望的格式（远程 MCP 使用 `url`）。
+    对于 **Cursor**，你可以将相同的 `better-auth` 条目添加到 MCP 配置中——通常为 `~/.cursor/mcp.json`（用户）或 `.cursor/mcp.json`（项目），使用你的 Cursor 版本所需的 HTTP 服务器格式（`url` 表示远程 MCP）。
 
-    修改后，请在你的客户端中重启或重新加载 MCP。
+    在更改后，请重启或重新加载客户端中的 MCP。
   </Tab>
 </Tabs>

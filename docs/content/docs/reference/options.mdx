@@ -32,7 +32,7 @@ export const auth = betterAuth({
 如果未显式设置，系统将检查环境变量 `BETTER_AUTH_URL`。如果该环境变量也未设置，baseURL 将从传入请求中推断。
 
 <Callout type="warn">
-  不建议依赖请求推断。为了安全性和稳定性，始终在配置中或通过 `BETTER_AUTH_URL` 环境变量显式设置 `baseURL`。
+  Relying on request inference is not recommended. For security and stability, always set `baseURL` explicitly in your config or via the `BETTER_AUTH_URL` environment variable.
 </Callout>
 
 ## `basePath`
@@ -99,28 +99,28 @@ export const auth = betterAuth({
 
 #### 模式语法
 
-| 模式   | 说明                 |
-| ---- | ------------------ |
-| `?`  | 匹配恰好一个字符（不含 `/`）   |
-| `*`  | 匹配零个或多个字符，但不跨越 `/` |
-| `**` | 匹配零个或多个字符，包括 `/`   |
+| Pattern | Description                                          |
+| ------- | ---------------------------------------------------- |
+| `?`     | Matches exactly one character (except `/`)           |
+| `*`     | Matches zero or more characters that don't cross `/` |
+| `**`    | Matches zero or more characters including `/`        |
 
-#### 模式示例
+#### Pattern Examples
 
-| 模式                       | 匹配示例                                                                                     | 不匹配示例                                               |
+| Pattern                  | Matches                                                                                  | Does Not Match                                      |
 | ------------------------ | ---------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | `http://*.example.com`   | `http://api.example.com`<br />`http://app.example.com`<br />`http://api.app.example.com` | `https://api.example.com`<br />`http://example.com` |
 | `https://**.example.com` | `https://api.example.com`<br />`https://api.app.example.com`                             | `http://api.example.com`                            |
 | `https://example.com`    | `https://example.com`<br />`https://example.com/path`                                    | `https://api.example.com`<br />`http://example.com` |
 | `exp://192.168.*.*:*/**` | `exp://192.168.1.100:8081/path`<br />`exp://192.168.50.200:19000/auth/callback`          | `exp://10.0.0.29:8081/path`                         |
-| `myapp://`               | 以 `myapp://` 开头的所有 URL                                                                   | -                                                   |
+| `myapp://`               | All URLs starting with `myapp://`                                                        | -                                                   |
 
 <Callout type="info">
-  **注意**
+  **Notes**
 
-  * 对于 `http://` 和 `https://` URL，模式匹配完整来源，路径和查询字符串被忽略。
-  * 对于自定义协议（如 `exp://` 或 `myapp://`），如果有通配符模式，则对完整 URL（包含路径）匹配；若无通配符，则使用前缀匹配。
-  * 分隔符为 `/`（斜杠），例如 `http://*.example.com` 匹配 `http://api.example.com` 和 `http://api.app.example.com`。
+  * For `http://` and `https://` URLs, patterns match the full origin. Paths and query strings are ignored.
+  * For custom schemes (like `exp://` or `myapp://`), patterns match against the full URL including paths when wildcards are present, or use prefix matching when no wildcards exist.
+  * The separator is `/` (forward slash). This means `http://*.example.com` matches both `http://api.example.com` and `http://api.app.example.com`.
 </Callout>
 
 ## `secret`
@@ -134,7 +134,10 @@ export const auth = betterAuth({
 })
 ```
 
-默认情况下，Better Auth 会查找以下环境变量：
+By default, Better Auth will look for the following environment variables:
+
+* `process.env.BETTER_AUTH_SECRET`
+* `process.env.AUTH_SECRET`
 
 * `process.env.BETTER_AUTH_SECRET`
 * `process.env.AUTH_SECRET`
@@ -161,9 +164,9 @@ export const auth = betterAuth({
 })
 ```
 
-* 第一条是**当前**用于所有新加密的密钥。
-* 剩余是**仅用于解密**的旧密钥。
-* 版本为整数，允许跳号（如撤销版本2后保留1和3）。
+* The first entry is the **current** key used for all new encryption.
+* Remaining entries are **decryption-only** (previous rotations).
+* Versions are integers. Gaps are allowed (e.g., `1, 3` after revoking version 2).
 
 也可通过 `BETTER_AUTH_SECRETS` 环境变量设置：
 
@@ -227,11 +230,11 @@ export const auth = betterAuth({
 })
 ```
 
-* `sendVerificationEmail`：发送验证邮件的函数
-* `sendOnSignUp`：注册后自动发送验证邮件。`true` 总是发送，`false` 从不发送，`undefined` 遵循 `requireEmailVerification` 逻辑（默认：`undefined`）
-* `sendOnSignIn`：登录时用户邮箱未验证时自动发送验证邮件（默认：`false`）
-* `autoSignInAfterVerification`：验证邮箱后自动登录用户
-* `expiresIn`：验证令牌有效期秒数（默认：`3600` 秒）
+* `sendVerificationEmail`: Function to send verification email
+* `sendOnSignUp`: Send verification email automatically after sign up. `true` always sends, `false` never sends, `undefined` follows `requireEmailVerification` behavior (default: `undefined`)
+* `sendOnSignIn`: Send verification email automatically on sign in when the user's email is not verified (default: `false`)
+* `autoSignInAfterVerification`: Auto sign in the user after they verify their email
+* `expiresIn`: Number of seconds the verification token is valid for (default: `3600` seconds)
 
 ## `emailAndPassword`
 
@@ -260,24 +263,24 @@ export const auth = betterAuth({
 				// 自定义密码验证
 				return isValid;
 			}
-		}
+		},
 	},
 })
 ```
 
-* `enabled`：启用邮箱密码认证（默认：`false`）
-* `disableSignUp`：禁用邮箱密码注册（默认：`false`）
-* `requireEmailVerification`：必须邮箱验证后才可创建会话
-* `minPasswordLength`：最小密码长度（默认：`8`）
-* `maxPasswordLength`：最大密码长度（默认：`128`）
-* `autoSignIn`：注册后自动登录用户
-* `sendResetPassword`：发送重置密码邮件的函数
-* `onPasswordReset`：密码成功修改时回调
-* `revokeSessionsOnPasswordReset`：重置密码时注销其它所有会话（默认：`false`）
-* `resetPasswordTokenExpiresIn`：重置密码令牌有效期秒数（默认：`3600` 秒）
-* `onExistingUserSignUp`：当已有邮箱用户注册时触发的回调，仅在 `requireEmailVerification` 为 `true` 或 `autoSignIn` 为 `false` 时调用（默认：`undefined`）
-* `customSyntheticUser`：自定义合成用户构建函数，用于防止邮箱枚举攻击。当插件向用户表添加字段时使用。详见 [邮箱枚举防御](/docs/authentication/email-password#plugins-that-add-user-fields)。
-* `password`：密码哈希与验证的自定义函数
+* `enabled`: Enable email and password authentication (default: `false`)
+* `disableSignUp`: Disable email and password sign up (default: `false`)
+* `requireEmailVerification`: Require email verification before a session can be created
+* `minPasswordLength`: Minimum password length (default: `8`)
+* `maxPasswordLength`: Maximum password length (default: `128`)
+* `autoSignIn`: Automatically sign in the user after sign up
+* `sendResetPassword`: Function to send reset password email
+* `onPasswordReset`: Callback triggered when a user's password is changed successfully
+* `revokeSessionsOnPasswordReset`: Revoke all other sessions when resetting password (default: `false`)
+* `resetPasswordTokenExpiresIn`: Number of seconds the reset password token is valid for (default: `3600` seconds)
+* `onExistingUserSignUp`: Callback triggered when someone signs up with an already-registered email. Only called when `requireEmailVerification` is `true` or `autoSignIn` is `false` (default: `undefined`).
+* `customSyntheticUser`: Function to build a custom synthetic user for email enumeration protection. Use when plugins add fields to the user table. See [email enumeration protection](/docs/authentication/email-password#plugins-that-add-user-fields).
+* `password`: Custom password hashing and verification functions
 
 ## `socialProviders`
 
@@ -301,23 +304,23 @@ export const auth = betterAuth({
 })
 ```
 
-* `clientId`：提供商提供的 OAuth 客户端 ID
-* `clientSecret`：提供商提供的 OAuth 客户端密钥
-* `clientKey`：客户端密钥（部分提供商如 TikTok 用该字段代替 clientId）（可选）
-* `redirectURI`：OAuth 回调的自定义重定向 URI（可选）
-* `scope`：请求的额外 OAuth 权限范围（可选）
-* `mapProfileToUser`：将提供商资料映射为用户的自定义函数（可选）
-* `disableSignUp`：禁用新用户注册（可选）
-* `disableImplicitSignUp`：禁用隐式注册（可选）
-* `overrideUserInfoOnSignIn`：登录时用提供商用户信息覆盖用户信息（可选）
-* `prompt`：授权码请求使用的提示参数（如 `"select_account"`, `"consent"`, `"login"`, `"none"`, `"select_account consent"`）（可选）
-* `responseMode`：响应模式（`"query"` 或 `"form_post"`）（可选）
-* `getUserInfo`：自定义函数获取提供商用户信息（可选）
-* `refreshAccessToken`：自定义函数刷新访问令牌（可选）
-* `verifyIdToken`：自定义函数验证 ID 令牌（可选）
-* `disableIdTokenSignIn`：禁用客户端发送 ID 令牌进行登录（可选）
-* `disableDefaultScope`：禁用提供商默认权限范围（可选）
-* `authorizationEndpoint`：自定义授权端点 URL（可选）
+* `clientId`: OAuth client ID from the provider
+* `clientSecret`: OAuth client secret from the provider
+* `clientKey`: Client key (used by some providers like TikTok instead of clientId) (optional)
+* `redirectURI`: Custom redirect URI for the OAuth callback (optional)
+* `scope`: Additional OAuth scopes to request (optional)
+* `mapProfileToUser`: Custom function to map the provider profile to a user (optional)
+* `disableSignUp`: Disable sign up for new users (optional)
+* `disableImplicitSignUp`: Disable implicit sign up for new users (optional)
+* `overrideUserInfoOnSignIn`: Override user info with provider user info on sign in (optional)
+* `prompt`: The prompt to use for the authorization code request (`"select_account"`, `"consent"`, `"login"`, `"none"`, `"select_account consent"`) (optional)
+* `responseMode`: The response mode to use (`"query"`, `"form_post"`) (optional)
+* `getUserInfo`: Custom function to get user info from the provider (optional)
+* `refreshAccessToken`: Custom function to refresh a token (optional)
+* `verifyIdToken`: Custom function to verify the ID token (optional)
+* `disableIdTokenSignIn`: Disable sign in with ID token sent from the client (optional)
+* `disableDefaultScope`: Disable the provider's default scopes (optional)
+* `authorizationEndpoint`: Custom authorization endpoint URL (optional)
 
 ## `plugins`
 
@@ -379,11 +382,11 @@ export const auth = betterAuth({
 })
 ```
 
-* `modelName`：用户模型名（默认："user"）
-* `fields`：字段映射到不同列名
-* `additionalFields`：用户表的额外字段
-* `changeEmail`：变更邮件配置
-* `deleteUser`：用户删除配置
+* `modelName`: The model name for the user (default: `"user"`)
+* `fields`: Map fields to different column names
+* `additionalFields`: Additional fields for the user table
+* `changeEmail`: Configuration for changing email
+* `deleteUser`: Configuration for user deletion
 
 ## `session`
 
@@ -415,14 +418,14 @@ export const auth = betterAuth({
 })
 ```
 
-* `modelName`：会话模型名（默认："session"）
-* `fields`：字段映射
-* `expiresIn`：会话令牌过期时间（秒，默认：604800 即 7 天）
-* `updateAge`：会话刷新频率（秒，默认：86400 即 1 天）
-* `additionalFields`：会话表额外字段
-* `storeSessionInDatabase`：提供二级存储时是否存数据库（默认：`false`）
-* `preserveSessionInDatabase`：二级存储删除时是否保留数据库记录（默认：`false`）
-* `cookieCache`：启用 cookie 中缓存会话
+* `modelName`: The model name for the session (default: `"session"`)
+* `fields`: Map fields to different column names
+* `expiresIn`: Expiration time for the session token in seconds (default: `604800` - 7 days)
+* `updateAge`: How often the session should be refreshed in seconds (default: `86400` - 1 day)
+* `additionalFields`: Additional fields for the session table
+* `storeSessionInDatabase`: Store session in database when secondary storage is provided (default: `false`)
+* `preserveSessionInDatabase`: Preserve session records in database when deleted from secondary storage (default: `false`)
+* `cookieCache`: Enable caching session in cookie
 
 ## `account`
 
@@ -442,13 +445,13 @@ export const auth = betterAuth({
 			enabled: true,
 			trustedProviders: ["google", "github", "email-password"], // 或异步函数 (request) => ["google", "github"]
 			allowDifferentEmails: false
-		}
+		},
 	},
 })
 ```
 
-* `modelName`：账号模型名
-* `fields`：字段映射
+* `modelName`: The model name for the account
+* `fields`: Map fields to different column names
 
 ### `encryptOAuthTokens`
 
@@ -462,8 +465,8 @@ export const auth = betterAuth({
 
 OAuth 流程后将账号数据（访问令牌、刷新令牌等）存入 cookie，适用于无数据库模式。
 
-* 默认：`false`
-* 未提供数据库时自动设为 `true`
+* Default: `false`
+* Automatically set to `true` if no database is provided
 
 启用后，可通过 `better-auth/cookies` 的 `getAccountCookie` 在钩子或中间件读取解密后的账号 cookie：
 
@@ -480,10 +483,10 @@ const hook = createAuthMiddleware(async (ctx) => {
 
 账号关联配置。
 
-* `enabled`：启用账号关联（默认：`true`）
-* `trustedProviders`：可信提供商列表，支持静态数组或异步函数（基于请求动态返回）
-* `allowDifferentEmails`：允许关联电子邮件不同的账号
-* `allowUnlinkingAll`：允许解绑所有账号
+* `enabled`: Enable account linking (default: `true`)
+* `trustedProviders`: List of trusted providers. Can be a static array or an async function that returns providers dynamically based on the request (similar to `trustedOrigins`)
+* `allowDifferentEmails`: Allow users to link accounts with different email addresses
+* `allowUnlinkingAll`: Allow users to unlink all accounts
 
 ## `verification`
 
@@ -503,11 +506,11 @@ export const auth = betterAuth({
 })
 ```
 
-* `modelName`：验证表的模型名称
-* `fields`：字段映射到不同的列名
-* `disableCleanup`：获取验证值时是否禁用已过期值的清理
-* `storeIdentifier`：如何存储验证标识符（如令牌和 OTP 密钥）。支持 `"plain"`、`"hashed"` 或自定义哈希函数。你还可以使用 `{ default, overrides }` 来针对不同的标识符前缀应用不同策略。
-* `storeInDatabase`：即使配置了 `secondaryStorage`，是否仍存储验证记录到数据库中。默认值为 `false`。
+* `modelName`: The model name for the verification table
+* `fields`: Map fields to different column names
+* `disableCleanup`: Disable cleaning up expired values when a verification value is fetched
+* `storeIdentifier`: How to store verification identifiers such as tokens and OTP keys. Supports `"plain"`, `"hashed"`, or a custom hasher. You can also use `{ default, overrides }` to apply different strategies per identifier prefix.
+* `storeInDatabase`: Store verification records in the database even when `secondaryStorage` is configured. Default is `false`.
 
 如果配置了 `secondaryStorage`，验证记录默认存储于二级存储中。此行为适用于使用 Better Auth 共享验证层的流程，包括 OTP 和魔法链接（magic-link）风格的流程。
 
@@ -534,12 +537,12 @@ export const auth = betterAuth({
 })
 ```
 
-* `enabled`：开启速率限制（默认：生产环境为 `true`，开发环境为 `false`）
-* `window`：速率限制时间窗口（秒，默认：`10`）
-* `max`：时间窗口内允许的最大请求数（默认：`100`）
-* `customRules`：为特定路径定义自定义速率限制规则
-* `storage`：存储配置，如果传入二级存储，速率限制数据存储于二级存储。（可选值：`"memory"`, `"database"`, `"secondary-storage"`；默认：`"memory"`）
-* `modelName`：若使用数据库存储，速率限制数据表名（默认：`"rateLimit"`）
+* `enabled`: Enable rate limiting (defaults: `true` in production, `false` in development)
+* `window`: Time window to use for rate limiting. The value should be in seconds. (default: `10`)
+* `max`: The default maximum number of requests allowed within the window. (default: `100`)
+* `customRules`: Custom rate limit rules to apply to specific paths.
+* `storage`: Storage configuration. If you passed a secondary storage, rate limiting will be stored in the secondary storage. (options: `"memory", "database", "secondary-storage"`, default: `"memory"`)
+* `modelName`: The name of the table to use for rate limiting if database is used as storage. (default: `"rateLimit"`)
 
 ## `advanced`
 
@@ -598,18 +601,18 @@ export const auth = betterAuth({
 })
 ```
 
-* `ipAddress`: IP 地址配置，用于速率限制和会话跟踪
-* `useSecureCookies`: 默认情况下，生产环境中的 cookie 为安全 cookie。将其设为 `true` 可在所有环境中强制使用 `Secure` cookie 属性。
-* `disableCSRFCheck`: 禁用所有 CSRF 防护，包括来源头验证和 Fetch Metadata 检查（⚠️ 安全风险）
-* `disableOriginCheck`: 禁用 `callbackURL`、`redirectTo` 及其他重定向 URL 的 URL 验证（⚠️ 安全风险）
-* `crossSubDomainCookies`: 配置 cookie 在子域之间共享
-* `cookies`: 自定义 cookie 名称和属性
-* `defaultCookieAttributes`: 所有 cookie 的默认属性
-* `cookiePrefix`: cookie 前缀
-* `database`: 数据库配置选项
-* `backgroundTasks`: 配置延迟操作的后台任务处理
-* `skipTrailingSlashes`: 路由匹配时跳过尾部斜杠验证。（默认：`false`）
-* OAuth 状态配置选项（`storeStateStrategy`、`skipStateCookieCheck`）现已成为 `account` 选项的一部分
+* `ipAddress`: IP address configuration for rate limiting and session tracking
+* `useSecureCookies`: By default, cookies are secure in production environments. Set this to `true` to force the `Secure` cookie attribute in all environments.
+* `disableCSRFCheck`: Disable all CSRF protection including origin header validation and Fetch Metadata checks (⚠️ security risk)
+* `disableOriginCheck`: Disable URL validation for `callbackURL`, `redirectTo`, and other redirect URLs (⚠️ security risk)
+* `crossSubDomainCookies`: Configure cookies to be shared across subdomains
+* `cookies`: Customize cookie names and attributes
+* `defaultCookieAttributes`: Default attributes for all cookies
+* `cookiePrefix`: Prefix for cookies
+* `database`: Database configuration options
+* `backgroundTasks`: Configure background task handling for deferred operations
+* `skipTrailingSlashes`: Skip trailing slash validation in route matching. (default: `false`)
+* OAuth state configuration options (`storeStateStrategy`, `skipStateCookieCheck`) are now part of the `account` option
 
 ### `backgroundTasks`
 
@@ -678,17 +681,17 @@ export const auth = betterAuth({
 
 该配置允许定制 Better Auth 的日志行为，支持选项包括：
 
-* `disabled`：设置为 `true` 时禁用所有日志（默认：`false`）
-* `disableColors`：禁用默认日志实现中的颜色（默认根据终端是否支持颜色自动设定）
-* `level`：日志显示最小级别（默认：`"warn"`）
-  * `"debug"`：显示所有日志（含调试信息）
-  * `"info"`：显示除调试以外的所有日志
-  * `"warn"`：显示警告和错误
-  * `"error"`：仅显示错误
-* `log`：自定义日志函数，参数为：
-  * `level`：日志级别
-  * `message`：日志消息
-  * `...args`：传给日志的其他参数
+* `disabled`: Disable all logging when set to `true` (default: `false`)
+* `disableColors`: Disable colors in the default logger implementation (default: determined by the terminal's color support)
+* `level`: Set the minimum log level to display (default: `"warn"`)
+  * `"debug"`: Show all logs including debug information
+  * `"info"`: Show all logs except debug information
+  * `"warn"`: Show warnings and errors
+  * `"error"`: Show only errors
+* `log`: Custom logging function that receives:
+  * `level`: The log level
+  * `message`: The log message
+  * `...args`: Additional arguments passed to the logger
 
 自定义日志示例：
 
@@ -801,37 +804,37 @@ export const auth = betterAuth({
 })
 ```
 
-* `throw`：API 出错时是否抛出异常（默认：`false`）
-* `onError`：自定义错误处理函数
-* `errorURL`：错误时重定向 URL（默认：`/api/auth/error`）
-* `customizeDefaultErrorPage`：配置 Better Auth 默认提供的错误页。启动开发服务器并访问 `/api/auth/error` 查看错误页。
-  * `colors`：自定义颜色方案
-    * `background`：背景色
-    * `foreground`：前景/文字色
-    * `primary`：主色调
-    * `primaryForeground`：主色背景上的文字色
-    * `mutedForeground`：弱化文字色
-    * `border`：边框色
-    * `destructive`：错误/危险色
-    * `titleBorder`：标题边框色
-    * `titleColor`：标题文字色
-    * `gridColor`：背景网格色
-    * `cardBackground`：卡片背景色
-    * `cornerBorder`：角落装饰边框色
-  * `size`：自定义尺寸和间距
-    * `radiusSm`：小圆角
-    * `radiusMd`：中圆角
-    * `radiusLg`：大圆角
-    * `textSm`：小号字体
-    * `text2xl`：2xl 字体
-    * `text4xl`：4xl 字体
-    * `text6xl`：6xl 字体
-  * `font`：自定义字体族
-    * `defaultFamily`：默认字体
-    * `monoFamily`：等宽字体
-  * `disableTitleBorder`：禁用标题边框（默认：`false`）
-  * `disableCornerDecorations`：禁用角落装饰（默认：`false`）
-  * `disableBackgroundGrid`：禁用背景网格图案（默认：`false`）
+* `throw`: 发生 API 错误时抛出异常（默认：`false`）
+* `onError`: 自定义错误处理函数
+* `errorURL`: 发生错误时重定向的 URL（默认：`/api/auth/error`）
+* `customizeDefaultErrorPage`: 配置 Better Auth 提供的默认错误页面。启动开发服务器并访问 `/api/auth/error` 查看错误页面。
+  * `colors`: 自定义错误页面的配色方案
+    * `background`: 背景颜色
+    * `foreground`: 前景/文本颜色
+    * `primary`: 主要强调色
+    * `primaryForeground`: 主要背景上的文本颜色
+    * `mutedForeground`: 弱化文本颜色
+    * `border`: 边框颜色
+    * `destructive`: 错误/破坏性颜色
+    * `titleBorder`: 标题的边框颜色
+    * `titleColor`: 标题文本颜色
+    * `gridColor`: 背景网格颜色
+    * `cardBackground`: 卡片背景颜色
+    * `cornerBorder`: 角落装饰的边框颜色
+  * `size`: 自定义尺寸和间距
+    * `radiusSm`: 小边框半径
+    * `radiusMd`: 中等边框半径
+    * `radiusLg`: 大边框半径
+    * `textSm`: 小文本大小
+    * `text2xl`: 2xl 文本大小
+    * `text4xl`: 4xl 文本大小
+    * `text6xl`: 6xl 文本大小
+  * `font`: 自定义字体族
+    * `defaultFamily`: 默认字体族
+    * `monoFamily`: 等宽字体族
+  * `disableTitleBorder`: 禁用标题周围的边框（默认：`false`）
+  * `disableCornerDecorations`: 禁用角落装饰（默认：`false`）
+  * `disableBackgroundGrid`: 禁用背景网格图案（默认：`false`）
 
 ## `hooks`
 

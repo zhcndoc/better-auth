@@ -7,8 +7,8 @@ description: 无法关联该账户。
 
 此错误仅在 OAuth 流程中尝试将提供商账户关联到当前已认证用户时发生。如果发生以下情况，Better Auth 会阻止该操作：
 
-1) 创建/更新关联账户的数据库操作失败。
-2) 根据您的认证配置（`account.accountLinking.trustedProviders`），该提供商不被视为可信赖的关联来源。
+1. 创建/更新关联账户的数据库操作失败。
+2. 根据您的认证配置（`account.accountLinking.trustedProviders`），该提供商不被视为可信任以进行关联。
 
 ## 常见原因
 
@@ -30,7 +30,7 @@ description: 无法关联该账户。
 * 执行待处理的迁移，确保数据库模式与当前 Better Auth 版本匹配。
 * 调查数据库错误（死锁、超时、连接池限制）并在适当时重试。
 
-### 验证环境配置
+### Verify environment configuration
 
-* 确保所有环境部署有相同的认证配置，且环境变量正确加载。
-* 再次确认运行时看到的是预期的 `trustedProviders` 列表。
+* 确保相同的认证配置部署到所有环境，并且环境变量按预期加载。
+* 确认运行时看到预期的 `trustedProviders` 列表。

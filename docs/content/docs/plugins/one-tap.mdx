@@ -6,52 +6,55 @@ description: 用于 Better Auth 的一键登录插件
 一键登录插件允许用户通过 Google 的 One Tap API 只需轻点一次即可登录。该插件为您提供一个简单的方式将 One Tap 集成到您的应用中，负责处理客户端和服务器端的逻辑。
 
 ## 安装
+
 <Steps>
-    <Step>
-### 添加服务器插件
-将一键登录插件添加到您的认证配置中：
+  <Step>
+    ### 添加服务器端插件
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { oneTap } from "better-auth/plugins"; // [!code highlight]
+    将 One Tap 插件添加到您的认证配置中：
 
-export const auth = betterAuth({
-    plugins: [
-        oneTap(), // 添加 One Tap 服务器插件  // [!code highlight]
-    ]
-});
-```
-    </Step>
-    
-    <Step>
-### 添加客户端插件
-添加客户端插件并指定用户登录后或需要额外验证（如两步验证）时应重定向到的位置。
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
+    import { oneTap } from "better-auth/plugins"; // [!code highlight]
 
-```ts
-import { createAuthClient } from "better-auth/client";
-import { oneTapClient } from "better-auth/client/plugins"; // [!code highlight]
+    export const auth = betterAuth({
+        plugins: [
+            oneTap(), // 添加 One Tap 服务器端插件  // [!code highlight]
+        ]
+    });
+    ```
+  </Step>
 
-export const authClient = createAuthClient({
-  plugins: [
-    oneTapClient({
-      clientId: "YOUR_CLIENT_ID",
-      // 可选的客户端配置：
-      autoSelect: false,
-      cancelOnTapOutside: true,
-      context: "signin",
-      additionalOptions: {
-        // 传递给 Google 初始化方法的额外选项
-      },
-      // 配置提示行为和指数退避策略：
-      promptOptions: {
-        baseDelay: 1000,   // 基础延迟（毫秒）（默认：1000）
-        maxAttempts: 5     // 触发 onPromptNotification 之前的最大尝试次数（默认：5）
-      }
-    })
-  ]
-});
-```
-    </Step>
+  <Step>
+    ### 添加客户端插件
+
+    添加客户端插件并指定用户登录后应重定向到的位置，以及是否需要额外验证（如双因素认证）。
+
+    ```ts
+    import { createAuthClient } from "better-auth/client";
+    import { oneTapClient } from "better-auth/client/plugins"; // [!code highlight]
+
+    export const authClient = createAuthClient({
+      plugins: [
+        oneTapClient({
+          clientId: "YOUR_CLIENT_ID",
+          // 可选的客户端配置：
+          autoSelect: false,
+          cancelOnTapOutside: true,
+          context: "signin",
+          additionalOptions: {
+            // Google 初始化方法的任何额外选项
+          },
+          // 配置提示行为和指数退避：
+          promptOptions: {
+            baseDelay: 1000,   // 重试延迟基数（毫秒，默认：1000）
+            maxAttempts: 5     // 触发 onPromptNotification 前的最大尝试次数（默认：5）
+          }
+        })
+      ]
+    });
+    ```
+  </Step>
 </Steps>
 
 ### 用法
@@ -90,6 +93,7 @@ await authClient.oneTap(); // [!code highlight]
     });
     ```
   </Tab>
+
   <Tab value="React Ref">
     ```tsx
     import { useEffect, useRef } from "react";
@@ -169,36 +173,37 @@ await authClient.oneTap({
 
 ### 客户端选项
 
-- `clientId`: 您的 Google One Tap API 客户端 ID。
-- `autoSelect`: 如果用户已登录，是否自动选择帐户。默认值为 false。
-- `cancelOnTapOutside`: 当用户点击弹窗外部时，是否取消 One Tap 弹窗。启用 FedCM 时此选项可能无效，因为浏览器会管理关闭行为。默认值为 true。
-- `uxMode`: Google One Tap 流程使用的模式，可选 `"popup"`（弹窗）或 `"redirect"`（重定向）。默认值为 `"popup"`。
-- `context`: One Tap API 所使用的上下文，可选 `"signin"`、`"signup"` 或 `"use"`。默认值为 `"signin"`。
-- `additionalOptions`: 传递给 Google 初始化方法的额外选项，详见 [Google Identity Services 文档](https://developers.google.com/identity/gsi/web/reference/js-reference#google.accounts.id.prompt)。
-- `promptOptions`: 用于配置提示行为和指数退避策略：
-  - `baseDelay`: 重试的基础延迟，单位毫秒。默认值为 1000。
-  - `maxAttempts`: 触发 `onPromptNotification` 回调前的提示尝试最大次数。默认值为 5。
-  - `fedCM`: 启用后在登出时调用 [`navigator.credentials.preventSilentAccess()`](https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/preventSilentAccess) 清除浏览器的 FedCM 凭据状态。FedCM 由 Google Identity Services 库管理，无法禁用。默认值为 true。
+* `clientId`: 您的 Google One Tap API 的客户端 ID。
+* `autoSelect`: 如果用户已登录，自动选择账户。默认为 false。
+* `cancelOnTapOutside`: 当用户点击弹窗外部时取消 One Tap 弹窗。请注意，当 FedCM 处于活动状态时，此选项可能无效，因为浏览器会管理取消行为。默认为 true。
+* `uxMode`: Google One Tap 流程使用的模式。可以是 "popup" 或 "redirect"。默认为 "popup"。
+* `context`: 应使用 One Tap API 的上下文。可以是 "signin"、"signup" 或 "use"。默认为 "signin"。
+* `additionalOptions`: 额外的选项，按照 [Google Identity Services 文档](https://developers.google.com/identity/gsi/web/reference/js-reference#google.accounts.id.prompt) 传递给 Google 的初始化方法。
+* `promptOptions`: 提示行为和指数退避的配置：
+  * `baseDelay`: 重试延迟基数（毫秒）。默认是 1000。
+  * `maxAttempts`: 触发 onPromptNotification 回调前的最大尝试次数。默认是 5。
+  * `fedCM`: 启用时，调用 [`navigator.credentials.preventSilentAccess()`](https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/preventSilentAccess) 以在登出时清除浏览器的 FedCM 凭据状态。FedCM 本身由 Google Identity Services 库管理，无法禁用。默认是 true。
 
 ### 按钮模式选项
 
 使用按钮模式时，向 `oneTap` 方法传递 `button` 对象，包含以下属性：
 
-- `container`: 必填，按钮要渲染到的 HTML 元素或 CSS 选择器。
-- `config`: 可选，按钮配置选项：
-  - `type`: 按钮类型 — `"standard"`（默认）或 `"icon"`（仅图标）
-  - `theme`: 按钮主题 — `"outline"`（默认）、`"filled_blue"`、或 `"filled_black"`
-  - `size`: 按钮尺寸 — `"large"`（默认）、`"medium"` 或 `"small"`
-  - `text`: 按钮文字 — `"signin_with"`（默认）、`"signup_with"`、`"continue_with"`、或 `"signin"`
-  - `shape`: 按钮形状 — `"rectangular"`（默认）、`"pill"`、`"circle"`、或 `"square"`
-  - `logo_alignment`: Google 标志对齐方式 — `"left"`（默认）或 `"center"`（仅限标准按钮）
-  - `width`: 按钮最小宽度（像素），最大 400
-  - `locale`: 以指定语言代码显示按钮（例如 `"zh_CN"`）
+* `container`: 渲染按钮的 HTML 元素或 CSS 选择器（必需）
+* `config`: 按钮配置选项（可选）：
+  * `type`: 按钮类型 - `"standard"`（默认）或 `"icon"`（仅图标）
+  * `theme`: 按钮主题 - `"outline"`（默认）、`"filled_blue"` 或 `"filled_black"`
+  * `size`: 按钮大小 - `"large"`（默认）、`"medium"` 或 `"small"`
+  * `text`: 按钮文本 - `"signin_with"`（默认）、`"signup_with"`、`"continue_with"` 或 `"signin"`
+  * `shape`: 按钮形状 - `"rectangular"`（默认）、`"pill"`、`"circle"` 或 `"square"`
+  * `logo_alignment`: Google Logo 对齐方式 - `"left"`（默认）或 `"center"`（仅标准按钮）
+  * `width`: 最小按钮宽度（像素，最大 400）
+  * `locale`: 使用指定的语言代码显示按钮（例如 `"zh_CN"`）
 
 ### 服务器端选项
 
-- `disableSignUp`: 禁用注册选项，仅允许已有用户登录。默认值为 false。
-- `clientId`: 如果您的社交提供商配置中未提供客户端 ID，可以在这里传入。
+* `disableSignUp`: 禁用注册选项，仅允许现有用户登录。默认是 false。
+* `clientId`: 如果社交提供程序配置中未提供客户端 ID，可以在此处选择性传递客户端 ID。
 
 ### 授权的 JavaScript 来源
-请确保您已在 Google Cloud 控制台中为您的客户端 ID 配置了授权的 JavaScript 来源（例如 http://localhost:3000，https://example.com）。这是 Google One Tap API 的必需步骤，如未正确设置来源，该功能将无法正常工作。
+
+请确保为您的客户端 ID 配置已授权的 JavaScript 来源（例如 [http://localhost:3000](http://localhost:3000), [https://example.com](https://example.com)）。这是 Google One Tap API 的必需步骤，除非正确设置了来源，否则无法正常工作。

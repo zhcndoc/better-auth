@@ -4,65 +4,68 @@ description: 微信提供者设置和使用。
 ---
 
 <Steps>
-    <Step>
-        ### 获取您的微信凭据
-        要使用微信登录，您需要在[微信开放平台](https://open.weixin.qq.com/)注册一个网站应用，设置 `Authorization Callback Domain` 为 better auth 域名，并获取您的 App ID 和 App Secret。
-    </Step>
+  <Step>
+    ### 获取微信凭证
 
-    <Step>
-        ### 配置提供者
-        要配置提供者，您需要导入该提供者并将其传递给 auth 实例的 `socialProviders` 选项。
+    要使用微信登录，您需要在 [微信开放平台](https://open.weixin.qq.com/) 注册一个网站应用，将 `Authorization Callback Domain` 设置为更好的认证域名，并获取您的 App ID 和 App Secret。
+  </Step>
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
+  <Step>
+    ### 配置提供者
 
-        export const auth = betterAuth({
-            socialProviders: {
-                wechat: { // [!code highlight]
-                    clientId: process.env.WECHAT_CLIENT_ID, // [!code highlight]
-                    clientSecret: process.env.WECHAT_CLIENT_SECRET, // [!code highlight]
-                }, // [!code highlight]
+    要配置提供者，您需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            wechat: { // [!code highlight]
+                clientId: process.env.WECHAT_CLIENT_ID, // [!code highlight]
+                clientSecret: process.env.WECHAT_CLIENT_SECRET, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+
+    #### 可选配置
+
+    您可以使用以下选项来自定义微信提供者：
+
+    ```ts title="auth.ts"
+    export const auth = betterAuth({
+        socialProviders: {
+            wechat: {
+                clientId: process.env.WECHAT_CLIENT_ID,
+                clientSecret: process.env.WECHAT_CLIENT_SECRET,
+                // 可选：设置微信登录页面的 UI 语言
+                lang: "cn", // 或 "en" 表示英文
+                // 可选：使用自定义作用域
+                scope: [], // "snsapi_login" 用于网页二维码登录。
             },
+        },
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 使用微信登录
+
+    要使用微信登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+
+    * `provider`: 要使用的提供者，应设置为 `wechat`。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    const authClient = createAuthClient()
+
+    const signIn = async () => {
+        const data = await authClient.signIn.social({
+            provider: "wechat"
         })
-        ```
-
-        #### 可选配置
-
-        您可以使用额外选项自定义微信提供者：
-
-        ```ts title="auth.ts"
-        export const auth = betterAuth({
-            socialProviders: {
-                wechat: {
-                    clientId: process.env.WECHAT_CLIENT_ID,
-                    clientSecret: process.env.WECHAT_CLIENT_SECRET,
-                    // 可选：设置微信登录页面的界面语言
-                    lang: "cn", // 或 "en" 表示英文
-                    // 可选：使用自定义权限范围
-                    scope: [], // 网络二维码登录使用 "snsapi_login"。
-                },
-            },
-        })
-        ```
-    </Step>
-
-    <Step>
-        ### 使用微信登录
-        要使用微信登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个具有以下属性的对象：
-        - `provider`：要使用的提供者，应该设置为 `wechat`。
-
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        const authClient = createAuthClient()
-
-        const signIn = async () => {
-            const data = await authClient.signIn.social({
-                provider: "wechat"
-            })
-        }
-        ```
-    </Step>
-
+    }
+    ```
+  </Step>
 </Steps>
 
 ## 使用方式
@@ -73,5 +76,4 @@ description: 微信提供者设置和使用。
 
 ### 开发注意事项
 
-- 重定向 URL 的域名必须与微信开放平台中配置的域名匹配
-
+* 跳转 URL 域名必须与微信开放平台中配置的域名匹配

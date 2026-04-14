@@ -14,32 +14,37 @@ import { Step, Steps } from "fumadocs-ui/components/steps";
 
 # Supabase Auth 到 Better Auth + PlanetScale PostgreSQL 迁移指南
 
-最近，[PlanetScale 宣布](https://planetscale.com/blog/planetscale-for-postgres)支持 PostgreSQL。这对开发者来说是令人振奋的消息，也是数据库行业的重要进步。
+最近，[PlanetScale 宣布](https://planetscale.com/blog/planetscale-for-postgres)支持 PostgreSQL。这是一个令人振奋的消息，也是数据库行业的重要进步。
 
 我们注意到一些用户正在从 Supabase 迁移到 PlanetScale PostgreSQL，但由于他们也依赖 Supabase Auth，这带来了一些挑战。本文将帮助你将认证从 Supabase Auth 迁移到运行在 PlanetScale PostgreSQL 上的 Better Auth。
 
 ## 1. 设置 PlanetScale 数据库
 
 <Steps>
-<Step>
-  打开 PlanetScale [控制台](https://app.planetscale.com/)
-</Step>
-<Step>
-  创建一个[新数据库](https://app.planetscale.com/new?org=better-auth)
-</Step>
-<Step>
-  获取你的连接字符串（PostgreSQL URI）
-```jsx
-postgresql://<用户名>:<密码>@<主机>/postgres?sslmode=verify-full
-```
-</Step>
-<Step>
-  将数据库 URL 保存在你的 `.env` 文件，稍后用于 Better Auth：
-```txt title=".env"
-DATABASE_URL =
-  postgresql://<用户名>:<密码>@<主机>/postgres?sslmode=verify-full
-```
-</Step>
+  <Step>
+    打开 PlanetScale [控制面板](https://app.planetscale.com/)
+  </Step>
+
+  <Step>
+    创建一个[新数据库](https://app.planetscale.com/new?org=better-auth)
+  </Step>
+
+  <Step>
+    获取你的连接字符串（PostgreSQL URI）
+
+    ```jsx
+    postgresql://<username>:<password>@<host>/postgres?sslmode=verify-full
+    ```
+  </Step>
+
+  <Step>
+    将数据库 URL 保存到你的 `.env` 文件中，以便稍后与 Better Auth 一起使用：
+
+    ```txt title=".env"
+    DATABASE_URL =
+      postgresql://<username>:<password>@<host>/postgres?sslmode=verify-full
+    ```
+  </Step>
 </Steps>
 
 <Callout>
@@ -49,17 +54,18 @@ DATABASE_URL =
 ## 2. 安装 Better Auth
 
 <Steps>
-<Step>
-  安装 Better Auth
-```package-install
-npm install better-auth
-```
-</Step>
+  <Step>
+    安装 Better Auth
 
-<Step>
-  按照并完成以下基础设置
-  [文档](https://www.better-auth.com/docs/installation)
-</Step>
+    ```package-install
+    npm install better-auth
+    ```
+  </Step>
+
+  <Step>
+    按照并完成基本设置
+    [这里](https://www.better-auth.com/docs/installation)
+  </Step>
 </Steps>
 
 <Callout>
@@ -78,23 +84,26 @@ npm install --save-dev @types/pg
 ## 4. 生成并迁移 Better Auth 模式
 
 <Steps>
-<Step>
-  运行此 CLI 命令生成设置 Better Auth 所需的全部模式：
-```bash 
-npx auth generate 
-```
-</Step>
-<Step>
-  接着运行此命令将生成的模式应用到你的 PlanetScale 数据库：
-```bash 
-npx auth migrate 
-```
-</Step>
+  <Step>
+    运行以下 CLI 命令以生成设置 Better Auth 所需的所有模式：
 
+    ```bash
+    npx auth generate 
+    ```
+  </Step>
+
+  <Step>
+    然后运行以下命令将生成的模式应用到你的 PlanetScale
+    数据库：
+
+    ```bash
+    npx auth migrate 
+    ```
+  </Step>
 </Steps>
 
 <Callout type="success">
-  现在你应该已经在 PlanetScale 中拥有所需的认证表。
+  现在你应该已经在 PlanetScale 中拥有了所需的认证表。
 </Callout>
 
 ### 5. 快速检查
@@ -103,7 +112,7 @@ npx auth migrate
 
 <Tabs items={["auth.ts", "auth-client.ts"]}>
   <Tab value="auth.ts">
-    ```ts 
+    ```ts
     import { Pool } from "pg";
     import { betterAuth } from "better-auth";
 
@@ -117,10 +126,10 @@ npx auth migrate
       },
     });
     ```
-    </Tab>
+  </Tab>
 
   <Tab value="auth-client.ts">
-    ```ts 
+    ```ts
     import { createAuthClient } from "better-auth/react";
     export const authClient = createAuthClient({
       baseURL: "http://localhost:3000",
@@ -128,17 +137,16 @@ npx auth migrate
 
     export const { signIn, signUp, useSession } = createAuthClient();
     ```
-    </Tab>
-
+  </Tab>
 </Tabs>
 
 ### 6. 有趣的部分
 
 现在到了有趣的环节。你已完成全部设置，现在只需查找代码中使用 Supabase Auth 客户端的地方，替换为 Better Auth 客户端即可。我们这里看几个示例。
 
-<Tabs items={["注册", "登录", "会话"]}>
-  <Tab value="注册">
-    ```ts 
+<Tabs items={["sign up", "sign in", "session"]}>
+  <Tab value="sign up">
+    ```ts
     // Supabase Auth
     await supabase.auth.signUp({
       email,
@@ -152,11 +160,10 @@ npx auth migrate
       name: "John",
     });
     ```
-
   </Tab>
 
-  <Tab value="登录">
-    ```ts 
+  <Tab value="sign in">
+    ```ts
     // Supabase
     await supabase.auth.signInWithPassword({
       email,
@@ -169,20 +176,17 @@ npx auth migrate
       password,
     });
     ```
-
   </Tab>
 
-  <Tab value="会话">
-    ```ts 
+  <Tab value="session">
+    ```ts
     // Supabase
     const { data, error } = await supabase.auth.getClaims();
 
     // Better Auth
     const { data, error } = await authClient.useSession();
     ```
-
   </Tab>
-
 </Tabs>
 
 ### 7. 从 Supabase Auth 迁移用户
@@ -190,6 +194,7 @@ npx auth migrate
 <Callout type="warn">
   此迁移会使所有活跃会话失效。虽然当前指南未涵盖两因素认证(2FA)或行级安全(RLS)配置的迁移，但这些都应可通过额外步骤实现。
 </Callout>
+
 <Callout type="info">
   更多详细指南请参考我们提供的[迁移指南](https://www.better-auth.com/docs/guides/supabase-migration-guide)。
 </Callout>
@@ -319,7 +324,7 @@ bun migration.ts # 或使用 node, ts-node 等工具运行
 
 ### 8. 迁移其余数据
 
-如果你在 Supabase 中还有其他与用户相关的数据，可以使用[Supabase 到 PlanetScale 的迁移工具](https://planetscale.com/docs/postgres/imports/supabase)。
+如果你在 Supabase 中还有其他与用户相关的数据，可以使用[Supabase 到 PlanetScale 的迁移工具](https://planetscale.com/docs/postgres/imports/supabase-import)。
 
 ### 9. 清理代码库中所有 Supabase Auth 相关代码
 
@@ -331,36 +336,27 @@ bun migration.ts # 或使用 node, ts-node 等工具运行
 
 ### 小贴士
 
-- 上线前请仔细检查生产环境中的所有环境变量是否正确定义。
-- 测试所有认证流程（注册、登录、重置密码、会话刷新）确保正常。
-- 这只是基础操作，如果你在很多地方集成了 Supabase Auth 的功能，需在[这里](https://www.better-auth.com/docs)找到合适的 Better Auth 替代方案。
-- 玩得开心！
+* Double-check that all environment variables are set in production.
+* Test all auth flows (sign-up, login, password reset, session refresh) before going live.
+* Remember that this is just the basics and if you've integrated Supabase Auth's auth functions in a lot of placed you'd have to find the suitable Better Auth replacements [here](https://www.better-auth.com/docs).
+* Have fun!
 
 ### 了解更多！
 
 <Cards>
-  <Card
-    href="https://www.better-auth.com/docs/introduction"
-    title="Better Auth 设置"
-  >
-    快速开始安装 Better Auth
+  <Card href="https://www.better-auth.com/docs/introduction" title="Better Auth Setup">
+    Get started with installing Better Auth
   </Card>
-  <Card
-    href="https://planetscale.com/docs/vitess/tutorials/planetscale-quick-start-guide"
-    title="PlanetScale 快速入门"
-  >
-    在这里开始你的 PlanetScale 之旅
+
+  <Card href="https://planetscale.com/docs/vitess/tutorials/planetscale-quick-start-guide" title="PlanetScale Quick Start">
+    Get started on PlanetScale here
   </Card>
-  <Card
-    href="https://planetscale.com/docs/postgres/imports/postgres-imports"
-    title="PlanetScale 迁移指南"
-  >
-    使用该指南迁移你的 Supabase 及更多服务数据
+
+  <Card href="https://planetscale.com/docs/postgres/imports/postgres-imports" title="PlanetScale Migration Guides">
+    Use this guide to move your data from Supabase and many more services
   </Card>
-  <Card
-    href="https://www.better-auth.com/docs/guides/supabase-migration-guide"
-    title="Supabase Auth 迁移"
-  >
-    将认证从 Supabase Auth 迁移到你自己的数据库
+
+  <Card href="https://www.better-auth.com/docs/guides/supabase-migration-guide" title="Supabase Auth Migration">
+    Move your auth from Supabase Auth to your own DB
   </Card>
 </Cards>

@@ -6,27 +6,27 @@ description: 学习如何将 Better Auth 无缝集成到您的 Fastify 应用中
 本指南提供了配置基本处理程序和 CORS 设置的逐步说明。
 
 <Callout type="important">
-  在继续之前，您需要先配置好 Better Auth 实例。如果尚未设置，请查阅我们的[安装指南](/docs/installation)。
+  在继续之前，需要配置一个 Better Auth 实例。如果尚未设置，请参考我们的 [安装指南](/docs/installation)。
 </Callout>
 
 ### 前提条件
 
 在集成之前，请确认满足以下要求：
 
-* **Node.js 环境**：安装了 v16 或更高版本
-* **ES 模块支持**：启用 ES 模块方式，通过以下任一途径：
-  * `package.json` 中设置 `{ "type": "module" }`
-  * TypeScript 的 `tsconfig.json` 中设置 `{ "module": "ESNext" }`
-* **Fastify 依赖**：
+* **Node.js 环境**: 已安装 v16 或更高版本
+* **ES Module 支持**: 在以下任一选项中启用 ES 模块：
+  * `package.json`: `{ "type": "module" }`
+  * TypeScript `tsconfig.json`: `{ "module": "ESNext" }`
+* **Fastify 依赖项**:
   ```package-install
   fastify @fastify/cors
   ```
 
-<Callout type="tip"> 对于 TypeScript 使用者：请确保 `tsconfig.json` 中包含 `"esModuleInterop": true`，以获得最佳兼容性。 </Callout>
+<Callout type="tip"> 对于 TypeScript 用户：请确保 `tsconfig.json` 包含 `"esModuleInterop": true`，以获得最佳兼容性。 </Callout>
 
 ### 认证处理程序设置
 
-通过创建一个通配路由来配置 Better Auth 处理身份验证请求：
+通过创建一个通配路由来配置 Better Auth 以处理身份验证请求：
 
 ```ts title="server.ts"
 import Fastify from "fastify";

@@ -8,40 +8,41 @@ description: 跟踪并显示用户最后使用的身份验证方式
 ## 安装
 
 <Steps>
-    <Step>
-        ### 在你的 auth 配置中添加插件
+  <Step>
+    ### 将插件添加到您的身份验证配置
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
-        import { lastLoginMethod } from "better-auth/plugins" // [!code highlight]
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+    import { lastLoginMethod } from "better-auth/plugins" // [!code highlight]
 
-        export const auth = betterAuth({
-            // ... 其他配置选项
-            plugins: [
-                lastLoginMethod() // [!code highlight]
-            ]
-        })
-        ```
-    </Step>
-    <Step>
-        ### 在你的 auth 客户端中添加客户端插件
+    export const auth = betterAuth({
+        // ... other config options
+        plugins: [
+            lastLoginMethod() // [!code highlight]
+        ]
+    })
+    ```
+  </Step>
 
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        import { lastLoginMethodClient } from "better-auth/client/plugins" // [!code highlight]
+  <Step>
+    ### 将客户端插件添加到您的身份验证客户端
 
-        export const authClient = createAuthClient({
-            plugins: [
-                lastLoginMethodClient() // [!code highlight]
-            ]
-        })
-        ```
-    </Step>
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    import { lastLoginMethodClient } from "better-auth/client/plugins" // [!code highlight]
+
+    export const authClient = createAuthClient({
+        plugins: [
+            lastLoginMethodClient() // [!code highlight]
+        ]
+    })
+    ```
+  </Step>
 </Steps>
 
 ## 使用方法
 
-安装后，插件会自动跟踪用户最后一次使用的身份验证方式。你可以在应用程序中检索并显示该信息。
+安装后，插件会自动跟踪用户最后一次使用的身份验证方式。您可以在应用程序中检索并显示该信息。
 
 ### 获取最后使用的方式
 
@@ -127,59 +128,62 @@ export function SignInPage() {
 默认情况下，最后登录方式仅存储在 cookie 中。若需更持久的跟踪和分析，可以启用数据库存储。
 
 <Steps>
-    <Step>
-        ### 启用数据库存储
+  <Step>
+    ### 启用数据库存储
 
-        在插件配置中将 `storeInDatabase` 设置为 `true`：
+    在插件配置中将 `storeInDatabase` 设置为 `true`：
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
-        import { lastLoginMethod } from "better-auth/plugins"
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+    import { lastLoginMethod } from "better-auth/plugins"
 
-        export const auth = betterAuth({
-            plugins: [
-                lastLoginMethod({
-                    storeInDatabase: true // [!code highlight]
-                })
-            ]
-        })
-        ```
-    </Step>
-    <Step>
-        ### 执行数据库迁移
+    export const auth = betterAuth({
+        plugins: [
+            lastLoginMethod({
+                storeInDatabase: true // [!code highlight]
+            })
+        ]
+    })
+    ```
+  </Step>
 
-        插件会自动向用户表添加 `lastLoginMethod` 字段。运行迁移以应用变更：
+  <Step>
+    ### 运行数据库迁移
 
-   <Tabs items={["migrate", "generate"]}>
+    插件会自动将 `lastLoginMethod` 字段添加到您的用户表中。运行迁移以应用更改：
+
+    <Tabs items={["migrate", "generate"]}>
       <Tab value="migrate">
-      ```package-install
-      npx auth@latest migrate
-      ```
+        ```package-install
+        npx auth@latest migrate
+        ```
       </Tab>
+
       <Tab value="generate">
-      ```package-install
-      npx auth@latest generate
-      ```
+        ```package-install
+        npx auth@latest generate
+        ```
       </Tab>
     </Tabs>
-    </Step>
-    <Step>
-        ### 访问数据库字段
+  </Step>
 
-        启用数据库存储后，`lastLoginMethod` 字段将出现在用户对象中：
+  <Step>
+    ### 访问数据库字段
 
-        ```ts title="user-profile.tsx"
-        import { auth } from "@/lib/auth"
+    启用数据库存储后，`lastLoginMethod` 字段将在用户对象中可用：
 
-        // 服务器端访问
-        const session = await auth.api.getSession({ headers })
-        console.log(session?.user.lastLoginMethod) // "google", "email" 等等
+    ```ts title="user-profile.tsx"
+    import { auth } from "@/lib/auth"
 
-        // 客户端通过 session 访问
-        const { data: session } = authClient.useSession()
-        console.log(session?.user.lastLoginMethod)
-        ```
-    </Step>
+    // 服务器端访问
+    const session = await auth.api.getSession({ headers })
+    console.log(session?.user.lastLoginMethod) // "google", "email", 等等
+
+    // 通过会话进行客户端访问
+    const { data: session } = authClient.useSession()
+    console.log(session?.user.lastLoginMethod)
+    ```
+  </Step>
 </Steps>
 
 ### 数据库模式
@@ -188,11 +192,16 @@ export function SignInPage() {
 
 表：`user`
 
-<DatabaseTable
-    fields={[
-        { name: "lastLoginMethod", type: "string", description: "用户最后使用的身份验证方式", isOptional: true },
-    ]}
-/>
+export const lastLoginMethodUserTableFields = [
+	{
+		name: "lastLoginMethod",
+		type: "string",
+		description: "The last authentication method used by the user",
+		isOptional: true,
+	},
+];
+
+<DatabaseTable name="user" fields={lastLoginMethodUserTableFields} />
 
 ### 自定义模式配置
 
@@ -257,28 +266,33 @@ export const auth = betterAuth({
 })
 ```
 
-**cookieName**: `string`  
-- 用于存储最后登录方式的 cookie 名称  
-- 默认: `"better-auth.last_used_login_method"`  
-- **注意**：该 cookie 设置为 `httpOnly: false`，允许客户端 JavaScript 访问，用于 UI 功能
+**cookieName**: `string`
 
-**maxAge**: `number`  
-- cookie 过期时间，单位为秒  
-- 默认: `2592000`（30 天）
+* 用于存储最后登录方式的 Cookie 名称
+* 默认: `"better-auth.last_used_login_method"`
+* **注意**: 该 Cookie 设置为 `httpOnly: false`，以便客户端 JavaScript 访问用于 UI 功能
 
-**storeInDatabase**: `boolean`  
-- 是否将最后登录方式存储到数据库中  
-- 默认: `false`  
-- 启用后会在用户表中添加 `lastLoginMethod` 字段
+**maxAge**: `number`
 
-**customResolveMethod**: `(ctx: GenericEndpointContext) => string | null`  
-- 自定义函数根据请求上下文判断登录方式  
-- 返回 `null` 则使用默认解析逻辑  
-- 适用于自定义 OAuth 提供商或身份验证流程
+* Cookie 过期时间（秒）
+* 默认: `2592000`（30 天）
 
-**schema**: `object`  
-- 在启用 `storeInDatabase` 时自定义数据库字段名映射  
-- 允许将 `lastLoginMethod` 字段映射到自定义列名
+**storeInDatabase**: `boolean`
+
+* 是否将最后登录方式存储在数据库中
+* 默认: `false`
+* 启用时，会在用户表中添加 `lastLoginMethod` 字段
+
+**customResolveMethod**: `(ctx: GenericEndpointContext) => string | null`
+
+* 用于从请求上下文中确定登录方式的自定义函数
+* 返回 `null` 使用默认解析逻辑
+* 对自定义 OAuth 提供程序或身份验证流程很有用
+
+**schema**: `object`
+
+* 启用 `storeInDatabase` 时自定义数据库字段名
+* 允许将 `lastLoginMethod` 字段映射到自定义列名
 
 ### 客户端选项
 
@@ -295,40 +309,42 @@ export const authClient = createAuthClient({
 })
 ```
 
-**cookieName**: `string`  
-- 用于读取最后登录方式的 cookie 名称  
-- 必须和服务端的 `cookieName` 配置一致  
-- 默认: `"better-auth.last_used_login_method"`
+**cookieName**: `string`
+
+* 用于读取最后登录方式的 Cookie 名称
+* 必须与服务端的 `cookieName` 配置匹配
+* 默认: `"better-auth.last_used_login_method"`
 
 ### 默认方式解析
 
 插件默认跟踪以下身份验证方式：
 
-- **邮箱身份验证**： `"email"`  
-- **OAuth 提供商**：提供商 ID（例如 `"google"`, `"github"`, `"discord"`）  
-- **OAuth2 回调**：从 URL 路径提取提供商 ID  
-- **注册方式**：和登录方式相同的方式跟踪
+* **Email authentication**: `"email"`
+* **OAuth providers**: Provider ID（例如 `"google"`, `"github"`, `"discord"`）
+* **OAuth2 callbacks**: URL 路径中的提供程序 ID
+* **Sign up methods**: 与登录方式相同
 
-插件自动检测以下端点的方式：  
-- `/callback/:id` - OAuth 回调，带有提供商 ID  
-- `/oauth2/callback/:id` - OAuth2 回调，带有提供商 ID  
-- `/sign-in/email` - 邮箱登录  
-- `/sign-up/email` - 邮箱注册
+插件自动从以下端点检测方式：
+
+* `/callback/:id` - 带有提供程序 ID 的 OAuth 回调
+* `/oauth2/callback/:id` - 带有提供程序 ID 的 OAuth2 回调
+* `/sign-in/email` - 邮箱登录
+* `/sign-up/email` - 邮箱注册
 
 ## 跨域支持
 
-插件自动继承 Better Auth 集中 cookie 系统的 cookie 设置，解决了最后登录方式无法跨越以下情况持久化的问题：
+插件会自动继承 Better Auth 集中 Cookie 系统的 Cookie 设置，解决了最后登录方式无法在以下情况下持久化的问题：
 
-- **跨子域部署**：`auth.example.com` → `app.example.com`  
-- **跨源部署**：`api.company.com` → `app.different.com`
+* **跨子域设置**: `auth.example.com` → `app.example.com`
+* **跨源设置**: `api.company.com` → `app.different.com`
 
-当你在 Better Auth 配置中启用 `crossSubDomainCookies` 或 `crossOriginCookies`，插件会自动使用与会话 cookie 相同的域、secure 和 sameSite 设置，确保应用中的一致行为。
+当在 Better Auth 配置中启用 `crossSubDomainCookies` 或 `crossOriginCookies` 时，插件会自动使用与会话 Cookie 相同的域、secure 和 sameSite 设置，确保应用中的一致行为。
 
 ## 高级示例
 
 ### 自定义提供商跟踪
 
-如果你有自定义的 OAuth 提供商或身份验证方式，可以使用 `customResolveMethod` 选项：
+如果你有自定义的 OAuth 提供程序或身份验证方式，可以使用 `customResolveMethod` 选项：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -387,5 +403,5 @@ export const authClient = createAuthClient({
 ```
 
 <Callout type="info">
-    对于仅使用 Expo 的应用，不需要浏览器支持时，可以只使用客户端插件，省略服务端插件。
+  仅在 Expo 应用中使用（不需要浏览器支持时），可以省略服务端插件，仅依赖客户端插件。
 </Callout>

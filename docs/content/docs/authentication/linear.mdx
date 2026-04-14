@@ -4,72 +4,78 @@ description: Linear 提供者的设置和使用。
 ---
 
 <Steps>
-    <Step> 
-        ### 获取你的 Linear 凭证
-        要使用 Linear 登录，你需要一个客户端 ID 和客户端密钥。你可以从 [Linear 开发者门户](https://linear.app/settings/api) 获取它们。
+  <Step>
+    ### 获取你的 Linear 凭证
 
-        确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/linear` 以便本地开发。对于生产环境，你应该将其设置为你应用程序的 URL。如果你更改了认证路由的基础路径，也应相应更新重定向 URL。
+    要使用 Linear 登录，你需要一个客户端 ID 和客户端密钥。你可以从 [Linear 开发者门户](https://linear.app/settings/api) 获取它们。
 
-        在 Linear 创建 OAuth 应用时，你需要指定所需的权限范围。默认范围是 `read`，但如果需要，你也可以请求额外的权限，例如 `write`。
-    </Step>
+    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/linear` 用于本地开发。对于生产环境，你应该将其设置为你的应用程序 URL。如果更改了认证路由的基本路径，你需要相应地更新重定向 URL。
 
-    <Step>
-        ### 配置提供者
-        要配置提供者，你需要导入该提供者并将其传递给认证实例的 `socialProviders` 选项。
+    在 Linear 中创建你的 OAuth 应用程序时，你需要指定所需的权限范围。默认权限是 `read`，但如果需要，你还可以请求其他权限，例如 `write`。
+  </Step>
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
-        
-        export const auth = betterAuth({
-            socialProviders: {
-                linear: { // [!code highlight]
-                    clientId: process.env.LINEAR_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.LINEAR_CLIENT_SECRET as string, // [!code highlight]
-                }, // [!code highlight]
-            },
+  <Step>
+    ### 配置提供者
+
+    要配置提供者，你需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            linear: { // [!code highlight]
+                clientId: process.env.LINEAR_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.LINEAR_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 使用 Linear 登录
+
+    要使用 Linear 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+
+    * `provider`: 要使用的提供者。应设置为 `linear`。
+
+    ```ts title="auth-client.ts"  
+    import { createAuthClient } from "better-auth/client"
+    const authClient = createAuthClient()
+
+    const signIn = async () => {
+        const data = await authClient.signIn.social({
+            provider: "linear"
         })
-        ```
-    </Step>
+    }
+    ```
+  </Step>
 
-    <Step>
-        ### 使用 Linear 登录
-        要使用 Linear 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
-        - `provider`：使用的提供者，应设置为 `linear`。
+  <Step>
+    ### 可用权限范围
 
-        ```ts title="auth-client.ts"  
-        import { createAuthClient } from "better-auth/client"
-        const authClient = createAuthClient()
-        
-        const signIn = async () => {
-            const data = await authClient.signIn.social({
-                provider: "linear"
-            })
-        }
-        ```
-    </Step>
+    Linear OAuth 支持以下权限范围：
 
-    <Step>
-        ### 可用权限范围
-        Linear OAuth 支持以下权限范围：
-        - `read`（默认）：用户账户的读取权限
-        - `write`：用户账户的写入权限
-        - `issues:create`：允许创建新问题及其附件
-        - `comments:create`：允许创建新的问题评论
-        - `timeSchedule:write`：允许创建和修改时间表
-        - `admin`：对管理员级别端点的完全访问权限（请谨慎使用）
+    * `read`（默认）：对用户账户的读取权限
+    * `write`：对用户账户的写入权限
+    * `issues:create`：允许创建新问题及其附件
+    * `comments:create`：允许创建新的问题评论
+    * `timeSchedule:write`：允许创建和修改时间计划
+    * `admin`：对管理级别端点的完全访问权限（谨慎使用）
 
-        你可以在配置提供者时指定额外的权限范围：
+    你可以在配置提供者时指定额外的权限范围：
 
-        ```ts title="auth.ts"
-        export const auth = betterAuth({
-            socialProviders: {
-                linear: {
-                    clientId: process.env.LINEAR_CLIENT_ID as string,
-                    clientSecret: process.env.LINEAR_CLIENT_SECRET as string,
-                    scope: ["read", "write"] // [!code highlight]
-                },
+    ```ts title="auth.ts"
+    export const auth = betterAuth({
+        socialProviders: {
+            linear: {
+                clientId: process.env.LINEAR_CLIENT_ID as string,
+                clientSecret: process.env.LINEAR_CLIENT_SECRET as string,
+                scope: ["read", "write"] // [!code highlight]
             },
-        })
-        ```
-    </Step>
+        },
+    })
+    ```
+  </Step>
 </Steps>

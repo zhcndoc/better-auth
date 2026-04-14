@@ -4,42 +4,45 @@ description: Notion 提供者的设置和使用。
 ---
 
 <Steps>
-    <Step> 
-        ### 获取你的 Notion 凭据
-        要使用 Notion 作为社交提供者，你需要获取 Notion 的 OAuth 凭据。你可以通过在 [Notion 开发者门户](https://www.notion.so/my-integrations) 创建一个新的集成来获得。
+  <Step>
+    ### 获取 Notion 凭证
 
-        在 Notion 集成设置 > OAuth 域名和 URI 中，确保为本地开发将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/notion`。在生产环境中，确保将重定向 URL 设置为你的应用域名，例如 `https://example.com/api/auth/callback/notion`。如果你更改了认证路由的基础路径，也请相应地更新重定向 URL。
+    要将 Notion 用作社交提供者，你需要获取 Notion OAuth 凭证。你可以在 [Notion 开发者门户](https://www.notion.so/my-integrations) 中创建新的集成来获取这些凭证。
 
-        <Callout>
-        确保你的 Notion 集成启用了适当的权限。对于用户身份验证，你需要启用「读取用户信息，包括电子邮件地址」权限。
-        </Callout>
-    </Step>
+    在 Notion 集成设置 > OAuth 域名与 URI 中，请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/notion` 用于本地开发。生产环境中，请将重定向 URL 设置为你的应用程序域名，例如 `https://example.com/api/auth/callback/notion`。如果修改了认证路由的基本路径，需要相应地更新重定向 URL。
+
+    <Callout>
+      确保你的 Notion 集成已启用所需的功能。对于用户认证，你需要启用“读取用户信息（包括电子邮件地址）”功能。
+    </Callout>
+  </Step>
 
   <Step>
-        ### 配置提供者
-        要配置提供者，你需要在认证配置中将 `clientId` 和 `clientSecret` 传递给 `socialProviders.notion`。
+    ### 配置提供者
 
-        ```ts title="auth.ts"   
-        import { betterAuth } from "better-auth"
-        
-        export const auth = betterAuth({
-            socialProviders: {
-                notion: { // [!code highlight]
-                    clientId: process.env.NOTION_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.NOTION_CLIENT_SECRET as string, // [!code highlight]
-                }, // [!code highlight]
-            },
-        })
-        ```
-    </Step>
+    要配置该提供者，你需要将 `clientId` 和 `clientSecret` 传递给 `socialProviders.notion`。
+
+    ```ts title="auth.ts"   
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            notion: { // [!code highlight]
+                clientId: process.env.NOTION_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.NOTION_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
 </Steps>
 
 ## 使用说明
 
 ### 使用 Notion 登录
 
-要使用 Notion 登录，你可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
-- `provider`：要使用的提供者，应设置为 `notion`。
+要使用 Notion 登录，可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+
+* `provider`: 要使用的提供者，应设置为 `notion`。
 
 ```ts title="auth-client.ts"  
 import { createAuthClient } from "better-auth/client"
@@ -56,14 +59,14 @@ const signIn = async () => {
 
 Notion 支持不同类型的集成。创建集成时，你可以选择：
 
-- **公开集成**：任何 Notion 工作区都可以安装
-- **内部集成**：仅限你自己的工作区
+* **公开集成**：可以被任何 Notion 工作区安装
+* **内部集成**：仅限于你自己的工作区
 
-大多数身份验证的场景中，你需要创建公开集成，以允许来自不同工作区的用户登录。
+大多数认证场景中，你需要创建公开集成，以允许来自不同工作区的用户登录。
 
 ### 请求额外的 Notion 权限
 
-如果你的应用在用户已注册后需要额外的 Notion 权限，可以使用同一 Notion 提供者和额外作用域调用 `linkSocial` 方法请求。
+如果你的应用在用户注册后需要额外的 Notion 权限，可以使用相同的 Notion 提供者和额外作用域调用 `linkSocial` 方法进行请求。
 
 ```ts title="auth-client.ts"
 const requestNotionAccess = async () => {
@@ -78,5 +81,5 @@ return <button onClick={requestNotionAccess}>连接 Notion 工作区</button>;
 ```
 
 <Callout>
-身份验证后，你可以使用访问令牌与 Notion API 交互，读取和写入页面、数据库及用户授权访问的其他内容。
+  认证后，你可以使用访问令牌与 Notion API 交互，以读取和写入用户已授予访问权限的页面、数据库和其他内容。
 </Callout>

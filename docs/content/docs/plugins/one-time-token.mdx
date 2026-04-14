@@ -16,7 +16,7 @@ description: 生成和验证一次性令牌
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";
     import { oneTimeToken } from "better-auth/plugins/one-time-token"; // [!code highlight]
-    
+
     export const auth = betterAuth({
         plugins: [
           oneTimeToken() // [!code highlight]
@@ -34,7 +34,7 @@ description: 生成和验证一次性令牌
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
     import { oneTimeTokenClient } from "better-auth/client/plugins" // [!code highlight]
-    
+
     export const authClient = createAuthClient({
         plugins: [
             oneTimeTokenClient() // [!code highlight]
@@ -50,15 +50,11 @@ description: 生成和验证一次性令牌
 
 使用 `auth.api.generateOneTimeToken` 或 `authClient.oneTimeToken.generate` 方法生成令牌。
 
-<APIMethod
-  path="/one-time-token/generate"
-  method="GET"
-  requireSession
->
-```ts
-type generateOneTimeToken = {
-}
-```
+<APIMethod path="/one-time-token/generate" method="GET" requireSession>
+  ```ts
+  type generateOneTimeToken = {
+  }
+  ```
 </APIMethod>
 
 这将返回一个附加到当前会话的 `token`，可用于验证一次性令牌。默认情况下，令牌将在 3 分钟后过期。
@@ -68,14 +64,14 @@ type generateOneTimeToken = {
 当用户点击链接或提交令牌时，在另一个 API 路由中使用 `auth.api.verifyOneTimeToken` 或 `authClient.oneTimeToken.verify` 方法进行验证。
 
 <APIMethod path="/one-time-token/verify" method="POST">
-```ts
-type verifyOneTimeToken = {
-    /**
-     * 要验证的令牌。
-     */
-    token: string = "some-token"
-}
-```
+  ```ts
+  type verifyOneTimeToken = {
+      /**
+       * The token to verify. 
+       */
+      token: string = "some-token"
+  }
+  ```
 </APIMethod>
 
 这将返回附加到该令牌的会话。
@@ -84,24 +80,25 @@ type verifyOneTimeToken = {
 
 添加 `oneTimeToken` 插件时可以配置以下选项：
 
-*   **`disableClientRequest`**（布尔值）：可选。如果设为 `true`，则令牌仅在服务器端生成。默认值：`false`。
-*   **`expiresIn`**（数字）：可选。令牌有效的时长，单位为分钟。默认值：`3`。
+* **`disableClientRequest`** (boolean): 可选。如果为 `true`，令牌将仅在服务器端生成。默认值：`false`。
+* **`expiresIn`** (number): 可选。令牌有效的持续时间（分钟）。默认值：`3`。
 
 ```ts
 oneTimeToken({
     expiresIn: 10 // 10 分钟
 })
 ```
-* **`generateToken`**：一个自定义令牌生成函数，参数为 `session` 对象和 `ctx`。
 
-* **`storeToken`**：可选。此选项允许您配置如何将令牌存储在数据库中。
+* **`generateToken`**: 一个自定义令牌生成函数，接收 `session` 对象和 `ctx` 作为参数。
 
-    * **`plain`**：明文存储令牌。（默认）
-    * **`hashed`**：使用默认哈希算法对令牌进行哈希存储。
-    * **`custom-hasher`**：自定义哈希函数，接收令牌并返回哈希后的令牌。
+* **`storeToken`**：可选。此选项允许您配置如何在数据库中存储令牌。
+
+  * **`plain`**: 令牌以明文存储。（默认）
+  * **`hashed`**: 令牌使用默认哈希算法进行哈希处理。
+  * **`custom-hasher`**: 一个自定义哈希函数，接收令牌并返回哈希后的令牌。
 
 <Callout type="info">
-    注意：这不会影响发送的令牌，仅影响您数据库中存储的令牌。
+  注意：这不会影响发送的令牌，它只会影响存储在数据库中的令牌。
 </Callout>
 
 示例：
@@ -111,12 +108,14 @@ oneTimeToken({
     storeToken: "plain"
 })
 ```
-```ts title="内置哈希"
+
+```ts title="built-in hasher"
 oneTimeToken({
     storeToken: "hashed"
 })
 ```
-```ts title="自定义哈希"
+
+```ts title="custom hasher"
 oneTimeToken({
     storeToken: {
         type: "custom-hasher",

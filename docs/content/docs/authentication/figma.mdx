@@ -4,56 +4,61 @@ description: Figma 提供者的设置与使用。
 ---
 
 <Steps>
-    <Step>
-        ### 获取您的凭证
-        1. 登录您的 Figma 账户并访问 [开发者应用页面](https://www.figma.com/developers/apps)
-        2. 点击“创建新应用”
-        3. 填写应用详情（名称、描述等）
-        4. 配置您的重定向 URI（例如，`https://yourdomain.com/api/auth/callback/figma`）
-        5. 记录您的客户端 ID 和客户端密钥
+  <Step>
+    ### 获取凭证
 
-        <Callout type="info">
-            默认的权限范围是 `current_user:read`。如需更多权限范围例如 `file_content:read`，请参考 [Figma OAuth 权限范围文档](https://developers.figma.com/docs/rest-api/scopes)。
-        </Callout>
+    1. 登录您的 Figma 账户，进入 [开发者应用页面](https://www.figma.com/developers/apps)
+    2. 点击“创建新应用”
+    3. 填写应用详情（名称、描述等）
+    4. 配置重定向 URI（例如：`https://yourdomain.com/api/auth/callback/figma`）
+    5. 记录您的客户端 ID 和客户端密钥
 
-        确保将重定向 URI 设置为与您应用的回调 URL 匹配。如果您更改了认证路由的基础路径，应相应更新重定向 URI。
-    </Step>
+    <Callout type="info">
+      默认作用域为 `current_user:read`。如需其他作用域（如 `file_content:read`），请参考 [Figma OAuth 作用域文档](https://developers.figma.com/docs/rest-api/scopes)。
+    </Callout>
 
-    <Step>
-        ### 配置提供者
-        配置提供者时，您需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
+    请确保将重定向 URI 设置为与应用程序回调 URL 匹配。如果更改了认证路由的基本路径，请相应地更新重定向 URI。
+  </Step>
 
-        ```ts title="auth.ts"
-        import { betterAuth } from "better-auth"
+  <Step>
+    ### 配置提供者
 
-        export const auth = betterAuth({
-            socialProviders: {
-                figma: { // [!code highlight]
-                    clientId: process.env.FIGMA_CLIENT_ID as string, // [!code highlight]
-                    clientSecret: process.env.FIGMA_CLIENT_SECRET as string, // [!code highlight]
-                }, // [!code highlight]
-            },
+    要配置提供者，您需要导入该提供者，并将其传递给认证实例的 `socialProviders` 选项。
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            figma: { // [!code highlight]
+                clientId: process.env.FIGMA_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.FIGMA_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
+
+  <Step>
+    ### 使用 Figma 登录
+
+    要使用 Figma 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
+
+    * `provider`：要使用的提供器，应设置为 `figma`。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    const authClient =  createAuthClient()
+
+    const signIn = async () => {
+        const data = await authClient.signIn.social({
+            provider: "figma"
         })
-        ```
-    </Step>
-    <Step>
-        ### 使用 Figma 登录
-        要使用 Figma 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
-        - `provider`：要使用的提供者，应设置为 `figma`。
+    }
+    ```
 
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        const authClient =  createAuthClient()
-
-        const signIn = async () => {
-            const data = await authClient.signIn.social({
-                provider: "figma"
-            })
-        }
-        ```
-        <Callout type="info">
-        关于 Figma 的 OAuth 权限范围及 API 功能的更多信息，请参考 [Figma 官方 API 文档](https://www.figma.com/developers/api)。
-        </Callout>
-    </Step>
-
+    <Callout type="info">
+      有关 Figma 作用域和 API 功能的更多信息，请参考 [官方 Figma API 文档](https://www.figma.com/developers/api)。
+    </Callout>
+  </Step>
 </Steps>

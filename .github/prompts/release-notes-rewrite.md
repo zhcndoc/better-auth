@@ -1,71 +1,62 @@
 <!-- Prompt structure adapted from sst/opencode (MIT, Copyright (c) 2025 opencode) -->
 <!-- https://github.com/anomalyco/opencode — .opencode/command/changelog.md -->
 
-You are rewriting release notes for better-auth, an open-source
-authentication framework for TypeScript.
+你正在为一个用于 TypeScript 的开源认证框架 **better-auth** 重写发布说明。
 
-Read the raw changelog at: __RAW_CHANGELOG_PATH__
+## 输入文件
 
-This raw changelog was generated from git history and PR metadata.
-Each entry has a description, a PR link, and an author attribution.
-Entries are grouped by domain (Core, Database, Identity, etc.).
+**原始变更日志：** __RAW_CHANGELOG_PATH__  
+每一项都是一条单行 PR 标题，后跟一个 PR 链接，按 npm 包和变更类型（Breaking Changes、Features、Bug Fixes）进行分组。
 
-Entries come from two sources:
-- Changeset descriptions (may already look clean but often need tense
-  fixes, code formatting, and user-focus adjustments)
-- Raw commit subjects (lower-case, terse, may include PR number
-  suffixes like "(#8289)" in the description text)
+**变更集上下文（可选）：** __CONTEXT_PATH__  
+一个将 PR 编号映射到完整变更集描述的 JSON 文件。使用这些描述作为背景来撰写更优质的标题——它们解释了每个变更背后的动机与细节。如果文件路径为 `"none"` 或不存在，则跳过此步骤。
 
-Your job is to rewrite EVERY description so the changelog reads as a
-polished, consistent document written for end users.
+## 你的任务
 
-For entries that are unclear or too terse, inspect the actual PR diff
-to understand what really changed:
-  gh pr diff <PR_NUMBER> --repo __GITHUB_REPOSITORY__ | head -200
+将每个条目标题重写为一个简洁、用户友好的一行描述。  
+原始标题是常规提交消息（例如：`fix(scope): replace cookie probe with header-based RSC detection`）。  
+请将其转换为清晰说明用户所看到的变化的表述。
 
-## Writing rules
+## 编写规则
 
-Tense and voice:
-- Use past tense consistently throughout ("Added", "Fixed", "Removed")
-- Never mix tenses ("Added X and improve Y" is wrong, use "Added X and improved Y")
-- Never use imperative/present ("Add", "Fix", "Remove")
+重写标题时请遵循：
+- 移除常规提交前缀（`fix(scope):`、`feat:` 等）
+- 替换为描述变更类型的过去式动词：“Fixed …”、“Added …”、“Improved …”、“Refactored …”、“Removed …”
+- 保持在单行内 —— 这是摘要，不是段落
+- 描述用户可见的影响，而非内部代码变更
+- 使用反引\`` 包裹代码标识符：函数名、配置键、字段名、类型名（如 `nextCookies()`、`twoFactorMethods`）
+- 不要对通用概念使用反引\``（如“password hashing”保持原样）
+- 如果标题不清晰，请阅读该 PR 的变更集上下文，或检查差异：`gh pr diff <N> --repo __GITHUB_REPOSITORY__ | head -200`
+- 从标题中移除 PR 编号后缀（链接中已包含该编号）
 
-Code references:
-- Wrap code identifiers in backticks: function names, method names,
-  option names, config keys, field names, type names, package names
-  (e.g., `storeSessionInDatabase`, `provisionUserOnEveryLogin`, `auth_time`)
-- Do NOT wrap general concepts in backticks (e.g., "password hashing" stays plain)
+### 重大变更（Breaking Changes）
+- `### ❗ Breaking Changes` 下的条目需要附带迁移说明
+- 同样重写标题（使用过去式、用户视角）
+- 原始输出中可能包含在标题行下方的缩进变更集详情；请将其替换为单行块引用：
+  `> **Migration:** <变更内容及用户所需操作>`
+- 检查 PR 差异（`gh pr diff <N>`）以获取确切的迁移操作
+- 如果存在可配置关闭选项，请在行内代码中使用代码块包裹
+- 保持迁移说明简洁（最多 1-3 行）
+- 示例：
+  ```
+  Before (raw):
+  - feat(sso)!: enable InResponseTo validation by default for SAML flows ([#8736](url))
+    ...indented changeset description...
 
-User focus:
-- The changelog is for users who are at least slightly technical (they
-  use the library and want to know what changed for them)
-- Describe the impact on users, not the internal code change
-- "Fixed a bug where sessions expired immediately after creation" is better
-  than "Aligned session fresh age calculation with creation time"
-- "Password hashing no longer blocks the server during sign-up" is better
-  than "Used non-blocking scrypt for password hashing"
-- If a change is behavioral (affects what users experience), lead with the behavior
-- Be thorough in understanding flow-on effects that may not be immediately
-  apparent: a package upgrade that looks internal may patch a user-facing
-  bug; a refactor may stabilize a race condition that caused intermittent
-  failures; a dependency bump may change minimum supported versions
-- When inspecting a diff, look at the PR title and body for the author's
-  context (the outcome they intended, not just the technical detail)
+  After (rewritten):
+  - Enabled InResponseTo validation by default for SP-initiated SAML flows ([#8736](url))
+  > **Migration:** Set `sso({ saml: { enableInResponseToValidation: false } })` to restore the previous behavior.
+  ```
 
-Breaking changes:
-- Entries with `**BREAKING:**` prefix must clearly explain what changed
-  and what users need to do (migration steps if applicable)
-- Keep the `**BREAKING:**` prefix exactly as-is
+## 结构规则（不得违反）
+- 不得添加或删除条目
+- 不得修改 PR 链接 `([#NNNN](url))`
+- 不得修改 `## \`package-name\`` 标题及其顺序
+- 不得修改 `### ❗ Breaking Changes`、`### Features` 或 `### Bug Fixes` 子标题及其顺序
+- 不得修改每个包结尾的 `CHANGELOG` 链接
+- 不得添加作者署名（`by @username`）
+- 不得使用长破折号（—）；请使用逗号、冒号或括号（例外：重大变更标题后允许使用 “ — ”）
+- 保持博客文章链接、贡献者章节和完整变更日志链接原样
+- 每个条目保持在单行（标题 + PR 链接），重大变更除外，额外增加一行迁移说明
 
-## Structural rules (do NOT violate)
-
-- Do NOT add or remove entries; keep every entry from the raw changelog
-- Do NOT modify PR links `([#NNNN](url))` or author attributions `by @username`
-- Do NOT modify the `## Domain` headings or their order
-- Do NOT use em dashes; use parentheses, commas, or colons instead
-- Keep the install banner line and full changelog link exactly as-is
-- Remove duplicate PR number suffixes from description text (the PR
-  link in parentheses already provides this; e.g., change
-  "fixed foo (#8289)" to "Fixed foo")
-
-Write the final release notes to: __RAW_CHANGELOG_PATH__.final
+将最终发布说明写入：__RAW_CHANGELOG_PATH__.final

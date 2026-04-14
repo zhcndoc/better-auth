@@ -3,29 +3,29 @@ title: Chargebee
 description: 用于 Better Auth 的 Chargebee 插件，用于管理订阅和支付。
 ---
 
-Chargebee 插件将 [Chargebee](https://www.chargebee.com) 的订阅管理和计费功能与 Better Auth 集成在一起。由于支付和身份验证通常紧密耦合，这个插件简化了将 Chargebee 集成到你的应用中的过程，负责客户创建、订阅管理和 webhook 处理。
+Chargebee 插件将 [Chargebee 的](https://www.chargebee.com) 订阅管理和计费功能与 Better Auth 集成。由于支付和认证通常紧密耦合，此插件简化了 Chargebee 集成到应用程序的流程，处理客户创建、订阅管理和 Webhook 处理。
 
 <Callout>
-  此插件由 Chargebee 团队维护。关于 bug、问题或功能请求，
+  此插件由 Chargebee 团队维护。关于错误、问题或功能请求，
   请访问 [Chargebee GitHub 仓库](https://github.com/chargebee/js-framework-adapters)。
 </Callout>
 
 <Card href="https://discord.com/invite/gpsNqnhDm2" title="在 Chargebee Discord 上获取支持">
-  有问题吗？我们的团队随时可以在 Discord 上协助你。
+  有问题吗？我们的团队随时在 Discord 上为您提供帮助。
 </Card>
 
 ## 功能
 
 * 用户注册时自动创建 Chargebee 客户
-* 管理订阅计划和定价（基于 item：plans、addons、charges）
+* 管理订阅计划和定价（基于项目：计划、附加组件、费用）
 * 处理订阅生命周期事件（创建、更新、取消）
-* 通过 Basic Auth 验证安全处理 Chargebee webhooks
-* 向你的应用暴露订阅数据
-* 支持试用期和多项订阅
-* 自动防止试用滥用 - 用户在所有计划中每个账户只能获得一次试用
-* 灵活的引用系统，可将订阅关联到用户或组织
-* 支持团队订阅及座位管理
-* 通过 Chargebee Hosted Pages 提供托管结账和门户
+* 使用 Basic Auth 验证安全处理 Chargebee Webhook
+* 将订阅数据暴露给应用程序
+* 支持试用期和多项目订阅
+* 自动试用滥用预防——每个账户在所有计划中只能获得一次试用
+* 灵活的引用系统，用于将订阅与用户或组织关联
+* 团队订阅支持及席位管理
+* 通过 Chargebee 托管页面进行托管结账和门户
 * 自助计费门户，用于管理支付方式、发票和订阅
 
 ## 安装
@@ -41,14 +41,14 @@ Chargebee 插件将 [Chargebee](https://www.chargebee.com) 的订阅管理和计
     ```
 
     <Callout>
-      如果你使用的是独立的客户端和服务端设置，请确保在项目的两部分都安装此插件。
+      如果您使用单独的客户端和服务器设置，请确保在项目的两个部分中都安装该插件。
     </Callout>
   </Step>
 
   <Step>
     ### 安装 Chargebee SDK
 
-    接下来，在你的服务器上安装 Chargebee SDK：
+    接下来，在服务器上安装 Chargebee SDK：
 
     ```package-install
     chargebee
@@ -56,7 +56,7 @@ Chargebee 插件将 [Chargebee](https://www.chargebee.com) 的订阅管理和计
   </Step>
 
   <Step>
-    ### 将插件添加到你的 auth 配置中
+    ### 将插件添加到认证配置
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
@@ -69,7 +69,7 @@ Chargebee 插件将 [Chargebee](https://www.chargebee.com) 的订阅管理和计
     })
 
     export const auth = betterAuth({
-        // ... 你现有的配置
+        // ... 您的现有配置
         plugins: [
             chargebee({
                 chargebeeClient,
@@ -90,10 +90,10 @@ Chargebee 插件将 [Chargebee](https://www.chargebee.com) 的订阅管理和计
     import { chargebeeClient } from "@chargebee/better-auth/client"
 
     export const authClient = createAuthClient({
-        // ... 你现有的配置
+        // ... 您的现有配置
         plugins: [
             chargebeeClient({
-                subscription: true //如果你想启用订阅管理
+                subscription: true // 如果要启用订阅管理
             })
         ]
     })
@@ -103,7 +103,7 @@ Chargebee 插件将 [Chargebee](https://www.chargebee.com) 的订阅管理和计
   <Step>
     ### 迁移数据库
 
-    运行迁移或生成 schema，以向数据库添加必要的表。
+    运行迁移或生成架构以向数据库添加必要的表。
 
     <Tabs items={["migrate", "generate"]}>
       <Tab value="migrate">
@@ -119,19 +119,19 @@ Chargebee 插件将 [Chargebee](https://www.chargebee.com) 的订阅管理和计
       </Tab>
     </Tabs>
 
-    参见 [Schema](#schema) 部分以手动添加这些表。
+    请参阅 [架构](#schema) 部分以手动添加表。
   </Step>
 
   <Step>
-    ### 设置 Chargebee webhooks
+    ### 设置 Chargebee Webhook
 
-    在你的 Chargebee 仪表盘中创建一个 webhook 端点，指向：
+    在您的 Chargebee 仪表板中创建一个指向以下地址的 Webhook 端点：
 
     ```
     https://your-domain.com/api/auth/chargebee/webhook
     ```
 
-    `/api/auth` 是 auth server 的默认路径。
+    `/api/auth` 是认证服务器的默认路径。
 
     确保至少选择以下事件：
 
@@ -144,7 +144,7 @@ Chargebee 插件将 [Chargebee](https://www.chargebee.com) 的订阅管理和计
     * `subscription_cancellation_scheduled`
     * `customer_deleted`
 
-    如果你设置了 `webhookUsername` 和 `webhookPassword`，请在 Chargebee webhook 设置中配置相同的 Basic Authentication 凭据。
+    如果设置了 `webhookUsername` 和 `webhookPassword`，请在 Chargebee Webhook 设置中配置相同的 Basic Authentication 凭据。
   </Step>
 </Steps>
 
@@ -152,10 +152,10 @@ Chargebee 插件将 [Chargebee](https://www.chargebee.com) 的订阅管理和计
 
 ### 客户管理
 
-你可以仅将此插件用于客户管理，而无需启用订阅。这在你只想将 Chargebee 客户与你的用户关联时非常有用。
+您可以将此插件仅用于客户管理，而无需启用订阅。这在您只想将 Chargebee 客户与用户关联时非常有用。
 
-当你设置 `createCustomerOnSignUp: true` 时，会在注册时自动创建一个 Chargebee 客户，并将其关联到你数据库中的用户。
-你可以自定义客户创建流程：
+当设置 `createCustomerOnSignUp: true` 时，注册时会自动创建一个 Chargebee 客户，并将其关联到数据库中的用户。
+您可以自定义客户创建流程：
 
 ```ts title="auth.ts"
 chargebee({
@@ -170,7 +170,7 @@ chargebee({
 
 #### 传递额外的客户参数
 
-Better Auth 将姓名存储在单个 `user.name` 字段中。如果你希望在创建时传递 `first_name`、`last_name` 或任何其他 Chargebee 客户字段，请使用 `getCustomerCreateParams`：
+Better Auth 将名称存储在单个 `user.name` 字段中。如果您希望在创建时传递 `first_name`、`last_name` 或任何其他 Chargebee 客户字段，请使用 `getCustomerCreateParams`：
 
 ```ts title="auth.ts"
 chargebee({
@@ -188,17 +188,17 @@ chargebee({
 })
 ```
 
-该回调接收 `user` 对象和一个可选的 `ctx`（请求上下文——仅在订阅时按需创建客户时可用，而不是在注册期间）。
+此回调接收 `user` 对象和一个可选的 `ctx`（请求上下文——仅在按需创建客户时可用，而不是在注册期间）。
 
 <Callout type="info">
-  `getCustomerCreateParams` 同时适用于 `createCustomerOnSignUp` 和按需客户创建（例如用户首次订阅且之前未创建过注册信息时）。对于组织，请改用 `organization.getCustomerCreateParams`。
+  `getCustomerCreateParams` 适用于 `createCustomerOnSignUp` 和按需客户创建（例如，当用户首次订阅且没有先前注册时）。对于组织，请使用 `organization.getCustomerCreateParams`。
 </Callout>
 
 ### 订阅管理
 
 #### 定义计划
 
-Chargebee 使用基于 item 的计费模型。你可以静态定义订阅计划，也可以从数据库中动态定义：
+Chargebee 使用基于项目的计费模型。您可以静态定义订阅计划，也可以从数据库中动态定义：
 
 **静态计划：**
 
@@ -207,7 +207,7 @@ subscription: {
     enabled: true,
     plans: [
         {
-            name: "starter", // 计划名称，存储到数据库时会自动转为小写
+            name: "starter", // 存储到数据库时计划名称会自动转为小写
             itemPriceId: "starter-USD-Monthly", // 来自 Chargebee 的 item price ID
             type: "plan",
             limits: {
@@ -233,7 +233,7 @@ subscription: {
 
 **从数据库动态获取计划（推荐）：**
 
-推荐从你自己的数据库中获取计划。这样你可以完全控制计划数据，用自定义元数据（限制、功能、展示信息）丰富计划，并避免在 auth 配置中硬编码 Chargebee 配置：
+推荐从您自己的数据库中获取计划。这样您可以完全控制计划数据，使用自定义元数据（限制、功能、展示信息）丰富计划，并避免在认证配置中硬编码 Chargebee 配置：
 
 ```ts title="auth.ts"
 subscription: {
@@ -250,7 +250,7 @@ subscription: {
 }
 ```
 
-更多内容请参见 [plan configuration](#plan-configuration)。
+更多内容请参见 [计划配置](#plan-configuration)。
 
 #### 创建订阅
 
@@ -260,39 +260,39 @@ subscription: {
   ```ts
   type createSubscription = {
       /**
-       * 来自 Chargebee 的 item price ID。对于多项订阅，可以是单个字符串或数组。
+       * 来自 Chargebee 的 item price ID(s)。单个字符串或数组用于多项目订阅。
        */
       itemPriceId: string | string[] = "pro-USD-Monthly"
       /**
-       * 订阅的引用 ID。默认值基于 customerType。
+       * 订阅的引用 ID。默认基于 customerType。
        */
       referenceId?: string = "123"
       /**
-       * 要与订阅一起存储的额外元数据。
+       * 要与订阅一起存储的附加元数据。
        */
       metadata?: Record<string, any>
       /**
-       * 用于计费的客户类型。（默认："user"）
+       * 计费客户的类型。（默认："user"）
        */
       customerType?: "user" | "organization"
       /**
-       * 座位数（如果适用）。
+       * 席位数量（如果适用）。
        */
       seats?: number = 1
       /**
-       * 支付或设置完成后用户将被送往的 URL。
+       * 用户完成付款或设置后重定向的 URL。
        */
       successUrl: string
       /**
-       * 如果设置，客户取消时将被引导至此处。
+       * 如果设置，用户取消后将跳转至此。
        */
       cancelUrl: string
       /**
-       * 禁用成功订阅后的重定向。
+       * 禁用订阅成功后的重定向。
        */
       disableRedirect: boolean = false
       /**
-       * 试用结束时间的 Unix 时间戳。
+       * 试用结束时间（Unix 时间戳）。
        */
       trialEnd?: number
   }
@@ -312,30 +312,30 @@ await authClient.subscription.create({
 ```
 
 <Callout type="info">
-  **结账重定向的工作方式**
+  **结账重定向的工作原理**
 
-  此插件不会直接重定向到你的 `successUrl`。相反，它会将 Chargebee 的 `redirect_url` 设置为一个内部注册的端点：
+  插件**不会**直接重定向到您的 `successUrl`。相反，它将 Chargebee 的 `redirect_url` 设置为一个内部注册的端点：
 
   ```
   GET {baseURL}/subscription/success?callbackURL=<your-successUrl>&subscriptionId=<id>
   ```
 
-  Chargebee 在成功结账后会进入该端点，插件会立即将用户转发到你原始的 `successUrl`。这在 Chargebee 托管页面重定向和你的应用之间为插件提供了一个挂接点，以便将来可以插入中间件（例如 session 刷新、订阅同步），而无需更改你的调用代码。
+  Chargebee 在成功结账后访问该端点，然后插件会立即将用户转发到您原始的 `successUrl`。这为插件提供了一个钩子点，位于 Chargebee 的托管式页面重定向和您的应用程序之间，这样可以在不更改调用站点代码的情况下插入未来的中间件（例如会话刷新、订阅同步）。
 </Callout>
 
 #### 切换计划
 
-要将现有订阅切换到不同计划，请使用 `subscription.update` 方法。这可确保用户只为新计划付费，而不是两个计划都付费：
+要将现有订阅切换到不同计划，请使用 `subscription.update` 方法。这确保用户只为新计划付费，而不是同时为两个计划付费：
 
 <APIMethod path="/subscription/update" method="POST" requireSession>
   ```ts
   type updateSubscription = {
       /**
-       * 来自 Chargebee 的 item price ID。对于多项订阅，可以是单个字符串或数组。
+       * 来自 Chargebee 的 item price ID(s)。单个字符串或数组用于多项目订阅。
        */
       itemPriceId: string | string[] = "pro-USD-Monthly"
       /**
-       * 订阅的引用 ID。默认值基于 customerType。
+       * 订阅的引用 ID。默认基于 customerType。
        */
       referenceId?: string = "123"
       /**
@@ -343,31 +343,31 @@ await authClient.subscription.create({
        */
       subscriptionId?: string = "sub_123"
       /**
-       * 要与订阅一起存储的额外元数据。
+       * 要与订阅一起存储的附加元数据。
        */
       metadata?: Record<string, any>
       /**
-       * 用于计费的客户类型。（默认："user"）
+       * 计费客户的类型。（默认："user"）
        */
       customerType?: "user" | "organization"
       /**
-       * 要更新到的座位数（如果适用）。
+       * 要更新到的席位数量（如果适用）。
        */
       seats?: number = 1
       /**
-       * 支付或设置完成后用户将被送往的 URL。
+       * 用户完成付款或设置后重定向的 URL。
        */
       successUrl: string
       /**
-       * 如果设置，客户取消时将被引导至此处。
+       * 如果设置，用户取消后将跳转至此。
        */
       cancelUrl: string
       /**
-       * 从门户返回的 URL。
+       * 返回的 URL。
        */
       returnUrl?: string
       /**
-       * 禁用成功更新后的重定向。
+       * 禁用重定向。
        */
       disableRedirect: boolean = false
   }
@@ -383,9 +383,9 @@ await authClient.subscription.update({
 ```
 
 <Callout type="info">
-  此插件一次只支持每个引用 ID（用户或组织）拥有一个处于活跃或试用中的订阅。当用户已经有活跃订阅并想切换计划时，请使用 `subscription.update`。当用户没有活跃订阅时，请使用 `subscription.create`。
+  该插件仅支持每个引用 ID（用户或组织）同时只有一个活跃或试用中的订阅。使用 `subscription.update` 当用户已有活跃订阅并希望切换计划时。当用户没有活跃订阅时，请使用 `subscription.create`。
 
-  如果用户已经有活跃订阅，你**必须**使用 `subscription.update`，并在需要时提供 `subscriptionId` 参数。否则，尝试通过 `subscription.create` 创建新的订阅将会因 `ALREADY_SUBSCRIBED` 错误而失败。
+  如果用户已有活跃订阅，则**必须**使用 `subscription.update` 并提供 `subscriptionId` 参数。否则，尝试使用 `subscription.create` 创建新订阅将因 `ALREADY_SUBSCRIBED` 错误而失败。
 </Callout>
 
 #### 列出活跃订阅
@@ -396,11 +396,11 @@ await authClient.subscription.update({
   ```ts
   type listActiveSubscriptions = {
       /**
-       * 订阅的引用 ID。默认值基于 customerType。
+       * 订阅的引用 ID。默认基于 customerType。
        */
       referenceId?: string
       /**
-       * 用于计费的客户类型。（默认："user"）
+       * 计费客户的类型。（默认："user"）
        */
       customerType?: "user" | "organization"
   }
@@ -422,25 +422,25 @@ const { data: orgSubscriptions } = await authClient.subscription.list({
 
 #### 取消订阅
 
-要取消订阅，请使用 `subscription.cancel` 方法。这会将用户重定向到 Chargebee Portal，用户可以在那里取消订阅。当订阅在当前计费周期结束时取消时，Chargebee 会将其标记为 `non_renewing`。只有当周期结束时，订阅状态才会变为 `cancelled`。
+要取消订阅，请使用 `subscription.cancel` 方法。这会将用户重定向到 Chargebee Portal，用户可以在那里取消订阅。当订阅在当前计费周期结束时取消时，Chargebee 会将其标记为 `non_renewing`。只有在周期结束时，订阅状态才会变为 `cancelled`。
 
 <APIMethod path="/subscription/cancel" method="POST" requireSession>
   ```ts
   type cancelSubscription = {
       /**
-       * 要取消的订阅的引用 ID。默认值基于 customerType。
+       * 要取消的订阅的引用 ID。默认基于 customerType。
        */
       referenceId?: string = 'org_123'
       /**
-       * 用于计费的客户类型。（默认："user"）
+       * 计费客户的类型。（默认："user"）
        */
       customerType?: "user" | "organization"
       /**
-       * 要取消的订阅 ID。
+       * 要取消的订阅的 ID。
        */
       subscriptionId?: string = 'sub_123'
       /**
-       * 客户点击计费门户中返回你网站的链接时要跳转到的 URL。
+       * 用户点击返回您的网站链接时要跳转的 URL。
        */
       returnUrl: string = '/account'
   }
@@ -452,33 +452,33 @@ const { data: orgSubscriptions } = await authClient.subscription.list({
 
   Chargebee 支持不同的取消行为：
 
-  | 字段           | 说明                    |
-  | ------------ | --------------------- |
-  | `canceledAt` | 订阅被取消的时间。             |
-  | `status`     | 当订阅结束时变为 "cancelled"。 |
+  | 字段        | 描述                                             |
+  | ------------ | ------------------------------------------------------- |
+  | `canceledAt` | 订阅被取消的时间。                                  |
+  | `status`     | 当订阅结束时状态变为 "cancelled"。                   |
 </Callout>
 
 #### 计费门户会话
 
-为了获得完整的自助计费体验，你可以打开 Chargebee 客户门户，让用户管理其计费的所有方面：
+为了获得完整的自助计费体验，您可以打开 Chargebee 客户门户，让用户管理其计费的所有方面：
 
 <APIMethod path="/subscription/portal" method="POST" requireSession>
   ```ts
   type createPortalSession = {
       /**
-       * 客户的引用 ID。默认值基于 customerType。
+       * 订阅的引用 ID。默认基于 customerType。
        */
       referenceId?: string = 'org_123'
       /**
-       * 用于计费的客户类型。（默认："user"）
+       * 计费客户的类型。（默认："user"）
        */
       customerType?: "user" | "organization"
       /**
-       * 客户完成门户会话后重定向到的 URL。
+       * 用户完成门户会话后重定向的 URL。
        */
       returnUrl: string = '/account'
       /**
-       * 打开门户后禁用重定向。
+       * 禁用重定向。
        */
       disableRedirect?: boolean = false
   }
@@ -509,22 +509,22 @@ await authClient.subscription.portal({
 });
 ```
 
-该门户允许用户：
+门户允许用户：
 
 * 更新支付方式（信用卡、银行账户）
-* 查看并下载发票
+* 查看和下载发票
 * 管理订阅（升级、降级、取消）
-* 更新账单地址和联系信息
-* 查看订阅历史
-* 应用促销代码
+* 更新账单地址和联系人信息
+* 查看订阅历史记录
+* 应用促销优惠码
 
 <Callout type="info">
-  门户会话提供完整的自助服务体验，当你希望让用户完全控制其计费时，推荐使用它，而不是像取消这类单独操作。
+  门户会话提供完整的自助服务体验，并推荐在您希望让用户完全控制其计费时，优于单独的操作（如取消）。
 </Callout>
 
 ### 引用系统
 
-默认情况下，订阅会关联到用户 ID。不过，你可以使用自定义引用 ID 将订阅关联到其他实体，例如组织：
+默认情况下，订阅会关联到用户 ID。不过，您可以使用自定义引用 ID 将订阅关联到其他实体，例如组织：
 
 ```ts title="client.ts"
 // 为组织创建订阅
@@ -546,9 +546,9 @@ const { data: subscriptions } = await authClient.subscription.list({
 });
 ```
 
-#### 带座位数的团队订阅
+#### 带席位数的团队订阅
 
-对于团队或组织计划，你可以指定座位数：
+对于团队或组织计划，您可以指定席位数量：
 
 ```ts
 await authClient.subscription.create({
@@ -561,7 +561,7 @@ await authClient.subscription.create({
 });
 ```
 
-`seats` 参数会作为订阅 item 的数量传递给 Chargebee。你可以在应用逻辑中使用该值来限制团队或组织中的成员数量。
+`seats` 参数将作为订阅项的数量传递给 Chargebee。您可以在应用逻辑中使用该值来限制团队或组织中的成员数量。
 
 要授权引用 ID，请实现 `authorizeReference` 函数：
 
@@ -586,9 +586,9 @@ subscription: {
 
 ### Webhook 处理
 
-此插件会自动处理来自 Chargebee 的常见 webhook 事件：
+此插件会自动处理来自 Chargebee 的常见 Webhook 事件：
 
-* **`subscription_created`** – 在 Chargebee 中创建订阅时创建一个订阅。
+* **`subscription_created`** – 在 Chargebee 中创建订阅时创建订阅。
 * **`subscription_activated`** – 当订阅在 Chargebee 中变为活跃时更新订阅。
 * **`subscription_changed`** – 当 Chargebee 中发生更改时更新订阅。
 * **`subscription_renewed`** – 在续订时更新订阅。
@@ -597,7 +597,7 @@ subscription: {
 * **`subscription_cancellation_scheduled`** – 使用计划取消的详细信息更新订阅。
 * **`customer_deleted`** – 移除客户及其关联的任何订阅。
 
-你还可以使用 `webhookHandler` 处理自定义事件，这会让你直接访问带类型的 handler 实例：
+您也可以使用 `webhookHandler` 处理自定义事件，这为您提供了对类型化处理程序的直接访问：
 
 ```ts title="auth.ts"
 import { WebhookEventType, WebhookHandler } from "chargebee"
@@ -618,7 +618,7 @@ chargebee({
 
 ### 订阅生命周期钩子
 
-你可以在各种订阅生命周期事件中挂钩：
+您可以在各种订阅生命周期事件中挂钩：
 
 ```ts title="auth.ts"
 subscription: {
@@ -652,7 +652,7 @@ subscription: {
 
 ### 试用期
 
-你可以为你的计划配置试用期：
+您可以为计划配置试用期：
 
 ```ts title="auth.ts"
 {
@@ -709,7 +709,7 @@ await authClient.subscription.create({
 ```
 
 <Callout type="info">
-  试用仅适用于**新订阅**。对现有订阅的更新不能包含试用（这是 Chargebee 的限制）。
+  试用期仅适用于**新订阅**。对现有订阅的更新不能包含试用期（Chargebee 限制）。
 </Callout>
 
 ## 架构
@@ -720,159 +720,162 @@ Chargebee 插件会向你的数据库添加以下表：
 
 表名：`user`
 
-<DatabaseTable
-  fields={[
-  { 
-    name: "chargebeeCustomerId", 
-    type: "string", 
-    description: "Chargebee 客户 ID",
-    isOptional: true
-  },
-]}
-/>
+export const chargebeeUserTableFields = [
+	{
+		name: "chargebeeCustomerId",
+		type: "string",
+		description: "The Chargebee customer ID",
+		isOptional: true,
+	},
+];
+
+<DatabaseTable name="user" fields={chargebeeUserTableFields} />
 
 ### 组织
 
 表名：`organization` <small className="text-xs">(仅当 `organization.enabled` 为 `true` 时)</small>
 
-<DatabaseTable
-  fields={[
-  {
-    name: "chargebeeCustomerId",
-    type: "string",
-    description: "组织的 Chargebee 客户 ID",
-    isOptional: true
-  },
-]}
-/>
+export const chargebeeOrganizationTableFields = [
+	{
+		name: "chargebeeCustomerId",
+		type: "string",
+		description: "The Chargebee customer ID for the organization",
+		isOptional: true,
+	},
+];
+
+<DatabaseTable name="organization" fields={chargebeeOrganizationTableFields} />
 
 ### 订阅
 
 表名：`subscription`
 
-<DatabaseTable
-  fields={[
-  { 
-    name: "id", 
-    type: "string", 
-    description: "每个订阅的唯一标识符",
-    isPrimaryKey: true
-  },
-  { 
-    name: "referenceId", 
-    type: "string", 
-    description: "此订阅所关联的 ID（默认是用户 ID）。这不应当是数据库中的唯一字段，因为它必须允许用户在取消后重新订阅。",
-    isUnique: false
-  },
-  { 
-    name: "chargebeeCustomerId", 
-    type: "string", 
-    description: "Chargebee 客户 ID",
-    isOptional: true
-  },
-  { 
-    name: "chargebeeSubscriptionId", 
-    type: "string", 
-    description: "Chargebee 订阅 ID",
-    isOptional: true
-  },
-  { 
-    name: "status", 
-    type: "string", 
-    description: "订阅状态（future, in_trial, active, non_renewing, paused, cancelled, transferred）",
-    defaultValue: "future"
-  },
-  { 
-    name: "periodStart", 
-    type: "Date", 
-    description: "当前计费周期的开始日期",
-    isOptional: true
-  },
-  { 
-    name: "periodEnd", 
-    type: "Date", 
-    description: "当前计费周期的结束日期",
-    isOptional: true
-  },
-  { 
-    name: "trialStart", 
-    type: "Date", 
-    description: "试用期的开始日期",
-    isOptional: true
-  },
-  { 
-    name: "trialEnd", 
-    type: "Date", 
-    description: "试用期的结束日期",
-    isOptional: true
-  },
-  { 
-    name: "canceledAt", 
-    type: "Date", 
-    description: "如果订阅已被取消，则为其取消的时间",
-    isOptional: true
-  },
-  { 
-    name: "seats", 
-    type: "number", 
-    description: "团队套餐的座位数",
-    isOptional: true
-  },
-  { 
-    name: "metadata", 
-    type: "string", 
-    description: "额外元数据的 JSON 字符串",
-    isOptional: true
-  }
-]}
-/>
+export const chargebeeSubscriptionTableFields = [
+	{
+		name: "id",
+		type: "string",
+		description: "Unique identifier for each subscription",
+		isPrimaryKey: true,
+	},
+	{
+		name: "referenceId",
+		type: "string",
+		description:
+			"The ID this subscription is associated with (user ID by default). This should NOT be a unique field in your database, as it must allow users to resubscribe after a cancellation.",
+		isUnique: false,
+	},
+	{
+		name: "chargebeeCustomerId",
+		type: "string",
+		description: "The Chargebee customer ID",
+		isOptional: true,
+	},
+	{
+		name: "chargebeeSubscriptionId",
+		type: "string",
+		description: "The Chargebee subscription ID",
+		isOptional: true,
+	},
+	{
+		name: "status",
+		type: "string",
+		description:
+			"The status of the subscription (future, in_trial, active, non_renewing, paused, cancelled, transferred)",
+		defaultValue: "future",
+	},
+	{
+		name: "periodStart",
+		type: "Date",
+		description: "Start date of the current billing period",
+		isOptional: true,
+	},
+	{
+		name: "periodEnd",
+		type: "Date",
+		description: "End date of the current billing period",
+		isOptional: true,
+	},
+	{
+		name: "trialStart",
+		type: "Date",
+		description: "Start date of the trial period",
+		isOptional: true,
+	},
+	{
+		name: "trialEnd",
+		type: "Date",
+		description: "End date of the trial period",
+		isOptional: true,
+	},
+	{
+		name: "canceledAt",
+		type: "Date",
+		description:
+			"If the subscription has been canceled, this is the time when it was canceled",
+		isOptional: true,
+	},
+	{
+		name: "seats",
+		type: "number",
+		description: "Number of seats for team plans",
+		isOptional: true,
+	},
+	{
+		name: "metadata",
+		type: "string",
+		description: "JSON string of additional metadata",
+		isOptional: true,
+	},
+];
+
+<DatabaseTable name="subscription" fields={chargebeeSubscriptionTableFields} />
 
 ### 订阅项
 
 表名：`subscriptionItem`
 
-<DatabaseTable
-  fields={[
-  { 
-    name: "id", 
-    type: "string", 
-    description: "唯一标识符",
-    isPrimaryKey: true
-  },
-  { 
-    name: "subscriptionId", 
-    type: "string", 
-    description: "指向 subscription 的外键"
-  },
-  { 
-    name: "itemPriceId", 
-    type: "string", 
-    description: "Chargebee item price ID"
-  },
-  { 
-    name: "itemType", 
-    type: "string", 
-    description: "类型：plan、addon 或 charge"
-  },
-  { 
-    name: "quantity", 
-    type: "number", 
-    description: "此项的数量"
-  },
-  { 
-    name: "unitPrice", 
-    type: "number", 
-    description: "单价",
-    isOptional: true
-  },
-  { 
-    name: "amount", 
-    type: "number", 
-    description: "此项的总金额",
-    isOptional: true
-  }
-]}
-/>
+export const chargebeeSubscriptionItemTableFields = [
+	{
+		name: "id",
+		type: "string",
+		description: "Unique identifier",
+		isPrimaryKey: true,
+	},
+	{
+		name: "subscriptionId",
+		type: "string",
+		description: "Foreign key to subscription",
+	},
+	{
+		name: "itemPriceId",
+		type: "string",
+		description: "Chargebee item price ID",
+	},
+	{
+		name: "itemType",
+		type: "string",
+		description: "Type: plan, addon, or charge",
+	},
+	{
+		name: "quantity",
+		type: "number",
+		description: "Quantity of this item",
+	},
+	{
+		name: "unitPrice",
+		type: "number",
+		description: "Unit price",
+		isOptional: true,
+	},
+	{
+		name: "amount",
+		type: "number",
+		description: "Total amount for this item",
+		isOptional: true,
+	},
+];
+
+<DatabaseTable name="subscriptionItem" fields={chargebeeSubscriptionItemTableFields} />
 
 ### 自定义架构
 
@@ -894,63 +897,63 @@ chargebee({
 
 ## 选项
 
-| 选项                        | 类型          | 描述                                                                                      |
-| ------------------------- | ----------- | --------------------------------------------------------------------------------------- |
-| `chargebeeClient`         | `Chargebee` | Chargebee 客户端实例。**必需。**                                                                 |
-| `webhookUsername`         | `string`    | webhook 端点 Basic Auth 的用户名。建议在生产环境中使用。                                                  |
-| `webhookPassword`         | `string`    | webhook 端点 Basic Auth 的密码。建议在生产环境中使用。                                                   |
-| `createCustomerOnSignUp`  | `boolean`   | 用户注册时是否自动创建 Chargebee 客户。默认值：`false`。                                                   |
-| `getCustomerCreateParams` | `function`  | 返回传递给用户客户 `cb.customer.create` 的额外参数（例如 `first_name`、`last_name`）。接收 `user` 和可选的 `ctx`。 |
-| `onCustomerCreate`        | `function`  | 客户创建后调用的回调。接收 `{ chargebeeCustomer, user }`。                                            |
-| `webhookHandler`          | `function`  | 接收 webhook 处理器实例的回调。调用 `handler.on(EventType, fn)` 来注册带类型的事件监听器。                        |
-| `subscription`            | `object`    | 订阅配置。见 [下文](#subscription-options)。                                                     |
-| `organization`            | `object`    | 启用组织客户支持。见 [下文](#organization-options)。                                                 |
+| 选项 | 类型 | 描述 |
+|------|------|------|
+| `chargebeeClient` | `Chargebee` | Chargebee 客户端实例。**必需。** |
+| `webhookUsername` | `string` | Webhook 端点的基本认证用户名。建议在生产环境中使用。 |
+| `webhookPassword` | `string` | Webhook 端点的基本认证密码。建议在生产环境中使用。 |
+| `createCustomerOnSignUp` | `boolean` | 用户注册时是否自动创建 Chargebee 客户。默认值：`false`。 |
+| `getCustomerCreateParams` | `function` | 返回传递给 `cb.customer.create` 的额外参数（用于用户客户），例如 `first_name`、`last_name`。接收 `user` 和可选的 `ctx`。 |
+| `onCustomerCreate` | `function` | 客户创建后的回调函数。接收 `{ chargebeeCustomer, user }`。 |
+| `webhookHandler` | `function` | 接收 webhook 处理程序实例的回调函数。调用 `handler.on(EventType, fn)` 来注册类型化的事件监听器。 |
+| `subscription` | `object` | 订阅配置。参见下面的 [订阅选项](#订阅选项)。 |
+| `organization` | `object` | 启用组织客户支持。参见下面的 [组织选项](#组织选项)。 |
 
 ### 订阅选项
 
-| 选项                         | 类型                              | 描述                                                                              |
-| -------------------------- | ------------------------------- | ------------------------------------------------------------------------------- |
-| `enabled`                  | `boolean`                       | 是否启用订阅功能。**必需。**                                                                |
-| `plans`                    | `ChargebeePlan[]` or `function` | 订阅计划数组或返回计划的异步函数。启用时**必需**。                                                     |
-| `requireEmailVerification` | `boolean`                       | 在允许创建订阅前是否要求电子邮件验证。默认值：`false`。                                                 |
-| `preventDuplicateTrials`   | `boolean`                       | 防止用户获得多个试用期。默认值：`false`。                                                        |
-| `authorizeReference`       | `function`                      | 授权 reference ID。接收 `{ user, session, referenceId, action }` 和上下文。               |
-| `getHostedPageParams`      | `function`                      | 自定义 Chargebee Hosted Page 参数。接收 `{ user, session, plan, subscription }`、请求和上下文。 |
-| `onSubscriptionComplete`   | `function`                      | 通过 hosted page 创建订阅时调用。接收 `{ subscription, chargebeeSubscription, plan }`。      |
-| `onSubscriptionCreated`    | `function`                      | 创建订阅时调用。接收 `{ subscription, chargebeeSubscription, plan }`。                     |
-| `onSubscriptionUpdate`     | `function`                      | 订阅更新时调用。接收 `{ subscription }`。                                                  |
-| `onSubscriptionDeleted`    | `function`                      | 订阅删除时调用。接收 `{ subscription, chargebeeSubscription }`。                           |
-| `onTrialStart`             | `function`                      | 试用开始时调用。接收 `{ subscription }`。                                                  |
-| `onTrialEnd`               | `function`                      | 试用结束时调用。接收 `{ subscription }`。                                                  |
+| 选项 | 类型 | 描述 |
+|------|------|------|
+| `enabled` | `boolean` | 是否启用订阅功能。**必需。** |
+| `plans` | `ChargebeePlan[]` 或 `function` | 订阅计划数组或返回计划的异步函数。如果启用，则**必需**。 |
+| `requireEmailVerification` | `boolean` | 是否要求在允许创建订阅之前进行电子邮件验证。默认值：`false`。 |
+| `preventDuplicateTrials` | `boolean` | 防止用户获得多个试用。默认值：`false`。 |
+| `authorizeReference` | `function` | 授权参考 ID。接收 `{ user, session, referenceId, action }` 和上下文。 |
+| `getHostedPageParams` | `function` | 自定义 Chargebee Hosted Page 参数。接收 `{ user, session, plan, subscription }`、请求和上下文。 |
+| `onSubscriptionComplete` | `function` | 通过托管页面创建订阅后调用。接收 `{ subscription, chargebeeSubscription, plan }`。 |
+| `onSubscriptionCreated` | `function` | 订阅创建后调用。接收 `{ subscription, chargebeeSubscription, plan }`。 |
+| `onSubscriptionUpdate` | `function` | 订阅更新时调用。接收 `{ subscription }`。 |
+| `onSubscriptionDeleted` | `function` | 订阅删除时调用。接收 `{ subscription, chargebeeSubscription }`。 |
+| `onTrialStart` | `function` | 试用开始时调用。接收 `{ subscription }`。 |
+| `onTrialEnd` | `function` | 试用结束时调用。接收 `{ subscription }`。 |
 
 #### 计划配置
 
-| 选项                | 类型       | 描述                                         |
-| ----------------- | -------- | ------------------------------------------ |
-| `name`            | `string` | 计划名称。**必需。**                               |
-| `itemPriceId`     | `string` | Chargebee item price ID。**必需。**            |
-| `itemId`          | `string` | Chargebee item ID。可选。                      |
-| `itemFamilyId`    | `string` | Chargebee item family ID。可选。               |
-| `type`            | `string` | 类型：`"plan"`、`"addon"` 或 `"charge"`。**必需。** |
-| `limits`          | `object` | 计划限制（例如 `{ projects: 10, storage: 5 }`）。   |
-| `freeTrial`       | `object` | 试用配置。见 [下文](#free-trial-configuration)。    |
-| `trialPeriod`     | `number` | 试用期长度。可选。                                  |
-| `trialPeriodUnit` | `string` | `"day"` 或 `"month"`。可选。                    |
-| `billingCycles`   | `number` | 计费周期数量。可选。                                 |
+| 选项 | 类型 | 描述 |
+|------|------|------|
+| `name` | `string` | 计划名称。**必需。** |
+| `itemPriceId` | `string` | Chargebee 项目价格 ID。**必需。** |
+| `itemId` | `string` | Chargebee 项目 ID。可选。 |
+| `itemFamilyId` | `string` | Chargebee 项目系列 ID。可选。 |
+| `type` | `string` | 类型：`"plan"`、`"addon"` 或 `"charge"`。**必需。** |
+| `limits` | `object` | 计划限制（例如 `{ projects: 10, storage: 5 }`）。 |
+| `freeTrial` | `object` | 试用配置。参见下面的 [免费试用配置](#免费试用配置)。 |
+| `trialPeriod` | `number` | 试用期长度。可选。 |
+| `trialPeriodUnit` | `string` | `"day"` 或 `"month"`。可选。 |
+| `billingCycles` | `number` | 计费周期数。可选。 |
 
 #### 免费试用配置
 
-| 选项     | 类型       | 描述           |
-| ------ | -------- | ------------ |
+| 选项 | 类型 | 描述 |
+|------|------|------|
 | `days` | `number` | 试用天数。**必需。** |
 
 ### 组织选项
 
-| 选项                        | 类型         | 描述                                                       |
-| ------------------------- | ---------- | -------------------------------------------------------- |
-| `enabled`                 | `boolean`  | 启用组织客户支持。**必需。**                                         |
-| `getCustomerCreateParams` | `function` | 自定义组织的 Chargebee 客户创建参数。接收 `organization` 和上下文。          |
-| `onCustomerCreate`        | `function` | 组织客户创建后调用。接收 `{ chargebeeCustomer, organization }` 和上下文。 |
+| 选项 | 类型 | 描述 |
+|------|------|------|
+| `enabled` | `boolean` | 启用组织客户支持。**必需。** |
+| `getCustomerCreateParams` | `function` | 为组织自定义 Chargebee 客户创建参数。接收 `organization` 和上下文。 |
+| `onCustomerCreate` | `function` | 组织客户创建后的回调函数。接收 `{ chargebeeCustomer, organization }` 和上下文。 |
 
 ## 高级用法
 
@@ -959,16 +962,16 @@ chargebee({
 Chargebee 插件与 [organization 插件](/docs/plugins/organization) 集成，可将组织作为 Chargebee 客户使用。订阅的计费主体不再是单个用户，而是组织。对于 B2B 服务，这很有用，因为计费是绑定到组织而不是个人用户的。
 
 <Callout type="info">
-  **启用组织客户后：**
+  **当启用组织客户时：**
 
-  * 当组织首次订阅时，会自动创建一个 Chargebee Customer
-  * 组织名称变更会同步到 Chargebee Customer
-  * 拥有活跃订阅的组织不能被删除
+  * 当组织首次订阅时，会自动创建 Chargebee 客户
+  * 组织名称更改会同步到 Chargebee 客户
+  * 拥有活动订阅的组织无法被删除
 </Callout>
 
 #### 启用组织客户
 
-要启用 Organization Customer，请将 `organization.enabled` 设置为 `true`，并确保已安装 organization 插件：
+要启用组织客户，请将 `organization.enabled` 设置为 `true`，并确保已安装 organization 插件：
 
 ```ts title="auth.ts"
 plugins: [
@@ -987,12 +990,12 @@ plugins: [
 ```
 
 <Callout type="info">
-  当 `organization.enabled: true` 时，该插件会自动从 `user` 表中省略 `chargebeeCustomerId`，并禁用用户级计费钩子。对于仅使用组织范围计费的情况，你不需要在数据库 schema 中添加该列。
+  当 `organization.enabled: true` 时，插件会自动从 `user` 表中排除 `chargebeeCustomerId` 并禁用用户级别的计费钩子。使用仅限组织范围的计费时，不需要将该列添加到数据库架构中。
 </Callout>
 
 #### 创建组织订阅
 
-即使启用了 Organization Customer，用户订阅仍然可用，并且是默认选项。若要使用组织作为计费主体，请传入 `customerType: "organization"`：
+即使启用了组织客户，用户订阅仍然可用，并且是默认选项。若要使用组织作为计费主体，请传入 `customerType: "organization"`：
 
 ```ts title="client.ts"
 await authClient.subscription.create({
@@ -1059,16 +1062,16 @@ getHostedPageParams: async ({ user, session, plan, subscription }, request, ctx)
 
 Chargebee 插件会自动防止用户获得多个免费试用期。一旦用户使用过一次试用期（无论哪个计划），他们就不再有资格在任何计划上获得额外试用。
 
-**其工作方式如下：**
+**工作原理：**
 
 * 系统会跟踪每个用户在所有计划中的试用使用情况
-* 当用户订阅带有试用期的计划时，系统会检查其订阅历史
-* 如果用户曾经有过试用（由 `trialStart`/`trialEnd` 字段或 `in_trial` 状态表示），则不会再提供新的试用
-* 这可以防止用户通过取消订阅再重新订阅来获取多次免费试用的滥用行为
+* 当用户订阅一个带有试用的计划时，系统会检查其订阅历史记录
+* 如果用户曾经有过试用（通过 `trialStart`/`trialEnd` 字段或 `in_trial` 状态标识），则不会提供新的试用
+* 这可以防止用户取消订阅后重新注册以获得多个免费试用
 
 **示例场景：**
 
-1. 用户订阅带有 7 天游试用期的 "Starter" 计划
+1. 用户订阅带有 7 天试用期的 "Starter" 计划
 2. 用户在试用期结束后取消订阅
 3. 用户尝试订阅 "Premium" 计划 - 不会提供试用
 4. 用户将立即被收取 Premium 计划费用
@@ -1125,5 +1128,5 @@ https://your-ngrok-url/api/auth/chargebee/webhook
 
 ## 资源
 
-* [Chargebee 文档](https://www.chargebee.com/docs/)
-* [Better Auth 文档](https://www.better-auth.com/)
+* [Chargebee Documentation](https://www.chargebee.com/docs/)
+* [Better Auth Documentation](https://www.better-auth.com/)

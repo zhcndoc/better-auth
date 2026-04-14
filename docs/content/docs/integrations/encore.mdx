@@ -34,7 +34,7 @@ export const authHandler = api.raw(
 ```
 
 <Callout>
-Encore 的 `api.raw()` 提供 Node.js 请求/响应类型。我们使用 `better-auth/node` 中的 `toNodeHandler` 将这些桥接到 Better Auth 的 Web API 处理器。
+  Encore 的 `api.raw()` 提供 Node.js 请求/响应类型。我们使用 `toNodeHandler` 从 `better-auth/node` 桥接这些到 Better Auth 的 Web API 处理器。
 </Callout>
 
 ### CORS
@@ -70,7 +70,7 @@ encore run
 ```
 
 <Callout type="tip">
-打开 `localhost:9400` 上的本地仪表板，查看所有请求的追踪，包括身份验证处理器执行和会话验证。这对于调试身份验证问题非常有用。
+  在本地仪表板打开 `localhost:9400`，以查看所有请求的跟踪信息，包括身份验证处理器执行和会话验证。这对于调试身份验证问题很有用。
 </Callout>
 
 ### 保护端点
@@ -136,7 +136,7 @@ export const getProfile = api(
 ```
 
 <Callout type="tip">
-如果您想直接在 Encore 端点中管理会话 cookie，请查看 Encore 的[类型化 cookie 支持](https://encore.dev/docs/ts/primitives/cookies)。
+  如果您希望在 Encore 端点中直接管理会话 cookie，请查看 Encore 的 [类型化 Cookie 支持](https://encore.dev/docs/ts/primitives/cookies)。
 </Callout>
 
 ### 了解更多

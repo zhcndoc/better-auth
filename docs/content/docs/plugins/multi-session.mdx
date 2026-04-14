@@ -3,107 +3,94 @@ title: 多会话
 description: 学习如何在 Better Auth 中使用多会话插件。
 ---
 
-多会话插件允许用户在同一浏览器中跨不同账户保持多个活动会话。该插件适用于需要用户在多个账户之间切换而不登出的应用。
+多会话插件允许用户在同一个浏览器中跨不同账户保持多个活跃会话。该插件适用于需要在多个账户之间切换而无需登出的应用。
 
 ## 安装
 
 <Steps>
-<Step>
-### 将插件添加到你的 **auth** 配置中
-```ts title="auth.ts"
-import { betterAuth } from "better-auth"
-import { multiSession } from "better-auth/plugins"  // [!code highlight]
+  <Step>
+    ### 将插件添加到你的 **auth** 配置
 
-export const auth = betterAuth({
-    plugins: [
-        multiSession(), // [!code highlight]
-    ]
-})
-```
-</Step>
-<Step>
-        ### 添加客户端插件
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+    import { multiSession } from "better-auth/plugins"  // [!code highlight]
 
-        添加客户端插件，并指定用户需要验证二次身份验证时应重定向的页面
+    export const auth = betterAuth({
+        plugins: [
+            multiSession(), // [!code highlight]
+        ]
+    })
+    ```
+  </Step>
 
-        ```ts title="auth-client.ts"
-        import { createAuthClient } from "better-auth/client"
-        import { multiSessionClient } from "better-auth/client/plugins"  // [!code highlight]
+  <Step>
+    ### 添加客户端插件
 
-        export const authClient = createAuthClient({
-            plugins: [
-                multiSessionClient()  // [!code highlight]
-            ]
-        })
-        ```
-        </Step>
-</Steps>    
+    添加客户端插件，并指定用户在需要验证二次因素时应被重定向到的位置
 
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    import { multiSessionClient } from "better-auth/client/plugins"  // [!code highlight]
+
+    export const authClient = createAuthClient({
+        plugins: [
+            multiSessionClient()  // [!code highlight]
+        ]
+    })
+    ```
+  </Step>
+</Steps>
 
 ## 使用
 
-每当用户登录时，插件会向浏览器添加额外的 cookie。该 cookie 用于维护跨不同账户的多个会话。
-
-### 列出所有设备会话
+每当用户登录时，插件会在浏览器中添加额外的 Cookie。该 Cookie 将用于在不同账户之间维护多个会话。
 
 要列出当前用户的所有活跃会话，可以调用 `listDeviceSessions` 方法。
 
-<APIMethod
-  path="/multi-session/list-device-sessions"
-  method="GET"
-  requireSession
->
-```ts
-type listDeviceSessions = {
-}
-```
+<APIMethod path="/multi-session/list-device-sessions" method="GET" requireSession>
+  ```ts
+  type listDeviceSessions = {
+  }
+  ```
 </APIMethod>
 
 ### 设置活动会话
 
 要设置活动会话，可以调用 `setActive` 方法。
 
-<APIMethod
-  path="/multi-session/set-active"
-  method="POST"
-  requireSession
->
-```ts
-type setActiveSession = {
-    /**
-     * 要设置为活动的会话令牌。 
-     */
-    sessionToken: string = "some-session-token"
-}
-```
+<APIMethod path="/multi-session/set-active" method="POST" requireSession>
+  ```ts
+  type setActiveSession = {
+      /**
+       * 要设置为活跃的会话令牌。
+       */
+      sessionToken: string = "some-session-token"
+  }
+  ```
 </APIMethod>
 
 ### 撤销会话
 
 要撤销会话，可以调用 `revoke` 方法。
 
-<APIMethod
-  path="/multi-session/revoke"
-  method="POST"
-  requireSession
->
-```ts
-type revokeDeviceSession = {
-    /**
-     * 要撤销的会话令牌。 
-     */
-    sessionToken: string = "some-session-token"
-}
-```
+<APIMethod path="/multi-session/revoke" method="POST" requireSession>
+  ```ts
+  type revokeDeviceSession = {
+      /**
+       * 要撤销的会话令牌。
+       */
+      sessionToken: string = "some-session-token"
+  }
+  ```
 </APIMethod>
 
 ### 登出并撤销所有会话
 
-当用户登出时，插件会撤销该用户所有活跃会话。你可以调用现有的 `signOut` 方法，它会自动处理撤销所有会话。
+当用户登出时，插件会撤销该用户的所有活跃会话。你可以调用现有的 `signOut` 方法，它会自动处理撤销所有会话。
 
 ### 最大会话数
 
-你可以通过传递 `maximumSessions` 选项给插件来指定用户最多允许的会话数。默认情况下，插件允许每个设备5个会话。
+你可以通过向插件传递 `maximumSessions` 选项来指定用户允许的最大会话数。默认情况下，插件允许每个设备最多 5 个会话。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"

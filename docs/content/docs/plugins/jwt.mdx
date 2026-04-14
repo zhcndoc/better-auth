@@ -12,59 +12,62 @@ JWT 插件提供了用于获取 JWT 令牌的端点以及用于验证令牌的 J
 ## 安装
 
 <Steps>
-<Step>
-### 将插件添加到你的 **auth** 配置中
-```ts title="auth.ts"
-import { betterAuth } from "better-auth"
-import { jwt } from "better-auth/plugins" // [!code highlight]
+  <Step>
+    ### 将插件添加到你的 **auth** 配置
 
-export const auth = betterAuth({
-    plugins: [
-        jwt(), // [!code highlight]
-    ]
-})
-```
-</Step>
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+    import { jwt } from "better-auth/plugins" // [!code highlight]
 
-<Step>
+    export const auth = betterAuth({
+        plugins: [
+            jwt(), // [!code highlight]
+        ]
+    })
+    ```
+  </Step>
+
+  <Step>
     ### 迁移数据库
 
     运行迁移或生成模式，将必要的字段和表添加到数据库中。
 
     <Tabs items={["migrate", "generate"]}>
-        <Tab value="migrate">
+      <Tab value="migrate">
         ```package-install
         npx auth migrate
         ```
-        </Tab>
-        <Tab value="generate">
+      </Tab>
+
+      <Tab value="generate">
         ```package-install
         npx auth generate
         ```
-        </Tab>
+      </Tab>
     </Tabs>
-    如需手动添加字段，请参见 [Schema](#schema) 部分。
-</Step>
-<Step>
-### 将客户端插件添加到你的 auth 客户端
 
-```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/client"
-import { jwtClient } from "better-auth/client/plugins" // [!code highlight]
+    请参阅 [Schema](#schema) 部分以手动添加字段。
+  </Step>
 
-export const authClient = createAuthClient({
-  plugins: [
-    jwtClient() // [!code highlight]
-  ]
-})
-```
-</Step>
-</Steps>    
+  <Step>
+    ### 将客户端插件添加到你的认证客户端
 
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client"
+    import { jwtClient } from "better-auth/client/plugins" // [!code highlight]
+
+    export const authClient = createAuthClient({
+      plugins: [
+        jwtClient() // [!code highlight]
+      ]
+    })
+    ```
+  </Step>
+</Steps>
 
 ## 用法
 
-安装插件后，你可以通过相应端点开始使用 JWT 和 JWKS 插件以获取令牌及 JWKS。
+安装插件后，你可以通过相应的端点开始使用 JWT 和 JWKS 插件来获取令牌和 JWKS。
 
 ## JWT
 
@@ -92,6 +95,8 @@ if (data) {
 2. **使用你的 session 令牌**
 
 调用 `/token` 端点可获取令牌，返回如下：
+
+要获取令牌，请调用 `/token` 端点。返回结果如下：
 
 ```json
   { 
@@ -126,12 +131,13 @@ await authClient.getSession({
 ```
 
 ### 验证令牌
-令牌可以在你的服务中自行验证，无需额外的验证调用或数据库检查。
-为此会使用 JWKS。公钥可以通过 `/api/auth/jwks` 端点获取。
+
+令牌可以在你自己的服务中验证，无需额外的验证调用或数据库检查。
+为此会使用 JWKS。公钥可以从 `/api/auth/jwks` 端点获取。
 
 由于该密钥不经常变更，可以长期缓存。
 用于签名 JWT 的密钥 ID (`kid`) 包含在令牌头中。
-若接收到的 JWT 带有不同的 `kid`，建议重新获取 JWKS。
+如果接收到的 JWT 带有不同的 `kid`，建议重新获取 JWKS。
 
 ```json
   {
@@ -247,10 +253,11 @@ jwt({
 
 默认情况下，JWKS 端点位于 `/jwks`。你可以使用 `jwksPath` 选项自定义路径。
 
-有以下用途：
-- 遵循 OAuth 2.0/OIDC 规范（例如 `/.well-known/jwks.json`）
-- 匹配应用中的现有 API 规则
-- 避免与其他端点路径冲突
+这在以下情况下非常有用：
+
+* 遵循 OAuth 2.0/OIDC 约定（例如 `/.well-known/jwks.json`）
+* 匹配应用程序中现有的 API 约定
+* 避免与其他端点路径冲突
 
 **服务器配置：**
 
@@ -281,7 +288,7 @@ export const authClient = createAuthClient({
 })
 ```
 
-然后你可正常使用 `jwks()` 方法：
+然后你可以正常使用 `jwks()` 方法：
 
 ```ts
 const { data, error } = await authClient.jwks()
@@ -298,10 +305,11 @@ if (data) {
 
 这是高级功能。插件外部**必须**提供配置。
 
-实现要点：
-- 使用 `sign` 函数时，必须定义 `remoteUrl`，且该地址应存储所有有效密钥，而非仅当前密钥。
-- 若采用本地方式，确保服务器在密钥轮换后使用最新私钥。根据部署情况，可能需要重新启动服务器。
-- 使用远程方式时，需验证传输后载荷未被篡改。建议使用 CRC32 或 SHA256 等完整性校验。
+实现者注意事项：
+
+* 如果使用 `sign` 函数，`remoteUrl` 必须已定义。这将存储所有活动密钥，而不仅仅是当前密钥。
+* 如果使用本地化方法，请确保服务器在轮换时使用的是最新的私钥。根据部署情况，可能需要重启服务器。
+* 使用远程方法时，请验证载荷在传输过程中未更改。如果可用，请使用完整性验证（如 CRC32 或 SHA256 检查）。
 
 #### 本地签名示例
 
@@ -330,7 +338,7 @@ jwt({
 
 #### 远程签名示例
 
-适用于使用远程密钥管理服务，如 [Google KMS](https://cloud.google.com/kms/docs/encrypt-decrypt-rsa#kms-encrypt-asymmetric-nodejs)、[Amazon KMS](https://docs.aws.amazon.com/kms/latest/APIReference/API_Sign.html) 或 [Azure Key Vault](https://learn.microsoft.com/en-us/rest/api/keyvault/keys/sign/sign?view=rest-keyvault-keys-7.4&tabs=HTTP)。
+如果使用远程密钥管理服务（例如 [Google KMS](https://cloud.google.com/kms/docs/encrypt-decrypt-rsa#kms-encrypt-asymmetric-nodejs)、[Amazon KMS](https://docs.aws.amazon.com/kms/latest/APIReference/API_Sign.html) 或 [Azure Key Vault](https://learn.microsoft.com/en-us/rest/api/keyvault/keys/sign/sign?view=rest-keyvault-keys-7.4&tabs=HTTP)），此功能非常有用。
 
 ```ts title="auth.ts"
 jwt({
@@ -361,7 +369,6 @@ jwt({
 })
 ```
 
-
 ## Schema
 
 JWT 插件会向数据库添加以下表：
@@ -370,37 +377,37 @@ JWT 插件会向数据库添加以下表：
 
 表名：`jwks`
 
-<DatabaseTable
-  fields={[
-    { 
-      name: "id", 
-      type: "string", 
-      description: "每个 Web 密钥的唯一标识符",
-      isPrimaryKey: true
-    },
-    { 
-      name: "publicKey", 
-      type: "string", 
-      description: "Web 密钥的公钥部分" 
-    },
-    { 
-      name: "privateKey", 
-      type: "string", 
-      description: "Web 密钥的私钥部分" 
-    },
-    { 
-      name: "createdAt", 
-      type: "Date", 
-      description: "Web 密钥的创建时间戳" 
-    },
-    { 
-      name: "expiresAt", 
-      type: "Date", 
-      description: "Web 密钥的过期时间戳",
-      isOptional: true
-    },
-  ]}
-  />
+export const jwksTableFields = [
+	{
+		name: "id",
+		type: "string",
+		description: "Unique identifier for each web key",
+		isPrimaryKey: true,
+	},
+	{
+		name: "publicKey",
+		type: "string",
+		description: "The public part of the web key",
+	},
+	{
+		name: "privateKey",
+		type: "string",
+		description: "The private part of the web key",
+	},
+	{
+		name: "createdAt",
+		type: "Date",
+		description: "Timestamp of when the web key was created",
+	},
+	{
+		name: "expiresAt",
+		type: "Date",
+		description: "Timestamp of when the web key expires",
+		isOptional: true,
+	},
+];
+
+<DatabaseTable name="jwks" fields={jwksTableFields} />
 
 <Callout>
   你可以自定义 `jwks` 表的表名和字段。详见 [数据库概念文档](/docs/concepts/database#custom-table-names) 获取如何自定义插件 Schema 的更多信息。
@@ -424,32 +431,37 @@ jwt({
 ```
 
 #### EdDSA
-- **默认曲线**: `Ed25519`
-- **可选属性**: `crv`
-  - 可选值: `Ed25519`, `Ed448`
-  - 默认: `Ed25519`
+
+* **默认曲线**: `Ed25519`
+* **可选属性**: `crv`
+  * 可用选项: `Ed25519`, `Ed448`
+  * 默认: `Ed25519`
 
 #### ES256
-- 无附加属性
+
+* 无额外属性
 
 #### RSA256
-- **可选属性**: `modulusLength`
-  - 类型: 数字
-  - 默认: `2048`
+
+* **可选属性**: `modulusLength`
+  * 期望一个数字
+  * 默认: `2048`
 
 #### PS256
-- **可选属性**: `modulusLength`
-  - 类型: 数字
-  - 默认: `2048`
+
+* **可选属性**: `modulusLength`
+  * 期望一个数字
+  * 默认: `2048`
 
 #### ECDH-ES
-- **可选属性**: `crv`
-  - 可选值: `P-256`, `P-384`, `P-521`
-  - 默认: `P-256`
+
+* **可选属性**: `crv`
+  * 可用选项: `P-256`, `P-384`, `P-521`
+  * 默认: `P-256`
 
 #### ES512
-- 无附加属性
 
+* 无额外属性
 
 ### 禁用私钥加密
 
@@ -480,8 +492,8 @@ jwt({
 })
 ```
 
-- `rotationInterval`：密钥轮换的秒数间隔。
-- `gracePeriod`：轮换后旧密钥副本仍有效的秒数。用于允许客户端验证由旧密钥签发的令牌。默认是 30 天。
+* `rotationInterval`: 以秒为单位的密钥对轮换间隔。
+* `gracePeriod`: 轮换后保留旧密钥对有效的时间（秒）。这允许客户端验证使用旧密钥对签名的令牌。默认值为 30 天。
 
 ### 修改 JWT 载荷
 
@@ -501,8 +513,9 @@ jwt({
 })
 ```
 
-### 修改 Issuer、Audience、Subject 或过期时间
-若不设置，则默认使用 `BASE_URL` 作为发行者，Audience 也设为 `BASE_URL`，过期时间为 15 分钟。
+### 修改颁发者、受众、主题或过期时间
+
+如果未提供，将使用 `BASE_URL` 作为颁发者，并将受众设置为 `BASE_URL`。过期时间设置为 15 分钟。
 
 ```ts title="auth.ts"
 jwt({

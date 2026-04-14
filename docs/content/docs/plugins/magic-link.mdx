@@ -8,7 +8,7 @@ description: 魔法链接插件
 ## 安装
 
 <Steps>
-    <Step>
+  <Step>
     ### 添加服务器插件
 
     将魔法链接插件添加到服务器：
@@ -27,9 +27,9 @@ description: 魔法链接插件
         ]
     })
     ```
-    </Step>
+  </Step>
 
-    <Step>
+  <Step>
     ### 添加客户端插件
 
     将魔法链接插件添加到客户端：
@@ -37,62 +37,54 @@ description: 魔法链接插件
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client";
     import { magicLinkClient } from "better-auth/client/plugins"; // [!code highlight]
-    
+
     export const authClient = createAuthClient({
         plugins: [
             magicLinkClient() // [!code highlight]
         ]
     });
     ```
-    </Step>
-
+  </Step>
 </Steps>
 
 ## 使用方法
 
 ### 使用魔法链接登录
 
-要通过魔法链接登录，需调用 `signIn.magicLink` 并传入用户的电子邮件地址。`sendMagicLink` 函数会被调用以向用户邮箱发送魔法链接。
-
-<APIMethod
-  path="/sign-in/magic-link"
-  method="POST"
-  requireSession
->
-  
-```ts
-type signInMagicLink = {
-    /**
-     * 用于发送魔法链接的电子邮件地址。
-     */
-    email: string = "user@email.com"
-    /**
-     * 用户显示名称。仅在用户首次注册时使用。
-     */
-    name?: string = "my-name"
-    /**
-     * 魔法链接验证后重定向的 URL。
-     */
-    callbackURL?: string = "/dashboard"
-    /**
-     * 新用户注册后重定向的 URL。
-     */
-    newUserCallbackURL?: string = "/welcome"
-    /**
-     * 验证出错时重定向的 URL。
-     * 如果只提供了 callbackURL 而没有 `errorCallbackURL`，则会重定向到 callbackURL 并带有 `error` 查询参数。
-     */
-    errorCallbackURL?: string = "/error"
-    /**
-     * Additional metadata forwarded to the sendMagicLink callback.
-     */
-    metadata?: Record<string, any> = { inviteId: "123" }
-}
-```
+<APIMethod path="/sign-in/magic-link" method="POST" requireSession>
+  ```ts
+  type signInMagicLink = {
+      /**
+       * 发送魔法链接的电子邮件地址。 
+       */
+      email: string = "user@email.com"
+      /**
+       * 用户显示名称。仅在用户首次注册时使用。 
+       */
+      name?: string = "my-name"
+      /**
+       * 验证后重定向的 URL。 
+       */
+      callbackURL?: string = "/dashboard"
+      /**
+       * 新用户注册后重定向的 URL
+       */
+      newUserCallbackURL?: string = "/welcome"
+      /**
+       * 验证出错时重定向的 URL
+       * 如果只提供了 callbackURL 而没有 errorCallbackURL，则会带有 `error` 查询参数重定向到 callbackURL。
+       */
+      errorCallbackURL?: string = "/error"
+      /**
+       * 传递给 sendMagicLink 回调的附加元数据。
+       */
+      metadata?: Record<string, any> = { inviteId: "123" }
+  }
+  ```
 </APIMethod>
 
 <Callout>
-如果用户尚未注册，除非 `disableSignUp` 被设置为 `true`，否则用户将自动注册。
+  如果用户尚未注册，除非将 `disableSignUp` 设置为 `true`，否则用户将自动注册。
 </Callout>
 
 ### 验证魔法链接
@@ -103,58 +95,54 @@ type signInMagicLink = {
   如果未提供 `callbackURL`，用户将被重定向到根网址。
 </Callout>
 
-如果你想手动处理验证过程（例如，你发送给用户的 URL 与默认不同），可以使用 `verify` 函数。
+如果你想手动处理验证（例如，如果你向用户发送了不同的 URL），可以使用 `verify` 函数。
 
-<APIMethod
-  path="/magic-link/verify"
-  method="GET"
-  requireSession
->
-```ts
-type magicLinkVerify = {
-    /**
-     * 验证令牌。
-     */
-    token: string = "123456"
-    /**
-     * 魔法链接验证后重定向的 URL，若未提供则返回会话信息。
-     */
-    callbackURL?: string = "/dashboard"
-}
-```
+<APIMethod path="/magic-link/verify" method="GET" requireSession>
+  ```ts
+  type magicLinkVerify = {
+      /**
+       * 验证令牌。 
+       */
+      token: string = "123456"
+      /**
+       * 验证后重定向的 URL，如果未提供则返回会话。 
+       */
+      callbackURL?: string = "/dashboard"
+  }
+  ```
 </APIMethod>
 
 ## 配置选项
 
 **sendMagicLink**：当用户请求魔法链接时调用 `sendMagicLink` 函数。该函数接收一个包含以下属性的对象：
 
-- `email`：用户的电子邮件地址。
-- `url`：发送给用户的 URL，该 URL 包含令牌。
-- `token`：如果你想用自定义 URL 发送令牌，则为令牌内容。
-- `metadata`：从 `signIn.magicLink` 传入的额外请求元数据。
+* `email`: 用户的电子邮件地址。
+* `url`: 要发送给用户的 URL。此 URL 包含令牌。
+* `token`: 如果你想通过自定义 URL 发送令牌，则使用此令牌。
+* `metadata`: 从 `signIn.magicLink` 传递的附加请求元数据。
 
 此外，函数的第二个参数为上下文对象 `ctx`。
 
-**expiresIn**：指定魔法链接过期的时间，单位为秒。默认值为 `300` 秒（5 分钟）。
+**expiresIn**：指定魔法链接过期的时间（以秒为单位）。默认值为 `300` 秒（5 分钟）。
 
-**allowedAttempts**：指定验证魔法链接的允许尝试次数。默认值为 `1`。当超过限制时，令牌将被删除，用户会被重定向并附带 `?error=ATTEMPTS_EXCEEDED` 参数。可设置为 `Infinity` 以允许无限次尝试。
+**allowedAttempts**：指定验证魔法链接的允许尝试次数。默认值为 `1`。超过限制后，令牌将被删除，用户会被重定向并附带 `?error=ATTEMPTS_EXCEEDED` 参数。可以设置为 `Infinity` 以允许无限次尝试。
 
 **disableSignUp**：如果设置为 `true`，用户将无法使用魔法链接进行注册。默认值为 `false`。
 
-**generateToken**：调用该函数生成用于唯一标识用户的令牌。默认生成一个随机字符串。函数参数：
+**generateToken**：用于生成唯一标识用户的令牌的函数。默认生成一个随机字符串。函数参数：
 
-- `email`：用户的电子邮件地址。
+* `email`: 用户的电子邮件地址。
 
 <Callout type="warn">
-  使用 `generateToken` 时，确保返回的字符串难以猜测，因为它用于以保密方式验证用户身份。默认情况下，我们返回一个长度较长且密码学安全的字符串。
+  使用 `generateToken` 时，请确保返回的字符串难以猜测，因为它用于以保密方式验证用户身份。默认情况下，我们返回一个长度较长且密码学安全的字符串。
 </Callout>
 
 **storeToken**：`storeToken` 函数控制魔法链接令牌在被 Better Auth 的验证层存储前的转换方式。默认值为 `"plain"`。
 
 `storeToken` 可为以下之一：
 
-- `"plain"`：令牌以明文形式存储。
-- `"hashed"`：令牌使用默认哈希算法进行哈希存储。
-- `{ type: "custom-hasher", hash: (token: string) => Promise<string> }`：令牌使用自定义哈希算法进行哈希存储。
+* `"plain"`: 令牌以明文形式存储。
+* `"hashed"`: 使用默认哈希器对令牌进行哈希处理。
+* `{ type: "custom-hasher", hash: (token: string) => Promise<string> }`: 使用自定义哈希器对令牌进行哈希处理。
 
 存储后端本身由全局 [`verification`](/docs/reference/options#verification) 配置控制。如果你配置了 `secondaryStorage`，魔法链接验证记录可以存储在那里，而不是数据库中。

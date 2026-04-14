@@ -12,12 +12,12 @@ description: 使用 Polar 实现更佳的支付和结账验证插件
 
 ## 功能
 
-- 结账集成
-- 客户门户
-- 注册时自动创建客户
-- 事件摄取与客户计量器，支持灵活的基于用量的计费
-- 使用签名验证安全处理 Polar Webhooks
-- 引用系统以将购买关联至组织
+* 结账集成
+* 客户门户
+* 注册时自动创建客户
+* 事件摄取与用于灵活使用计费的客户仪表
+* 使用签名验证安全处理 Polar Webhooks
+* 引用系统，用于将购买与组织关联
 
 ## 安装
 
@@ -38,10 +38,10 @@ POLAR_ACCESS_TOKEN=...
 
 Polar 插件包含若干附加插件，为你的堆栈增加功能。
 
-- Checkout - 实现无缝的结账集成
-- Portal - 让客户管理订单、订阅及授予的权益
-- Usage - 简单扩展，用于列出客户计量器及摄取事件，支持基于用量计费
-- Webhooks - 监听相关的 Polar webhook 事件
+* 结账（Checkout）—— 提供无缝的结账集成
+* 门户（Portal）—— 允许客户管理他们的订单、订阅和已授予的权益
+* 用量（Usage）—— 简单的扩展，用于列出客户仪表并摄取事件以支持基于用量的计费
+* Webhooks —— 监听相关的 Polar Webhooks
 
 ```typescript
 import { betterAuth } from "better-auth";
@@ -145,22 +145,22 @@ const auth = betterAuth({
 
 ### 必需选项
 
-- `client`: Polar SDK 客户端实例
+* `client`: Polar SDK 客户端实例
 
 ### 可选选项
 
-- `createCustomerOnSignUp`: 用户注册时自动创建 Polar 客户
-- `getCustomerCreateParams`: 自定义函数，提供额外的客户创建元数据
+* `createCustomerOnSignUp`: 用户注册时自动创建 Polar 客户
+* `getCustomerCreateParams`: 自定义函数，用于提供额外的客户创建元数据
 
 ### 客户管理
 
 启用 `createCustomerOnSignUp` 后，当在 Better-Auth 数据库中新增用户时，系统会自动创建对应的 Polar 用户。
 
-所有新客户均带有关联的 `externalId`，即数据库中用户的 ID，避免了在数据库中维护 Polar 与用户的映射。
+所有新客户均带有相关的 `externalId`，即数据库中用户的 ID，避免在数据库中维护 Polar 与用户的映射关系。
 
 ## 结账插件
 
-为了支持你的应用内结账，只需将 Checkout 插件通过 `use` 属性传入。
+为了支持应用内结账，只需通过 `use` 属性传入 Checkout 插件。
 
 ```typescript
 import { polar, checkout } from "@polar-sh/better-auth";
@@ -242,7 +242,7 @@ portal 插件为 BetterAuth 客户端提供了一组客户管理方法，位于 
 
 ### 客户门户管理
 
-以下方法可将用户重定向至 Polar 客户门户，查看订单、购买、订阅、权益等。
+以下方法可将用户重定向至 Polar 客户门户，查看订单、购买、订阅和权益等。
 
 ```typescript
 await authClient.customer.portal();
@@ -258,21 +258,21 @@ const { data: customerState } = await authClient.customer.state();
 
 客户状态对象包含：
 
-- 客户的所有数据
-- 其活跃的订阅列表
-  - 注意：不含父组织的订阅。详见下方订阅列表方法
-- 授权权益列表
-- 活跃计量器列表及其当前余额
+* 有关客户的全部数据。
+* 他们的活跃订阅列表
+  * 注意：这不包括由父组织进行的订阅。更多订阅列表信息请参见下文。
+* 他们已授予的权益列表。
+* 带有当前余额的活跃计量器列表。
 
-因此，凭该对象即可判定用户是否应获得服务访问权限。
+因此，可以根据该对象判断用户是否应获得服务访问权限。
 
-[你可在 Polar 文档中了解更多关于客户状态的信息](https://docs.polar.sh/integrate/customer-state)。
+[你可以在 Polar 文档中了解更多关于客户状态的信息](https://docs.polar.sh/integrate/customer-state)。
 
 ### 权益、订单与订阅
 
-portal 插件提供三个方便方法，列出认证用户/客户相关的权益、订单与订阅。
+portal 插件提供三个便捷方法，用于列出认证用户/客户相关的权益、订单和订阅。
 
-[所有这些方法均使用 Polar CustomerPortal API](https://docs.polar.sh/api-reference/customer-portal)
+[这些方法均使用 Polar CustomerPortal API](https://docs.polar.sh/api-reference/customer-portal)
 
 #### 权益
 
@@ -321,7 +321,7 @@ const { data: subscriptions } = await authClient.customer.subscriptions.list({
 
 你可以向此方法传入 `referenceId`，它将返回与该 `referenceId` 关联的所有订阅，而非用户的订阅。
 
-因此，要判断用户是否应有权限，可传入用户所属组织的 ID，查看该组织是否有活跃订阅。
+因此，要判断用户是否应有权限，可以传入用户所属组织的 ID，查看该组织是否有活跃订阅。
 
 ```typescript
 const organizationId = (await authClient.organization.list())?.data?.[0]?.id;
@@ -385,12 +385,12 @@ const { data: ingested } = await authClient.usage.ingest({
 
 客户计量器包含其定义计量器的所有用量信息：
 
-- 客户信息
-- 计量器信息
-- 客户计量器信息
-  - 已消费单位
-  - 已计入单位
-  - 余额
+* 客户信息
+* 计量器信息
+* 客户计量信息
+  * 已消耗单位
+  * 抵扣单位
+  * 余额
 
 ```typescript
 const { data: customerMeters } = await authClient.usage.meters.list({
@@ -438,29 +438,29 @@ POLAR_WEBHOOK_SECRET=...
 
 插件支持所有 Polar webhook 事件的处理：
 
-- `onPayload` - 捕获所有传入 Webhook 事件的通用处理器
-- `onCheckoutCreated` - 当结账创建时触发
-- `onCheckoutUpdated` - 当结账更新时触发
-- `onOrderCreated` - 当订单创建时触发
-- `onOrderPaid` - 当订单付款时触发
-- `onOrderRefunded` - 当订单退款时触发
-- `onRefundCreated` - 当退款创建时触发
-- `onRefundUpdated` - 当退款更新时触发
-- `onSubscriptionCreated` - 当订阅创建时触发
-- `onSubscriptionUpdated` - 当订阅更新时触发
-- `onSubscriptionActive` - 当订阅激活时触发
-- `onSubscriptionCanceled` - 当订阅取消时触发
-- `onSubscriptionRevoked` - 当订阅撤销时触发
-- `onSubscriptionUncanceled` - 当订阅取消被撤销时触发
-- `onProductCreated` - 当产品创建时触发
-- `onProductUpdated` - 当产品更新时触发
-- `onOrganizationUpdated` - 当组织更新时触发
-- `onBenefitCreated` - 当权益创建时触发
-- `onBenefitUpdated` - 当权益更新时触发
-- `onBenefitGrantCreated` - 当权益授权创建时触发
-- `onBenefitGrantUpdated` - 当权益授权更新时触发
-- `onBenefitGrantRevoked` - 当权益授权撤销时触发
-- `onCustomerCreated` - 当客户创建时触发
-- `onCustomerUpdated` - 当客户更新时触发
-- `onCustomerDeleted` - 当客户删除时触发
-- `onCustomerStateChanged` - 当客户状态变更时触发
+* `onPayload` - 捕获所有传入 Webhook 事件的通用处理器
+* `onCheckoutCreated` - 当创建结账时触发
+* `onCheckoutUpdated` - 当更新结账时触发
+* `onOrderCreated` - 当创建订单时触发
+* `onOrderPaid` - 当订单付款成功时触发（购买、订阅续费等）
+* `onOrderRefunded` - 当订单退款时触发
+* `onRefundCreated` - 当创建退款时触发
+* `onRefundUpdated` - 当更新退款时触发
+* `onSubscriptionCreated` - 当创建订阅时触发
+* `onSubscriptionUpdated` - 当更新订阅时触发
+* `onSubscriptionActive` - 当订阅变为活跃时触发
+* `onSubscriptionCanceled` - 当订阅取消时触发
+* `onSubscriptionRevoked` - 当订阅被撤销时触发
+* `onSubscriptionUncanceled` - 当订阅取消被撤销时触发
+* `onProductCreated` - 当创建产品时触发
+* `onProductUpdated` - 当更新产品时触发
+* `onOrganizationUpdated` - 当更新组织时触发
+* `onBenefitCreated` - 当创建权益时触发
+* `onBenefitUpdated` - 当更新权益时触发
+* `onBenefitGrantCreated` - 当创建权益授予时触发
+* `onBenefitGrantUpdated` - 当更新权益授予时触发
+* `onBenefitGrantRevoked` - 当权益授予被撤销时触发
+* `onCustomerCreated` - 当创建客户时触发
+* `onCustomerUpdated` - 当更新客户时触发
+* `onCustomerDeleted` - 当删除客户时触发
+* `onCustomerStateChanged` - 当创建客户

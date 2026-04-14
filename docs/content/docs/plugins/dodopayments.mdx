@@ -10,19 +10,16 @@ description: 更好的 Dodo Payments 认证插件
   请访问 [Dodo Payments GitHub 仓库](https://github.com/dodopayments/dodo-adapters)。
 </Callout>
 
-<Card
-  href="https://discord.gg/bYqAp4ayYh"
-  title="在 Dodo Payments 的 Discord 获取支持"
->
-  有疑问？我们的团队随时在 Discord 上为您提供帮助。
+<Card href="https://discord.gg/bYqAp4ayYh" title="Get support on Dodo Payments' Discord">
+  Have questions? Our team is available on Discord to assist you anytime.
 </Card>
 
 ## 功能
 
-- 注册时自动创建客户
-- 具有产品 slug 映射的类型安全结账流程
-- 自助客户门户
-- 实时 Webhook 事件处理及签名验证
+* 自动在注册时创建客户
+* 带有产品 slug 映射的类型安全结账流程
+* 自助服务客户门户
+* 带有签名验证的实时 Webhook 事件处理
 
 <Card href="https://app.dodopayments.com" title="开始使用 Dodo Payments">
   您需要一个 Dodo Payments 账户和 API 密钥才能使用此集成。
@@ -33,64 +30,68 @@ description: 更好的 Dodo Payments 认证插件
 <Steps>
   <Step title="安装依赖">
     在项目根目录运行以下命令：
-```bash
-npm install @dodopayments/better-auth dodopayments better-auth zod
-```
-  
+
+    ```bash
+    npm install @dodopayments/better-auth dodopayments better-auth zod
+    ```
   </Step>
+
   <Step title="配置环境变量">
-    添加以下内容到您的 `.env` 文件：
-```txt
-DODO_PAYMENTS_API_KEY=your_api_key_here
-DODO_PAYMENTS_WEBHOOK_SECRET=your_webhook_secret_here
-```
+    将以下内容添加到您的 `.env` 文件：
+
+    ```txt
+    DODO_PAYMENTS_API_KEY=your_api_key_here
+    DODO_PAYMENTS_WEBHOOK_SECRET=your_webhook_secret_here
+    ```
   </Step>
 
   <Step title="设置服务端集成">
     创建或更新 `src/lib/auth.ts`：
-```typescript
-import { betterAuth } from "better-auth";
-import {
-  dodopayments,
-  checkout,
-  portal,
-  webhooks,
-} from "@dodopayments/better-auth";
-import DodoPayments from "dodopayments";
 
-export const dodoPayments = new DodoPayments({
-  bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
-  environment: "test_mode"
-});
+    ```typescript
+    import { betterAuth } from "better-auth";
+    import {
+      dodopayments,
+      checkout,
+      portal,
+      webhooks,
+    } from "@dodopayments/better-auth";
+    import DodoPayments from "dodopayments";
 
-export const auth = betterAuth({
-  plugins: [
-    dodopayments({
-      client: dodoPayments,
-      createCustomerOnSignUp: true,
-      use: [
-        checkout({
-          products: [
-            {
-              productId: "pdt_xxxxxxxxxxxxxxxxxxxxx",
-              slug: "premium-plan",
-            },
+    export const dodoPayments = new DodoPayments({
+      bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
+      environment: "test_mode"
+    });
+
+    export const auth = betterAuth({
+      plugins: [
+        dodopayments({
+          client: dodoPayments,
+          createCustomerOnSignUp: true,
+          use: [
+            checkout({
+              products: [
+                {
+                  productId: "pdt_xxxxxxxxxxxxxxxxxxxxx",
+                  slug: "premium-plan",
+                },
+              ],
+              successUrl: "/dashboard/success",
+              authenticatedUsersOnly: true,
+            }),
+            portal(),
+            webhooks({
+              webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
+              onPayload: async (payload) => {
+                console.log("Received webhook:", payload.event_type);
+              },
+            }),
           ],
-          successUrl: "/dashboard/success",
-          authenticatedUsersOnly: true,
-        }),
-        portal(),
-        webhooks({
-          webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
-          onPayload: async (payload) => {
-            console.log("Received webhook:", payload.event_type);
-          },
         }),
       ],
-    }),
-  ],
-});
-```
+    });
+    ```
+
     <Card>
       将 `environment` 设置为 `live_mode` 即为生产环境。
     </Card>
@@ -98,15 +99,16 @@ export const auth = betterAuth({
 
   <Step title="设置客户端集成">
     创建或更新 `src/lib/auth-client.ts`：
-```typescript
-import { createAuthClient } from "better-auth/react";
-import { dodopaymentsClient } from "@dodopayments/better-auth";
 
-export const authClient = createAuthClient({
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
-  plugins: [dodopaymentsClient()],
-});
-```
+    ```typescript
+    import { createAuthClient } from "better-auth/react";
+    import { dodopaymentsClient } from "@dodopayments/better-auth";
+
+    export const authClient = createAuthClient({
+      baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+      plugins: [dodopaymentsClient()],
+    });
+    ```
   </Step>
 </Steps>
 
@@ -169,23 +171,25 @@ const { data: payments, error } = await authClient.dodopayments.customer.payment
 </Card>
 
 <Steps>
-  <Step title="生成并设置 webhook 密钥">
-    在 Dodo Payments 控制台为您的端点 URL（如 `https://your-domain.com/api/auth/dodopayments/webhooks`）生成 webhook 密钥，并将其设置到您的 .env 文件：
-```txt
-DODO_PAYMENTS_WEBHOOK_SECRET=your_webhook_secret_here
-```
+  <Step title="生成并设置 Webhook 密钥">
+    在 Dodo Payments 控制台中为您的端点 URL（例如 `https://your-domain.com/api/auth/dodopayments/webhooks`）生成 Webhook 密钥，并将其设置到 `.env` 文件中：
+
+    ```txt
+    DODO_PAYMENTS_WEBHOOK_SECRET=your_webhook_secret_here
+    ```
   </Step>
 
-  <Step title="处理 webhook 事件">
-    示例处理器：
-```typescript
-webhooks({
-  webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
-  onPayload: async (payload) => {
-    console.log("Received webhook:", payload.event_type);
-  },
-});
-```
+  <Step title="处理 Webhook 事件">
+    示例处理程序：
+
+    ```typescript
+    webhooks({
+      webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
+      onPayload: async (payload) => {
+        console.log("Received webhook:", payload.event_type);
+      },
+    });
+    ```
   </Step>
 </Steps>
 
@@ -193,14 +197,14 @@ webhooks({
 
 ### 插件选项
 
-- **client**（必填）：DodoPayments 客户端实例
-- **createCustomerOnSignUp**（可选）：用户注册时自动创建客户  
-- **use**（必填）：启用的插件数组（checkout，portal，webhooks）
+* **client** (必需): DodoPayments 客户端实例
+* **createCustomerOnSignUp** (可选): 在用户注册时自动创建客户
+* **use** (必需): 要启用的插件数组（checkout、portal、webhooks）
 
 ### 结账插件选项
 
-- **products**：产品数组或返回产品的异步函数
-- **successUrl**：付款成功后跳转的 URL
-- **authenticatedUsersOnly**：是否要求用户认证（默认：false）
+* **products**: 产品数组或返回产品的异步函数
+* **successUrl**: 支付成功后重定向的 URL
+* **authenticatedUsersOnly**: 要求用户认证（默认：false）
 
 如果遇到任何问题，请参考 [Dodo Payments 文档](https://docs.dodopayments.com) 进行排查。

@@ -6,353 +6,355 @@ description: 将 Better Auth 与 Convex 集成。
 在本指南中，我们将介绍将 Better Auth 与 [Convex](https://www.convex.dev) 集成的步骤。
 
 <Steps>
-<Step>
-## 前提条件
+  <Step>
+    ## Prerequisites
 
-### 创建一个 Convex 项目
+    ### Create a Convex project
 
-要在 Convex 中使用 Better Auth，您需要一个 Convex 项目。如果还没有项目，请运行以下命令创建一个新项目。详情请参阅 [Convex 文档](https://docs.convex.dev/home)。
+    To use Better Auth with Convex, you need a Convex project. If you don’t have one, run the following command to create a new project. For more details, see the [Convex documentation](https://docs.convex.dev/home).
 
-```package-install
-npm create convex@latest
+    ```package-install
+    npm create convex@latest
 
-# 选择用户认证：
-# > none
-```
+    # Choose user authentication:
+    # > none
+    ```
 
-### 运行 `convex dev`
+    ### Run `convex dev`
 
-在设置过程中运行 CLI，会初始化您的 Convex 部署（如果还不存在的话），并在整个过程中保持生成的类型更新。请保持其运行状态。
+    Running the CLI during setup will initialize your Convex deployment
+    if it doesn't already exist, and keeps generated types current through the process. Keep it running.
 
-```package-install
-npx convex dev
-```
-</Step>
+    ```package-install
+    npx convex dev
+    ```
+  </Step>
 
-<Step>
-## 安装依赖包
+  <Step>
+    ## Install packages
 
-安装 Better Auth 及其 Convex 组件，并确保您使用的是最新版本的 Convex。
+    Install Better Auth and the Convex component for Better Auth, and make sure you are using the latest version of Convex.
 
-```package-install
-npm install better-auth @convex-dev/better-auth
-```
+    ```package-install
+    npm install better-auth @convex-dev/better-auth
+    ```
 
-<Callout type="info">
-`@convex-dev/better-auth` 由 Convex 维护。如有问题或需更多详情，请访问 [这里](https://github.com/get-convex/better-auth)。
-</Callout>
-</Step>
+    <Callout type="info">
+      `@convex-dev/better-auth` is maintained by Convex. For issues or more details, please visit [here](https://github.com/get-convex/better-auth).
+    </Callout>
+  </Step>
 
-<Step>
-## 设置环境变量
+  <Step>
+    ## Set environment variables
 
-生成一个用于加密和生成哈希的密钥。若已安装 openssl，可使用下面的命令，或者使用 `npx auth secret` 生成。
+    Generate a secret for encryption and generating hashes. Use the command below if you have openssl installed, or use `npx auth secret` to generate one.
 
-```package-install
-npx convex env set BETTER_AUTH_SECRET=$(openssl rand -base64 32)
-```
+    ```package-install
+    npx convex env set BETTER_AUTH_SECRET=$(openssl rand -base64 32)
+    ```
 
-将您站点的 URL 添加到 Convex 部署中。
+    Add your site URL to your Convex deployment.
 
-```package-install
-npx convex env set SITE_URL http://localhost:3000
-```
+    ```package-install
+    npx convex env set SITE_URL http://localhost:3000
+    ```
 
-将环境变量添加到由 `npx convex dev` 创建的 `.env.local` 文件。
-您的框架开发服务器会自动读取该文件。
+    Add environment variables to the `.env.local` file created by `npx convex dev`.
+    It will be picked up by your framework dev server.
 
-```sh title=".env.local" tab="云端"
-# 由 `npx convex dev` 使用的部署信息
-CONVEX_DEPLOYMENT=dev:adjective-animal-123 # 团队: team-name，项目: project-name
+    ```sh title=".env.local" tab="Cloud"
+    # Deployment used by `npx convex dev`
+    CONVEX_DEPLOYMENT=dev:adjective-animal-123 # team: team-name, project: project-name
 
-NEXT_PUBLIC_CONVEX_URL=https://adjective-animal-123.convex.cloud
+    NEXT_PUBLIC_CONVEX_URL=https://adjective-animal-123.convex.cloud
 
-# 与 NEXT_PUBLIC_CONVEX_URL 相同，但以 .site 结尾 // [!code ++]
-NEXT_PUBLIC_CONVEX_SITE_URL=https://adjective-animal-123.convex.site # [!code ++]
+    # Same as NEXT_PUBLIC_CONVEX_URL but ends in .site // [!code ++]
+    NEXT_PUBLIC_CONVEX_SITE_URL=https://adjective-animal-123.convex.site # [!code ++]
 
-# 本地站点 URL // [!code ++]
-NEXT_PUBLIC_SITE_URL=http://localhost:3000 # [!code ++]
-```
+    # Your local site URL // [!code ++]
+    NEXT_PUBLIC_SITE_URL=http://localhost:3000 # [!code ++]
+    ```
 
-```sh title=".env.local" tab="自托管"
-# 由 `npx convex dev` 使用的部署信息
-CONVEX_DEPLOYMENT=dev:adjective-animal-123 # 团队: team-name，项目: project-name
+    ```sh title=".env.local" tab="Self hosted"
+    # Deployment used by `npx convex dev`
+    CONVEX_DEPLOYMENT=dev:adjective-animal-123 # team: team-name, project: project-name
 
-NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210
+    NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210
 
-# 通常比 NEXT_PUBLIC_CONVEX_URL 端口号大 1
-# 比如如果 convex URL 是 :3212，则站点 URL 是 :3213
-NEXT_PUBLIC_CONVEX_SITE_URL=http://127.0.0.1:3211 # [!code ++]
+    # Will generally be one number higher than NEXT_PUBLIC_CONVEX_URL,
+    # so if your convex url is :3212, your site url will be :3213
+    NEXT_PUBLIC_CONVEX_SITE_URL=http://127.0.0.1:3211 # [!code ++]
 
-# 本地站点 URL // [!code ++]
-NEXT_PUBLIC_SITE_URL=http://localhost:3000 # [!code ++]
-```
+    # Your local site URL // [!code ++]
+    NEXT_PUBLIC_SITE_URL=http://localhost:3000 # [!code ++]
+    ```
 
-<Callout type="info">
-由于 Better Auth 实例运行在 Convex 上，因此 auth 实例使用的环境变量应通过 Convex CLI 或控制面板配置，而不是 `.env.local` 文件。
+    <Callout type="info">
+      Since the Better Auth instance runs on Convex, environment variables used by the auth instance should be configured through the Convex CLI or dashboard, not in `.env.local`.
 
-例如：`BETTER_AUTH_SECRET`、`GITHUB_CLIENT_ID`、`GITHUB_CLIENT_SECRET` 等。
-</Callout>
-</Step>
+      e.g. `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` ...
+    </Callout>
+  </Step>
 
-<Step>
-## 添加 Convex 认证配置
+  <Step>
+    ## Add Convex auth config
 
-创建一个 `convex/auth.config.ts` 文件以配置 Better Auth 作为认证提供者。
+    Add a `convex/auth.config.ts` file to configure Better Auth as an authentication provider.
 
-```ts title="convex/auth.config.ts"
-import { getAuthConfigProvider } from "@convex-dev/better-auth/auth-config";
-import type { AuthConfig } from "convex/server";
+    ```ts title="convex/auth.config.ts"
+    import { getAuthConfigProvider } from "@convex-dev/better-auth/auth-config";
+    import type { AuthConfig } from "convex/server";
 
-export default {
-  providers: [getAuthConfigProvider()],
-} satisfies AuthConfig;
-```
-</Step>
+    export default {
+      providers: [getAuthConfigProvider()],
+    } satisfies AuthConfig;
+    ```
+  </Step>
 
-<Step>
-## 创建 Better Auth 的 Convex 组件
+  <Step>
+    ## Create the Better Auth Convex Component
 
-Convex 组件可以从 NPM 或本地文件夹安装。虽然可以通过 NPM 版本（[点击这里](https://www.convex.dev/components/better-auth)）使用，但本指南采用本地文件夹的方式，发挥 Better Auth 的全部潜力。
+    Convex components can be installed from NPM or a local folder. While the NPM version is available [here](https://www.convex.dev/components/better-auth), this guide uses a local folder setup to unlock the full potential of Better Auth.
 
-### 创建组件定义
+    ### Create the component definition
 
-创建 `convex/betterAuth/convex.config.ts` 文件来定义组件，这将告知 Convex `convex/betterAuth` 目录为本地安装的组件。
+    Create a `convex/betterAuth/convex.config.ts` file to define the component. This will signal to Convex that the `convex/betterAuth` directory is a locally installed component.
 
-```ts title="convex/betterAuth/convex.config.ts"
-import { defineComponent } from "convex/server";
-
-const component = defineComponent("betterAuth");
-
-export default component;
-```
-### 注册组件
-
-在您的 Convex 项目中注册 Better Auth 组件。
-
-```ts title="convex/convex.config.ts"
-import { defineApp } from "convex/server";
-import betterAuth from "./betterAuth/convex.config";
-
-const app = defineApp();
-
-app.use(betterAuth);
-
-export default app;
-```
-
-### 创建 Better Auth 实例
-
-创建 Better Auth 实例并初始化该组件。
-
-<Callout type="info">
-- 在完成下一步前，此文件尚未完成。
-- 直到保存文件前，可能显示部分 TypeScript 错误。
-</Callout>
+    ```ts title="convex/betterAuth/convex.config.ts"
+    import { defineComponent } from "convex/server";
 
-```ts title="convex/betterAuth/auth.ts"
-import { createClient } from "@convex-dev/better-auth";
-import { convex } from "@convex-dev/better-auth/plugins";
-import type { GenericCtx } from "@convex-dev/better-auth/utils";
-import type { BetterAuthOptions } from "better-auth";
-import { betterAuth } from "better-auth";
-import { components } from "../_generated/api";
-import type { DataModel } from "../_generated/dataModel";
-import authConfig from "../auth.config";
-import schema from "./schema";
-
-// Better Auth 组件
-export const authComponent = createClient<DataModel, typeof schema>(
-  components.betterAuth,
-  {
-    local: { schema },
-    verbose: false,
-  },
-);
-
-// Better Auth 配置选项
-export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
-  return {
-    appName: "My App",
-    baseURL: process.env.SITE_URL,
-    secret: process.env.BETTER_AUTH_SECRET,
-    database: authComponent.adapter(ctx),
-    emailAndPassword: {
-      enabled: true,
-    },
-    plugins: [convex({ authConfig })],
-  } satisfies BetterAuthOptions;
-};
-
-// 用于 `auth` CLI
-export const options = createAuthOptions({} as GenericCtx<DataModel>);
+    const component = defineComponent("betterAuth");
+
+    export default component;
+    ```
+
+    ### Register the component
+
+    Register the Better Auth component in your Convex project.
+
+    ```ts title="convex/convex.config.ts"
+    import { defineApp } from "convex/server";
+    import betterAuth from "./betterAuth/convex.config";
+
+    const app = defineApp();
 
-// Better Auth 实例
-export const createAuth = (ctx: GenericCtx<DataModel>) => {
-  return betterAuth(createAuthOptions(ctx));
-};
-```
+    app.use(betterAuth);
+
+    export default app;
+    ```
+
+    ### Create a Better Auth instance
+
+    Create a Better Auth instance and initialize the component.
 
-### 生成 schema
+    <Callout type="info">
+      * This file is not yet complete before the next step.
+      * Some TypeScript errors will show until you save the file.
+    </Callout>
 
-配置好 Better Auth 实例后，运行以下命令生成 `convex/betterAuth/schema.ts`。
+    ```ts title="convex/betterAuth/auth.ts"
+    import { createClient } from "@convex-dev/better-auth";
+    import { convex } from "@convex-dev/better-auth/plugins";
+    import type { GenericCtx } from "@convex-dev/better-auth/utils";
+    import type { BetterAuthOptions } from "better-auth";
+    import { betterAuth } from "better-auth";
+    import { components } from "../_generated/api";
+    import type { DataModel } from "../_generated/dataModel";
+    import authConfig from "../auth.config";
+    import schema from "./schema";
+
+    // Better Auth Component
+    export const authComponent = createClient<DataModel, typeof schema>(
+      components.betterAuth,
+      {
+        local: { schema },
+        verbose: false,
+      },
+    );
+
+    // Better Auth Options
+    export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
+      return {
+        appName: "My App",
+        baseURL: process.env.SITE_URL,
+        secret: process.env.BETTER_AUTH_SECRET,
+        database: authComponent.adapter(ctx),
+        emailAndPassword: {
+          enabled: true,
+        },
+        plugins: [convex({ authConfig })],
+      } satisfies BetterAuthOptions;
+    };
 
-```package-install
-npx auth generate --config ./convex/betterAuth/auth.ts --output ./convex/betterAuth/schema.ts
-```
+    // For `auth` CLI
+    export const options = createAuthOptions({} as GenericCtx<DataModel>);
 
-<Callout type="info">
-如需修改 Better Auth 实例，可通过此命令更新 schema。
-</Callout>
+    // Better Auth Instance
+    export const createAuth = (ctx: GenericCtx<DataModel>) => {
+      return betterAuth(createAuthOptions(ctx));
+    };
+    ```
 
-### 导出适配器函数
+    ### Generate the schema
 
-为 Better Auth 组件导出适配器函数。
+    After configuring your Better Auth instance, run the command below to generate `convex/betterAuth/schema.ts`.
 
-```ts title="convex/betterAuth/adapter.ts"
-import { createApi } from "@convex-dev/better-auth";
-import { createAuthOptions } from "./auth";
-import schema from "./schema";
-
-export const {
-  create,
-  findOne,
-  findMany,
-  updateOne,
-  updateMany,
-  deleteOne,
-  deleteMany,
-} = createApi(schema, createAuthOptions);
-```
-</Step>
-
-<Step>
-## 创建 Better Auth 客户端实例
-
-创建 Better Auth 客户端实例，用于从客户端与 Better Auth 服务器交互。
-
-```ts title="lib/auth-client.ts"
-import { convexClient } from "@convex-dev/better-auth/client/plugins";
-import { createAuthClient } from "better-auth/react";
-
-export const authClient = createAuthClient({
-  plugins: [convexClient()],
-});
-```
-</Step>
-
-<Step>
-## 配置 Next.js 服务器辅助函数
-
-配置一套辅助方法，用于支持认证的 SSR、服务器函数和路由处理。
-
-```ts title="lib/auth-server.ts"
-import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs";
-
-export const {
-  handler,
-  preloadAuthQuery,
-  isAuthenticated,
-  getToken,
-  fetchAuthQuery,
-  fetchAuthMutation,
-  fetchAuthAction,
-} = convexBetterAuthNextJs({
-  convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
-});
-```
-</Step>
-
-<Step>
-## 挂载处理器
-
-在您的 Convex 部署中注册 Better Auth 路由处理器。
-
-```ts title="convex/http.ts"
-import { httpRouter } from "convex/server";
-import { authComponent, createAuth } from "./betterAuth/auth";
-
-const http = httpRouter();
-
-authComponent.registerRoutes(http, createAuth);
-
-export default http;
-```
-
-设置路由处理器，将 Next.js 的认证请求代理到您的 Convex 部署。
-
-```ts title="app/api/auth/[...all]/route.ts"
-import { handler } from "@/lib/auth-server";
-
-export const { GET, POST } = handler;
-```
-</Step>
-
-<Step>
-## 设置 Convex 客户端提供者
-
-创建一个 `ConvexClientProvider` 组件。
-
-```tsx title="components/ConvexClientProvider.tsx"
-"use client";
-
-import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
-import { ConvexReactClient } from "convex/react";
-import { authClient } from "@/lib/auth-client";
-
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
-export function ConvexClientProvider({
-  children,
-  initialToken,
-}: {
-  children: React.ReactNode;
-  initialToken?: string | null;
-}) {
-  return (
-    <ConvexBetterAuthProvider
-      client={convex}
-      authClient={authClient}
-      initialToken={initialToken}
-    >
-      {children}
-    </ConvexBetterAuthProvider>
-  );
-}
-```
-
-使用 `ConvexClientProvider` 组件包装您的应用。
-
-```tsx title="app/layout.tsx"
-import { ConvexClientProvider } from "@/components/ConvexClientProvider";
-import { getToken } from "@/lib/auth-server";
-
-export default async function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const token = await getToken();
-  return (
-    <html>
-      <body>
-        <ConvexClientProvider initialToken={token}>
+    ```package-install
+    npx auth generate --config ./convex/betterAuth/auth.ts --output ./convex/betterAuth/schema.ts
+    ```
+
+    <Callout type="info">
+      If you need to modify your Better Auth instance, use this command to update the schema.
+    </Callout>
+
+    ### Export adapter functions
+
+    Export adapter functions for the Better Auth component.
+
+    ```ts title="convex/betterAuth/adapter.ts"
+    import { createApi } from "@convex-dev/better-auth";
+    import { createAuthOptions } from "./auth";
+    import schema from "./schema";
+
+    export const {
+      create,
+      findOne,
+      findMany,
+      updateOne,
+      updateMany,
+      deleteOne,
+      deleteMany,
+    } = createApi(schema, createAuthOptions);
+    ```
+  </Step>
+
+  <Step>
+    ## Create the Better Auth client instance
+
+    Create the Better Auth client instance for interacting with the Better Auth server from your client.
+
+    ```ts title="lib/auth-client.ts"
+    import { convexClient } from "@convex-dev/better-auth/client/plugins";
+    import { createAuthClient } from "better-auth/react";
+
+    export const authClient = createAuthClient({
+      plugins: [convexClient()],
+    });
+    ```
+  </Step>
+
+  <Step>
+    ## Configure Next.js server helpers
+
+    Configure a set of helper functions for authenticated SSR, server functions, and route handlers.
+
+    ```ts title="lib/auth-server.ts"
+    import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs";
+
+    export const {
+      handler,
+      preloadAuthQuery,
+      isAuthenticated,
+      getToken,
+      fetchAuthQuery,
+      fetchAuthMutation,
+      fetchAuthAction,
+    } = convexBetterAuthNextJs({
+      convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
+      convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+    });
+    ```
+  </Step>
+
+  <Step>
+    ## Mount handlers
+
+    Register Better Auth route handlers on your Convex deployment.
+
+    ```ts title="convex/http.ts"
+    import { httpRouter } from "convex/server";
+    import { authComponent, createAuth } from "./betterAuth/auth";
+
+    const http = httpRouter();
+
+    authComponent.registerRoutes(http, createAuth);
+
+    export default http;
+    ```
+
+    Set up route handlers to proxy auth requests from Next.js to your Convex deployment.
+
+    ```ts title="app/api/auth/[...all]/route.ts"
+    import { handler } from "@/lib/auth-server";
+
+    export const { GET, POST } = handler;
+    ```
+  </Step>
+
+  <Step>
+    ## Set up Convex client provider
+
+    Create a `ConvexClientProvider` component.
+
+    ```tsx title="components/ConvexClientProvider.tsx"
+    "use client";
+
+    import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+    import { ConvexReactClient } from "convex/react";
+    import { authClient } from "@/lib/auth-client";
+
+    const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+    export function ConvexClientProvider({
+      children,
+      initialToken,
+    }: {
+      children: React.ReactNode;
+      initialToken?: string | null;
+    }) {
+      return (
+        <ConvexBetterAuthProvider
+          client={convex}
+          authClient={authClient}
+          initialToken={initialToken}
+        >
           {children}
-        </ConvexClientProvider>
-      </body>
-    </html>
-  );
-}
-```
-</Step>
+        </ConvexBetterAuthProvider>
+      );
+    }
+    ```
+
+    Wrap your app with the `ConvexClientProvider` component.
+
+    ```tsx title="app/layout.tsx"
+    import { ConvexClientProvider } from "@/components/ConvexClientProvider";
+    import { getToken } from "@/lib/auth-server";
+
+    export default async function RootLayout({
+      children,
+    }: Readonly<{
+      children: React.ReactNode;
+    }>) {
+      const token = await getToken();
+      return (
+        <html>
+          <body>
+            <ConvexClientProvider initialToken={token}>
+              {children}
+            </ConvexClientProvider>
+          </body>
+        </html>
+      );
+    }
+    ```
+  </Step>
 </Steps>
 
 ## 完成 🎉
 
 您现已准备好开始使用 Better Auth 结合 Convex。
 
----
+***
 
 ## 使用方法
 
@@ -465,7 +467,7 @@ export default Page;
 Convex 查询可以在服务器组件中预加载，并通过 `preloadAuthQuery` 和 `usePreloadedAuthQuery` 在客户端组件中渲染。
 
 <Callout type="info">
-`preloadAuthQuery` 建议用于根据数据状态处理不同 UI，而不是用于资源保护。
+  `preloadAuthQuery` is recommended for use when you want to handle different UI based on the data state, rather than for protecting resources.
 </Callout>
 
 *在服务器组件中预加载：*
@@ -525,6 +527,6 @@ export default Header;
 
 ## 额外资源
 
-- [Convex 文档](https://docs.convex.dev/home)
-- [`@convex-dev/better-auth` 文档](https://labs.convex.dev/better-auth)
-- [`@convex-dev/better-auth` GitHub 仓库](https://github.com/get-convex/better-auth)
+* [Convex Documentation](https://docs.convex.dev/home)
+* [`@convex-dev/better-auth` Documentation](https://labs.convex.dev/better-auth)
+* [`@convex-dev/better-auth` GitHub Repository](https://github.com/get-convex/better-auth)

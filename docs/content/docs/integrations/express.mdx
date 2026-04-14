@@ -8,7 +8,7 @@ description: 将 Better Auth 与 Express 集成。
 开始之前，确保你已经配置了 Better Auth 实例。如果还没有，请查看[安装](/docs/installation)。
 
 <Callout>
-请注意，不支持 CommonJS (cjs)。请通过在 `package.json` 中设置 `"type": "module"` 或在 `tsconfig.json` 中配置使用 ES 模块来使用 ECMAScript 模块 (ESM)。
+  注意 CommonJS (cjs) 不受支持。请通过 `package.json` 中设置 `"type": "module"` 或配置 `tsconfig.json` 使用 ES 模块来改用 ECMAScript 模块 (ESM)。
 </Callout>
 
 ### 挂载处理器
@@ -16,7 +16,7 @@ description: 将 Better Auth 与 Express 集成。
 为了让 Better Auth 处理请求，我们需要将处理器挂载到一个 API 路由上。创建一个 catch-all 路由来管理所有对 `/api/auth/*` 的请求（ExpressJS v4）或 `/api/auth/*splat` 的请求（ExpressJS v5），或者使用你在 Better Auth 选项中指定的任意路径。
 
 <Callout type="warn">
-不要在 Better Auth 处理器之前使用 `express.json()`。仅在其他路由上使用它，否则客户端 API 会一直处于“pending”状态。
+  不要在 Better Auth 处理器之前使用 `express.json()`。请仅用于其他路由，否则客户端 API 会卡在“待处理”状态。
 </Callout>
 
 ```ts title="server.ts"
@@ -41,9 +41,9 @@ app.listen(port, () => {
 
 完成设置后，启动服务器。Better Auth 即可使用。你可以向 `/ok` 端点（`/api/auth/ok`）发送一个 `GET` 请求，以验证服务器是否正在运行。
 
-### 跨域资源共享 (Cors) 配置
+### CORS 配置
 
-在将 Better Auth 集成到 Express 服务器时，为了添加 CORS（跨域资源共享）支持，你可以使用 `cors` 中间件。以下是一个更新的示例，展示如何为你的服务器配置 CORS：
+要在集成 Better Auth 时为 Express 服务器添加 CORS（跨域资源共享）支持，你可以使用 `cors` 中间件。以下是一个更新后的示例，展示如何为服务器配置 CORS：
 
 ```ts
 import express from "express";
