@@ -1,5 +1,8 @@
 {
   "app_dir": "/",
   "build_command": "cd docs && pnpm run build",
+  "ignore_dockerfile": true,
+  "install_command": "npm install -g pnpm && pnpm install",
+  "output_dir": "",
   "start_command": "cd docs && pnpm run start"
 }

@@ -89,7 +89,7 @@ description: 学习如何在你的项目中配置 Better Auth。
       </Tab>
 
       <Tab value="postgres">
-        ```ts title="auth.ts"
+        ````ts title="auth.ts"
         import { betterAuth } from "better-auth";
         import { Pool } from "pg";
 
@@ -98,9 +98,9 @@ description: 学习如何在你的项目中配置 Better Auth。
                 // 连接选项
             }),
         })
-      </Tab>
+        </Tab>
 
-      <Tab value="mysql">
+        <Tab value="mysql">
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth";
         import { createPool } from "mysql2/promise";
@@ -110,13 +110,13 @@ description: 学习如何在你的项目中配置 Better Auth。
                 // 连接选项
             }),
         })
-      </Tab>
-    </Tabs>
+        </Tab>
+        </Tabs>
 
-    或者，如果你更喜欢使用 ORM，可以使用内置适配器之一。
+        或者，如果你更喜欢使用 ORM，可以使用内置适配器之一。
 
-    <Tabs items={["drizzle", "prisma", "mongodb"]}>
-      <Tab value="drizzle">
+        <Tabs items={["drizzle", "prisma", "mongodb"]}>
+        <Tab value="drizzle">
         ```ts title="auth.ts"
         import { betterAuth } from "better-auth";
         import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -127,7 +127,7 @@ description: 学习如何在你的项目中配置 Better Auth。
                 provider: "pg", // 或 "mysql"、"sqlite"
             }),
         });
-        ```
+        ````
       </Tab>
 
       <Tab value="prisma">
@@ -331,6 +331,7 @@ description: 学习如何在你的项目中配置 Better Auth。
                 return new Response("Not found", { status: 404 });
             },
         };
+        ```
 
         <Callout type="info">
           **Node.js AsyncLocalStorage 支持**: Better Auth 使用 AsyncLocalStorage 进行异步上下文跟踪。要在 Cloudflare Workers 中启用此功能，请在 `wrangler.toml` 中添加 `nodejs_compat` 标志：
@@ -441,6 +442,7 @@ description: 学习如何在你的项目中配置 Better Auth。
                 },
             },
         })
+        ```
 
         <Callout type="info">
           当调用需要设置 Cookie 的函数（如 `signInEmail` 或 `signUpEmail`）时，你需要处理 TanStack Start 的 Cookie 设置。Better Auth 提供了 `tanstackStartCookies` 插件来自动处理此问题。
