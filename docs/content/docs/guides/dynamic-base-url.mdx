@@ -1,0 +1,155 @@
+---
+title: 动态基础 URL
+description: 为预览部署、多域名以及按请求解析 URL 配置 Better Auth。
+---
+
+当你的应用从不止一个主机名提供服务时，请使用动态基础 URL，例如：
+
+* 像 `myapp.com` 和 `www.myapp.com` 这样的自定义域名
+* 像 `my-app-abc123.vercel.app` 这样的预览部署
+* 像 `feature-branch.myapp.com` 这样的分支环境
+
+配置本身位于 [`baseURL` 选项](/docs/reference/options#baseurl) 中。本指南聚焦于何时使用以及如何安全地组织它。
+
+## 基础设置
+
+将 `baseURL` 配置为带有 `allowedHosts` 白名单的对象：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+
+export const auth = betterAuth({
+	baseURL: {
+		allowedHosts: [
+			"myapp.com",
+			"www.myapp.com",
+			"*.vercel.app",
+		],
+	},
+})
+```
+
+当请求到来时，Better Auth 会从 `x-forwarded-host`、`host` 头，或请求 URL（按该顺序）中提取主机，使用 `allowedHosts` 校验匹配值，并使用匹配到的值来构建特定于该请求的基础 URL。
+
+## 常见部署模式
+
+### Vercel 部署
+
+```ts title="auth.ts"
+export const auth = betterAuth({
+	baseURL: {
+		allowedHosts: [
+			"myapp.com",
+			"www.myapp.com",
+			"*.vercel.app",
+		],
+	},
+})
+```
+
+### 开发 + 生产
+
+```ts title="auth.ts"
+export const auth = betterAuth({
+	baseURL: {
+		allowedHosts: [
+			"localhost:3000",
+			"localhost:5173",
+			"myapp.com",
+			"*.vercel.app",
+		],
+		protocol: process.env.NODE_ENV === "development" ? "http" : "https",
+	},
+})
+```
+
+### 多个生产域名
+
+```ts title="auth.ts"
+export const auth = betterAuth({
+	baseURL: {
+		allowedHosts: [
+			"myapp.com",
+			"myapp.co.uk",
+			"myapp.eu",
+		],
+		protocol: "https",
+	},
+})
+```
+
+## 选择回退（Fallback）
+
+默认情况下，Better Auth 在传入主机不匹配 `allowedHosts` 时会抛出错误。通常这也是更安全的默认行为，因为它会立即暴露代理或部署方面的错误。
+
+如果你需要回退，请显式设置：
+
+```ts title="auth.ts"
+export const auth = betterAuth({
+	baseURL: {
+		allowedHosts: ["myapp.com", "*.vercel.app"],
+		fallback: "https://myapp.com",
+	},
+})
+```
+
+仅在明确地“使用规范（canonical）域名回退”比直接失败更可取时使用它。
+
+## 跨子域名的 Cookie
+
+如果你需要在子域名之间共享 Cookie，你可以在仍使用动态基础 URL 的同时启用 `crossSubDomainCookies`。除非你显式设置 `domain`，Better Auth 会从解析后的主机自动推导 Cookie 域名。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+
+export const auth = betterAuth({
+	baseURL: {
+		allowedHosts: [
+			"auth.example1.com",
+			"auth.example2.com",
+		],
+		protocol: "https",
+	},
+	advanced: {
+		crossSubDomainCookies: {
+			enabled: true,
+		},
+	},
+})
+```
+
+如果你想强制使用一个共享的上级域名，请直接设置：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+
+export const auth = betterAuth({
+	baseURL: {
+		allowedHosts: ["auth.example1.com", "auth.example2.com"],
+		protocol: "https",
+	},
+	advanced: {
+		crossSubDomainCookies: {
+			enabled: true,
+			domain: ".example.com",
+		},
+	},
+})
+```
+
+完整的 Cookie 行为请查看 [Cookies](/docs/concepts/cookies#cross-subdomain-cookies)。
+
+## 安全模型
+
+动态基础 URL 使用白名单模型：
+
+1. 只接受列在 `allowedHosts` 中的主机
+2. 在使用前会对 `x-forwarded-host` 和 `host` 头进行清理并校验
+3. 未知主机会抛出错误，除非你提供了 `fallback`
+4. `allowedHosts` 会自动添加到 [`trustedOrigins`](/docs/reference/options#trustedorigins) 中（本地主机条目会同时添加 `http` 和 `https`）
+
+这会让多域名支持保持“显式”的配置方式，而不是信任任意的头部或平台特定行为。
+
+## 参考
+
+关于精确的选项形状以及按属性级别的行为，请参阅 [`baseURL` 在选项参考中的说明](/docs/reference/options#baseurl)。

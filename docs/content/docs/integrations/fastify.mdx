@@ -60,12 +60,11 @@ fastify.route({
       // 将响应转发给客户端
       reply.status(response.status);
       response.headers.forEach((value, key) => reply.header(key, value));
-      reply.send(response.body ? await response.text() : null);
-
+      return reply.send(response.body ? await response.text() : null);
     } catch (error) {
-      fastify.log.error("认证错误：", error);
-      reply.status(500).send({ 
-        error: "内部认证错误",
+      fastify.log.error("Authentication Error:", error);
+      return reply.status(500).send({ 
+        error: "内部身份验证错误",
         code: "AUTH_FAILURE"
       });
     }

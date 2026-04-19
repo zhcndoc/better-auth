@@ -74,7 +74,7 @@ const mcpAuth = createMcpAuthClient({
 
 // 作为请求处理器包装器使用
 const handler = mcpAuth.handler(async (req, session) => {
-    // session 包含 userId, scopes, accessToken, clientId 等信息
+    // session 包含 userId、scopes、accessToken、clientId 等信息
     return new Response("OK");
 });
 
@@ -260,14 +260,14 @@ export const auth = betterAuth({
 
 ### 其他 SSO 改进
 
-* **Signed SAML AuthnRequests**: Configurable signature and digest algorithms.
-* **Multi-domain providers**: Bind SSO providers to multiple domains.
-* **InResponseTo validation**: Prevent replay attacks on SAML assertions.
-* **Algorithm restrictions**: Block deprecated signature/digest algorithms.
-* **Clock skew tolerance**: Configurable tolerance for SAML timestamp validation.
-* **OIDC ID token `aud` claim validation**: Verify audience in OpenID Connect flows.
-* **Provider CRUD endpoints**: List, get, update, and delete SSO providers via API.
-* **Shared OIDC redirect URI**: Single redirect URI for all OIDC providers.
+* **Signed SAML AuthnRequests**: 可配置签名和摘要算法。
+* **Multi-domain providers**: 将 SSO 提供者绑定到多个域。
+* **InResponseTo validation**: 防止 SAML 断言重放攻击。
+* **Algorithm restrictions**: 阻止已弃用的签名/摘要算法。
+* **Clock skew tolerance**: 可配置对 SAML 时间戳校验的容忍度。
+* **OIDC ID token `aud` 声明验证**: 在 OpenID Connect 流程中验证受众。
+* **Provider CRUD endpoints**: 通过 API 列出、获取、更新和删除 SSO 提供者。
+* **Shared OIDC redirect URI**: 所有 OIDC 提供者共用一个重定向 URI。
 
 ***
 
@@ -390,7 +390,7 @@ hooks: {
 
 Better Auth 现可从传入请求动态解析基础 URL，让它无缝适配 Vercel 预览部署、多域名配置以及反向代理。
 
-[👉 了解动态基础 URL](https://www.better-auth.com/docs/concepts/dynamic-base-url)
+[👉 Read more about dynamic base URL](https://www.better-auth.com/docs/guides/dynamic-base-url)
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -448,11 +448,11 @@ verification: {
 
 限流器现在区分请求与响应阶段处理，强化默认配置，支持 IPv6。
 
-* **Separate request and response phases**: Rejected requests are no longer counted against the rate limit.
-* **Hardened default rules**: Sign-in/sign-up limited to 3 requests per 10 seconds; password reset/OTP limited to 3 requests per 60 seconds.
-* **IPv6 subnet support**: Rate limiting by IPv6 prefix with configurable subnet size.
-* **Plugin-level rate limit rules**: Plugins can define their own rate limit rules.
-* **Expired entry cleanup**: Automatic cleanup for the memory storage backend.
+* **Separate request and response phases**: 被拒绝的请求不再计入限流。
+* **Hardened default rules**: 登录/注册在 10 秒内限制为 3 次；密码重置/OTP 在 60 秒内限制为 3 次。
+* **IPv6 subnet support**: 按 IPv6 前缀限流，并可配置子网大小。
+* **Plugin-level rate limit rules**: 插件可以定义自己的限流规则。
+* **Expired entry cleanup**: 为内存存储后端提供自动清理。
 
 ```tsx
 import { betterAuth } from "better-auth";
@@ -538,13 +538,15 @@ export const auth = betterAuth({
 import { betterAuth } from "better-auth";
 import { testUtils } from "better-auth/plugins";
 
-export const auth = betterAuth({
+export const testAuth = betterAuth({
     plugins: [testUtils({ captureOTP: true })],
 });
 ```
 
+建议仅在测试用的认证实例中添加 `testUtils`，例如 `auth.test.ts`。它不会暴露公开路由，但会在 `ctx.test` 上添加特权级辅助函数，并且条件化的插件数组可能会削弱类型推断。
+
 ```tsx
-const ctx = await auth.$context;
+const ctx = await testAuth.$context;
 const test = ctx.test;
 
 // 创建并保存测试用户
@@ -578,7 +580,7 @@ await authClient.updateSession({
 
 ### 适配器拆分
 
-数据库适配器已拆分成独立包。这是一次重大的架构调整，减少了主包体积并支持适配器独立版本管理。
+数据库适配器已拆分成独立包。这是一项重大的架构调整，减少了主包体积并支持适配器独立版本管理。
 
 | Package                        | Description         |
 | ------------------------------ | ------------------- |
@@ -627,7 +629,7 @@ export default {
 ### 认证与会话
 
 * **`verifyPassword` API**: 新增服务器端端点，用于验证当前用户的密码。
-* **`setShouldSkipSessionRefresh`**: 编程方式跳过特定请求的会话刷新。
+* **`setShouldSkipSessionRefresh`**: 以编程方式跳过特定请求的会话刷新。
 * **`deferSessionRefresh`**: 支持只读副本数据库设置。
 * **可等待的社会化提供者配置**: 提供者配置现在可以是异步的。
 * **注册时限制枚举**: 当需要电子邮件验证时，注册不会泄露现有账户。

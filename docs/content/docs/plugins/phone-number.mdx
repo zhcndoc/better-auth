@@ -203,7 +203,21 @@ const isVerified = await authClient.phoneNumber.verify({
 })
 ```
 
-### 禁用会话创建
+### Remove Phone Number
+
+已登录用户可以通过向 `updateUser` 传递 `null` 来释放其电话号码。插件会原子性地清除电话号码并重置已验证标志，从而释放该号码，使其他账号可以通过标准验证流程来认领它。
+
+```ts
+import { authClient } from "@/lib/auth-client";
+
+await authClient.updateUser({
+    phoneNumber: null // [!code highlight]
+})
+```
+
+出于安全原因，通过 `updateUser` 更新非空电话号码仍然被阻止。将电话号码更改为不同号码始终需要通过 `verify` 并设置 `updatePhoneNumber: true` 进行 OTP 验证。
+
+### Disable Session Creation
 
 默认情况下，插件在验证电话号码后会为用户创建会话。您可以通过向 `verify` 方法传递 `disableSession: true` 来禁用此行为。
 

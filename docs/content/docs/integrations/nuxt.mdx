@@ -18,7 +18,7 @@ export default defineEventHandler((event) => {
 ```
 
 <Callout type="info">
-  You can change the path on your better-auth configuration but it's recommended to keep it as `/api/auth/[...all]`
+  你可以在更改 better-auth 配置中的路径，但建议保留为 `/api/auth/[...all]`
 </Callout>
 
 ## 创建客户端
@@ -63,7 +63,7 @@ const session = authClient.useSession()
 
 ### 服务器端使用
 
-导出自 auth 实例的 `api` 对象包含了你可以在服务器端执行的所有操作。Better Auth 中创建的每个端点都可以作为函数调用，包括插件端点。
+从 auth 实例导出的 `api` 对象包含你在服务器上可以执行的所有操作。Better Auth 内部创建的每个端点都可以作为函数调用。包括插件端点。
 
 **示例：在服务器 API 路由中获取会话**
 
@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
 
 ### SSR 使用
 
-如果你正在使用带有 SSR 的 Nuxt，可以在 `setup` 函数中的页面组件使用 `useSession` 函数，并传递 `useFetch` 以使其在 SSR 中正常工作。
+如果你正在使用带有 SSR 的 Nuxt，可以在页面组件的 `setup` 函数中使用 `useSession` 函数，并传递 `useFetch` 以使其在 SSR 中正常工作。
 
 ```vue title="index.vue"
 <script setup lang="ts">
@@ -120,5 +120,5 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 * [Nuxt and Nuxt Hub example](https://github.com/atinux/nuxthub-better-auth) on GitHub.
 * [NuxtZzle is Nuxt,Drizzle ORM example](https://github.com/leamsigc/nuxt-better-auth-drizzle) on GitHub [preview](https://nuxt-better-auth.giessen.dev/)
 * [Nuxt example](https://stackblitz.com/github/better-auth/examples/tree/main/nuxt-example) on StackBlitz.
-* [NuxSaaS (Github)](https://github.com/NuxSaaS/NuxSaaS) is a full-stack SaaS Starter Kit that leverages Better Auth for secure and efficient user authentication. [Demo](https://nuxsaas.com/)
-* [NuxtOne (Github)](https://github.com/nuxtone/nuxt-one) is a Nuxt-based starter template for building AIaaS (AI-as-a-Service) applications.
+* [NuxSaaS (Github)](https://github.com/NuxSaaS/NuxSaaS) 是一个全栈 SaaS 启动套件，它利用 Better Auth 以实现安全且高效的用户认证。[Demo](https://nuxsaas.com/)
+* [NuxtOne (Github)](https://github.com/nuxtone/nuxt-one) 是一个基于 Nuxt 的启动模板，用于构建 AIaaS（AI-as-a-Service）应用。

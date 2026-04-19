@@ -45,6 +45,7 @@ interface SecurityOptions {
   freeTrialAbuse?: FreeTrialAbuseConfig;
   compromisedPassword?: CompromisedPasswordConfig;
   emailValidation?: EmailValidationConfig;
+  emailNormalization?: { enabled?: boolean };
   staleUsers?: StaleUsersConfig;
   challengeDifficulty?: number;
 }
@@ -274,9 +275,29 @@ sentinel({
 * `medium` - 还检查有效的 MX 记录
 * `high` - 额外的启发式检查
 
-## 工作量证明（PoW）挑战
+### 邮箱规范化
 
-当安全检查导致“challenge”动作时，Sentinel会发起工作量证明（PoW）挑战，客户端必须完成挑战。
+Sentinel 会在注册和登录之前规范化邮箱地址，以防止别名和提供商的怪癖导致重复账户或登录不匹配。规范化包括将邮箱转为小写、在常见提供商上移除 plus-address 标签（例如 `user+tag@gmail.com` → `user@gmail.com`）、移除 Gmail 风格地址中的点，以及将 `googlemail.com` 映射到 `gmail.com`。
+
+当你希望将此功能与一次性域名验证（`emailValidation`）分开控制时，请使用 `security.emailNormalization`：
+
+```ts
+sentinel({
+  apiKey: process.env.BETTER_AUTH_API_KEY,
+  security: {
+    emailValidation: {
+      enabled: false, // 跳过一次性 / MX 检查
+    },
+    emailNormalization: {
+      enabled: true, // 仍进行规范化以去重和保持一致的登录
+    },
+  },
+}),
+```
+
+## Proof-of-Work Challenges
+
+当安全检查导致“challenge”动作时，Sentinel 会发起工作量证明（PoW）挑战，客户端必须完成挑战。
 
 ### PoW 工作原理
 
@@ -302,7 +323,7 @@ sentinel({
 
 ### sentinelClient()
 
-客户端插件负责设备指纹识别及自动完成PoW挑战。
+客户端插件负责设备指纹识别及自动完成 PoW 挑战。
 
 ```ts
 import { createAuthClient } from "better-auth/client";
@@ -331,7 +352,7 @@ export const authClient = createAuthClient({
 * 免费试用滥用防护
 * 设备跟踪
 
-### PoW解答请求头
+### PoW 解答请求头
 
 启用自动解决后，解答通过 `X-PoW-Solution` 头发送。
 
@@ -411,7 +432,7 @@ export const authClient = createAuthClient({
 
 ## 安全事件
 
-Sentinel跟踪以下安全事件类型：
+Sentinel 跟踪以下安全事件类型：
 
 | 事件类型                      | 描述                         |
 | ----------------------------- | ---------------------------- |

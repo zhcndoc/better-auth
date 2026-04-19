@@ -51,7 +51,9 @@ export const authClient =  createAuthClient({
 
 ## RSC 和服务器操作
 
-**示例：在服务器操作中获取 Session**
+从认证实例导出的 `api` 对象包含你在服务器端可以执行的所有操作。Better Auth 内部创建的每个端点都可以像函数一样被调用，包括插件端点。
+
+**示例：在服务器操作中获取 session**
 
 ```tsx title="server.ts"
 import { auth } from "@/lib/auth"
@@ -175,7 +177,7 @@ export const config = {
 ```
 
 <Callout type="info">
-  **迁移自中间件（Migration from middleware）：** 将 `middleware.ts` 重命名为 `proxy.ts`，并将 `middleware` 函数重命名为 `proxy`。所有 Better Auth 方法保持不变。
+  **从中间件迁移（Migration from middleware）：** 将 `middleware.ts` 重命名为 `proxy.ts`，并将 `middleware` 函数重命名为 `proxy`。所有 Better Auth 方法保持不变。
 </Callout>
 
 ### Next.js 15.2.0+（Node.js 运行时中间件）

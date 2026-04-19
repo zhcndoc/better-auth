@@ -1,0 +1,45 @@
+---
+title: 请重启该流程
+description: 无法解析 OAuth 状态。必须重新启动登录流程。
+---
+
+## 这是什么？
+
+这是一个兜底错误，会在 OAuth 回调期间触发：当 Better Auth 无法解析或验证 `state` 参数时，且失败 **不是** `state_security_mismatch`。这意味着 OAuth 流程的状态数据无法恢复，用户必须再次开始登录流程。
+
+在底层，`parseState` 会委托给 `parseGenericState`（它同时处理 cookie 和数据库两种状态策略）。如果该函数抛出 code 为 `state_security_mismatch` 的 `StateError`，你会被重定向到 `?error=state_mismatch`。对于其他任何失败——例如缺失的验证记录、解密错误、状态过期、数据格式不正确或意外异常——重定向都会落到这里。
+
+## 常见原因
+
+* **验证记录被删除或过期。** 状态记录有效期为 10 分钟。如果用户在提供方页面停留时间过长，回调到达之前记录可能已经被清理。
+* **加密状态 cookie 无法被解密。** 当使用 `"cookie"` 状态策略时，在流程开始到回调之间轮转 `BETTER_AUTH_SECRET` 会导致 cookie 无法读取。
+* **状态 cookie 完全缺失。** 浏览器的 cookie 限制、跨域重定向或代理移除，可能会阻止状态 cookie 随回调一起被发送回去。
+* **回调被重复调用（重放）。** 刷新回调 URL，或在成功登录后按返回按钮，会在首次使用时删除验证记录，因此第二次尝试将找不到任何东西。
+* **存在多个并发的登录尝试。** 打开多个登录页签会覆盖状态 cookie；只有最后一个页签的状态是有效的。
+* **二级存储（Redis / KV）驱逐了该键。** 如果在未配置数据库兜底的情况下使用 `secondaryStorage`，内存压力或 TTL 过期可能会在回调到来之前静默移除状态。
+
+## 如何解决
+
+### 重试登录流程
+
+在大多数情况下，只需将用户重定向回你的登录页面，并启动一个新的 OAuth 流程即可解决该问题。错误页面应包含清晰的“重试”链接或按钮。
+
+### 检查你的错误页面
+
+Better Auth 会使用 `?error=please_restart_the_process` 将用户重定向到 `{onAPIError.errorURL}`（或默认的 `/api/auth/error`）。请确保你的错误页面能处理此代码，并引导用户进行重试。
+
+### 排查持续性故障
+
+如果用户反复遇到此错误：
+
+* 确保你的数据库（或 Redis）在应用的所有实例之间是**共享的**。
+* 确认 `BETTER_AUTH_SECRET` 在活跃流程期间没有被轮转。
+* 确认 cookie 没有被阻止或被移除——在重定向前后检查 DevTools -> Application -> Cookies 中的
+  `better-auth.state` 或 `better-auth.oauth_state` cookie。
+* 如果使用 `"cookie"` 策略，请确保你的域名以及 `SameSite` / `Secure` 属性设置正确。
+* 查看服务器日志中的底层错误——在重定向之前，Better Auth 会在日志中记录 `"Failed to parse state"`，并附带原始异常。
+
+### 相关错误
+
+此错误与 `state_mismatch` 密切相关。区别在于：`state_mismatch` 用于特定情况，即已签名的状态 cookie 与预期不匹配（内部为 `state_security_mismatch`）；而 `please_restart_the_process` 覆盖所有其他状态解析失败。请查看
+[state\_mismatch](/docs/reference/errors/state_mismatch) 页面，以获得每个状态错误代码和与策略相关的调试指导的详细拆解。

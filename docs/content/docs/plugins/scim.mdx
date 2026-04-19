@@ -3,7 +3,7 @@ title: 跨域身份管理系统（SCIM）
 description: 将 SCIM 集成到您的应用程序中。
 ---
 
-跨域身份管理系统（[SCIM](https://simplecloud.info/#Specification)）通过标准化协议，使多域场景中的身份管理变得更容易支持。  
+跨域身份管理系统（[SCIM](https://simplecloud.info/#Specification)）通过标准化协议，使多域场景中的身份管理更容易支持。  
 此插件公开了一个符合规范的 [SCIM 2.0](https://simplecloud.info/#Specification) 服务器，允许第三方身份提供商将身份同步到您的服务。
 
 ## 安装
@@ -90,9 +90,26 @@ description: 将 SCIM 集成到您的应用程序中。
 * **SCIM 基础 URL**：这应该是 SCIM 服务器的完全限定 URL（例如 `http://your-app.com/api/auth/scim/v2`）
 * **SCIM 承载令牌**：请参阅[生成 SCIM 令牌](#generating-a-scim-token)
 
+### Self-Service Directory Sync
+
+如果您使用 [Better Auth Infrastructure](https://dash.better-auth.com/sign-in)，在仪表板中会获得自助目录同步。组织管理员可以创建和管理 SCIM 目录连接，并在不直接调用 SCIM API 的情况下轮换承载令牌。
+
+仪表板可在：
+
+```
+https://dash.better-auth.com/[project]/organization/[orgId]/enterprise
+```
+
+从仪表板您可以：
+
+* 创建和移除作用于某个组织的目录连接
+* 当您的身份提供商需要轮换时，重新生成 SCIM 承载令牌
+
+这消除了设置 SCIM 时通常需要的来回沟通，将入职时间从数天缩短到数分钟。
+
 ### 生成 SCIM 令牌
 
-在身份提供商开始将信息同步到您的 SCIM 服务器之前，您需要生成一个 SCIM 令牌，供身份提供商用于身份验证。
+在身份提供商开始将信息同步到您的 SCIM 服务器之前，您需要生成一个 SCIM 令牌，让身份提供商用于身份验证。
 
 SCIM 令牌是一种简单的承载令牌，可以通过以下接口生成：
 
@@ -534,7 +551,7 @@ export const scimProviderOwnershipFields = [
 
 - `providerOwnership`: `{ enabled: boolean }` — 启用时，将每个提供商连接关联至其生成令牌的用户。详见[连接所有权](#scim-提供商连接所有权)。默认 `{ enabled: false }`。
 
-* `requiredRole`: `string[]` — Minimum organization role(s) allowed to generate organization-scoped tokens and manage organization-scoped connections. Defaults to `["admin", organization.creatorRole ?? "owner"]`.
+* `requiredRole`: `string[]` — 允许生成组织范围令牌并管理组织范围连接的最小组织角色。默认值为 `["admin", organization.creatorRole ?? "owner"]`。
 
 ```ts title="仅允许所有者管理组织范围的 SCIM 连接"
 scim({

@@ -77,7 +77,7 @@ npx auth login
     将设备授权插件添加到客户端。
 
     ```ts title="auth-client.ts"
-    import { createAuthClient } from "better-auth/client";
+    import { createAuthClient } from "better-auth/client"
     import { deviceAuthorizationClient } from "better-auth/client/plugins"; // [!code highlight]
 
     export const authClient = createAuthClient({
@@ -293,7 +293,7 @@ export default function DeviceAuthorizationPage() {
 export default function DeviceApprovalPage() {
   const { user } = useAuth(); // 必须已登录
   const searchParams = useSearchParams();
-  const userCode = searchParams.get("userCode");
+  const userCode = searchParams.get("user_code");
   const [isProcessing, setIsProcessing] = useState(false);
   
   const handleApprove = async () => {
@@ -573,11 +573,11 @@ authenticateCLI().catch((err) => {
 
 无客户端特定配置选项。插件添加以下方法：
 
-* **device()**: Verify user code validity
-* **device.code()**: Request device and user codes
-* **device.token()**: Poll for access token
-* **device.approve()**: Approve device (requires authentication)
-* **device.deny()**: Deny device (requires authentication)
+* **device()**: 验证用户码有效性
+* **device.code()**: 请求设备码和用户码
+* **device.token()**: 轮询访问令牌
+* **device.approve()**: 批准设备（需要身份验证）
+* **device.deny()**: 拒绝设备（需要身份验证）
 
 ## 模式
 
