@@ -7,6 +7,10 @@ description: 将单点登录（SSO）集成到您的应用程序中。
 
 单点登录（SSO）允许用户使用一套凭证登录多个应用。本插件支持 OpenID Connect（OIDC）、OAuth2 提供者和 SAML 2.0。
 
+<Callout>
+  需要自助式 SSO，让您的客户可以自行配置 SSO 连接？[联系企业版](/enterprise)。
+</Callout>
+
 ## 安装
 
 <Steps>
@@ -170,7 +174,7 @@ Better Auth 会自动从以下地址抓取并验证提供者的 [OpenID Connect 
 
 这使得 `oidcConfig` 中的大多数端点字段变为**可选**，它们会从身份提供者（IdP）自动填充。
 
-<APIMethod path="/sso/register" method="POST" requireSession note="Minimal OIDC configuration — endpoints are discovered automatically from the issuer.">
+<APIMethod path="/sso/register" method="POST" requireSession note="最小 OIDC 配置 — 端点会根据 issuer 自动发现。">
   ```ts
   type registerSSOProvider = {
       /**
@@ -352,7 +356,7 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
             digestAlgorithm: "sha256",
             identifierFormat: "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
             idpMetadata: {
-                metadata: "<!-- IdP Metadata XML -->",
+                metadata: "<!-- IdP 元数据 XML -->",
                 privateKey: "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----",
                 privateKeyPass: "your-private-key-password",
                 isAssertionEncrypted: true,
@@ -360,7 +364,7 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
                 encPrivateKeyPass: "your-encryption-key-password"
             },
             spMetadata: {
-                metadata: "<!-- SP Metadata XML -->",
+                metadata: "<!-- SP 元数据 XML -->",
                 binding: "post",
                 privateKey: "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----",
                 privateKeyPass: "your-sp-private-key-password",
@@ -403,7 +407,7 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
                 digestAlgorithm: "sha256",
                 identifierFormat: "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
                 idpMetadata: {
-                    metadata: "<!-- IdP Metadata XML -->",
+                    metadata: "<!-- IdP 元数据 XML -->",
                     privateKey: "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----",
                     privateKeyPass: "your-private-key-password",
                     isAssertionEncrypted: true,
@@ -411,7 +415,7 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
                     encPrivateKeyPass: "your-encryption-key-password"
                 },
                 spMetadata: {
-                    metadata: "<!-- SP Metadata XML -->",
+                    metadata: "<!-- SP 元数据 XML -->",
                     binding: "post",
                     privateKey: "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----",
                     privateKeyPass: "your-sp-private-key-password",
@@ -698,9 +702,9 @@ const auth = betterAuth({
 * 基于 SSO 属性自动角色分配
 * 通过 SSO 管理团队成员身份
 
-* Enterprise SSO where each company/domain maps to an organization
-* Automatic role assignment based on SSO attributes
-* Managing team memberships through SSO
+* 企业 SSO 场景，一个公司/域对应一个组织
+* 基于 SSO 属性自动角色分配
+* 通过 SSO 管理团队成员身份
 
 #### 基础组织预置
 
@@ -793,9 +797,9 @@ https://dash.better-auth.com/[project]/organization/[orgId]/enterprise
 
 面板功能：
 
-* **Generate onboarding links** for enterprise customers to self-configure their SAML provider
-* **Monitor SSO connection status** for each organization
-* **Manage provider configurations** without writing code
+* **为企业客户生成 onboarding 链接**，以便其自助配置 SAML 提供者
+* **监控每个组织的 SSO 连接状态**
+* **无需编写代码即可管理提供者配置**
 
 极大减少企业 SSO 上线时间，从数天缩短至几分钟。
 
@@ -842,9 +846,9 @@ await auth.api.registerSSOProvider({
 
 ### 预置最佳实践
 
-#### 1. Idempotent Operations
+#### 1. 幂等操作
 
-If you enable `provisionUserOnEveryLogin`, make sure your provisioning functions can be safely run multiple times:
+如果启用 `provisionUserOnEveryLogin`，请确保你的预置函数可以安全地多次运行：
 
 ```ts
 provisionUser: async ({ user, userInfo }) => {
@@ -860,9 +864,9 @@ provisionUser: async ({ user, userInfo }) => {
 },
 ```
 
-#### 2. Error Handling
+#### 2. 错误处理
 
-Handle errors gracefully to avoid blocking user sign-in:
+优雅地处理错误，避免阻塞用户登录：
 
 ```ts
 provisionUser: async ({ user, userInfo }) => {
@@ -876,9 +880,9 @@ provisionUser: async ({ user, userInfo }) => {
 },
 ```
 
-#### 3. Conditional Provisioning
+#### 3. 条件预置
 
-Only run certain provisioning steps when needed:
+仅在需要时运行某些预置步骤：
 
 ```ts
 organizationProvisioning: {
@@ -895,7 +899,7 @@ organizationProvisioning: {
 
 ## SAML 配置
 
-### Default SSO Provider
+### 默认 SSO 提供者
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -915,7 +919,7 @@ const auth = betterAuth({
                         callbackUrl: "http://localhost:3000/api/auth/sso/saml2/sp/acs/default-saml",
                         spMetadata: {
                             entityID: "http://localhost:3000/api/auth/sso/saml2/sp/metadata",
-                            metadata: "<!-- Your SP Metadata XML -->",
+                            metadata: "<!-- 你的 SP 元数据 XML -->",
                         }
                     }
                 }
@@ -925,9 +929,9 @@ const auth = betterAuth({
 });
 ```
 
-The defaultSSO provider will be used when:
+在以下情况下会使用 defaultSSO 提供者：
 
-1. No matching provider is found in the database
+1. 数据库中未找到匹配的提供者
 
 这允许您无需数据库配置便测试 SAML 认证。defaultSSO 支持与正常 SAML 提供者相同的配置选项。
 
@@ -935,13 +939,13 @@ The defaultSSO provider will be used when:
 
 注册 SAML 提供者时须提供服务提供者（SP）元数据：
 
-* **metadata**: XML metadata for the Service Provider
-* **binding**: The binding method, typically "post" or "redirect"
-* **privateKey**: Private key for signing AuthnRequests
-* **privateKeyPass**: Password for the private key
-* **isAssertionEncrypted**: Whether assertions should be encrypted
-* **encPrivateKey**: Private key for decryption (if encryption is enabled)
-* **encPrivateKeyPass**: Password for the encryption private key
+* **metadata**: 服务提供者的 XML 元数据
+* **binding**: 绑定方法，通常为 "post" 或 "redirect"
+* **privateKey**: 用于签名 AuthnRequests 的私钥
+* **privateKeyPass**: 私钥密码
+* **isAssertionEncrypted**: 断言是否应加密
+* **encPrivateKey**: 用于解密的私钥（如果启用了加密）
+* **encPrivateKeyPass**: 加密私钥密码
 
 ### 签名 AuthnRequests
 
@@ -963,12 +967,12 @@ samlConfig: {
 
 还须提供身份提供者（IdP）配置：
 
-* **metadata**: XML metadata from your Identity Provider
-* **privateKey**: Private key for the IdP communication (optional)
-* **privateKeyPass**: Password for the IdP private key (if encrypted)
-* **isAssertionEncrypted**: Whether assertions from IdP are encrypted
-* **encPrivateKey**: Private key for IdP assertion decryption
-* **encPrivateKeyPass**: Password for the IdP decryption key
+* **metadata**: 来自身份提供者的 XML 元数据
+* **privateKey**: IdP 通信所用私钥（可选）
+* **privateKeyPass**: IdP 私钥密码（如果加密）
+* **isAssertionEncrypted**: 来自 IdP 的断言是否加密
+* **encPrivateKey**: IdP 断言解密用私钥
+* **encPrivateKeyPass**: IdP 解密密钥密码
 
 ### SAML 属性映射
 
@@ -997,12 +1001,12 @@ mapping: {
 
 可启用 SP 发起的 SAML 流程中的 InResponseTo 校验。启用后插件会跟踪 AuthnRequest ID 并验证 SAML 响应的 `InResponseTo` 属性，以防范：
 
-* **Unsolicited responses**: Responses not triggered by a legitimate login request
-* **Replay attacks**: Reusing old SAML responses
-* **Cross-provider injection**: Responses meant for a different provider
+* **未请求的响应**：未由合法登录请求触发的响应
+* **重放攻击**：重复使用旧的 SAML 响应
+* **跨提供者注入**：原本发给其他提供者的响应
 
 <Callout type="info">
-  This feature is **opt-in** to ensure backward compatibility. Enable it explicitly for enhanced security.
+  此功能为**可选启用**，以确保向后兼容。若要增强安全性，请显式开启。
 </Callout>
 
 #### 启用校验（单实例）
@@ -1033,24 +1037,24 @@ const auth = betterAuth({
 
 | Option                         | Type      | Default          | Description                                                                                                                              |
 | ------------------------------ | --------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `enableInResponseToValidation` | `boolean` | `true`           | Enable InResponseTo validation for SP-initiated flows.                                                                                   |
-| `allowIdpInitiated`            | `boolean` | `true`           | Allow IdP-initiated SSO (responses without InResponseTo). Set to `false` for stricter security. Only applies when validation is enabled. |
-| `requestTTL`                   | `number`  | `300000` (5 min) | Time-to-live for AuthnRequest records in milliseconds. Requests older than this will be rejected.                                        |
+| `enableInResponseToValidation` | `boolean` | `true`           | 为 SP 发起流程启用 InResponseTo 校验。                                                                                                   |
+| `allowIdpInitiated`            | `boolean` | `true`           | 允许 IdP 发起的 SSO（无 InResponseTo 的响应）。若要更严格的安全性请设为 `false`。仅在启用校验时适用。                                        |
+| `requestTTL`                   | `number`  | `300000` (5 min) | AuthnRequest 记录的生存时间（毫秒）。超过此时间的请求将被拒绝。                                                                           |
 
 #### 错误处理
 
 校验失败时用户会被重定向并附带错误参数：
 
-* `?error=invalid_saml_response&error_description=Unknown+or+expired+request+ID` — The request ID was not found or has expired
-* `?error=invalid_saml_response&error_description=Provider+mismatch` — The response was meant for a different provider
-* `?error=unsolicited_response&error_description=IdP-initiated+SSO+not+allowed` — IdP-initiated SSO is disabled
+* `?error=invalid_saml_response&error_description=Unknown+or+expired+request+ID` — 未找到请求 ID 或已过期
+* `?error=invalid_saml_response&error_description=Provider+mismatch` — 响应是发给其他提供者的
+* `?error=unsolicited_response&error_description=IdP-initiated+SSO+not+allowed` — 已禁用 IdP 发起的 SSO
 
 ### 断言重放保护
 
 插件包含断言重放保护，防止攻击者捕获并重新提交有效的 SAML 响应。每个断言 ID 会被追踪，重复使用将被拒绝。
 
 <Callout type="info">
-  Replay protection is **always enabled**. This is a critical security feature that prevents attackers from reusing intercepted SAML responses.
+  重放保护始终启用。这是一项关键安全特性，可防止攻击者重复使用被截获的 SAML 响应。
 </Callout>
 
 #### 工作原理
@@ -1060,20 +1064,20 @@ const auth = betterAuth({
 3. 新断言时，存储 ID 直到其 `NotOnOrAfter` 到期
 4. 重复断言（重放攻击）则拒绝
 
-**Both SAML endpoints are protected:**
+**两个 SAML 端点都受保护：**
 
 * `/sso/saml2/callback/:providerId`
 * `/sso/saml2/sp/acs/:providerId`
 
 <Callout type="info">
-  Replay protection uses the database verification table, so it works correctly in multi-instance deployments without additional configuration.
+  重放保护使用数据库校验表，因此在多实例部署中无需额外配置即可正常工作。
 </Callout>
 
 #### 错误处理
 
 检测到重放攻击时重定向并附加错误：
 
-* `?error=replay_detected&error_description=SAML+assertion+has+already+been+used` — The assertion ID was already used
+* `?error=replay_detected&error_description=SAML+assertion+has+already+been+used` — 该断言 ID 已被使用
 
 ### 时间戳校验
 
@@ -1087,16 +1091,13 @@ const auth = betterAuth({
 
 Better Auth 提供灵活性支持两者：
 
-* **Default behavior**: Accepts assertions without timestamps (SAML 2.0 Core compliant) but logs a warning
-* **Strict mode**: Rejects assertions without timestamps (SAML2Int compliant)
-
 * **默认行为**：接受不含时间戳断言（符合 SAML 2.0 Core），但记录警告
 * **严格模式**：拒绝无时间戳断言（符合 SAML2Int）
 
 对于每个断言：
 
-* **NotBefore**: The assertion is rejected if current time is before `NotBefore - clockSkew`
-* **NotOnOrAfter**: The assertion is rejected if current time is after `NotOnOrAfter + clockSkew`
+* **NotBefore**: 若当前时间早于 `NotBefore - clockSkew`，则拒绝该断言
+* **NotOnOrAfter**: 若当前时间晚于 `NotOnOrAfter + clockSkew`，则拒绝该断言
 
 对于每个断言：
 
@@ -1127,27 +1128,27 @@ const auth = betterAuth({
 
 | Option              | Type      | Default          | Description                                                                                                                                  |
 | ------------------- | --------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `clockSkew`         | `number`  | `300000` (5 min) | Clock skew tolerance in milliseconds. Allows for time differences between IdP and SP servers.                                                |
-| `requireTimestamps` | `boolean` | `false`          | When `true`, assertions without `NotBefore`/`NotOnOrAfter` conditions are rejected. When `false`, they are accepted but a warning is logged. |
+| `clockSkew`         | `number`  | `300000` (5 min) | 允许的时钟偏差，单位毫秒。用于容忍 IdP 与 SP 服务器间的时间差。                                                                              |
+| `requireTimestamps` | `boolean` | `false`          | 当为 `true` 时，未包含 `NotBefore`/`NotOnOrAfter` 条件的断言将被拒绝；当为 `false` 时，断言会被接受，但会记录警告。                             |
 
 #### 何时启用 `requireTimestamps`
 
 <Callout type="info">
-  **Recommendation**: Enable `requireTimestamps: true` for enterprise and high-security deployments.
+  **建议**：在企业和高安全性部署中启用 `requireTimestamps: true`。
 </Callout>
 
-Enable `requireTimestamps: true` when:
+在以下情况下启用 `requireTimestamps: true`：
 
-* Your IdP follows **SAML2Int** (most enterprise IdPs like Okta, Azure AD, OneLogin)
-* You need **SOC 2**, **ISO 27001**, or similar compliance
-* You want to prevent acceptance of malformed or test assertions
-* You're in a **production environment** with proper IdP configuration
+* 你的 IdP 遵循 **SAML2Int**（如 Okta、Azure AD、OneLogin 等大多数企业 IdP）
+* 你需要满足 **SOC 2**、**ISO 27001** 或类似合规要求
+* 你希望防止接受格式错误或测试断言
+* 你处于配置正确的 IdP 的**生产环境**
 
-Keep `requireTimestamps: false` (default) when:
+在以下情况下保持 `requireTimestamps: false`（默认）：
 
-* Integrating with **legacy IdPs** that may not include timestamps
-* During **development/testing** with mock IdPs
-* You need **maximum compatibility** with various IdP implementations
+* 集成可能不包含时间戳的**遗留 IdP**
+* 进行带有模拟 IdP 的**开发/测试**
+* 你需要对各种 IdP 实现具有**最高兼容性**
 
 默认关闭时适合：
 
@@ -1168,9 +1169,9 @@ sso({
 
 #### 错误提示
 
-* **"SAML assertion is not yet valid"** — Current time is before the `NotBefore` timestamp (minus clock skew)
-* **"SAML assertion has expired"** — Current time is after the `NotOnOrAfter` timestamp (plus clock skew)
-* **"SAML assertion missing required timestamp conditions"** — Assertion has no timestamps and `requireTimestamps` is enabled
+* **"SAML assertion is not yet valid"** — 当前时间早于 `NotBefore` 时间戳（减去时钟偏差）
+* **"SAML assertion has expired"** — 当前时间晚于 `NotOnOrAfter` 时间戳（加上时钟偏差）
+* **"SAML assertion missing required timestamp conditions"** — 断言没有时间戳且启用了 `requireTimestamps`
 
 ### 算法校验
 
@@ -1189,9 +1190,9 @@ sso({
 
 | Value      | Behavior                                    |
 | ---------- | ------------------------------------------- |
-| `"warn"`   | Log warning, allow authentication (default) |
-| `"reject"` | Throw error, block authentication           |
-| `"allow"`  | Silent, no validation                       |
+| `"warn"`   | 记录警告，允许认证（默认）                 |
+| `"reject"` | 抛出错误，阻止认证                         |
+| `"allow"`  | 静默，不进行校验                           |
 
 生产环境严格配置示例：
 
@@ -1207,21 +1208,21 @@ sso({
 
 #### 支持算法
 
-**Signature algorithms:**
+**签名算法：**
 
-* `RSA-SHA256`, `RSA-SHA384`, `RSA-SHA512`
-* `ECDSA-SHA256`, `ECDSA-SHA384`, `ECDSA-SHA512`
+* `RSA-SHA256`、`RSA-SHA384`、`RSA-SHA512`
+* `ECDSA-SHA256`、`ECDSA-SHA384`、`ECDSA-SHA512`
 
-**Digest algorithms:**
+**摘要算法：**
 
-* `SHA256`, `SHA384`, `SHA512`
+* `SHA256`、`SHA384`、`SHA512`
 
-**Deprecated (triggers warning/rejection):**
+**废弃（触发警告/拒绝）：**
 
-* `RSA-SHA1` (signature)
-* `SHA1` (digest)
-* `RSA 1.5` (key encryption)
-* `3DES` (data encryption)
+* `RSA-SHA1`（签名）
+* `SHA1`（摘要）
+* `RSA 1.5`（密钥加密）
+* `3DES`（数据加密）
 
 * `SHA256`、`SHA384`、`SHA512`
 
@@ -1254,7 +1255,7 @@ sso({
 ```
 
 <Callout type="info">
-  For true early rejection of oversized payloads (before they reach your application), configure size limits at your infrastructure level (nginx `client_max_body_size`, CDN settings, load balancer).
+  若要在请求到达应用之前就真正提前拒绝超大负载，请在基础设施层配置大小限制（nginx `client_max_body_size`、CDN 设置、负载均衡器）。
 </Callout>
 
 ## 共享重定向 URI
@@ -1287,15 +1288,15 @@ sso({ redirectURI: "https://login.example.com/callback" })
 提供者 ID 会存储在 OAuth 状态中，以便回调时识别发起的提供者。
 
 <Callout type="info">
-  When using a full URL, make sure it routes to your Better Auth instance.
+  当使用完整 URL 时，请确保它会路由到您的 Better Auth 实例。
 </Callout>
 
 <Callout type="info">
-  This option only affects OIDC providers. SAML providers use a separate ACS endpoint that is configured automatically.
+  此选项仅影响 OIDC 提供者。SAML 提供者使用单独的 ACS 端点，并会自动配置。
 </Callout>
 
 <Callout type="info">
-  Both the shared endpoint (`/sso/callback`) and the per-provider endpoints (`/sso/callback/:providerId`) are always registered for backward compatibility, so existing integrations continue to work regardless of this setting.
+  共享端点（`/sso/callback`）和按提供者的端点（`/sso/callback/:providerId`）都会始终注册，以保持向后兼容，因此无论此设置如何，现有集成都可以继续工作。
 </Callout>
 
 ## 域名验证
@@ -1364,27 +1365,27 @@ sso({ redirectURI: "https://login.example.com/callback" })
 
 <Steps>
   <Step>
-    #### Acquire verification token
+    #### 获取验证令牌
 
-    When an SSO provider is registered, a **verification token** will be issued to the provider (it will be returned as part of the response).
-    You can use this token to prove ownership over the domain.
+    当注册 SSO 提供者时，会向该提供者发放一个 **验证令牌**（它会作为响应的一部分返回）。
+    您可以使用此令牌来证明对该域名的所有权。
   </Step>
 
   <Step>
-    #### Create `TXT` DNS record
+    #### 创建 `TXT` DNS 记录
 
-    To do this, you'll need to add a `TXT` record to your domain's DNS settings:
+    为此，您需要在域名的 DNS 设置中添加一条 `TXT` 记录：
 
-    * **Host:** `_better-auth-token-{your-provider-id}` (**Note:** An underscore is automatically prepended to follow DNS infrastructure subdomain conventions. The `better-auth-token` part can be customized through the `domainVerification.tokenPrefix` option)
-    * **Value:** The verification token you were given.
+    * **Host:** `_better-auth-token-{your-provider-id}` (**注意：** 为遵循 DNS 基础设施的子域命名约定，系统会自动在前面添加一个下划线。`better-auth-token` 部分可通过 `domainVerification.tokenPrefix` 选项进行自定义)
+    * **Value:** 为您提供的验证令牌。
 
-    **Save the record and wait for it to propagate.** This can take up to 48 hours, but it's usually much faster.
+    **保存记录并等待其传播。** 这可能需要长达 48 小时，但通常会快得多。
   </Step>
 
   <Step>
-    #### Submit a validation request
+    #### 提交验证请求
 
-    **Once the DNS record has propagated**, you can submit a validation request (See below)
+    **DNS 记录传播完成后**，您就可以提交验证请求（见下文）
   </Step>
 </Steps>
 
@@ -1397,7 +1398,7 @@ sso({ redirectURI: "https://login.example.com/callback" })
   ```ts
   type verifyDomain = {
     /**
-    * The provider id
+    * 提供者 ID
     */
     providerId: string = "acme-corp"
   }
@@ -1414,7 +1415,7 @@ sso({ redirectURI: "https://login.example.com/callback" })
   ```ts
   type requestDomainVerification = {
     /**
-    * The provider id
+    * 提供者 ID
     */
     providerId: string = "acme-corp"
   }
@@ -1425,24 +1426,24 @@ sso({ redirectURI: "https://login.example.com/callback" })
 
 插件会自动创建以下 SAML 端点：
 
-* **SP Metadata**: `/api/auth/sso/saml2/sp/metadata?providerId={providerId}`
-* **SAML Callback**: `/api/auth/sso/saml2/callback/{providerId}` (supports both GET and POST)
+* **SP 元数据**: `/api/auth/sso/saml2/sp/metadata?providerId={providerId}`
+* **SAML 回调**: `/api/auth/sso/saml2/callback/{providerId}`（支持 GET 和 POST）
 
 ### SAML 回调 URL 配置
 
 SAML 回调端点 (`/api/auth/sso/saml2/callback/{providerId}`) 支持：
 
-* **SP-initiated**: User clicks "Sign in with SSO" in your app → redirects to IdP → IdP POSTs SAMLResponse to callback
-* **IdP-initiated**: User clicks app icon in IdP dashboard (Okta, Azure AD, etc.) → IdP POSTs SAMLResponse to callback
+* **SP 发起**: 用户在您的应用中点击“使用 SSO 登录” → 重定向到 IdP → IdP 将 SAMLResponse POST 到回调端点
+* **IdP 发起**: 用户在 IdP 仪表板中点击应用图标（Okta、Azure AD 等）→ IdP 将 SAMLResponse POST 到回调端点
 
-**Important**: `callbackUrl` in your SAML configuration is used as the Assertion Consumer Service (ACS) URL. Set it to the SAML callback route for your provider (e.g., `https://yourapp.com/api/auth/sso/saml2/sp/acs/my-provider`). If omitted, Better Auth derives it automatically from your `baseURL` and `providerId`.
+**重要**：您 SAML 配置中的 `callbackUrl` 用作断言消费者服务（ACS）URL。请将其设置为该提供者的 SAML 回调路由（例如 `https://yourapp.com/api/auth/sso/saml2/sp/acs/my-provider`）。如果省略，Better Auth 会根据您的 `baseURL` 和 `providerId` 自动推导。
 
-The post-login redirect destination is controlled by the `callbackURL` parameter in the client-side `signIn.sso()` call:
+登录后的重定向目标由客户端 `signIn.sso()` 调用中的 `callbackURL` 参数控制：
 
 ```ts
 await authClient.signIn.sso({
   providerId: "my-provider",
-  callbackURL: "/dashboard", // Where the user lands after SSO
+  callbackURL: "/dashboard", // 用户在 SSO 后到达的页面
 });
 ```
 
@@ -1525,23 +1526,23 @@ Better Auth 支持 **IdP 发起的 SSO 流程**，用户从身份提供者仪表
 
 **流程：**
 
-1. User clicks your app icon in the IdP dashboard
-2. IdP POSTs SAMLResponse to `/api/auth/sso/saml2/callback/{providerId}`
-3. Better Auth processes the assertion, creates a session, and redirects to your application
-4. Browser follows the redirect with a GET request (handled automatically)
+1. 用户在 IdP 仪表盘中点击你的应用图标
+2. IdP 将 SAMLResponse POST 到 `/api/auth/sso/saml2/callback/{providerId}`
+3. Better Auth 处理断言，创建会话，并重定向到你的应用
+4. 浏览器跟随重定向发起 GET 请求（自动处理）
 
 **无需额外配置**，回调接口自动支持 GET 和 POST。
 
 <Callout type="warn">
-  IdP-initiated flows do not carry a RelayState, so the post-login redirect falls back to your application's base URL. To control where users land after SP-initiated SSO, pass the destination via `callbackURL` in the `signIn.sso()` call.
+  IdP 发起的流程不携带 RelayState，因此登录后的重定向会回退到你应用的基础 URL。要控制在 SP 发起的 SSO 之后用户落地到哪里，请在 `signIn.sso()` 调用中通过 `callbackURL` 传入目标地址。
 </Callout>
 
 <Callout type="info">
-  If you previously created a manual GET handler for the SAML callback route as a workaround, you can remove it after upgrading. Better Auth now handles GET requests automatically.
+  如果你之前为了兼容而手动为 SAML 回调路由创建了 GET 处理器，在升级后可以将其移除。Better Auth 现在会自动处理 GET 请求。
 </Callout>
 
 <Callout type="info">
-  **Security:** Better Auth validates all redirect URLs to prevent open redirect attacks. Only relative paths (e.g., `/dashboard`) and URLs matching your configured `trustedOrigins` are allowed. Malicious URLs like `https://evil.com` or protocol-relative URLs (`//evil.com`) are automatically blocked.
+  **安全性：** Better Auth 会验证所有重定向 URL，以防止开放重定向攻击。仅允许相对路径（例如 `/dashboard`）以及与你配置的 `trustedOrigins` 匹配的 URL。诸如 `https://evil.com` 这类恶意 URL 或协议相对 URL（`//evil.com`）会被自动阻止。
 </Callout>
 
 有关 Okta 和 DummyIDP 的详细 SAML SSO 教程，见 [SAML SSO with Okta](/docs/guides/saml-sso-with-okta)。

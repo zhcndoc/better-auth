@@ -5,12 +5,12 @@ description: 将 Better Auth 集成到 Nuxt 中。
 
 在开始之前，请确保你已经配置了 Better Auth 实例。如果还没有，查看 [安装指南](/docs/installation)。
 
-### 创建 API 路由
+## 挂载处理器
 
-我们需要将处理器挂载到 API 路由上。在 `/server/api/auth` 目录下创建一个名为 `[...all].ts` 的文件，并添加以下代码：
+将 Better Auth 处理器挂载到一个 catch-all Nitro 路由。创建文件 `server/api/auth/[...all].ts`：
 
 ```ts title="server/api/auth/[...all].ts"
-import { auth } from "~/lib/auth"; // 导入你的 auth 配置
+import { auth } from "~~/lib/auth"; // 导入你的 auth 配置
 
 export default defineEventHandler((event) => {
 	return auth.handler(toWebRequest(event));
@@ -18,107 +18,144 @@ export default defineEventHandler((event) => {
 ```
 
 <Callout type="info">
-  你可以在更改 better-auth 配置中的路径，但建议保留为 `/api/auth/[...all]`
+  你可以在 Better Auth 配置中更改挂载路径，但建议保持为 `/api/auth/[...all]`。
 </Callout>
 
 ## 创建客户端
 
-创建一个客户端实例。你可以将文件命名为任意名称。这里我们在 `lib/` 目录下创建 `client.ts` 文件。
+使用 `better-auth/vue` 创建 auth 客户端，这样 `useSession` 会返回 Vue refs：
 
-```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/vue" // 确保从 better-auth/vue 导入
+```ts title="lib/auth-client.ts"
+import { createAuthClient } from "better-auth/vue";
 
-export const authClient = createAuthClient({
-    // 可以在这里传入客户端配置
-})
+export const authClient = createAuthClient();
+export const { signIn, signUp, signOut, useSession } = authClient;
 ```
 
-创建客户端后，你可以使用它来注册、登录和执行其他操作。
-部分操作是响应式的。
+## 使用会话
 
-### 使用示例
+在页面的 `setup()` 中使用 `authClient.useSession(useFetch)`，即可在服务端加载会话并在客户端补水。传入 Nuxt 的 `useFetch`，这样请求会携带传入的 cookies，并且 payload 会在补水期间复用：
 
-```vue title="index.vue"
+```vue title="app/pages/index.vue"
 <script setup lang="ts">
-import { authClient } from "~/lib/client"
-const session = authClient.useSession()
-</script>
-
-<template>
-    <div>
-        <button v-if="!session?.data" @click="() => authClient.signIn.social({
-            provider: 'github'
-        })">
-            使用 GitHub 继续
-        </button>
-        <div>
-            <pre>{{ session.data }}</pre>
-            <button v-if="session.data" @click="authClient.signOut()">
-                登出
-            </button>
-        </div>
-    </div>
-</template>
-```
-
-### 服务器端使用
-
-从 auth 实例导出的 `api` 对象包含你在服务器上可以执行的所有操作。Better Auth 内部创建的每个端点都可以作为函数调用。包括插件端点。
-
-**示例：在服务器 API 路由中获取会话**
-
-```tsx title="server/api/example.ts"
-import { auth } from "~/lib/auth";
-
-export default defineEventHandler(async (event) => {
-    const session = await auth.api.getSession({
-      headers: event.headers
-    });
-
-   if(session) {
-     // 访问 session.session 和 session.user
-   }
-});
-```
-
-### SSR 使用
-
-如果你正在使用带有 SSR 的 Nuxt，可以在页面组件的 `setup` 函数中使用 `useSession` 函数，并传递 `useFetch` 以使其在 SSR 中正常工作。
-
-```vue title="index.vue"
-<script setup lang="ts">
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~~/lib/auth-client";
 
 const { data: session } = await authClient.useSession(useFetch);
 </script>
 
 <template>
-    <p>
-        {{ session }}
-    </p>
+	<div v-if="session">
+		<p>欢迎，{{ session.user.name }}</p>
+		<button @click="authClient.signOut()">退出登录</button>
+	</div>
+	<button v-else @click="authClient.signIn.social({ provider: 'github' })">
+		使用 GitHub 继续
+	</button>
 </template>
 ```
 
-### 中间件
+对于像弹出层或菜单这类仅在客户端使用的组件，直接调用 `authClient.useSession()`，不要传参数。它会返回一个响应式 ref，并在登录和退出时自动更新。
 
-要为你的 Nuxt 项目添加中间件，可以使用客户端中的 `useSession` 方法。
+## 保护页面
 
-```ts title="middleware/auth.global.ts"
-import { authClient } from "~/lib/auth-client";
-export default defineNuxtRouteMiddleware(async (to, from) => {
-	const { data: session } = await authClient.useSession(useFetch); 
+创建一个命名路由中间件，并通过 `definePageMeta` 将页面纳入其中：
+
+```ts title="app/middleware/auth.ts"
+import { authClient } from "~~/lib/auth-client";
+
+export default defineNuxtRouteMiddleware(async (to) => {
+	const { data: session } = await authClient.useSession(useFetch);
 	if (!session.value) {
-		if (to.path === "/dashboard") {
-			return navigateTo("/");
-		}
+		return navigateTo({ path: "/login", query: { redirect: to.fullPath } });
 	}
 });
 ```
 
-### 资源与示例
+```vue title="app/pages/dashboard.vue"
+<script setup lang="ts">
+definePageMeta({ middleware: "auth" });
+</script>
+```
 
-* [Nuxt and Nuxt Hub example](https://github.com/atinux/nuxthub-better-auth) on GitHub.
-* [NuxtZzle is Nuxt,Drizzle ORM example](https://github.com/leamsigc/nuxt-better-auth-drizzle) on GitHub [preview](https://nuxt-better-auth.giessen.dev/)
-* [Nuxt example](https://stackblitz.com/github/better-auth/examples/tree/main/nuxt-example) on StackBlitz.
-* [NuxSaaS (Github)](https://github.com/NuxSaaS/NuxSaaS) 是一个全栈 SaaS 启动套件，它利用 Better Auth 以实现安全且高效的用户认证。[Demo](https://nuxsaas.com/)
-* [NuxtOne (Github)](https://github.com/nuxtone/nuxt-one) 是一个基于 Nuxt 的启动模板，用于构建 AIaaS（AI-as-a-Service）应用。
+将文件重命名为 `app/middleware/auth.global.ts`，即可在每个路由上运行它。务必 `return` `navigateTo(...)` 调用，因为不加 `return` 时它不会生效。
+
+## 保护服务端路由
+
+使用传入的 `event.headers` 调用 `auth.api.getSession`，并用 `createError` 对路由进行保护：
+
+```ts title="server/api/me.get.ts"
+import { auth } from "~~/lib/auth";
+
+export default defineEventHandler(async (event) => {
+	const session = await auth.api.getSession({ headers: event.headers });
+	if (!session?.user) {
+		throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
+	}
+	return { user: session.user };
+});
+```
+
+如果你需要在很多路由中复用这段逻辑，可以把检查提取到你自己的 `server/utils/` 辅助函数中。
+
+## 在 SSR 期间使用客户端
+
+除了 `useSession(useFetch)` 之外，`authClient` 的操作默认不会在 SSR 期间转发 cookies，因此会返回未认证状态。处理方式有两种：
+
+**方案 A：只在客户端调用。** 使用 `<ClientOnly>` 包裹消费者组件，或者通过 `import.meta.client` 做条件判断：
+
+```vue
+<script setup lang="ts">
+import { authClient } from "~~/lib/auth-client";
+
+const accounts = ref<Awaited<ReturnType<typeof authClient.listAccounts>>["data"]>();
+
+onMounted(async () => {
+	const { data } = await authClient.listAccounts();
+	accounts.value = data;
+});
+</script>
+```
+
+**方案 B：创建一个按请求作用域的客户端，在 SSR 期间转发 cookies。** 添加一个 `useAuth` 可组合函数，并与 `useAsyncData` 结合使用：
+
+```ts title="app/composables/useAuth.ts"
+import { createAuthClient } from "better-auth/vue";
+
+export function useAuth() {
+	const url = useRequestURL();
+	const headers = import.meta.server ? useRequestHeaders(["cookie"]) : undefined;
+	return createAuthClient({
+		baseURL: url.origin,
+		fetchOptions: { headers },
+	});
+}
+```
+
+```vue title="app/pages/settings.vue"
+<script setup lang="ts">
+const { data: accounts } = await useAsyncData("accounts", () =>
+	useAuth().listAccounts().then((res) => res.data),
+);
+</script>
+```
+
+## 与 Nuxt layer 复用
+
+当你想在多个 Nuxt 应用之间复用同一套 auth 配置时（例如一个营销站和一个仪表盘），可以将 `lib/auth.ts`、`server/`、`app/middleware/` 和 `app/composables/` 提取到一个 [Nuxt layer](https://nuxt.com/docs/4.x/getting-started/layers) 中，并在每个应用里继承它：
+
+```ts title="nuxt.config.ts"
+export default defineNuxtConfig({
+	extends: ["./layers/auth"],
+});
+```
+
+## 资源与示例
+
+{/* cspell:disable */}
+
+* [`atinux/nuxthub-better-auth`](https://github.com/atinux/nuxthub-better-auth)
+* [`leamsigc/nuxt-better-auth-drizzle`](https://github.com/leamsigc/nuxt-better-auth-drizzle)
+* [`NuxSaaS/NuxSaaS`](https://github.com/NuxSaaS/NuxSaaS)
+* [`nuxtone/nuxt-one`](https://github.com/nuxtone/nuxt-one)
+
+{/* cspell:enable */}

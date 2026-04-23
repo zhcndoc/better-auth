@@ -111,6 +111,38 @@ const data = await authClient.signIn.social({
   如果你想使用 Google 的一键登录，可以参考 [一键登录插件](/docs/plugins/one-tap) 指南。
 </Callout>
 
+### 跨平台登录（Web、iOS、Android）
+
+Google 会在同一个 Google Cloud 项目中为每个平台分别发放一个 Client ID。将数组传递给 `clientId`，即可接受来自任一平台的 ID Token。有关共享提供者选项语义，请参阅 [clientId](/docs/concepts/oauth#clientid)。
+
+```ts title="auth.ts"
+socialProviders: {
+    google: {
+        clientId: [ // [!code highlight]
+            process.env.GOOGLE_WEB_CLIENT_ID as string, // [!code highlight]
+            process.env.GOOGLE_IOS_CLIENT_ID as string, // [!code highlight]
+            process.env.GOOGLE_ANDROID_CLIENT_ID as string, // [!code highlight]
+        ], // [!code highlight]
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
+}
+```
+
+你的移动应用使用原生 Google SDK 登录，并转发 ID Token：
+
+```ts title="Mobile app"
+const { idToken, accessToken } = await GoogleSignin.signIn();
+
+await authClient.signIn.social({
+    provider: "google",
+    idToken: { token: idToken, accessToken },
+});
+```
+
+<Callout type="info">
+  数组仅会扩展 ID Token 的受众验证。授权码流程仍然使用第一个条目，并与单个 `clientSecret` 和 `redirectURI` 配对，因此在同一个提供者块内，这些值不能按平台分别变化。
+</Callout>
+
 ### 始终要求选择账户
 
 如果你希望始终要求用户选择账户，可以在提供者中传递 `prompt` 参数，并将其设置为 `select_account`。
@@ -137,7 +169,7 @@ const requestGoogleDriveAccess = async () => {
   });
 };
 
-// 在 React 组件中的示例用法
+// React 组件中的示例用法
 return (
   <button onClick={requestGoogleDriveAccess}>
     添加 Google Drive 权限

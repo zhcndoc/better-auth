@@ -129,7 +129,7 @@ const requestAdditionalScopes = async () => {
 ```
 
 <Callout>
-  Make sure you're running Better Auth version 1.2.7 or later. Earlier versions (like 1.2.2) may show a "Social account already linked" error when trying to link with an existing provider for additional scopes.
+  请确保你正在运行 Better Auth 1.2.7 或更高版本。较早版本（如 1.2.2）在尝试使用现有提供商关联以获取额外权限时，可能会显示 “Social account already linked” 错误。
 </Callout>
 
 ### 通过 OAuth 流传递额外数据
@@ -173,7 +173,7 @@ await auth.api.signInSocial({
 额外数据可以通过 `getOAuthState` 在 OAuth 回调时钩子中访问。
 
 <Callout>
-  This usually works for `/callback/:id` paths and the generic OAuth plugin callback path (`/oauth2/callback/:providerId`).
+  这通常适用于 `/callback/:id` 路径以及通用 OAuth 插件回调路径（`/oauth2/callback/:providerId`）。
 </Callout>
 
 使用 after 钩子的示例：
@@ -254,19 +254,45 @@ export const auth = betterAuth({
 ```
 
 <Callout>
-  By default OAuth state includes the following data:
+  默认情况下，OAuth state 包含以下数据：
 
-  * `callbackURL` - the callback URL for the OAuth flow
-  * `codeVerifier` - the code verifier for the OAuth flow
-  * `errorURL` - the error URL for the OAuth flow
-  * `newUserURL` - the new user URL for the OAuth flow
-  * `link` - the link for the OAuth flow (email and user id)
-  * `requestSignUp` - whether to request sign up for the OAuth flow
-  * `expiresAt` - the expiration time of the OAuth state
-  * `[key: string]`: any additional data you pass in the OAuth flow
+  * `callbackURL` - OAuth 流程的回调 URL
+  * `codeVerifier` - OAuth 流程的 code verifier
+  * `errorURL` - OAuth 流程的错误 URL
+  * `newUserURL` - OAuth 流程的新用户 URL
+  * `link` - OAuth 流程的关联链接（邮箱和用户 id）
+  * `requestSignUp` - 是否为 OAuth 流程请求注册
+  * `expiresAt` - OAuth state 的过期时间
+  * `[key: string]`: 你在 OAuth 流程中传递的任何额外数据
 </Callout>
 
 ## 提供商选项
+
+### clientId
+
+提供商签发的 OAuth 2.0 Client ID。
+
+对于通过受众（audience）验证 ID token 的提供商（Google、Apple、Microsoft Entra、Facebook、Cognito），你可以传入一个数组，以接受为任意已配置客户端签发的 token。Better Auth 驱动授权码流程时会使用数组中的第一个条目；验证 ID token 的 `aud` 声明时会接受所有条目。这使得你可以使用单一后端配置实现跨平台登录（Web、iOS、Android），其中每个平台的原生 SDK 都会使用各自的 Client ID 签发 token。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+  // 其他配置...
+  socialProviders: {
+    google: {
+      clientId: [
+        process.env.GOOGLE_WEB_CLIENT_ID as string,
+        process.env.GOOGLE_IOS_CLIENT_ID as string,
+        process.env.GOOGLE_ANDROID_CLIENT_ID as string,
+      ],
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
+  },
+});
+```
+
+所有 Client ID 必须位于同一个提供商项目中，这样用户同意才能共享。对于不通过受众验证 ID token 的提供商，只接受单个字符串。
 
 ### scope
 

@@ -40,7 +40,7 @@ export const auth = betterAuth({
   不建议依赖请求推断。出于安全性和稳定性考虑，请在配置中显式设置 `baseURL`，或通过 `BETTER_AUTH_URL` 环境变量进行设置。
 </Callout>
 
-### Dynamic Base URL
+### 动态 Base URL
 
 当你的应用可以通过多个域名访问时（例如预览部署、分支环境或多个生产主机），请使用对象形式。Better Auth 会从传入请求中提取主机，使用 `allowedHosts` 校验，并基于该匹配构造与请求相关的 base URL。
 
@@ -142,7 +142,7 @@ export const auth = betterAuth({
 | `*`     | 匹配零个或多个不跨越 `/` 的字符 |
 | `**`    | 匹配零个或多个字符（包括 `/`）        |
 
-#### Pattern Examples
+#### 模式示例
 
 | Pattern                  | Matches                                                                                  | Does Not Match                                      |
 | ------------------------ | ---------------------------------------------------------------------------------------- | --------------------------------------------------- |
@@ -153,7 +153,7 @@ export const auth = betterAuth({
 | `myapp://`               | 所有以 `myapp://` 开头的 URL                                                        | -                                                   |
 
 <Callout type="info">
-  **Notes**
+  **注意**
 
   * 对于 `http://` 和 `https://` URL，模式匹配完整的来源（origin）。路径和查询字符串会被忽略。
   * 对于自定义协议（如 `exp://` 或 `myapp://`），当通配符存在时，模式会与包含路径的完整 URL 进行匹配；当没有通配符时，则使用前缀匹配。
@@ -650,6 +650,26 @@ export const auth = betterAuth({
 * `backgroundTasks`: 配置后台任务处理，用于延迟操作
 * `skipTrailingSlashes`: 在路由匹配中跳过尾部斜杠校验。（默认：`false`）
 * OAuth 状态配置选项（`storeStateStrategy`, `skipStateCookieCheck`）现已属于 `account` 选项
+
+<h3 id="advanced-database"><code>database</code></h3>
+
+为 ID 生成和 findMany 查询设置自定义策略。
+
+* `generateId`: 控制记录 ID 的生成方式。接受自定义函数、`false`、`"serial"` 或 `"uuid"`（默认：[随机 base62 字符串](https://github.com/better-auth/better-auth/blob/main/packages/core/src/utils/id.ts)）。更多信息请参阅[数据库文档](/docs/concepts/database#id-generation)。
+* `defaultFindManyLimit`: `findMany` 适配器方法返回的默认最大记录数。（默认：`100`）
+
+```ts
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+	advanced: {
+		database: {
+			generateId: "uuid",
+			defaultFindManyLimit: 50,
+		},
+	},
+});
+```
 
 ### `backgroundTasks`
 

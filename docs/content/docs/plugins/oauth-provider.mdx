@@ -9,32 +9,32 @@ description: 一个更好的认证插件，使您的认证服务器能够作为 
 
 **主要特性**：
 
-* **OAuth 2.1**: Restricted security practices to [OAuth 2.1](https://oauth.net/2.1/)
-* **Issuer Validation**: Authorization responses include `iss` parameter to prevent [mix-up attacks](https://datatracker.ietf.org/doc/html/rfc9207)
-* **MCP Enabled**: Support with [MCP authentication](#mcp)
-* **OIDC compatibility**: [OIDC](https://openid.net/specs/openid-connect-core-1_0.html)-compliant with the `openid` scope
-  * **UserInfo**: Endpoint providing current user details
-  * **id\_token**: JWT-signed user information
-  * **OIDC Logout**: [RP-initiated](https://openid.net/specs/openid-connect-rpinitiated-1_0.html)-compliant Logout
-* **Dynamic Client Registration**: Allow clients to register clients dynamically.
-  * **Public Clients**: Support public clients for native mobile clients and user-agent clients (like AI)
-  * **Confidential Clients**: Supports confidential clients for web clients
-  * **Trusted Clients**: Configure hard-coded trusted clients with optional consent bypass.
-* **JWT Plugin compatibility**: required by default with an option to disable
-  * **JWT Signing**: sign JWT tokens when requesting a `resource`
-  * **JWKS Verifiable**: verify tokens remotely at the [`/jwks`](/docs/plugins/jwt#verifying-the-token) endpoint
-* **Authorization Prompts**: prompts that initiate specific login flows
-  * **Consent**: Ensure consent is granted for each scope. Forcible with `prompt=consent`.
-  * **Select Account**: Ensure an account is selected prior when specific scopes being granted. Forcible with `prompt=select_account`.
-* **Resource Endpoints**: Read and manage tokens.
-  * **Introspection**: [RFC7662](https://datatracker.ietf.org/doc/html/rfc7662)-compliant Introspection.
-  * **Revocation**: [RFC7009](https://datatracker.ietf.org/doc/html/rfc7009)-compliant Revocation.
+* **OAuth 2.1**: 限制安全实践遵循 [OAuth 2.1](https://oauth.net/2.1/)
+* **Issuer Validation**: 授权响应包含 `iss` 参数，以防止 [混淆攻击](https://datatracker.ietf.org/doc/html/rfc9207)
+* **MCP Enabled**: 支持 [MCP 认证](#mcp)
+* **OIDC compatibility**: 与 [OIDC](https://openid.net/specs/openid-connect-core-1_0.html) 兼容，支持 `openid` scope
+  * **UserInfo**: 提供当前用户详情的端点
+  * **id\_token**: JWT 签名的用户信息
+  * **OIDC Logout**: 符合 [RP-initiated](https://openid.net/specs/openid-connect-rpinitiated-1_0.html) 的注销
+* **Dynamic Client Registration**: 允许客户端动态注册客户端。
+  * **Public Clients**: 支持原生移动客户端和用户代理客户端（如 AI）使用公有客户端
+  * **Confidential Clients**: 支持 Web 客户端使用机密客户端
+  * **Trusted Clients**: 配置硬编码的受信任客户端，并可选绕过同意。
+* **JWT Plugin compatibility**: 默认需要，可选择禁用
+  * **JWT Signing**: 在请求 `resource` 时签名 JWT 令牌
+  * **JWKS Verifiable**: 在 [`/jwks`](/docs/plugins/jwt#verifying-the-token) 端点远程验证令牌
+* **Authorization Prompts**: 触发特定登录流程的提示
+  * **Consent**: 确保每个 scope 都获得同意。可通过 `prompt=consent` 强制。
+  * **Select Account**: 在授予特定 scope 之前确保已选择账户。可通过 `prompt=select_account` 强制。
+* **Resource Endpoints**: 读取和管理令牌。
+  * **Introspection**: 符合 [RFC7662](https://datatracker.ietf.org/doc/html/rfc7662) 的令牌核查。
+  * **Revocation**: 符合 [RFC7009](https://datatracker.ietf.org/doc/html/rfc7009) 的撤销。
 
 **支持的授权方式**
 
-* **authorization\_code**: Code for user token exchange with PKCE and S256 requirements.
-* **refresh\_token**: Issue refresh tokens and handle access token renewal using `offline_access` scope.
-* **client\_credentials**: Machine to Machine tokens for API communication.
+* **authorization\_code**: 使用 PKCE 和 S256 要求进行用户令牌交换的授权码。
+* **refresh\_token**: 通过 `offline_access` scope 发放刷新令牌并处理访问令牌续期。
+* **client\_credentials**: 用于 API 通信的机器对机器令牌。
 
 ## 安装
 
@@ -84,7 +84,7 @@ description: 一个更好的认证插件，使您的认证服务器能够作为 
       </Tab>
     </Tabs>
 
-    See the [Schema](#schema) section to add the fields manually.
+    请参见 [Schema](#schema) 章节以手动添加这些字段。
   </Step>
 
   <Step>
@@ -92,9 +92,9 @@ description: 一个更好的认证插件，使您的认证服务器能够作为 
 
     请添加所有 [Well-Known 端点](#well-known) 到您的项目。如果不确定，系统会通过警告提示位置。
 
-    * You **MUST** add the OAuth Authorization Server metadata endpoint at your issuer path (root if no path).
-    * If you are using the `openid` scope, you **MUST** add the openid configuration at your issuer path (root if no path).
-    * If you are using the resource server (ie for MCP), you **MUST** add the resource server metadata to your API, with the issuer path appended.
+    * 您**必须**在您的发行者路径上添加 OAuth 授权服务器元数据端点（如果没有路径，则为根路径）。
+    * 如果您使用 `openid` scope，您**必须**在您的发行者路径上添加 openid 配置（如果没有路径，则为根路径）。
+    * 如果您使用资源服务器（例如用于 MCP），您**必须**将资源服务器元数据添加到您的 API 中，并附加发行者路径。
   </Step>
 
   <Step>
@@ -109,11 +109,11 @@ description: 一个更好的认证插件，使您的认证服务器能够作为 
     			redirect_uris: [redirectUri],
     		}
     	});
-    console.log(client); // If you wish, you may add the `client_id` to `cachedTrustedClients`
+    console.log(client); // 如果您愿意，可以将 `client_id` 添加到 `cachedTrustedClients`
     ```
 
     <Callout type="info">
-      To create a public client (ie. without a client secret), set `token_endpoint_auth_method: "none"`.
+      若要创建公有客户端（即没有 client secret），请设置 `token_endpoint_auth_method: "none"`。
     </Callout>
   </Step>
 </Steps>
@@ -159,10 +159,10 @@ export const serverClient = createAuthClient({
 
 ### OAuth 客户端
 
-In OAuth there are two types of clients:
+OAuth 中有两类客户端：
 
-* **Public Clients**: Cannot store a client secret such as native mobile clients and user-agent clients (like AI)
-* **Confidential Clients**: Can store a client secret such as web clients
+* **Public Clients**：无法存储 client secret，例如原生移动客户端和用户代理客户端（如 AI）
+* **Confidential Clients**：可以存储 client secret，例如 Web 客户端
 
 #### 获取客户端信息
 
@@ -172,7 +172,7 @@ In OAuth there are two types of clients:
   ```ts
   type getOAuthClient = {
     /**
-     * The OAuth client's client_id
+     * OAuth 客户端的 client_id
      */
     client_id: string,
   }
@@ -187,7 +187,7 @@ In OAuth there are two types of clients:
   ```ts
   type getOAuthClientPublic = {
     /**
-     * The OAuth client's client_id
+     * OAuth 客户端的 client_id
      */
     client_id: string,
   }
@@ -210,11 +210,11 @@ oauthProvider({
   ```ts
   type getOAuthClientPublicPrelogin = {
     /**
-     * The OAuth client's client_id
+     * OAuth 客户端的 client_id
      */
     client_id: string,
     /**
-     * Valid oauth query parameters (Sent automatically when using the provided client)
+     * 有效的 oauth 查询参数（使用提供的客户端时会自动发送）
      */
     oauth_query: string
   }
@@ -236,12 +236,12 @@ oauthProvider({
 
 创建与指定用户或组织关联的 OAuth 客户端，使用 `/oauth2/create-client` 端点（如 `createOAuthClient`）。参数与 [RFC7591](https://datatracker.ietf.org/doc/html/rfc7591) 描述的注册端点相同。
 
-The following fields on the database are considered restricted and should only be editable by admin users.
+数据库中的以下字段被视为受限字段，仅应由管理员用户编辑。
 
-* `client_secret_expires_at`: The expiration time for a secret of a confidential client
-* `skip_consent`: Allows the ability to skip user consent flow. Useful for trusted clients.
-* `enable_end_session`: Allows a user to logout of a session from the client via their `id_token` at the `/oauth2/end-session` endpoint. Used in OIDC-setups and specified trusted clients.
-* `metadata`: Additional private metadata to attach to the client.
+* `client_secret_expires_at`：机密客户端密钥的过期时间
+* `skip_consent`：允许跳过用户同意流程。适用于受信任客户端。
+* `enable_end_session`：允许用户通过客户端在 `/oauth2/end-session` 端点使用其 `id_token` 退出会话。用于 OIDC 配置和指定的受信任客户端。
+* `metadata`：附加到客户端的额外私有元数据。
 
 部分场景下，您可能希望通过自定义 API、公司管理员门户或服务器初始化逻辑创建带有受限字段的客户端，可使用以下仅限服务器端的端点：
 
@@ -267,21 +267,21 @@ await auth.api.adminCreateOAuthClient({
   ```ts
   type updateOAuthClient = {
     /**
-     * The OAuth client's client_id
+     * OAuth 客户端的 client_id
      */
     client_id: string,
     /**
-     * The fields to update
+     * 要更新的字段
      */
     update: OAuthClient,
   }
   ```
 </APIMethod>
 
-Restrictions on this endpoint:
+此端点限制如下：
 
-* You are unable to switch between confidential and public clients. The client type must be determined at creation.
-* You cannot update the client secret. To rotate the `client_secret` use the rotate client secret endpoint.
+* 您无法在机密客户端和公有客户端之间切换。客户端类型必须在创建时确定。
+* 您不能更新客户端密钥。要轮换 `client_secret`，请使用轮换客户端密钥端点。
 
 部分场景下，您可能希望通过自定义 API、公司管理员门户或服务器初始化逻辑更新带有受限字段的客户端，可使用以下仅限服务器端端点。字段同创建部分描述。
 
@@ -302,7 +302,7 @@ await auth.api.adminUpdateOAuthClient({
 #### 旋转客户端密钥
 
 <Callout type="warn">
-  The current implementation rotates the client secret immediately and the previous secret is invalidated immediately.
+  当前实现会立即轮换客户端密钥，并且会立即使旧密钥失效。
 </Callout>
 
 旋转客户端密钥，请使用以下端点：
@@ -311,7 +311,7 @@ await auth.api.adminUpdateOAuthClient({
   ```ts
   type rotateClientSecret = {
     /**
-     * The OAuth client's client_id
+     * OAuth 客户端的 client_id
      */
     client_id: string,
   }
@@ -326,7 +326,7 @@ await auth.api.adminUpdateOAuthClient({
   ```ts
   type deleteOAuthClient = {
     /**
-     * The OAuth client's client_id
+     * OAuth 客户端的 client_id
      */
     client_id: string,
   }
@@ -345,7 +345,7 @@ await auth.api.adminUpdateOAuthClient({
   ```ts
   type getOAuthConsent = {
     /**
-     * The consent id
+     * 同意项 id
      */
     id: string,
   }
@@ -371,11 +371,11 @@ await auth.api.adminUpdateOAuthClient({
   ```ts
   type updateOAuthClient = {
     /**
-     * The consent id
+     * 同意项 id
      */
     id: string,
     /**
-     * The values to update
+     * 要更新的值
      */
     update: OAuthConsent,
   }
@@ -390,17 +390,17 @@ await auth.api.adminUpdateOAuthClient({
   ```ts
   type deleteOAuthConsent = {
     /**
-     * The consent id
+     * 同意项 id
      */
     id: string,
   }
   ```
 </APIMethod>
 
-### Dynamic Registration Endpoint
+### 动态注册端点
 
 <Callout type="info">
-  This endpoint supports [RFC7591](https://datatracker.ietf.org/doc/html/rfc7591) compliant client registration.
+  此端点支持符合 [RFC7591](https://datatracker.ietf.org/doc/html/rfc7591) 的客户端注册。
 </Callout>
 
 安装后，您可以使用 OAuth 提供者管理应用内的认证流程。
@@ -421,7 +421,7 @@ oauthProvider({
 若要启用无需认证的客户端注册（允许动态注册公有客户端），额外设置 `allowUnauthenticatedClientRegistration: true`。
 
 <Callout type="warn">
-  Support for `allowUnauthenticatedClientRegistration` **will be deprecated** when the MCP protocol standardizes unauthenticated dynamic client registration. As of writing, both [Client ID Metadata Documents](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/991) and [`software_statement` and `jwks_uri`](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1032) are under debate.
+  当 MCP 协议标准化无需认证的动态客户端注册时，`allowUnauthenticatedClientRegistration` 的支持**将被弃用**。截至撰写时，[Client ID Metadata Documents](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/991) 和 [`software_statement` and `jwks_uri`](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1032) 均仍在讨论中。
 </Callout>
 
 ```ts title="auth.ts"
@@ -440,14 +440,14 @@ oauthProvider({
 import { authClient } from "@/lib/auth-client"
 
 const client = await authClient.oauth2.register({
-  client_name: "My Client",
+  client_name: "我的客户端",
   redirect_uris: ["https://client.example.com/callback"],
 });
 ```
 
 所有参数详情请参见 [RFC 7591 注册部分](https://datatracker.ietf.org/doc/html/rfc7591#section-2)。
 
-Note the following parameters are not yet supported:
+注意以下参数目前尚不支持：
 
 * `jwks`
 * `jwks_uri`
@@ -458,11 +458,11 @@ Note the following parameters are not yet supported:
 
 授权端点为启动 OAuth 2.1 授权流程的入口。
 
-Important notes:
+重要说明：
 
-* In OAuth 2.1, only `response_type: "code"` is supported.
-* `code_challenge_method: "plain"` will not be supported since this is a security vulnerability.
-* All authorization responses (success and error) include the `iss` parameter for issuer validation ([RFC 9207](https://datatracker.ietf.org/doc/html/rfc9207)).
+* 在 OAuth 2.1 中，仅支持 `response_type: "code"`。
+* 不支持 `code_challenge_method: "plain"`，因为这是一项安全漏洞。
+* 所有授权响应（成功和错误）都包含 `iss` 参数用于发行者验证（[RFC 9207](https://datatracker.ietf.org/doc/html/rfc9207)）。
 
 **状态（State）**
 
@@ -480,7 +480,7 @@ Important notes:
 
 ### Token Endpoint
 
-By default, the token endpoint supports providing tokens for the following grants:
+默认情况下，令牌端点支持为以下授权方式提供令牌：
 
 * "authorization\_code"
 * "client\_credentials"
@@ -488,7 +488,7 @@ By default, the token endpoint supports providing tokens for the following grant
 
 #### 授权码授权方式
 
-The authorization code grant enables clients to obtain access user access tokens and optionally refresh tokens (with the "offline\_access" scope).
+授权码授权方式允许客户端获取用户访问令牌，并可选择获取刷新令牌（通过 "offline\_access" scope）。
 
 #### 客户端凭证授权方式
 
@@ -508,11 +508,11 @@ The authorization code grant enables clients to obtain access user access tokens
   ```ts
   type oauth2Consent = {
     /**
-     * Accept or deny user consent for a set of scopes
+     * 接受或拒绝用户对一组 scope 的同意
      */
     accept: boolean,
     /**
-     * Space-separated list of accepted scopes. If not provided, the originally requested scopes are accepted.
+     * 以空格分隔的已接受 scope 列表。若未提供，则接受最初请求的 scope。
      */
     scope?: string,
   }
@@ -529,15 +529,15 @@ The authorization code grant enables clients to obtain access user access tokens
   ```ts
   type oauth2Continue = {
     /**
-     * Confirms an account was selected.
+     * 确认已选择账户。
      */
     selected?: boolean,
     /**
-     * Confirms an account was registered
+     * 确认已注册账户
      */
     created?: boolean,
     /**
-     * Confirms completion of post login activity
+     * 确认登录后活动已完成
      */
     postLogin?: boolean,
   }
@@ -558,11 +558,11 @@ The authorization code grant enables clients to obtain access user access tokens
 
 此端点撤销所给令牌。
 
-* opaque `access_token`: immediately removes that `access_token` from the database. `refresh_token` is still valid.
-* JWT `access_token`: verifies that token is safe to remove from client storage.
-* `refresh_token`: removes all `access_tokens` granted using that `refresh_token` and removes the `refresh_token` to prevent further token issuance.
+* opaque `access_token`：立即将该 `access_token` 从数据库中移除。`refresh_token` 仍然有效。
+* JWT `access_token`：验证该令牌是否可安全从客户端存储中移除。
+* `refresh_token`：移除使用该 `refresh_token` 签发的所有 `access_tokens`，并移除该 `refresh_token` 以防止进一步发放令牌。
 
-For an `access_token` type,
+对于 `access_token` 类型：
 
 ### 会话结束端点
 
@@ -585,10 +585,10 @@ await auth.api.adminCreateOAuthClient({
 ```
 
 <Callout type="info">
-  If `disableJwtPlugin: true`, public clients will never be able to logout using this endpoint since no `id_token` is sent.
+  如果 `disableJwtPlugin: true`，公有客户端将永远无法使用此端点注销，因为不会发送 `id_token`。
 </Callout>
 
-### UserInfo Endpoint
+### UserInfo 端点
 
 UserInfo 端点提供符合 [OIDC](https://openid.net/specs/openid-connect-core-1_0.html) 标准的用户信息。端点为 `/oauth2/userinfo`，需带有效访问令牌且至少带有 `openid` 权限。
 
@@ -606,9 +606,9 @@ const userInfo = await response.json();
 
 UserInfo 端点根据授权时授予的范围返回不同的声明：
 
-* `openid`: Returns the user's ID (`sub` claim)
-* `profile`: Returns `name`, `picture`, `given_name`, `family_name`
-* `email`: Returns `email` and `email_verified`
+* `openid`: 返回用户 ID（`sub` 声明）
+* `profile`: 返回 `name`、`picture`、`given_name`、`family_name`
+* `email`: 返回 `email` 和 `email_verified`
 
 `customUserInfoClaims` 函数接收用户对象、请求的 scopes 数组以及传入的访问令牌，允许添加额外响应信息。
 
@@ -634,7 +634,7 @@ export const GET = oauthProviderOpenIdConfigMetadata(auth);
 ```
 
 <Callout type="info">
-  If you get a CORS issue when testing locally such as with the [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector), this is due to the frontend calling the endpoint instead of the backend. Add `Access-Control-Allow-Methods": "GET"` and `"Access-Control-Allow-Origin": "*"` for testing.
+  如果您在本地测试时遇到 CORS 问题，例如使用 [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) 时，这是因为前端在调用端点而不是后端。测试时请添加 `Access-Control-Allow-Methods": "GET"` 和 `"Access-Control-Allow-Origin": "*"`。
 </Callout>
 
 #### OAuth Authorization Server
@@ -653,7 +653,7 @@ export const GET = oauthProviderAuthServerMetadata(auth);
 ```
 
 <Callout type="info">
-  If you get a CORS issue when testing locally such as with the [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector), this is due to the frontend calling the endpoint instead of the backend. Add `Access-Control-Allow-Methods": "GET"` and `"Access-Control-Allow-Origin": "*"` for testing.
+  如果您在本地测试时遇到 CORS 问题，例如使用 [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) 时，这是因为前端在调用端点而不是后端。测试时请添加 `Access-Control-Allow-Methods": "GET"` 和 `"Access-Control-Allow-Origin": "*"`。
 </Callout>
 
 ## API Server
@@ -1523,10 +1523,10 @@ JWT 访问令牌仍使用真实用户 ID 作为 `sub`，因资源服务器可能
     });
     ```
 
-    These values should be used in the verify options `remoteVerify.clientId` and `remoteVerify.clientSecret`. Additionally, `remoteVerify.introspectUrl` would be something like `${BASE_URL}/${AUTH_PATH}/oauth2/introspect`.
+    这些值应当用于 `remoteVerify.clientId` 和 `remoteVerify.clientSecret` 验证选项。此外，`remoteVerify.introspectUrl` 可以设置为 `${BASE_URL}/${AUTH_PATH}/oauth2/introspect` 这样的地址。
 
     <Callout type="info">
-      If you choose to not support `allowUnauthenticatedClientRegistration` (and only `allowDynamicClientRegistration`), the MCP client (ie. ChatGPT, Anthropic, Gemini) would need to allow you to put in a public client\_id in their UI or at runtime while chatting with the AI.
+      如果你选择不支持 `allowUnauthenticatedClientRegistration`（仅支持 `allowDynamicClientRegistration`），则 MCP 客户端（如 ChatGPT、Anthropic、Gemini）需要允许你在其 UI 中或与 AI 对话的运行时传入公开的 client_id。
     </Callout>
   </Step>
 
@@ -2043,7 +2043,9 @@ export const oauthConsentTableFields = [
 
 ## 迁移
 
-### 自 [OIDC Provider 插件](/docs/plugins/oidc-provider) 迁移
+### 来自 OIDC Provider 插件
+
+请参见 [OIDC Provider Plugin](/docs/plugins/oidc-provider) 了解之前的实现。
 
 #### 配置变更
 
@@ -2135,7 +2137,9 @@ const defaultHasher = async (value: string) => {
 }
 ```
 
-### 来自 [MCP 插件](/docs/plugins/mcp)
+### 来自 MCP 插件
+
+请参见 [MCP Plugin](/docs/plugins/mcp) 了解之前的 MCP 专用端点。
 
 MCP 端点已从 `/mcp` 迁移至 `/oauth2`：
 
