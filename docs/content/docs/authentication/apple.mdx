@@ -120,7 +120,11 @@ description: Apple 提供者的设置与使用。
     })
     ```
 
-    在原生 iOS 上，它不使用服务 ID，而是使用应用 ID（捆绑标识符）作为客户端 ID，因此如果在 `signIn.social` 中使用服务 ID 作为 `clientId` 并传递 `idToken`，会抛出错误：`JWTClaimValidationFailed: unexpected "aud" claim value`。因此，当您想使用 ID 令牌进行 Apple 登录时，需要提供 `appBundleIdentifier`。
+    在原生 iOS 上，它使用的不是服务 ID，而是应用 ID（bundle ID）作为客户端 ID，因此如果在 `signIn.social` 中将服务 ID 作为 `clientId` 并使用 `idToken`，则会抛出错误：`JWTClaimValidationFailed: unexpected "aud" claim value`。因此，当您想使用 ID Token 通过 Apple 登录时，需要提供 `appBundleIdentifier`。
+
+    <Callout type="warn">
+      Apple 仅在首次授权时返回 `email` 声明；此后的每次登录都会省略它，而且 Apple 不提供可稍后获取它的用户信息端点。有关持久化的指导以及 `mapProfileToUser` 回退，请参见 [Handling Providers Without Email](/docs/concepts/oauth#handling-providers-without-email)。
+    </Callout>
   </Step>
 </Steps>
 

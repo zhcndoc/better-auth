@@ -37,6 +37,10 @@ description: LinkedIn 提供商
         },
     })
     ```
+
+    <Callout>
+      LinkedIn 的 `email` 和 `email_verified` 声明被[文档说明为可选](https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2)，当会员未关联已确认邮箱时可能不存在。有关推荐的 `mapProfileToUser` 回退方案，请参阅[处理没有邮箱的提供程序](/docs/concepts/oauth#handling-providers-without-email)。
+    </Callout>
   </Step>
 
   <Step>

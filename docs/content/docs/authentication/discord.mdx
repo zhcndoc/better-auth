@@ -1,6 +1,6 @@
 ---
 title: Discord
-description: Discord 提供商的设置和使用。
+description: Discord 提供程序的设置和使用。
 ---
 
 <Steps>
@@ -13,9 +13,9 @@ description: Discord 提供商的设置和使用。
   </Step>
 
   <Step>
-    ### 配置提供者
+    ### 配置提供程序
 
-    要配置提供者，您需要导入提供者并将其传递给认证实例的 `socialProviders` 选项。
+    要配置提供程序，您需要导入提供程序并将其传递给认证实例的 `socialProviders` 选项。
 
     ```ts title="auth.ts" 
     import { betterAuth } from "better-auth"
@@ -29,6 +29,10 @@ description: Discord 提供商的设置和使用。
         },
     })
     ```
+
+    <Callout>
+      对于仅有手机号的账户，即使授予了 `email` 范围，Discord 也会返回 `email: null`。请参阅 [处理没有邮箱的提供程序](/docs/concepts/oauth#handling-providers-without-email)，了解推荐的 `mapProfileToUser` 回退方案。
+    </Callout>
   </Step>
 </Steps>
 
@@ -38,7 +42,7 @@ description: Discord 提供商的设置和使用。
 
 要使用 Discord 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
 
-* `provider`: 要使用的提供者。应设置为 `discord`。
+* `provider`: 要使用的提供程序。应设置为 `discord`。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"

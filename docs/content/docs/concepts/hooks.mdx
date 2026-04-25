@@ -92,6 +92,35 @@ export const auth = betterAuth({
 });
 ```
 
+### 示例：在单个钩子中处理多个端点
+
+由于 `before` 和 `after` 都只接受一次 `createAuthMiddleware` 调用，因此可以通过在同一个钩子内对 `ctx.path` 进行条件判断来处理多个端点：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { createAuthMiddleware } from "better-auth/api";
+
+export const auth = betterAuth({
+    hooks: {
+        after: createAuthMiddleware(async (ctx) => {
+            if (ctx.path === "/reset-password") {
+                // 密码重置后自动登录用户
+            }
+            if (ctx.path.startsWith("/sign-up")) {
+                // 注册后发送欢迎通知
+            }
+            if (ctx.path === "/sign-in/email") {
+                // 跟踪登录分析
+            }
+        }),
+    },
+});
+```
+
+<Callout>
+每个钩子（`before` / `after`）都只接受一个中间件函数，而不是数组。若要为不同端点运行逻辑，请在该单个函数内部基于 `ctx.path` 分支处理。
+</Callout>
+
 ## Ctx
 
 调用 `createAuthMiddleware` 时会传入一个 `ctx` 对象，提供了许多有用的属性，包括：

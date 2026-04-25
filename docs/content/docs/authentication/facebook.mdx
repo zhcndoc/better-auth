@@ -41,6 +41,10 @@ description: Facebook 提供者的设置和使用。
     <Callout>
       BetterAuth 还支持 Facebook 企业登录，您只需提供 `configId`，就像在 **Facebook 企业登录 > 配置** 中列出的一样，同时提供 `clientId` 和 `clientSecret`。请注意，该应用必须是企业应用，并且因为 BetterAuth 期望获取电子邮件地址和账户 ID，所以配置类型必须为“用户访问令牌”。“系统用户访问令牌”不受支持。
     </Callout>
+
+    <Callout>
+      Facebook 即使在权限已授予的情况下，也可能不会返回 `email`（例如仅有手机号的账户、撤销同意，或 Meta 标记为无效的地址）。有关推荐的 `mapProfileToUser` 兜底处理，请参阅 [Handling Providers Without Email](/docs/concepts/oauth#handling-providers-without-email)。
+    </Callout>
   </Step>
 
   <Step>

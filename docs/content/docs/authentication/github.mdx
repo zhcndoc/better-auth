@@ -61,14 +61,14 @@ GitHub 有两种应用类型：GitHub 应用和 OAuth 应用。
 
 对于 OAuth 应用，无需执行特殊操作（只需按照上述步骤操作）。对于 GitHub 应用，你需要额外完成一项设置，即开启读取用户邮箱的权限：
 
-1. 创建应用后，进入 *Permissions and Events* > *Account Permissions* > *Email Addresses* 并选择“只读”（Read-Only）
+1. 创建应用后，进入 *权限和事件* > *账户权限* > *电子邮件地址* 并选择“只读”（Read-Only）
 
 2. 保存更改。
 
 这样就可以了！现在你可以复制应用的客户端 ID 和客户端密钥！
 
 <Callout>
-  如果出现 "email_not_found" 错误，是因为你选择了 GitHub 应用但未配置此部分！
+  如果你遇到 `email_not_found` 错误，通常是因为：(a) 你创建了一个 GitHub App，但没有授予“Email addresses: Read-only”权限；或者 (b) 用户将其主邮箱设置为私密，在这种情况下 `GET /user` 会返回 `email: null`。有关推荐的 `mapProfileToUser` 回退方案，请参阅 [处理无邮箱提供者](/docs/concepts/oauth#handling-providers-without-email)；用户的私密地址也可通过 [`/user/emails`](https://docs.github.com/en/rest/users/emails) 获取。
 </Callout>
 
 ### 为什么我没有刷新令牌？

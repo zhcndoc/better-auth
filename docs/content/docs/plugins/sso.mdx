@@ -654,7 +654,7 @@ const auth = betterAuth({
     plugins: [
         sso({
             provisionUser: async ({ user, userInfo, token, provider }) => {
-                // 用 SSO 数据更新用户资料
+                // 使用 SSO 数据更新用户资料
                 await updateUserProfile(user.id, {
                     department: userInfo.attributes?.department,
                     jobTitle: userInfo.attributes?.jobTitle,
@@ -1188,7 +1188,7 @@ sso({
 })
 ```
 
-| Value      | Behavior                                    |
+| Value      | 行为                                    |
 | ---------- | ------------------------------------------- |
 | `"warn"`   | 记录警告，允许认证（默认）                 |
 | `"reject"` | 抛出错误，阻止认证                         |
@@ -1228,10 +1228,10 @@ sso({
 
 **废弃（触发警告/拒绝）：**
 
-| Option            | Default | Description                         |
+| Option            | 默认值 | 描述                         |
 | ----------------- | ------- | ----------------------------------- |
-| `maxResponseSize` | 256KB   | Maximum SAML response size in bytes |
-| `maxMetadataSize` | 100KB   | Maximum IdP metadata size in bytes  |
+| `maxResponseSize` | 256KB   | 最大 SAML 响应大小（字节） |
+| `maxMetadataSize` | 100KB   | 最大 IdP 元数据大小（字节）  |
 
 ### 尺寸限制
 
@@ -1503,7 +1503,7 @@ export const ssoProviderTableFields = [
 	},
 ];
 
-<DatabaseTable fields={ssoProviderTableFields} />
+<DatabaseTable name="ssoProvider" fields={ssoProviderTableFields} />
 
 ### 若已启用域名验证：
 
@@ -1518,7 +1518,7 @@ export const ssoProviderDomainVerificationFields = [
 	},
 ];
 
-<DatabaseTable fields={ssoProviderDomainVerificationFields} />
+<DatabaseTable name="ssoProvider" fields={ssoProviderDomainVerificationFields} />
 
 ### IdP 发起的 SAML SSO
 

@@ -466,11 +466,13 @@ const client = await authClient.oauth2.register({
 
 **状态（State）**
 
-需发送状态参数以防止跨站请求伪造（CSRF）攻击。客户端通过该方式确保只响应其发起的请求。
+Clients should send a state value to mitigate cross-site request forgery (CSRF) attacks. This works by ensuring your client only responds to requests that your client initially requested.
 
 客户端生成状态值，并存储在安全、HTTP-only Cookie 或数据库等处。
 
-**代码挑战**
+The authorization server accepts requests without `state` for compatibility with OAuth and OpenID Connect, and echoes `state` back when it is provided. Better Auth's client helpers generate and validate `state` for you.
+
+**Code Challenge**
 
 代码挑战用于保护授权端点返回的授权码。
 
@@ -1512,7 +1514,7 @@ JWT 访问令牌仍使用真实用户 ID 作为 `sub`，因资源服务器可能
   </Step>
 
   <Step>
-    If you use `allowUnauthenticatedClientRegistration`, you must ensure that your API Server is a confidential client itself:
+    如果您使用 `allowUnauthenticatedClientRegistration`，则必须确保您的 API Server 本身也是机密客户端：
 
     ```ts
     await auth.api.createOAuthClient({

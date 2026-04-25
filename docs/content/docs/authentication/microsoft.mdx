@@ -38,7 +38,11 @@ description: Microsoft 提供商的设置与使用。
     })
     ```
 
-    **Authority URL**：对于标准 Entra ID 场景，请使用默认值 `https://login.microsoftonline.com`；对于 CIAM（客户身份与访问管理）场景，请使用 `https://<tenant-id>.ciamlogin.com`。
+    **Authority URL**: 标准 Entra ID 场景使用默认的 `https://login.microsoftonline.com`，CIAM（客户标识与访问管理）场景使用 `https://<tenant-id>.ciamlogin.com`。
+
+    <Callout type="warn">
+      默认情况下，Entra 不会为受管用户发出 `email` 声明，并且该值[可由租户变更且从不由 Microsoft 验证](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference)；它绝不能用于授权决策。对于受管用户，请将 `email` 作为[可选声明](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims)请求，并使用 `profile.oid`（如果需要跨租户关联，则再加上 `profile.tid`）作为稳定的身份锚点。有关 `mapProfileToUser` 的回退方式，请参阅[处理不提供电子邮件的提供商](/docs/concepts/oauth#handling-providers-without-email)。
+    </Callout>
   </Step>
 </Steps>
 

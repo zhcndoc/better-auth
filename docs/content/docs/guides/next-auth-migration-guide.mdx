@@ -330,6 +330,7 @@ description: 从 Auth.js 迁移到 Better Auth 的分步指南。
     <Tabs items={["Auth.js", "Better Auth"]}>
       <Tab value="Auth.js">
         <DatabaseTable
+          name="User"
           fields={[
 {
 name: "id",
@@ -367,6 +368,7 @@ isOptional: true,
 
       <Tab value="Better Auth">
         <DatabaseTable
+          name="user"
           fields={[
 {
 name: "id",
@@ -416,6 +418,7 @@ description: "用户信息最后更新时间戳",
     <Tabs items={["Auth.js", "Better Auth"]}>
       <Tab value="Auth.js">
         <DatabaseTable
+          name="Session"
           fields={[
 {
 name: "id",
@@ -446,6 +449,7 @@ description: "会话过期时间",
 
       <Tab value="Better Auth">
         <DatabaseTable
+          name="session"
           fields={[
 {
 name: "id",
@@ -503,6 +507,7 @@ description: "会话更新时间戳",
     <Tabs items={["Auth.js", "Better Auth"]}>
       <Tab value="Auth.js">
         <DatabaseTable
+          name="Account"
           fields={[
 {
 name: "id",
@@ -580,6 +585,7 @@ isOptional: true,
 
       <Tab value="Better Auth">
         <DatabaseTable
+          name="account"
           fields={[
 {
 name: "id",
@@ -668,6 +674,7 @@ description: "账户更新时间戳",
     <Tabs items={["Auth.js", "Better Auth"]}>
       <Tab value="Auth.js">
         <DatabaseTable
+          name="VerificationToken"
           fields={[
 {
 name: "identifier",
@@ -692,6 +699,7 @@ description: "验证令牌过期时间",
 
       <Tab value="Better Auth">
         <DatabaseTable
+          name="verification"
           fields={[
 {
 name: "id",

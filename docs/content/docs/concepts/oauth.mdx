@@ -266,6 +266,68 @@ export const auth = betterAuth({
   * `[key: string]`: 你在 OAuth 流程中传递的任何额外数据
 </Callout>
 
+## 处理没有邮箱的提供商
+
+Better Auth 目前要求每条用户记录都必须有电子邮件地址。大多数提供商会在使用 `email` scope 时返回邮箱，但有些提供商在合法情况下可能不会返回。当这种情况发生时，OAuth 流程会失败并报 `error=email_not_found`（而对于 Generic OAuth 插件则是 `error=email_is_missing`）。
+
+下表总结了每个受影响的提供商：何时可能缺少 `email`、在 `mapProfileToUser` 中可作为回退的稳定标识符，以及对提供商 `email_verified` 信号的可信度。
+
+| 提供商             | 何时可能缺少 `email`                                                                                                                                               | 稳定回退 ID                                       | `email_verified` 可信度                                                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Discord            | 仅手机号账户；未授予 `email` scope                                                                                                                           | `profile.id`（雪花 ID）                           | 可靠（专用 `verified` 字段）                                                                                                                               |
+| Apple              | 第一次之后的每次登录（Apple 仅在首次同意时发出 `email`）                                                                                          | `profile.sub`（每个 Apple Team 稳定）             | 可靠；中继地址也会被标记为已验证                                                                                                                 |
+| GitHub             | 用户将邮箱设为私密；GitHub App 缺少 “Email addresses” 权限                                                                                         | `profile.id`（数字）                              | 可靠                                                                                                                                                            |
+| Facebook           | 即使授予了 `email` 权限，文件中仍没有有效邮箱                                                                                                         | `profile.id`（应用作用域）                         | 未知：Graph API 不提供逐邮箱验证标志                                                                                                           |
+| LinkedIn           | 成员没有已确认邮箱；未授予 `email` scope                                                                                                              | `profile.sub`（每个应用的 pairwise）               | 出现时可靠                                                                                                                                               |
+| Microsoft Entra ID | 托管用户没有 `mail` 属性，除非将 `email` 配置为 [可选声明](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims) | `profile.oid` 加 `profile.tid`（或 `profile.sub`） | **不可信**：Microsoft [明确警告](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference) 切勿将其用于授权 |
+
+### 使用 `mapProfileToUser` 合成占位邮箱
+
+当 `email` 字段为 null 或不存在时，回退到提供商的稳定 ID：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+  socialProviders: {
+    discord: {
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+      mapProfileToUser: (profile) => ({
+        email: profile.email ?? `${profile.id}@discord.placeholder.local`,
+      }),
+    },
+    apple: {
+      clientId: process.env.APPLE_CLIENT_ID!,
+      clientSecret: process.env.APPLE_CLIENT_SECRET!,
+      mapProfileToUser: (profile) => ({
+        email: profile.email ?? `${profile.sub}@apple.placeholder.local`,
+      }),
+    },
+    microsoft: {
+      clientId: process.env.MICROSOFT_CLIENT_ID!,
+      clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+      mapProfileToUser: (profile) => ({
+        email: profile.email ?? `${profile.oid}@entra.placeholder.local`,
+      }),
+    },
+  },
+});
+```
+
+<Callout type="warn">
+  合成邮箱只是占位符，不是真实联系地址。发送邮件的插件（密码重置、魔法链接、邮箱验证、组织邀请）无法投递到这些地址。请使用你控制的域名，或使用保留后缀如 `.invalid` 或 `.local`，以免误发到真实邮箱。
+</Callout>
+
+### 提供商特定说明
+
+* **Apple**：第一次看到邮箱时请将其持久化保存。Apple 不提供用户信息端点，因此如果你在首次登录时不保存它，之后就无法再获取。`email_verified` 和 `is_private_email` 都会被序列化为 **字符串**（`"true"` / `"false"`），而不是布尔值。
+* **GitHub**：默认会请求 `user:email` scope。私密邮箱在 `/user` 上仍会返回 `null`；主要已验证地址可在 [`/user/emails`](https://docs.github.com/en/rest/users/emails) 获取。
+* **Microsoft Entra ID**：由于 `email` 可随租户变化且从不验证，请使用 `profile.oid`（不可变、在租户内稳定）作为身份锚点；仅将 `email` 视为资料属性。Microsoft 的 [声明验证指南](https://learn.microsoft.com/en-us/entra/identity-platform/claims-validation) 明确警告，切勿将 `email`、`preferred_username` 或 `unique_name` 用于授权决策。
+* **Facebook**：由于没有逐邮箱验证标志，除非你自行执行验证挑战，否则应将每个 Facebook 邮箱都视为未验证。
+
+针对无邮箱用户的一等支持——使用稳定的 `(providerId, accountId)` 对作为身份键（与 [OpenID Connect Core §5.7](https://openid.net/specs/openid-connect-core-1_0.html#ClaimStability) 一致）——已在 [#9124](https://github.com/better-auth/better-auth/issues/9124) 中跟踪。
+
 ## 提供商选项
 
 ### clientId

@@ -1845,15 +1845,16 @@ export const authClient = createAuthClient({
 
 #### 设置活跃团队
 
-设置当前活跃团队；`teamId` 为 `null` 时取消活跃团队。
+Sets the given team as the current active team for the current active organization. If `teamId` is `null` the current active team is unset.
 
 <APIMethod path="/organization/set-active-team" method="POST" requireSession>
   ```ts
   type setActiveTeam = {
       /**
        * The team ID of the team to set as the current active team.
+       * The team must belong to the current active organization.
        */
-      teamId?: string = "team-id"
+      teamId?: string | null = "team-id"
   }
   ```
 </APIMethod>
