@@ -624,8 +624,8 @@ subscription: {
         // 订阅在结账外创建时调用（比如后台仪表盘）
         await sendSubscriptionCreatedEmail(subscription.referenceId, plan.name);
     },
-    onSubscriptionUpdate: async ({ event, subscription }) => {
-        // 订阅更新时调用
+    onSubscriptionUpdate: async ({ event, subscription, stripeSubscription }) => {
+        // 订阅更新时调用。使用 `stripeSubscription` 获取原始 Stripe 字段，例如 `cancellation_details`。
         console.log(`订阅 ${subscription.id} 已更新`);
     },
     onSubscriptionCancel: async ({ event, subscription, stripeSubscription, cancellationDetails }) => {
@@ -851,55 +851,55 @@ stripe({
 
 ### 订阅选项
 
-| Option                     | Type                         | Description                                                                                                                   |
-| -------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `enabled`                  | `boolean`                    | Whether to enable subscription functionality. **Required.**                                                                   |
-| `plans`                    | `StripePlan[]` or `function` | An array of subscription plans or an async function that returns plans. **Required** if enabled.                              |
-| `requireEmailVerification` | `boolean`                    | Whether to require email verification before allowing subscription upgrades. Default: `false`.                                |
-| `authorizeReference`       | `function`                   | Authorize reference IDs. Receives `{ user, session, referenceId, action }` and context.                                       |
-| `getCheckoutSessionParams` | `function`                   | Customize Stripe Checkout session parameters. Receives `{ user, session, plan, subscription }`, request, and context.         |
-| `onSubscriptionComplete`   | `function`                   | Called when a subscription is created via checkout. Receives `{ event, stripeSubscription, subscription, plan }` and context. |
-| `onSubscriptionCreated`    | `function`                   | Called when a subscription is created outside checkout. Receives `{ event, stripeSubscription, subscription, plan }`.         |
-| `onSubscriptionUpdate`     | `function`                   | Called when a subscription is updated. Receives `{ event, subscription }`.                                                    |
-| `onSubscriptionCancel`     | `function`                   | Called when a subscription is canceled. Receives `{ event, subscription, stripeSubscription, cancellationDetails }`.          |
-| `onSubscriptionDeleted`    | `function`                   | Called when a subscription is deleted. Receives `{ event, stripeSubscription, subscription }`.                                |
+| Option                     | Type                         | Description                                                                                                                                                                |
+| -------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`                  | `boolean`                    | 是否启用订阅功能。**必需。**                                                                                                                |
+| `plans`                    | `StripePlan[]` or `function` | 订阅计划数组，或返回计划的异步函数。启用时**必需**。                                                                           |
+| `requireEmailVerification` | `boolean`                    | 在允许订阅升级前是否要求邮箱验证。默认：`false`。                                                                             |
+| `authorizeReference`       | `function`                   | 授权 reference ID。接收 `{ user, session, referenceId, action }` 以及上下文。                                                                                    |
+| `getCheckoutSessionParams` | `function`                   | 自定义 Stripe Checkout 会话参数。接收 `{ user, session, plan, subscription }`、请求和上下文。                                                      |
+| `onSubscriptionComplete`   | `function`                   | 通过 checkout 创建订阅时调用。接收 `{ event, stripeSubscription, subscription, plan }` 和上下文。                                              |
+| `onSubscriptionCreated`    | `function`                   | 在 checkout 之外创建订阅时调用。接收 `{ event, stripeSubscription, subscription, plan }`。                                                      |
+| `onSubscriptionUpdate`     | `function`                   | 订阅更新时调用。接收 `{ event, subscription, stripeSubscription }`。像 `cancellation_details` 这类原始 Stripe 字段请使用 `stripeSubscription`。 |
+| `onSubscriptionCancel`     | `function`                   | 订阅取消时调用。接收 `{ event, subscription, stripeSubscription, cancellationDetails }`。                                                       |
+| `onSubscriptionDeleted`    | `function`                   | 订阅删除时调用。接收 `{ event, stripeSubscription, subscription }`。                                                                             |
 
 #### 计划配置
 
 | Option                    | Type         | Description                                                                                                   |
 | ------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------- |
-| `name`                    | `string`     | The name of the plan. **Required.**                                                                           |
-| `priceId`                 | `string`     | The Stripe price ID. **Required** unless using `lookupKey`.                                                   |
-| `lookupKey`               | `string`     | The Stripe price lookup key. Alternative to `priceId`.                                                        |
-| `annualDiscountPriceId`   | `string`     | A price ID for annual billing.                                                                                |
-| `annualDiscountLookupKey` | `string`     | The Stripe price lookup key for annual billing.                                                               |
-| `limits`                  | `object`     | Limits for plan (e.g. `{ projects: 10, storage: 5 }`).                                                        |
-| `group`                   | `string`     | A group name for categorizing plans.                                                                          |
-| `seatPriceId`             | `string`     | Per-seat billing price ID. Requires the `organization` plugin.                                                |
-| `prorationBehavior`       | `string`     | Proration behavior on subscription updates: `"create_prorations"` (default), `"always_invoice"`, or `"none"`. |
-| `lineItems`               | `LineItem[]` | Additional line items to include in the checkout session.                                                     |
-| `freeTrial`               | `object`     | Trial configuration. See [below](#free-trial-configuration).                                                  |
+| `name`                    | `string`     | 计划名称。**必需。**                                                                           |
+| `priceId`                 | `string`     | Stripe price ID。除非使用 `lookupKey`，否则为**必需**。                                                   |
+| `lookupKey`               | `string`     | Stripe price lookup key。可替代 `priceId`。                                                        |
+| `annualDiscountPriceId`   | `string`     | 年付账单的 price ID。                                                                                |
+| `annualDiscountLookupKey` | `string`     | 年付账单的 Stripe price lookup key。                                                               |
+| `limits`                  | `object`     | 计划限制（例如 `{ projects: 10, storage: 5 }`）。                                                        |
+| `group`                   | `string`     | 用于对计划分组的组名。                                                                          |
+| `seatPriceId`             | `string`     | 按席位计费的 price ID。需要 `organization` 插件。                                                |
+| `prorationBehavior`       | `string`     | 订阅更新时的按比例计费行为：`"create_prorations"`（默认）、`"always_invoice"` 或 `"none"`。 |
+| `lineItems`               | `LineItem[]` | 在 checkout 会话中包含的附加条目。                                                     |
+| `freeTrial`               | `object`     | 试用配置。见[下文](#free-trial-configuration)。                                                  |
 
 <Callout type="info">
-  Stripe does not support [mixed-interval subscriptions](https://docs.stripe.com/billing/subscriptions/mixed-interval) via Checkout Sessions. All line items in a checkout should use the **same billing interval** (e.g. all monthly or all yearly). If intervals differ, the Stripe API will reject the request.
+  Stripe 不支持通过 Checkout Sessions 进行 [混合计费周期订阅](https://docs.stripe.com/billing/subscriptions/mixed-interval)。checkout 中的所有条目都应使用**相同的计费周期**（例如全部按月或全部按年）。如果周期不同，Stripe API 会拒绝该请求。
 </Callout>
 
 #### 免费试用配置
 
 | Option           | Type       | Description                                                                          |
 | ---------------- | ---------- | ------------------------------------------------------------------------------------ |
-| `days`           | `number`   | Number of trial days. **Required.**                                                  |
-| `onTrialStart`   | `function` | Called when a trial starts. Receives `subscription`.                                 |
-| `onTrialEnd`     | `function` | Called when a trial ends. Receives `{ subscription }` and context.                   |
-| `onTrialExpired` | `function` | Called when a trial expires without conversion. Receives `subscription` and context. |
+| `days`           | `number`   | 试用天数。**必需。**                                                  |
+| `onTrialStart`   | `function` | 试用开始时调用。接收 `subscription`。                                 |
+| `onTrialEnd`     | `function` | 试用结束时调用。接收 `{ subscription }` 和上下文。                   |
+| `onTrialExpired` | `function` | 试用在未转化时过期调用。接收 `subscription` 和上下文。 |
 
 ### 组织选项
 
 | Option                    | Type       | Description                                                                                                |
 | ------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
-| `enabled`                 | `boolean`  | Enable Organization Customer support. **Required.**                                                        |
-| `getCustomerCreateParams` | `function` | Customize Stripe customer creation parameters for organizations. Receives `organization` and context.      |
-| `onCustomerCreate`        | `function` | Called after an organization customer is created. Receives `{ stripeCustomer, organization }` and context. |
+| `enabled`                 | `boolean`  | 启用组织客户支持。**必需。**                                                        |
+| `getCustomerCreateParams` | `function` | 自定义组织的 Stripe 客户创建参数。接收 `organization` 和上下文。      |
+| `onCustomerCreate`        | `function` | 组织客户创建后调用。接收 `{ stripeCustomer, organization }` 和上下文。 |
 
 ## 高级用法
 
@@ -908,11 +908,11 @@ stripe({
 Stripe 插件集成了 [organization 插件](/docs/plugins/organization)，支持组织作为 Stripe 客户。订阅的计费对象由个人用户转为组织，适合 B2B 场景。
 
 <Callout type="info">
-  **When Organization Customer is enabled:**
+  **启用组织客户时：**
 
-  * A Stripe Customer is automatically created when an organization first subscribes
-  * Organization name changes are synced to the Stripe Customer
-  * Organizations with active subscriptions cannot be deleted
+  * 当组织首次订阅时会自动创建 Stripe Customer
+  * 组织名称变更会同步到 Stripe Customer
+  * 有活跃订阅的组织无法被删除
 </Callout>
 
 #### 启用组织客户
@@ -981,7 +981,40 @@ await stripeClient.customers.update(organization.stripeCustomerId, {
 });
 ```
 
-### 自定义结账会话参数
+### 处理用户删除
+
+有活跃订阅的组织会被自动阻止删除，但用户不会。若要在用户删除时实现相同行为，可在订阅活跃时于 [`beforeDelete`](/docs/concepts/users-accounts#callbacks) 回调中抛出错误：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
+
+export const auth = betterAuth({
+    user: {
+        deleteUser: {
+            enabled: true,
+            beforeDelete: async (user) => {
+                if (!user.stripeCustomerId) return;
+
+                for await (const sub of stripeClient.subscriptions.list({
+                    customer: user.stripeCustomerId,
+                    status: "all",
+                })) {
+                    if (["canceled", "incomplete", "incomplete_expired"].includes(sub.status)) continue;
+
+                    throw new APIError("BAD_REQUEST", {
+                        message: "请在删除账户前取消当前活跃订阅",
+                    });
+                    // 或立即取消：await stripeClient.subscriptions.cancel(sub.id);
+                    // 或在周期结束时取消：      await stripeClient.subscriptions.update(sub.id, { cancel_at_period_end: true });
+                }
+            },
+        },
+    },
+});
+```
+
+### 自定义 Checkout Session 参数
 
 你可以传递额外参数给 Stripe Checkout：
 
@@ -1053,19 +1086,19 @@ subscription: {
 
 ### 试用期管理
 
-**How it works:**
+**工作原理：**
 
-* The system tracks trial usage across all plans for each user
-* When a user subscribes to a plan with a trial, the system checks their subscription history
-* If the user has ever had a trial (indicated by `trialStart`/`trialEnd` fields or `trialing` status), no new trial will be offered
-* This prevents abuse where users cancel subscriptions and resubscribe to get multiple free trials
+* 系统会跟踪每个用户在所有计划中的试用使用情况
+* 当用户订阅带试用期的计划时，系统会检查其订阅历史
+* 如果用户曾经使用过试用期（由 `trialStart`/`trialEnd` 字段或 `trialing` 状态表示），则不会再提供新的试用期
+* 这可防止用户通过取消订阅再重新订阅来多次获取免费试用
 
-**Example scenario:**
+**示例场景：**
 
-1. User subscribes to "Starter" plan with 7-day trial
-2. User cancels the subscription after the trial
-3. User tries to subscribe to "Premium" plan - no trial will be offered
-4. User will be charged immediately for the Premium plan
+1. 用户订阅“Starter”计划，有 7 天试用
+2. 用户试用后取消订阅
+3. 用户尝试订阅“Premium”计划，不会再提供试用
+4. 用户将立即支付 Premium 计划费用
 
 **示例：**
 1. 用户订阅“Starter”计划，有 7 天试用
