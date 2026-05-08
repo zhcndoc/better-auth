@@ -120,7 +120,24 @@ export const authClient = createAuthClient({
 });
 ```
 
-### 基础查询
+### 获取当前用户的审计日志
+
+返回 **当前用户** 的审计事件。用于终端用户活动以及调用方为普通成员的组织视图。
+
+#### 查询参数
+
+| 参数             | 类型     | 描述                                   |
+| ---------------- | -------- | -------------------------------------- |
+| `limit`          | `number` | 每页结果数（最大 100，默认 50）         |
+| `offset`         | `number` | 分页偏移量（默认 0）                   |
+| `organizationId` | `string` | 按组织筛选                             |
+| `identifier`     | `string` | 按标识符筛选                           |
+| `eventType`      | `string` | 按事件类型筛选                         |
+| `userId`         | `string` | 按用户 ID 筛选                         |
+| `user`           | `object` | 带有 ID 的用户对象                     |
+| `session`        | `object` | 带有用户的会话对象                     |
+
+#### 基本查询
 
 ```ts
 const session = await authClient.getSession();
@@ -137,53 +154,172 @@ logs.data?.limit;   // 每页大小
 logs.data?.offset;  // 当前偏移量
 ```
 
-### 查询参数
+#### 按事件类型筛选
 
-| 参数               | 类型     | 描述                            |
-| ------------------ | -------- | ------------------------------ |
-| `limit`            | `number` | 每页结果数（最大 100，默认 50） |
-| `offset`           | `number` | 分页偏移量（默认 0）            |
-| `organizationId`   | `string` | 按组织筛选                      |
-| `identifier`       | `string` | 按标识符筛选                    |
-| `eventType`        | `string` | 按事件类型筛选                  |
-| `userId`           | `string` | 按用户 ID 筛选                  |
-| `user`             | `object` | 包含用户 ID 的用户对象          |
-| `session`          | `object` | 包含用户信息的会话对象          |
-
-### 筛选示例
+返回当前用户的登录审计日志。
 
 ```ts
-// 按事件类型筛选
 const signIns = await authClient.dash.getAuditLogs({
-  session,
+  session: session.data,
   eventType: "user_signed_in",
 });
+```
 
-// 按组织筛选
+#### 按组织筛选
+
+返回当前用户在指定组织范围内的审计日志。
+
+```ts
 const orgLogs = await authClient.dash.getAuditLogs({
-  session,
+  session: session.data,
   organizationId: "org_123",
 });
+```
 
-// 组合筛选
+#### 组合筛选
+
+您可以组合筛选条件以获得更具体的结果（例如，当前用户在特定组织中的所有登录事件）。
+
+```ts
 const orgSignIns = await authClient.dash.getAuditLogs({
-  session,
+  session: session.data,
   organizationId: "org_123",
   eventType: "user_signed_in",
 });
 ```
 
-### 分页示例
+您也可以将结果限制为特定标识符（例如，当前用户在特定组织和邮箱下的所有事件）。
 
 ```ts
-async function getAllAuditLogs(session: unknown) {
+const orgSignIns = await authClient.dash.getAuditLogs({
+  session: session.data,
+  organizationId: "org_123",
+  identifier: "user@example.com",
+});
+```
+
+> **注意**：标识符是事件的唯一值。例如，电子邮件地址、用户名等。
+
+#### 分页
+
+结果是分页返回的。如果您需要获取多页内容，可以使用 `limit` 和 `offset` 参数对结果进行分页：
+
+```ts
+async function fetchAllUserAuditLogEvents(session: unknown) {
   const limit = 100;
   let offset = 0;
   const allEvents = [];
 
   while (true) {
     const result = await authClient.dash.getAuditLogs({
-      session,
+      session: session.data,
+      limit,
+      offset,
+    });
+    
+    const events = result.data?.events ?? [];
+    allEvents.push(...events);
+
+    if (events.length < limit) break;
+    offset += limit;
+  }
+
+  return allEvents;
+}
+```
+
+### 获取全部审计日志
+
+返回当前用户拥有 **管理员** 或 **所有者** 访问权限的组织的所有审计事件。用于需要跨您管理的组织查看活动的管理员式仪表盘。
+您必须使用 [组织插件](/docs/plugins/organization)，以便评估成员角色。
+
+#### 查询参数
+
+| 参数             | 类型     | 描述                                                                           |
+| ---------------- | -------- | ------------------------------------------------------------------------------ |
+| `limit`          | `number` | 每页结果数（最大 `100`，默认 `50`）                                              |
+| `offset`         | `number` | 分页偏移量（默认 `0`）                                                          |
+| `organizationId` | `string` | 将结果限制为一个组织（您必须是所有者或管理员）                                   |
+| `userId`         | `string` | 限制为您以所有者或管理员身份管理的组织中某一用户的活动                           |
+| `eventType`      | `string` | 按事件类型筛选                                                               |
+| `identifier`     | `string` | 匹配 `eventData.identifier`（组织范围内的主体标识）                             |
+| `session`        | `object` | 带有用户的会话对象                                                           |
+
+#### 基本查询
+
+```ts
+const session = await authClient.getSession();
+
+const activity = await authClient.dash.getAllAuditLogs({
+  session: session.data,
+  limit: 50,
+  offset: 0,
+});
+
+activity.data?.events;
+activity.data?.total;
+activity.data?.limit;
+activity.data?.offset;
+```
+
+#### 按组织筛选
+
+返回指定组织的所有审计事件：
+
+```ts
+const orgActivity = await authClient.dash.getAllAuditLogs({
+  session: session.data,
+  organizationId: "org_123",
+});
+```
+
+#### 按用户筛选
+
+返回跨组织的指定用户的所有审计事件：
+
+```ts
+const userActivity = await authClient.dash.getAllAuditLogs({
+  session: session.data,
+  userId: "user_456",
+});
+```
+
+#### 按事件类型筛选
+
+返回跨组织的指定事件类型的所有审计事件：
+
+```ts
+const events = await authClient.dash.getAllAuditLogs({
+  session: session.data,
+  eventType: "member_invited",
+});
+```
+
+#### 组合筛选
+
+您可以组合筛选条件以获得更具体的结果（例如，指定组织和事件类型的所有审计事件）。
+
+```ts
+const orgEvents = await authClient.dash.getAllAuditLogs({
+  session: session.data,
+  organizationId: "org_123",
+  eventType: "member_invited",
+});
+```
+
+#### 分页
+
+结果是分页返回的。如果您需要获取多页内容，可以使用 `limit` 和 `offset` 参数对结果进行分页：
+
+```ts
+async function fetchAllAuditLogs(session: unknown) {
+  const limit = 100;
+  let offset = 0;
+  const allEvents = [];
+
+  while (true) {
+    const result = await authClient.dash.getAllAuditLogs({
+      session: session.data,
       limit,
       offset,
     });

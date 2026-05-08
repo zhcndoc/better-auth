@@ -26,7 +26,7 @@ export const auth = betterAuth({
 
 | 选项 | 类型 | 描述 |
 | ------------------ | -------- | ---------------------------------- |
-| `apiUrl` | `string` | Better Auth Infrastructure API URL |
+| `apiUrl` | `string` | Better Auth 基础设施 API URL |
 | `kvUrl` | `string` | 用于缓存的 KV 存储 URL |
 | `apiKey` | `string` | 用于身份验证的 API 密钥 |
 | `activityTracking` | `object` | 活动跟踪配置 |
@@ -256,7 +256,11 @@ dashClient({
 }),
 ```
 
-### 拉取审计日志
+### 获取当前用户的审计日志
+
+返回 **当前用户** 的审计事件；如果你以成员身份传入 `organizationId`，则返回组织范围内的事件。
+
+#### 基本查询
 
 ```ts
 const session = await authClient.getSession();
@@ -274,67 +278,28 @@ console.log(logs.data?.limit);   // 页面大小
 console.log(logs.data?.offset);  // 当前偏移量
 ```
 
-### 查询参数
+查看 [获取当前用户的审计日志](/docs/infrastructure/plugins/audit-logs#get-current-users-audit-logs) 以了解更多信息。
 
-| 参数 | 类型 | 描述 |
-| ---------------- | -------- | -------------------------------------- |
-| `limit` | `number` | 每页结果数（最大 100，默认 50） |
-| `offset` | `number` | 分页偏移量（默认 0） |
-| `organizationId` | `string` | 按组织筛选 |
-| `identifier` | `string` | 按标识符筛选 |
-| `eventType` | `string` | 按事件类型筛选 |
-| `userId` | `string` | 按用户 ID 筛选 |
-| `user` | `object` | 包含 ID 的用户对象 |
-| `session` | `object` | 包含用户的会话对象 |
+### 获取所有审计日志
 
-### 分页示例
+返回当前用户具有 **admin** 或 **owner** 访问权限的组织的所有审计事件。需要 [organization 插件](/docs/plugins/organization) 进行角色检查。
+
+#### 基本查询
 
 ```ts
-async function getAllAuditLogs(session: unknown) {
-  const limit = 100;
-  let offset = 0;
-  const allEvents = [];
+const session = await authClient.getSession();
 
-  while (true) {
-    const result = await authClient.dash.getAuditLogs({
-      session,
-      limit,
-      offset,
-    });
-    
-    const events = result.data?.events ?? [];
-    allEvents.push(...events);
+const activity = await authClient.dash.getAllAuditLogs({
+  session: session.data,
+  limit: 50,
+  offset: 0,
+});
 
-    if (events.length < limit) break;
-    offset += limit;
-  }
-
-  return allEvents;
-}
+console.log(activity.data?.events);
+console.log(activity.data?.total);
 ```
 
-### 过滤示例
-
-```ts
-// 按事件类型过滤
-const signIns = await authClient.dash.getAuditLogs({
-  session,
-  eventType: "user_signed_in",
-});
-
-// 按组织过滤
-const orgLogs = await authClient.dash.getAuditLogs({
-  session,
-  organizationId: "org_123",
-});
-
-// 组合过滤
-const orgSignIns = await authClient.dash.getAuditLogs({
-  session,
-  organizationId: "org_123",
-  eventType: "user_signed_in",
-});
-```
+查看 [获取所有审计日志](/docs/infrastructure/plugins/audit-logs#get-all-audit-logs) 以了解更多信息。
 
 ## Schema 扩展
 

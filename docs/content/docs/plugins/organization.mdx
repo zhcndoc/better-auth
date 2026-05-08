@@ -9,7 +9,7 @@ description: 组织插件允许您管理组织的成员和团队。
 
 <Steps>
   <Step>
-    ### Add the plugin to your **auth** config
+    ### 将插件添加到您的 **auth** 配置中
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
@@ -24,7 +24,7 @@ description: 组织插件允许您管理组织的成员和团队。
   </Step>
 
   <Step>
-    ### Migrate the database
+    ### 迁移数据库
 
     运行迁移或生成模式，以将必要的字段和表添加到数据库。
 
@@ -42,11 +42,11 @@ description: 组织插件允许您管理组织的成员和团队。
       </Tab>
     </Tabs>
 
-    See the [Schema](#schema) section to add the fields manually.
+    查看 [Schema](#schema) 部分以手动添加这些字段。
   </Step>
 
   <Step>
-    ### Add the client plugin
+    ### 添加客户端插件
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -75,28 +75,28 @@ description: 组织插件允许您管理组织的成员和团队。
 
   type createOrganization = {
     /**
-    * The organization name.
+    * 组织名称。
     */
     name: string = "My Organization"
     /**
-    * The organization slug.
+    * 组织短名称。
     */
     slug: string = "my-org"
     /**
-    * The organization logo.
+    * 组织徽标。
     */
     logo?: string = "https://example.com/logo.png"
     /**
-    * The metadata of the organization.
+    * 组织的元数据。
     */
     metadata?: Record<string, any>
     /**
-    * The user ID of the organization creator.
-    * @serverOnly - This is ignored if session headers are provided.
+    * 组织创建者的用户 ID。
+    * @serverOnly - 如果提供了会话头信息，则会忽略此项。
     */
     userId?: string = "some_user_id"
     /**
-    * Whether to keep the current active organization active after creating a new one.
+    * 创建新组织后是否保持当前活跃组织仍为活跃状态。
     */
     keepCurrentActiveOrganization?: boolean = false
   }
@@ -104,14 +104,14 @@ description: 组织插件允许您管理组织的成员和团队。
 </APIMethod>
 
 <Callout type="warn">
-  **Mutually Exclusive Parameters**
+  **互斥参数**
 
-  The `userId` and session headers cannot be used together:
+  `userId` 和会话头信息不能同时使用：
 
-  * **With session headers:** The organization is created for the authenticated session user. The `userId` field is **silently ignored**.
-  * **Without session headers (Server-side only):** The organization is created for the user specified by `userId`.
+  * **使用会话头信息时：** 组织会为已认证的会话用户创建。`userId` 字段会被**静默忽略**。
+  * **不使用会话头信息时（仅服务端）：** 组织会为 `userId` 指定的用户创建。
 
-  **For Admins:** To create an organization on behalf of another user, you must make the API call server-side **without** passing session headers.
+  **对于管理员：** 若要代表其他用户创建组织，必须在服务端调用 API，且**不要**传递会话头信息。
 </Callout>
 
 #### 限制谁可以创建组织
@@ -143,7 +143,7 @@ const auth = betterAuth({
   ```ts
   type checkOrganizationSlug = {
       /**
-       * The organization slug to check.  
+       * 要检查的组织短名称。  
        */
       slug: string = "my-org"
   }
@@ -506,7 +506,7 @@ export const auth = betterAuth({
           if (violations.length > 0) {
             throw new APIError("BAD_REQUEST", {
               message:
-                "User has pending violations and cannot join organizations",
+                "用户有待处理的违规，无法加入组织",
             });
           }
         },
@@ -516,7 +516,7 @@ export const auth = betterAuth({
           const existingTeam = await findTeamByName(team.name, organization.id);
           if (existingTeam) {
             throw new APIError("BAD_REQUEST", {
-              message: "Team name already exists in this organization",
+              message: "此组织中已存在相同的团队名称",
             });
           }
         },
@@ -554,13 +554,13 @@ export const auth = betterAuth({
       const organizations = authClient.useListOrganizations();
     </script>
 
-    <h1>Organizations</h1>
+    <h1>组织</h1>
 
     {#if $organizations.isPending}
 
-      <p>Loading...</p>
+      <p>加载中...</p>
     {:else if !$organizations.data?.length}
-      <p>No organizations found.</p>
+      <p>未找到组织。</p>
     {:else}
       <ul>
         {#each $organizations.data as organization}
@@ -584,9 +584,9 @@ export const auth = betterAuth({
 
     <template>
         <div>
-            <h1>Organizations</h1>
-            <div v-if="organizations.isPending">Loading...</div>
-            <div v-else-if="organizations.data === null">No organizations found.</div>
+            <h1>组织</h1>
+            <div v-if="organizations.isPending">加载中...</div>
+            <div v-else-if="organizations.data === null">未找到组织。</div>
             <ul v-else>
                 <li v-for="organization in organizations.data" :key="organization.id">
                     {{ organization.name }}
@@ -607,7 +607,7 @@ export const auth = betterAuth({
   ```
 </APIMethod>
 
-### Active Organization
+### 活跃组织
 
 活跃组织是用户当前工作的工作区。默认情况下，用户登录时活跃组织设置为 `null`。您可以为用户会话设置活跃组织。
 
@@ -630,11 +630,11 @@ export const auth = betterAuth({
   ```ts
   type setActiveOrganization = {
       /**
-       * The organization ID to set as active. It can be null to unset the active organization.  
+       * 要设为活跃的组织 ID。也可以为 null，以取消设置活跃组织。  
        */
       organizationId?: string | null = "org-id"
       /**
-       * The organization slug to set as active. It can be null to unset the active organization if organizationId is not provided.  
+       * 要设为活跃的组织短名称。如果未提供 organizationId，则也可以为 null，以取消设置活跃组织。  
        */
       organizationSlug?: string = "org-slug"
   }
@@ -738,22 +738,22 @@ export const auth = betterAuth({
   ```ts
   type getFullOrganization = {
       /**
-       * The organization ID to get. By default, it will use the active organization.  
+       * 要获取的组织 ID。默认情况下，它将使用活跃组织。  
        */
       organizationId?: string = "org-id"
       /**
-       * The organization slug to get.  
+       * 要获取的组织短名称。  
        */
       organizationSlug?: string = "org-slug"
       /**
-       * The limit of members to get. By default, it uses the membershipLimit option which defaults to 100.
+       * 要获取的成员数量上限。默认使用 membershipLimit 选项，其默认值为 100。
        */
       membersLimit?: number = 100
   }
   ```
 </APIMethod>
 
-### Update Organization
+### 更新组织
 
 要更新组织信息，可以使用 `organization.update`。
 
@@ -761,28 +761,28 @@ export const auth = betterAuth({
   ```ts
   type updateOrganization = {
       /**
-       * A partial list of data to update the organization. 
+       * 要更新组织的部分数据列表。 
        */
       data: {
           /**
-           * The name of the organization. 
+           * 组织名称。 
            */
           name?: string = "updated-name"
           /**
-           * The slug of the organization. 
+           * 组织短名称。 
            */
           slug?: string = "updated-slug"
           /**
-           * The logo of the organization. 
+           * 组织徽标。 
            */
           logo?: string = "new-logo.url"
           /**
-           * The metadata of the organization. 
+           * 组织的元数据。 
            */
           metadata?: Record<string, any> | null = { customerId: "test" }
       }
       /**
-       * The organization ID. to update.
+       * 要更新的组织 ID。
        */
       organizationId?: string = "org-id"
   }
@@ -797,7 +797,7 @@ export const auth = betterAuth({
   ```ts
   type deleteOrganization = {
       /*
-      * The organization ID to delete.
+      * 要删除的组织 ID。
       */
       organizationId: string = "org-id"
   }
@@ -870,23 +870,23 @@ export const auth = betterAuth({
   ```ts
   type createInvitation = {
       /**
-       * The email address of the user to invite.  
+       * 要邀请的用户邮箱地址。  
        */
       email: string = "example@gmail.com"
       /**
-       * The role(s) to assign to the user. It can be `admin`, `member`, `owner`
+       * 要分配给用户的角色。可以是 `admin`、`member`、`owner`
        */
       role: string | string[] = "member"
       /**
-       * The organization ID to invite the user to. Defaults to the active organization.  
+       * 要邀请用户加入的组织 ID。默认使用当前活跃组织。  
        */
       organizationId?: string = "org-id"
       /**
-       * Resend the invitation email, if the user is already invited.  
+       * 如果用户已被邀请，是否重新发送邀请邮件。  
        */
       resend?: boolean = true
       /**
-       * The team ID to invite the user to.  
+       * 要邀请用户加入的团队 ID。  
        */
       teamId?: string = "team-id"
   }
@@ -894,12 +894,9 @@ export const auth = betterAuth({
 </APIMethod>
 
 <Callout>
-  * If the user is already a member of the organization, the invitation will be
-    canceled. - If the user is already invited to the organization, unless
-    `resend` is set to `true`, the invitation will not be sent again. - If
-    `cancelPendingInvitationsOnReInvite` is set to `true`, the invitation will be
-    canceled if the user is already invited to the organization and a new
-    invitation is sent.
+  * 如果用户已经是该组织成员，邀请将被取消。
+  * 如果用户已经被邀请到该组织，除非将 `resend` 设为 `true`，否则不会再次发送邀请。
+  * 如果将 `cancelPendingInvitationsOnReInvite` 设为 `true`，当用户已被邀请到组织且发送新邀请时，之前的邀请将被取消。
 </Callout>
 
 ### 接受邀请
@@ -912,7 +909,7 @@ export const auth = betterAuth({
   ```ts
   type acceptInvitation = {
       /**
-       * The ID of the invitation to accept.  
+       * 要接受的邀请 ID。  
        */
       invitationId: string = "invitation-id"
   }
@@ -949,7 +946,7 @@ export const auth = betterAuth({
   ```ts
   type cancelInvitation = {
       /**
-       * The ID of the invitation to cancel.  
+       * 要取消的邀请 ID。  
        */
       invitationId: string = "invitation-id"
   }
@@ -964,7 +961,7 @@ export const auth = betterAuth({
   ```ts
   type rejectInvitation = {
       /**
-       * The ID of the invitation to reject.  
+       * 要拒绝的邀请 ID。  
        */
       invitationId: string = "invitation-id"
   }
@@ -983,7 +980,7 @@ export const auth = betterAuth({
   ```ts
   type getInvitation = {
       /**
-       * The ID of the invitation to get.  
+       * 要获取的邀请 ID。  
        */
       id: string = "invitation-id"
   }
@@ -998,7 +995,7 @@ export const auth = betterAuth({
   ```ts
   type listInvitations = {
       /**
-       * An optional ID of the organization to list invitations for. If not provided, will default to the user's active organization. 
+       * 用于列出邀请的可选组织 ID。如果未提供，将默认为用户的当前活跃组织。 
        */
       organizationId?: string = "organization-id"
   }
@@ -1039,35 +1036,35 @@ const invitations = await auth.api.listUserInvitations({
   ```ts
   type listMembers = {
       /**
-       * An optional organization ID to list members for. If not provided, will default to the user's active organization.
+       * 用于列出成员的可选组织 ID。如果未提供，将默认为用户的当前活跃组织。
        */
       organizationId?: string = "organization-id"
       /**
-       * The limit of members to return.
+       * 要返回的成员数量上限。
        */
       limit?: number = 100
       /**
-       * The offset to start from.
+       * 起始偏移量。
        */
       offset?: number = 0
       /**
-       * The field to sort by.
+       * 要排序的字段。
        */
       sortBy?: string = "createdAt"
       /**
-       * The direction to sort by.
+       * 排序方向。
        */
       sortDirection?: "asc" | "desc" = "desc"
       /**
-       * The field to filter by.
+       * 要筛选的字段。
        */
       filterField?: string = "createdAt"
       /**
-       * The operator to filter by.
+       * 要筛选所用的操作符。
        */
       filterOperator?: "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "in" | "not_in" | "contains" | "starts_with" | "ends_with" = "eq"
       /**
-       * The value to filter by.
+       * 要筛选的值。
        */
       filterValue?: string | number | boolean | string[] | number[] = "value"
   }
@@ -1082,11 +1079,11 @@ const invitations = await auth.api.listUserInvitations({
   ```ts
   type removeMember = {
       /**
-       * The ID or email of the member to remove. 
+       * 要移除的成员的 ID 或邮箱。 
        */
       memberIdOrEmail: string = "user@example.com"
       /**
-       * The ID of the organization to remove the member from. If not provided, the active organization will be used. 
+       * 要从中移除成员的组织 ID。如果未提供，将使用当前活跃组织。 
        */
       organizationId?: string = "org-id"
   }
@@ -1101,15 +1098,15 @@ const invitations = await auth.api.listUserInvitations({
   ```ts
   type updateMemberRole = {
       /**
-       * The new role to be applied. This can be a string or array of strings representing the roles. 
+       * 要应用的新角色。可以是表示角色的字符串或字符串数组。 
        */
       role: string | string[] = ["admin", "sale"]
       /**
-       * The member id to apply the role update to. 
+       * 要更新角色的成员 ID。 
        */
       memberId: string = "member-id"
       /**
-       * An optional organization ID which the member is a part of to apply the role update. If not provided, you must provide session headers to get the active organization. 
+       * 可选的组织 ID，成员所属的组织。若未提供，则必须提供会话头以获取当前活跃组织。 
        */
       organizationId?: string = "organization-id"
   }
@@ -1127,9 +1124,9 @@ const invitations = await auth.api.listUserInvitations({
   ```
 </APIMethod>
 
-### Get Active Member Role
+### 获取当前活跃成员角色
 
-To get the current role member of the active organization you can use the `organization.getActiveMemberRole` function. This function will return the user's member role in their active organization.
+要获取当前活跃组织中该成员的角色，可使用 `organization.getActiveMemberRole` 函数。此函数会返回用户在当前活跃组织中的成员角色。
 
 <APIMethod path="/organization/get-active-member-role" method="GET" requireSession resultVariable="{ role }">
   ```ts
@@ -1146,19 +1143,19 @@ To get the current role member of the active organization you can use the `organ
   ```ts
   type addMember = {
       /**
-       * The user ID which represents the user to be added as a member. If `null` is provided, then it's expected to provide session headers. 
+       * 表示要添加为成员的用户 ID。如果提供 `null`，则需要提供会话头。 
        */
       userId?: string | null = "user-id"
       /**
-       * The role(s) to assign to the new member. 
+       * 要分配给新成员的角色。 
        */
       role: string | string[] = ["admin", "sale"]
       /**
-       * An optional organization ID to pass. If not provided, will default to the user's active organization. 
+       * 可选的组织 ID。如果未提供，将默认为用户的当前活跃组织。 
        */
       organizationId?: string = "org-id"
       /**
-       * An optional team ID to add the member to. 
+       * 可选的团队 ID，要将成员添加到该团队。 
        */
       teamId?: string = "team-id"
   }
@@ -1173,7 +1170,7 @@ To get the current role member of the active organization you can use the `organ
   ```ts
   type leaveOrganization = {
       /**
-       * The organization ID for the member to leave. 
+       * 成员要退出的组织 ID。 
        */
       organizationId: string = "organization-id"
   }
@@ -1224,7 +1221,7 @@ To get the current role member of the active organization you can use the `organ
   <Step>
     #### Create Access Control
 
-    You first need to create access controller by calling `createAccessControl` function and passing the statement object. The statement object should have the resource name as the key and the array of actions as the value.
+    你首先需要通过调用 `createAccessControl` 函数并传入 statement 对象来创建访问控制器。statement 对象应以资源名作为键，以操作数组作为值。
 
     ```ts title="permissions.ts"
     import { createAccessControl } from "better-auth/plugins/access";
@@ -1276,7 +1273,7 @@ To get the current role member of the active organization you can use the `organ
     }); // [!code highlight]
     ```
 
-    When you create custom roles for existing roles, the predefined permissions for those roles will be overridden. To add the existing permissions to the custom role, you need to import `defaultStatements` and merge it with your new statement, plus merge the roles' permissions set with the default roles.
+    当您为已有角色创建自定义角色时，该角色预定义的权限将被覆盖。若要将现有权限添加到自定义角色中，需要导入 `defaultStatements` 并将其与新声明合并，同时将角色权限集合与默认角色进行合并。
 
     ```ts title="permissions.ts"
     import { createAccessControl } from "better-auth/plugins/access";
@@ -1299,7 +1296,7 @@ To get the current role member of the active organization you can use the `organ
   <Step>
     #### Pass Roles to the Plugin
 
-    Once you have created the roles you can pass them to the organization plugin both on the client and the server.
+    一旦创建好角色，就可以在客户端和服务器端把它们传递给组织插件。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
@@ -1321,7 +1318,7 @@ To get the current role member of the active organization you can use the `organ
     });
     ```
 
-    You also need to pass the access controller and the roles to the client plugin.
+    您还需要将访问控制器和角色传递给客户端插件。
 
     ```ts title="auth-client"
     import { createAuthClient } from "better-auth/client"
@@ -1426,7 +1423,7 @@ const canCreateProjectAndCreateSale =
 
 ***
 
-## Dynamic Access Control
+## 动态访问控制
 
 动态访问控制允许您在运行时为组织创建角色。通过在数据库表中存储组织关联的角色及权限实现。
 
@@ -1487,23 +1484,23 @@ export const authClient = createAuthClient({
 
 <APIMethod path="/organization/create-role" method="POST" requireSession noResult>
   ```ts
-  // To use custom resources or permissions,
-  // make sure they are defined in the `ac` instance of your organization config.
+  // 要使用自定义资源或权限，
+  // 请确保它们已在组织配置的 `ac` 实例中定义。
   const permission = {
     project: ["create", "update", "delete"]
   }
 
   type createOrgRole = {
       /**
-       * A unique name of the role to create.
+       * 要创建的角色的唯一名称。
        */
       role: string = "my-unique-role"
       /**
-       * The permissions to assign to the role.
+       * 要分配给该角色的权限。
        */
       permission?: Record<string, string[]> = permission,
       /**
-       * The organization ID which the role will be created in. Defaults to the active organization.
+       * 将创建该角色的组织 ID。默认为当前活跃组织。
        */
       organizationId?: string = "organization-id"
   }
@@ -1520,15 +1517,15 @@ export const authClient = createAuthClient({
   ```ts
   type deleteOrgRole = {
       /**
-       * The name of the role to delete. Alternatively, you can pass a `roleId` parameter instead.
+       * 要删除的角色名称。或者，你也可以改为传入 `roleId` 参数。
        */
       roleName?: string = "my-role"
       /**
-       * The id of the role to delete. Alternatively, you can pass a `roleName` parameter instead.
+       * 要删除的角色 ID。或者，你也可以改为传入 `roleName` 参数。
        */
       roleId?: string = "role-id"
       /**
-       * The organization ID which the role will be deleted in. Defaults to the active organization.
+       * 将删除该角色的组织 ID。默认为当前活跃组织。
        */
       organizationId?: string = "organization-id"
   }
@@ -1544,7 +1541,7 @@ export const authClient = createAuthClient({
   ```ts
   type listOrgRoles = {
       /**
-       * The organization ID which the roles are under to list. Defaults to the user's active organization. 
+       * 要列出的角色所属的组织 ID。默认为用户当前活跃组织。 
        */
       organizationId?: string = "organization-id"
   }
@@ -1557,15 +1554,15 @@ export const authClient = createAuthClient({
   ```ts
   type getOrgRole = {
       /**
-       * The name of the role to get. Alternatively, you can pass a `roleId` parameter instead.
+       * 要获取的角色名称。或者，你也可以改为传入 `roleId` 参数。
        */
       roleName?: string = "my-role"
       /**
-       * The id of the role to get. Alternatively, you can pass a `roleName` parameter instead.
+       * 要获取的角色 ID。或者，你也可以改为传入 `roleName` 参数。
        */
       roleId?: string = "role-id"
       /**
-       * The organization ID from which the role will be retrieved. Defaults to the active organization.
+       * 将检索该角色的组织 ID。默认为当前活跃组织。
        */
       organizationId?: string = "organization-id"
   }
@@ -1578,27 +1575,27 @@ export const authClient = createAuthClient({
   ```ts
   type updateOrgRole = {
       /**
-       * The name of the role to update. Alternatively, you can pass a `roleId` parameter instead.
+       * 要更新的角色名称。或者，你也可以改为传入 `roleId` 参数。
        */
       roleName?: string = "my-role"
       /**
-       * The id of the role to update. Alternatively, you can pass a `roleName` parameter instead.
+       * 要更新的角色 ID。或者，你也可以改为传入 `roleName` 参数。
        */
       roleId?: string = "role-id"
       /**
-       * The organization ID which the role will be updated in. Defaults to the active organization.
+       * 将更新该角色的组织 ID。默认为当前活跃组织。
        */
       organizationId?: string = "organization-id"
       /**
-       * The data which will be updated
+       * 将被更新的数据
       */
       data: {
         /**
-         * Optionally update the permissions of the role.
+         * 可选：更新角色权限。
          */
         permission?: Record<string, string[]> = { project: ["create", "update", "delete"] }
         /**
-         * Optionally update the name of the role.
+         * 可选：更新角色名称。
          */
         roleName?: string = "my-new-role"
       }
@@ -1606,7 +1603,7 @@ export const authClient = createAuthClient({
   ```
 </APIMethod>
 
-### Configuration Options
+### 配置选项
 
 以下是可传递给 `dynamicAccessControl` 对象的选项列表。
 
@@ -1686,7 +1683,7 @@ export const authClient = createAuthClient({
 })
 ```
 
-Otherwise, you can pass the schema values directly, the same way you do on the org plugin in the server.
+否则，你可以直接传递 schema 值，就像在服务器端的 org 插件中一样。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -1762,11 +1759,11 @@ export const authClient = createAuthClient({
   ```ts
   type createTeam = {
       /**
-       * The name of the team. 
+       * 团队名称。
        */
       name: string = "my-team"
       /**
-       * The organization ID which the team will be created in. Defaults to the active organization. 
+       * 将创建该团队的组织 ID。默认为当前活跃组织。 
        */
       organizationId?: string = "organization-id"
   }
@@ -1781,7 +1778,7 @@ export const authClient = createAuthClient({
   ```ts
   type listOrganizationTeams = {
       /**
-      * The organization ID which the teams are under to list. Defaults to the user's active organization. 
+      * 要列出的团队所属的组织 ID。默认为用户当前活跃组织。 
       */
       organizationId?: string = "organization-id"
   }
@@ -1796,27 +1793,27 @@ export const authClient = createAuthClient({
   ```ts
   type updateTeam = {
       /**
-       * The ID of the team to be updated. 
+       * 要更新的团队 ID。 
        */
       teamId: string = "team-id"
       /**
-       * A partial object containing options for you to update.
+       * 包含待更新选项的部分对象。
        */
       data: {
           /**
-           * The name of the team to be updated.
+           * 要更新的团队名称。
            */
           name?: string = "My new team name"
           /**
-           * The organization ID which the team falls under.
+           * 该团队所属的组织 ID。
            */
           organizationId?: string = "My new organization ID for this team"
           /**
-           * The timestamp of when the team was created.
+           * 团队创建时的时间戳。
            */
           createdAt?: Date = new Date()
           /**
-           * The timestamp of when the team was last updated.
+           * 团队上次更新时的时间戳。
            */
           updatedAt?: Date = new Date()
       }
@@ -1832,11 +1829,11 @@ export const authClient = createAuthClient({
   ```ts
   type removeTeam = {
       /**
-       * The team ID of the team to remove. 
+       * 要移除的团队 ID。 
        */
       teamId: string = "team-id"
       /**
-       * The organization ID which the team falls under. If not provided, it will default to the user's active organization. 
+       * 该团队所属的组织 ID。如果未提供，则默认为用户当前活跃组织。 
        */
       organizationId?: string = "organization-id"
   }
@@ -1845,14 +1842,14 @@ export const authClient = createAuthClient({
 
 #### 设置活跃团队
 
-Sets the given team as the current active team for the current active organization. If `teamId` is `null` the current active team is unset.
+将指定团队设为当前活跃组织的当前活跃团队。如果 `teamId` 为 `null`，则取消当前活跃团队。
 
 <APIMethod path="/organization/set-active-team" method="POST" requireSession>
   ```ts
   type setActiveTeam = {
       /**
-       * The team ID of the team to set as the current active team.
-       * The team must belong to the current active organization.
+       * 要设置为当前活跃团队的团队 ID。
+       * 该团队必须属于当前活跃组织。
        */
       teamId?: string | null = "team-id"
   }
@@ -1878,7 +1875,7 @@ Sets the given team as the current active team for the current active organizati
   ```ts
   type listTeamMembers = {
       /**
-       * The team whose members we should return. If this is not provided the members of the current active team get returned.
+       * 我们应返回其成员的团队。如果未提供此项，则返回当前活跃团队的成员。
        */
       teamId?: string = "team-id"
   }
@@ -1893,11 +1890,11 @@ Sets the given team as the current active team for the current active organizati
   ```ts
   type addTeamMember = {
       /**
-       * The team the user should be a member of.
+       * 用户应成为其成员的团队。
        */
       teamId: string = "team-id"
       /**
-       * The user ID which represents the user to be added as a member.
+       * 代表要添加为成员的用户 ID。
        */
       userId: string = "user-id"
   }
@@ -1912,11 +1909,11 @@ Sets the given team as the current active team for the current active organizati
   ```ts
   type removeTeamMember = {
       /**
-       * The team the user should be removed from.
+       * 用户应从中移除的团队。
        */
       teamId: string = "team-id"
       /**
-       * The user which should be removed from the team.
+       * 应从团队中移除的用户。
        */
       userId: string = "user-id"
   }
@@ -1927,33 +1924,33 @@ Sets the given team as the current active team for the current active organizati
 
 团队使用组织权限体系。管理团队需要以下权限：
 
-* `team:create` - Create new teams
-* `team:update` - Update team details
-* `team:delete` - Remove teams
+* `team:create` - 创建新团队
+* `team:update` - 更新团队详情
+* `team:delete` - 移除团队
 
 默认情况下：
 
-* Organization owners and admins can manage teams
-* Regular members cannot create, update, or delete teams
+* 组织所有者和管理员可以管理团队
+* 普通成员不能创建、更新或删除团队
 
 ### 团队配置选项
 
 团队功能支持以下配置：
 
-* `maximumTeams`: Limit the number of teams per organization
+* `maximumTeams`: 限制每个组织的团队数量
 
   ```ts
   teams: {
     enabled: true,
     maximumTeams: 10 // 固定数目
-    // OR
+    // 或
     maximumTeams: async ({ organizationId, session }, ctx) => {
       // 基于组织计划动态限制
       const plan = await getPlan(organizationId)
       return plan === 'pro' ? 20 : 5
     },
     maximumMembersPerTeam: 10 // 固定数目
-    // OR
+    // 或
     maximumMembersPerTeam: async ({ teamId, session, organizationId }, ctx) => {
       // 基于团队计划动态限制
       const plan = await getPlan(organizationId, teamId)
@@ -1962,7 +1959,7 @@ Sets the given team as the current active team for the current active organizati
   }
   ```
 
-* `allowRemovingAllTeams`: Control whether the last team can be removed
+* `allowRemovingAllTeams`: 控制是否可以移除最后一个团队
   ```ts
   teams: {
     enabled: true,
@@ -2143,7 +2140,7 @@ export const memberTableFields = [
 
 <DatabaseTable name="member" fields={memberTableFields} />
 
-### 邀请
+### Invitation
 
 表名：`invitation`
 
@@ -2469,7 +2466,7 @@ const client = createAuthClient({
 });
 ```
 
-#### Example usage
+#### 示例用法
 
 ```ts
 await client.organization.create({
