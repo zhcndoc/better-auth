@@ -766,6 +766,10 @@ const auth = betterAuth({
 
 注册 SSO 提供者时可指定所属组织：
 
+<Callout type="info">
+  当启用 `organization` 插件并提供 `organizationId` 时，调用者必须是组织的 `owner` 或 `admin`。普通成员会收到 `403 FORBIDDEN`。未启用 `organization` 插件的 SSO 部署将保持之前的行为（仅查找成员身份）。
+</Callout>
+
 ```ts title="register-org-provider.ts"
 import { auth } from "@/lib/auth"
 

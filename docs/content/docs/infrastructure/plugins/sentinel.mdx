@@ -24,12 +24,14 @@ export const auth = betterAuth({
 
 ### SentinelOptions
 
-| 选项     | 类型              | 描述                         |
-| --------- | ----------------- | ---------------------------- |
-| `apiUrl`   | `string`          | Better Auth 基础设施 API URL  |
-| `kvUrl`    | `string`          | 用于速率限制数据的 KV 存储 URL |
-| `apiKey`   | `string`          | 用于认证的 API 密钥           |
-| `security` | `SecurityOptions` | 安全功能配置                  |
+| Option       | Type              | Description                                                           |
+| ------------ | ----------------- | --------------------------------------------------------------------- |
+| `apiUrl`     | `string`          | Better Auth 基础设施 API URL                                    |
+| `kvUrl`      | `string`          | 用于速率限制数据的 KV 存储 URL                                   |
+| `apiKey`     | `string`          | 用于认证的您的 API 密钥                                       |
+| `apiTimeout` | `number`          | Infra API HTTP 请求（`apiUrl`）的超时时间，单位毫秒。默认值：`3000` |
+| `kvTimeout`  | `number`          | KV HTTP 请求（`kvUrl`）的超时时间，单位毫秒。默认值：`1000`         |
+| `security`   | `SecurityOptions` | 安全功能配置                                        |
 
 ### SecurityOptions
 
@@ -66,11 +68,11 @@ sentinel({
     credentialStuffing: {
       enabled: true,
       thresholds: {
-        challenge: 3,  // 失败3次后发起PoW挑战
-        block: 5,      // 失败5次后封禁
+        challenge: 3,  // 失败 3 次后发起 PoW 挑战
+        block: 5,      // 失败 5 次后封禁
       },
-      windowSeconds: 3600,     // 1小时时间窗口
-      cooldownSeconds: 900,    // 封禁后15分钟冷却期
+      windowSeconds: 3600,     // 1 小时时间窗口
+      cooldownSeconds: 900,    // 封禁后 15 分钟冷却期
     },
   },
 }),
@@ -100,7 +102,7 @@ sentinel({
 }),
 ```
 
-**示例：** 如果用户先后在纽约和30分钟后在东京登录，这被视为不可能的旅行（即需要超过1000公里/小时的速度）。
+**示例：** 如果用户先后在纽约和 30 分钟后在东京登录，这被视为不可能的旅行（即需要超过 1000 公里/小时的速度）。
 
 ### 免费试用滥用防护
 
@@ -146,7 +148,7 @@ sentinel({
 }),
 ```
 
-**隐私说明：** 采用k-匿名技术 — 仅将密码哈希的前5个字符发送到API，完整密码绝不发送。
+**隐私说明：** 采用 k-匿名技术 — 仅将密码哈希的前 5 个字符发送到 API，完整密码绝不发送。
 
 ### 过期账户监控
 
@@ -158,7 +160,7 @@ sentinel({
   security: {
     staleUsers: {
       enabled: true,
-      staleDays: 90,           // 账户超过90天视为沉睡
+      staleDays: 90,           // 账户超过 90 天视为沉睡
       action: "log",           // 可选："log"、"challenge"或"block"
       notifyUser: true,        // 向用户发送邮件通知
       notifyAdmin: true,       // 向管理员发送邮件通知
@@ -211,9 +213,9 @@ sentinel({
 }),
 ```
 
-### 可疑IP检测
+### 可疑 IP 检测
 
-封禁来自已知恶意IP地址的请求。
+封禁来自已知恶意 IP 地址的请求。
 
 ```ts
 sentinel({
@@ -340,9 +342,10 @@ export const authClient = createAuthClient({
 
 ### 配置项
 
-| 选项               | 类型      | 默认值 | 描述                        |
-| ------------------ | --------- | ------ | --------------------------- |
-| `autoSolveChallenge` | `boolean` | `true`  | 自动解决 PoW 挑战            |
+| Option               | Type      | Default | Description                                             |
+| -------------------- | --------- | ------- | ------------------------------------------------------- |
+| `autoSolveChallenge` | `boolean` | `true`  | 自动解决 PoW 挑战                      |
+| `kvTimeout`          | `number`  | `1000`  | KV 识别及相关 HTTP 请求的超时时间 |
 
 ### 浏览器指纹
 
@@ -356,7 +359,7 @@ export const authClient = createAuthClient({
 
 启用自动解决后，解答通过 `X-PoW-Solution` 头发送。
 
-### Expo and React Native
+### Expo 和 React Native
 
 对于 **Expo** 和 **React Native** 应用，使用 `@better-auth/infra/native` 中的 `sentinelNativeClient`，而不是使用 `@better-auth/infra/client`。
 
@@ -421,14 +424,15 @@ export const authClient = createAuthClient({
 
 #### `sentinelNativeClient` 选项
 
-| 选项                | 类型                            | 默认值                                                 | 描述                                                                 |
-| ------------------- | ------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------- |
-| `identifyUrl`       | `string`                        | `BETTER_AUTH_KV_URL`, then `https://kv.better-auth.com` | KV 识别端点基础 URL                                                  |
-| `autoSolveChallenge`| `boolean`                       | `true`                                                 | 在收到 `423` 状态码和 `X-PoW-Challenge` 头时，使用 `X-PoW-Solution` 头解决并重试一次 |
-| `onChallengeReceived`| `(reason: string) => void`      | —                                                      | 在收到 PoW 挑战时调用                                                |
-| `onChallengeSolved` | `(solveTimeMs: number) => void` | —                                                      | 成功解决后调用                                                       |
-| `onChallengeFailed` | `(error: Error) => void`        | —                                                      | 如果解决失败则调用                                                   |
-| `storage`           | `{ getItem, setItem }`          | 安装 Async Storage 时                                   | 用于稳定每安装访客 ID 的持久化异步存储                               |
+| Option                | Type                            | Default                                                 | Description                                                                 |
+| --------------------- | ------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `identifyUrl`         | `string`                        | `BETTER_AUTH_KV_URL`, then `https://kv.better-auth.com` | KV 识别端点基础 URL                                               |
+| `kvTimeout`           | `number`                        | `1000`                                                  | KV 识别及相关 HTTP 请求的超时时间                     |
+| `autoSolveChallenge`  | `boolean`                       | `true`                                                  | 当 `423` 返回 `X-PoW-Challenge` 时，自动解决并使用 `X-PoW-Solution` 重试一次 |
+| `onChallengeReceived` | `(reason: string) => void`      | —                                                       | 收到 PoW 挑战时调用                                     |
+| `onChallengeSolved`   | `(solveTimeMs: number) => void` | —                                                       | 成功解决后调用                                             |
+| `onChallengeFailed`   | `(error: Error) => void`        | —                                                       | 解决失败时调用                                                     |
+| `storage`             | `{ getItem, setItem }`          | 安装 Async Storage 时使用                            | 用于稳定的每次安装访客 ID 的持久化异步存储                |
 
 ## 安全事件
 

@@ -12,7 +12,7 @@ description: 通过双重身份验证增强您的应用安全性。
 1. **OTP (一次性密码)**：发送到用户邮箱或手机的临时代码。
 2. **TOTP (基于时间的一次性密码)**：由用户设备上的应用生成的代码。
 
-**Additional features include:**
+**附加功能包括：**
 
 * 生成备用代码用于账户恢复
 * 启用/禁用 2FA
@@ -35,7 +35,7 @@ description: 通过双重身份验证增强您的应用安全性。
     import { twoFactor } from "better-auth/plugins" // [!code highlight]
 
     export const auth = betterAuth({
-        // ... other config options
+        // ... 其他配置选项
         appName: "My App", // 提供您的应用名称。这将用作颁发者。 // [!code highlight]
         plugins: [
             twoFactor() // [!code highlight]
@@ -110,7 +110,7 @@ description: 通过双重身份验证增强您的应用安全性。
 * 生成加密的 `secret` 和 `backupCodes`。
 * `enable` 返回 `totpURI` 和 `backupCodes`。
 
-注意：在用户验证他们的 TOTP 代码之前，`twoFactorEnabled` 不会被设置为 `true`。有关 TOTP 验证的更多信息，请参阅[此处](#totp)。您也可以在插件配置中将 `skipVerificationOnEnable` 设置为 true 以跳过验证。
+注意：在用户验证其 TOTP 代码之前，`twoFactorEnabled` 不会被设置为 `true`。有关在 [TOTP 部分](#totp) 验证 TOTP 的更多信息。如果您在插件配置中将 `skipVerificationOnEnable` 设置为 true，则可以跳过验证。
 
 <Callout type="warn">
   默认情况下，双重身份验证需要凭证（密码）账户。要允许无密码用户（通行证密钥、魔法链接、邮箱 OTP、OAuth/社交或匿名），请设置 `allowPasswordless: true`。
@@ -198,7 +198,7 @@ const authClient = createAuthClient({
   });
 
   if ("twoFactorRedirect" in response) {
-  	// response.twoFactorMethods 是例如 ["totp", "otp"]
+  	// response.twoFactorMethods 例如 ["totp", "otp"]
   	// 将 responseHeaders 中的 cookie 传递到下一个 auth.api 2FA 调用。
   	// 在适当的位置处理 2FA 验证
   }
@@ -509,9 +509,9 @@ export const twoFactorTableFields = [
 
 **twoFactorTable**：存储双重身份验证数据的表名。默认值：`twoFactor`。
 
-**skipVerificationOnEnable**：启用用户的双重身份验证时，跳过验证过程。
+**skipVerificationOnEnable**：在启用用户的双重身份验证时，跳过验证过程。
 
-**allowPasswordless**: 允许对没有凭据账户的用户在没有密码的情况下启用和管理 2FA。如果存在凭据账户，则仍然需要密码。
+**allowPasswordless**: 允许没有凭据账户的用户在没有密码的情况下启用和管理 2FA。如果存在凭据账户，则仍然需要密码。
 
 **Issuer**：签发者是您的应用程序名称。它用于生成 TOTP 代码，并会显示在身份验证器应用中。
 
@@ -628,13 +628,13 @@ const authClient =  createAuthClient({
         twoFactorClient({ // [!code highlight]
             onTwoFactorRedirect({ twoFactorMethods }){ // [!code highlight]
                 // twoFactorMethods is e.g. ["totp", "otp"] // [!code highlight]
-                window.location.href = "/2fa" // Handle the 2FA verification redirect // [!code highlight]
+                window.location.href = "/2fa" // 处理 2FA 验证重定向 // [!code highlight]
             } // [!code highlight]
         }) // [!code highlight]
     ]
 })
 ```
 
-**Options**
+**选项**
 
-`onTwoFactorRedirect`: 当用户需要验证其双重身份验证代码时调用的回调函数。接收一个包含 `twoFactorMethods` 的上下文对象——一个已启用的双重身份验证方法数组（例如 `["totp", "otp"]`）。这可用于将用户重定向到适当的 2FA 页面。
+`onTwoFactorRedirect`：当用户需要验证其双重身份验证代码时调用的回调函数。接收一个包含 `twoFactorMethods` 的上下文对象——一个已启用的双重身份验证方法数组（例如 `["totp", "otp"]`）。这可用于将用户重定向到适当的 2FA 页面。

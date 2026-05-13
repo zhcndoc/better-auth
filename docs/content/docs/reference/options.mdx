@@ -230,7 +230,7 @@ export const auth = betterAuth({
 
 Better Auth 支持多种数据库配置，包括 [PostgreSQL](/docs/adapters/postgresql)、[MySQL](/docs/adapters/mysql) 和 [SQLite](/docs/adapters/sqlite)。
 
-更多数据库信息见 [这里](/docs/concepts/database)。
+Read more about [databases](/docs/concepts/database)。
 
 ## `secondaryStorage`
 
@@ -247,7 +247,7 @@ export const auth = betterAuth({
 })
 ```
 
-更多关于二级存储见 [这里](/docs/concepts/database#secondary-storage)。
+Read more about [secondary storage](/docs/concepts/database#secondary-storage)。
 
 ## `emailVerification`
 
@@ -477,7 +477,8 @@ export const auth = betterAuth({
 			userId: "user_id"
 		},
 		encryptOAuthTokens: true, // 在存入数据库前加密 OAuth 令牌
-		storeAccountCookie: true, // OAuth 流程后将账号数据存入 cookie（无数据库模式常用）
+		storeStateStrategy: "database", // 将 OAuth 状态负载存储在验证存储中
+		storeAccountCookie: true, // 在 OAuth 流程后将账号数据存入 cookie（适用于无数据库流程）
 		accountLinking: {
 			enabled: true,
 			trustedProviders: ["google", "github", "email-password"], // 或异步函数 (request) => ["google", "github"]
@@ -497,6 +498,15 @@ export const auth = betterAuth({
 ### `updateAccountOnSignIn`
 
 启用后，登录时使用提供商最新数据（accessToken、idToken、refreshToken 等）更新用户账号。
+
+### `storeStateStrategy`
+
+控制 OAuth 状态数据在认证流程中的存储位置。
+
+* `"cookie"`：将状态负载存储在加密 cookie 中。这样 OAuth 状态保持无状态，并避免在流程开始时写入数据库。
+* `"database"`：将状态负载存储在验证存储/表中，在开始流程时设置已签名的 state cookie，并在 OAuth 回调请求中将浏览器发送的已签名 cookie 与存储的状态进行校验。
+
+如果配置了数据库，则默认值为 `"database"`；对于无数据库/无状态设置，则默认为 `"cookie"`。如果你只提供了 `secondaryStorage`，请将其设为 `"database"`，以便将 OAuth 状态存储在那里而不是 cookie 中。
 
 ### `storeAccountCookie`
 

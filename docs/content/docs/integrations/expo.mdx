@@ -17,7 +17,7 @@ Expo 是一个使用 React Native 构建跨平台应用的流行框架。Better 
 
     在 Expo 中使用 Better Auth 之前，请确保已设置 Better Auth 后端。可以使用单独的服务器，或利用 Expo 新的 [API 路由](https://docs.expo.dev/router/reference/api-routes) 功能来托管 Better Auth 实例。
 
-    要开始，请查看我们的 [安装指南](/docs/installation)，了解如何在服务器上设置 Better Auth。如果希望查看完整示例，请访问 [此处](https://github.com/better-auth/examples/tree/main/expo-example)。
+    要开始使用，请先查看我们的 [安装](/docs/installation) 指南，了解如何在服务器上配置 Better Auth。如果你愿意，也可以查看 [完整示例](https://github.com/better-auth/examples/tree/main/expo-example)。
 
     若要在 Expo 中使用新的 API 路由功能来托管 Better Auth 实例，可以在 Expo 应用中创建一个新的 API 路由，并挂载 Better Auth 处理程序。
 
@@ -183,7 +183,7 @@ Expo 是一个使用 React Native 构建跨平台应用的流行框架。Better 
     })
     ```
 
-    有关可信来源的更多信息，请参考[此处](/docs/reference/options#trustedorigins)。
+    更多关于可信来源的信息，请参阅 [可信来源文档](/docs/reference/options#trustedorigins)。
 
     <Callout type="warn">
       开发环境中 `exp://` 的通配符模式仅应用于开发环境。在生产环境中，请使用应用特定的 Scheme（如 `myapp://`）。
@@ -329,7 +329,7 @@ export default function SocialSignIn() {
 ```
 
 <Callout type="info">
-  在原生平台（iOS/Android）上，`signIn.social` 不会自动导航。需要在解析后手动处理导航。请注意，不同平台下的浏览器行为可能有所不同。更多信息请参考 [此处](https://docs.expo.dev/versions/latest/sdk/webbrowser/#webbrowseropenauthsessionasyncurl-redirecturl-options)。
+  在原生平台（iOS/Android）上，`signIn.social` 不会自动导航。它完成后请自行处理导航。请注意，[底层浏览器行为因平台而异](https://docs.expo.dev/versions/latest/sdk/webbrowser/#webbrowseropenauthsessionasyncurl-redirecturl-options)。
 </Callout>
 
 #### ID Token 登录

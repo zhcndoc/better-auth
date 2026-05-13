@@ -162,7 +162,7 @@ if (data) {
 示例轮询实现：
 
 ```ts
-let pollingInterval = 5; // 初始轮询间隔为5秒
+let pollingInterval = 5; // 初始轮询间隔为 5 秒
 const pollForToken = async () => {
   const { data, error } = await authClient.device.token({
     grant_type: "urn:ietf:params:oauth:grant-type:device_code",
@@ -206,18 +206,20 @@ pollForToken();
 
 用户授权流程包含两个步骤：
 
-1. **代码验证**：检查输入的用户代码是否有效
-2. **授权**：用户必须已登录才能批准或拒绝设备
+1. **代码验证**：通过 `GET /device` 验证用户代码。验证请求会为当前会话声明待处理的设备代码。
+2. **授权**：声明了该代码的会话可以批准或拒绝它。
 
 <Callout type="warn">
-  用户必须先登录，才能批准或拒绝设备授权请求。如果未认证，应重定向到登录页面并携带返回 URL。
+  用户在调用 `GET /device` 时必须已通过身份验证，因为验证步骤会将待处理的设备代码绑定到该会话。之后只有同一会话才能批准或拒绝。如果用户在输入代码时尚未登录，请将其重定向到登录页面并带上返回 URL，登录后重新调用 `GET /device`。
 </Callout>
 
 创建让用户输入代码的页面：
 
 ```tsx title="app/device/page.tsx"
 export default function DeviceAuthorizationPage() {
-  const [userCode, setUserCode] = useState("");
+  const { data: session } = authClient.useSession();
+  const searchParams = useSearchParams();
+  const [userCode, setUserCode] = useState(searchParams.get("user_code") || "");
   const [error, setError] = useState(null);
   
   const handleSubmit = async (e) => {
@@ -226,6 +228,13 @@ export default function DeviceAuthorizationPage() {
     try {
       // 格式化代码：去除短横线并转换为大写
       const formattedCode = userCode.trim().replace(/-/g, "").toUpperCase();
+      const approvalPath = `/device/approve?user_code=${encodeURIComponent(formattedCode)}`;
+
+      if (!session?.user) {
+        const verificationPath = `/device?user_code=${encodeURIComponent(formattedCode)}`;
+        window.location.href = `/login?redirect=${encodeURIComponent(verificationPath)}`;
+        return;
+      }
 
       // 调用 GET /device 接口验证代码有效性
       const response = await authClient.device({
@@ -233,8 +242,8 @@ export default function DeviceAuthorizationPage() {
       });
       
       if (response.data) {
-        // 跳转到批准页面
-        window.location.href = `/device/approve?user_code=${formattedCode}`;
+        // 重定向到批准页面
+        window.location.href = approvalPath;
       }
     } catch (err) {
       setError("无效或已过期的代码");
@@ -326,8 +335,9 @@ export default function DeviceApprovalPage() {
   };
 
   if (!user) {
-    // 未登录时重定向至登录页面
-    window.location.href = `/login?redirect=/device/approve?user_code=${userCode}`;
+    // 如果未通过身份验证，则重定向到登录页
+    const verificationPath = `/device?user_code=${encodeURIComponent(userCode || "")}`;
+    window.location.href = `/login?redirect=${encodeURIComponent(verificationPath)}`;
     return null;
   }
   
@@ -540,12 +550,12 @@ authenticateCLI().catch((err) => {
 
 ## 安全注意事项
 
-1. **速率限制**：插件强制轮询间隔以防止滥用
-2. **代码过期**：设备码和用户码在配置的时间后过期（默认：30 分钟）
-3. **客户端验证**：生产环境中务必验证客户端 ID 以防止未授权访问
-4. **仅支持 HTTPS**：生产环境必须使用 HTTPS 进行设备授权
-5. **用户码格式**：用户码使用有限字符集（排除易混淆字符如 0/O、1/I）以减少输入错误
-6. **需要身份验证**：用户必须登录后才能批准或拒绝设备请求
+1. **速率限制**：插件会强制执行轮询间隔以防止滥用
+2. **代码过期**：设备码和用户码会在配置的时间后过期（默认：30 分钟）
+3. **客户端验证**：在生产环境中始终验证客户端 ID，以防止未授权访问
+4. **仅使用 HTTPS**：在生产环境中进行设备授权时始终使用 HTTPS
+5. **用户码格式**：用户码使用有限的字符集（不包括 0/O、1/I 等相似字符）以减少输入错误
+6. **需要身份验证**：在调用 `GET /device` 时，用户必须已通过身份验证。验证步骤会为调用会话获取待处理的设备码，之后只有该会话才能批准或拒绝它
 
 ## 选项
 
@@ -557,7 +567,7 @@ authenticateCLI().catch((err) => {
 
 **interval**：最小轮询间隔。默认值：`"5s"`（5 秒）。
 
-**userCodeLength**：用户码长度。默认值：`8`。
+**userCodeLength**：用户码长度。默认值：``8``。
 
 **deviceCodeLength**：设备码长度。默认值：`40`。
 

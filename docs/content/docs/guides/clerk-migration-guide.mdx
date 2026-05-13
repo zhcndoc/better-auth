@@ -165,7 +165,7 @@ description: 一个逐步指导，帮助您从 Clerk 平滑迁移到 Better Auth
   <Step>
     ### 导出 Clerk 用户
 
-    前往 Clerk 仪表板并导出用户数据。查看[此处](https://clerk.com/docs/deployments/exporting-users#export-your-users-data-from-the-clerk-dashboard)了解操作方法。系统将下载一个包含用户数据的 CSV 文件，您需要将其保存为 `exported_users.csv` 并放置在项目根目录中。
+    前往 Clerk 控制台并 [导出用户](https://clerk.com/docs/deployments/exporting-users#export-your-users-data-from-the-clerk-dashboard)。这将下载一个包含用户数据的 CSV 文件。您需要将其保存为 `exported_users.csv` 并放到项目根目录中。
   </Step>
 
   <Step>
@@ -404,11 +404,11 @@ description: 一个逐步指导，帮助您从 Clerk 平滑迁移到 Better Auth
 
     migrateFromClerk()
       .then(() => {
-          console.log('Migration completed');
+          console.log('迁移完成');
           process.exit(0);
       })
       .catch((error) => {
-          console.error('Migration failed:', error);
+          console.error('迁移失败：', error);
           process.exit(1);
       });
     ```
@@ -518,4 +518,4 @@ description: 一个逐步指导，帮助您从 Clerk 平滑迁移到 Better Auth
 
 恭喜！您已成功从 Clerk 迁移到 Better Auth。
 
-Better Auth 提供了更大灵活性和更多功能——务必浏览[文档](/docs)以充分发挥其潜力。
+Better Auth 提供了更大的灵活性和更多功能——务必浏览[文档](/docs)以充分发挥其潜力。

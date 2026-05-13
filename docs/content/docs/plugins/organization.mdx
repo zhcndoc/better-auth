@@ -77,7 +77,7 @@ description: 组织插件允许您管理组织的成员和团队。
     /**
     * 组织名称。
     */
-    name: string = "My Organization"
+    name: string = "我的组织"
     /**
     * 组织短名称。
     */
@@ -940,7 +940,7 @@ export const auth = betterAuth({
 
 若发出邀请后需要取消，可以调用此方法。
 
-若用户想要拒绝邀请，详见[拒绝邀请](#reject-invitation)。
+如果您想了解用户如何拒绝邀请，可以查看 [拒绝邀请部分](#reject-invitation)。
 
 <APIMethod path="/organization/cancel-invitation" method="POST" noResult requireSession>
   ```ts
@@ -1219,7 +1219,7 @@ const invitations = await auth.api.listUserInvitations({
 
 <Steps>
   <Step>
-    #### Create Access Control
+    #### 创建访问控制
 
     你首先需要通过调用 `createAccessControl` 函数并传入 statement 对象来创建访问控制器。statement 对象应以资源名作为键，以操作数组作为值。
 
@@ -1242,7 +1242,7 @@ const invitations = await auth.api.listUserInvitations({
   </Step>
 
   <Step>
-    #### Create Roles
+    #### 创建角色
 
     创建访问控制后，可以根据权限声明创建角色。
 
@@ -1294,7 +1294,7 @@ const invitations = await auth.api.listUserInvitations({
   </Step>
 
   <Step>
-    #### Pass Roles to the Plugin
+    #### 将角色传递给插件
 
     一旦创建好角色，就可以在客户端和服务器端把它们传递给组织插件。
 
@@ -2140,7 +2140,7 @@ export const memberTableFields = [
 
 <DatabaseTable name="member" fields={memberTableFields} />
 
-### Invitation
+### 邀请
 
 表名：`invitation`
 
@@ -2231,9 +2231,9 @@ export const sessionActiveOrganizationFields = [
 
 <DatabaseTable name="session" fields={sessionActiveOrganizationFields} />
 
-### 组织角色（可选）
+### Organization Roles (Optional)
 
-表名：`organizationRole`
+Table name: `organizationRole`
 
 export const organizationRoleTableFields = [
 	{

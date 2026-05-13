@@ -34,7 +34,7 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warning">
-  从 Prisma 7 开始，`output` 路径字段是必需的。如果您在 `schema.prisma` 文件中配置了自定义的输出路径（例如，`output = "../src/generated/prisma"`），请确保从该位置而非 `@prisma/client` 导入 Prisma 客户端。更多信息，请参见[这里](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/generating-prisma-client#the-location-of-prisma-client)。
+  从 Prisma 7 开始，`output` 路径字段是必需的。如果您在 `schema.prisma` 文件中配置了自定义输出路径（例如，`output = "../src/generated/prisma"`），请务必 [从该位置导入 Prisma 客户端](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/generating-prisma-client#the-location-of-prisma-client)，而不是使用 `@prisma/client`。
 </Callout>
 
 ## 模式生成与迁移

@@ -21,7 +21,7 @@ description: 魔法链接插件
         plugins: [
             magicLink({ // [!code highlight]
                 sendMagicLink: async ({ email, token, url, metadata }, ctx) => { // [!code highlight]
-                    // 发送邮件给用户 // [!code highlight]
+                    // 向用户发送邮件 // [!code highlight]
                 } // [!code highlight]
             }) // [!code highlight]
         ]
@@ -125,7 +125,7 @@ description: 魔法链接插件
 
 **expiresIn**：指定魔法链接过期的时间（以秒为单位）。默认值为 `300` 秒（5 分钟）。
 
-**allowedAttempts**：指定验证魔法链接的允许尝试次数。默认值为 `1`。超过限制后，令牌将被删除，用户会被重定向并附带 `?error=ATTEMPTS_EXCEEDED` 参数。可以设置为 `Infinity` 以允许无限次尝试。
+**allowedAttempts** (已弃用)：现在每次验证调用都会在首次尝试时以原子方式消费令牌，因此无论此设置如何，重试都会始终失败并返回 `?error=INVALID_TOKEN`（参见 [GHSA-hc7v-rggr-4hvx](https://github.com/better-auth/better-auth/security/advisories/GHSA-hc7v-rggr-4hvx)）。该选项仅为保持源码兼容而保留，但会被忽略；不再支持多次尝试兑换。将其设置为除 `1` 之外的任何值都会在启动时发出 `console.warn`（包括 `0`，它以前会立即拒绝，而现在不再生效）。
 
 **disableSignUp**：如果设置为 `true`，用户将无法使用魔法链接进行注册。默认值为 `false`。
 
@@ -146,3 +146,7 @@ description: 魔法链接插件
 * `{ type: "custom-hasher", hash: (token: string) => Promise<string> }`: 使用自定义哈希器对令牌进行哈希处理。
 
 存储后端本身由全局 [`verification`](/docs/reference/options#verification) 配置控制。如果你配置了 `secondaryStorage`，魔法链接验证记录可以存储在那里，而不是数据库中。
+
+<Callout type="warn">
+  当 `secondaryStorage` 承载验证（`verification.storeInDatabase: false`）时，来自 [GHSA-hc7v-rggr-4hvx](https://github.com/better-auth/better-auth/security/advisories/GHSA-hc7v-rggr-4hvx) 的原子性单次使用保证要求你的 secondary storage 提供 `getAndDelete`（Redis `GETDEL`，KV `getAndDelete`）。如果实现只提供 `get` 和 `delete`，则消费操作会回退到进程内的 JavaScript 锁，而该锁无法在多个应用实例之间协调。使用 secondary-storage 验证的多实例部署必须配置一个实现了 `getAndDelete` 的后端。
+</Callout>

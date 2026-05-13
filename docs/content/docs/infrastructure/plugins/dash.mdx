@@ -24,12 +24,14 @@ export const auth = betterAuth({
 
 ### DashOptions
 
-| 选项 | 类型 | 描述 |
-| ------------------ | -------- | ---------------------------------- |
-| `apiUrl` | `string` | Better Auth 基础设施 API URL |
-| `kvUrl` | `string` | 用于缓存的 KV 存储 URL |
-| `apiKey` | `string` | 用于身份验证的 API 密钥 |
-| `activityTracking` | `object` | 活动跟踪配置 |
+| Option             | Type     | Description                                                           |
+| ------------------ | -------- | --------------------------------------------------------------------- |
+| `apiUrl`           | `string` | Better Auth 基础设施 API URL                                          |
+| `kvUrl`            | `string` | 用于缓存的 KV 存储 URL                                                |
+| `apiKey`           | `string` | 用于身份验证的 API 密钥                                               |
+| `apiTimeout`       | `number` | 基础设施 API HTTP 请求超时时间（毫秒）（`apiUrl`）。默认值：`3000`    |
+| `kvTimeout`        | `number` | KV HTTP 请求超时时间（毫秒）（`kvUrl`）。默认值：`1000`               |
+| `activityTracking` | `object` | 活动跟踪配置                                                         |
 
 ### 活动跟踪
 

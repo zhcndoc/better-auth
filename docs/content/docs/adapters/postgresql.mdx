@@ -3,8 +3,8 @@ title: PostgreSQL
 description: 将 Better Auth 与 PostgreSQL 集成。
 ---
 
-PostgreSQL 是一个强大的开源关系型数据库管理系统，以其高级功能、可扩展性以及对复杂查询和大型数据集的支持而闻名。
-点击[这里](https://www.postgresql.org/)了解更多。
+PostgreSQL 是一个功能强大的开源关系型数据库管理系统，以其高级特性、可扩展性以及对复杂查询和大型数据集的支持而闻名。
+阅读更多关于 [PostgreSQL](https://www.postgresql.org/) 的信息。
 
 ## 示例用法
 
@@ -46,8 +46,8 @@ export const auth = betterAuth({
 
   <tbody>
     <tr className="h-10">
-      <td>✅ Supported</td>
-      <td>✅ Supported</td>
+      <td>✅ 支持</td>
+      <td>✅ 支持</td>
     </tr>
   </tbody>
 </table>
@@ -156,28 +156,28 @@ ALTER USER your_user SET search_path TO auth;
 
 Better Auth CLI 迁移系统会自动检测你配置的 `search_path`：
 
-* When running `npx auth migrate`, it inspects only the tables in your configured schema
-* Tables in other schemas (e.g., `public`) are ignored, preventing conflicts
-* All new tables are created in your specified schema
+* 运行 `npx auth migrate` 时，它只会检查你配置模式中的表
+* 其他模式中的表（例如 `public`）会被忽略，从而避免冲突
+* 所有新表都会在你指定的模式中创建
 
 ### 故障排查
 
 <Callout type="warning">
-  **Issue:** "relation does not exist" error during migration
+  **问题：** 迁移期间出现 "relation does not exist" 错误
 
-  **Solution:** This usually means the schema doesn't exist or the user lacks permissions. Create the schema and grant permissions as shown above.
+  **解决方案：** 这通常意味着该模式不存在，或者用户没有权限。请按上文所示创建模式并授予权限。
 </Callout>
 
 <Callout type="info">
-  **Verifying your schema configuration:**
+  **验证你的模式配置：**
 
-  You can verify which schema Better Auth will use by checking the `search_path`:
+  你可以通过检查 `search_path` 来确认 Better Auth 将使用哪个模式：
 
   ```sql
   SHOW search_path;
   ```
 
-  This should return your custom schema (e.g., `auth`) as the first value.
+  这应该返回你的自定义模式（例如 `auth`）作为第一个值。
 </Callout>
 
 ## 其他信息

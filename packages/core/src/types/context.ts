@@ -151,7 +151,12 @@ export interface InternalAdapter<
 
 	deleteAccounts(userId: string): Promise<void>;
 
-	deleteAccount(accountId: string): Promise<void>;
+	/**
+	 * Delete an account by its primary key.
+	 *
+	 * @param id - The account row's primary key (the `id` column, not the `accountId` column).
+	 */
+	deleteAccount(id: string): Promise<void>;
 
 	deleteSessions(userIdOrSessionTokens: string | string[]): Promise<void>;
 
@@ -210,6 +215,19 @@ export interface InternalAdapter<
 	findVerificationValue(identifier: string): Promise<Verification | null>;
 
 	deleteVerificationByIdentifier(identifier: string): Promise<void>;
+
+	/**
+	 * Atomically consume a single-use verification row by `identifier` and
+	 * return it. Only the first concurrent caller receives the latest row;
+	 * subsequent callers receive `null`. Consuming one row invalidates the
+	 * whole identifier so stale rows cannot be replayed. Callers MUST gate any
+	 * state change (issue session, mint token, change password) on a non-null
+	 * result.
+	 *
+	 * Replaces the racy `findVerificationValue` + `deleteVerificationByIdentifier`
+	 * pair at single-use credential consumption sites.
+	 */
+	consumeVerificationValue(identifier: string): Promise<Verification | null>;
 
 	updateVerificationByIdentifier(
 		identifier: string,
