@@ -113,12 +113,16 @@ description: 通过双重身份验证增强您的应用安全性。
 注意：在用户验证其 TOTP 代码之前，`twoFactorEnabled` 不会被设置为 `true`。有关在 [TOTP 部分](#totp) 验证 TOTP 的更多信息。如果您在插件配置中将 `skipVerificationOnEnable` 设置为 true，则可以跳过验证。
 
 <Callout type="warn">
-  默认情况下，双重身份验证需要凭证（密码）账户。要允许无密码用户（通行证密钥、魔法链接、邮箱 OTP、OAuth/社交或匿名），请设置 `allowPasswordless: true`。
+  默认情况下，双重身份验证插件要求用户拥有凭证（密码）账户。若要允许无密码用户（passkey、magic link、邮箱 OTP、OAuth/社交登录或匿名用户）启用并管理 2FA，请设置 `allowPasswordless: true`。此选项不会改变哪些登录方式会被 2FA 质询。
 </Callout>
 
 ### 使用 2FA 登录
 
-当启用 2FA 的用户尝试通过电子邮件登录时，响应对象将包含 `twoFactorRedirect` 设置为 `true` 和 `twoFactorMethods` — 一个包含用户可用的 2FA 方法的数组（例如 `["totp"]`、`["totp", "otp"]`）。使用 `twoFactorMethods` 决定显示哪个验证 UI。
+当启用了 2FA 的用户尝试通过邮箱、用户名或手机号登录时，响应对象将包含设置为 `true` 的 `twoFactorRedirect`，以及 `twoFactorMethods`——一个包含该用户可用 2FA 方法的数组（例如 `["totp"]`、`["totp", "otp"]`）。使用 `twoFactorMethods` 来决定显示哪种验证界面。
+
+默认情况下，2FA 登录强制适用于基于凭证的登录端点：`/sign-in/email`、`/sign-in/username` 和 `/sign-in/phone-number`。诸如邮箱 OTP、magic link、OAuth/社交登录、passkey、匿名登录以及类似的无密码流程，默认不会被 2FA 限制。
+
+如果您的应用需要对这些登录方式也强制要求 2FA，请为这些端点添加自定义 hook 处理，并在将登录视为完成之前，把用户重定向到您的 2FA 验证流程中。
 
 您可以在 `onSuccess` 回调中处理，或在插件配置中提供 `onTwoFactorRedirect` 回调。
 
@@ -511,7 +515,7 @@ export const twoFactorTableFields = [
 
 **skipVerificationOnEnable**：在启用用户的双重身份验证时，跳过验证过程。
 
-**allowPasswordless**: 允许没有凭据账户的用户在没有密码的情况下启用和管理 2FA。如果存在凭据账户，则仍然需要密码。
+**allowPasswordless**：允许对没有凭据账户的用户在没有密码的情况下启用和管理 2FA。如果存在凭据账户，则仍然需要密码。此选项不会更改哪些登录方式会在 2FA 时被质询。
 
 **Issuer**：签发者是您的应用程序名称。它用于生成 TOTP 代码，并会显示在身份验证器应用中。
 
@@ -534,9 +538,9 @@ export const twoFactorTotpOptionsType = {
 
 <TypeTable type={twoFactorTotpOptionsType} />
 
-**OTP 选项**
+**OTP Options**
 
-OTP 的相关配置。
+OTP-related configuration.
 
 export const twoFactorOtpOptionsType = {
   sendOTP: {
@@ -627,7 +631,7 @@ const authClient =  createAuthClient({
     plugins: [
         twoFactorClient({ // [!code highlight]
             onTwoFactorRedirect({ twoFactorMethods }){ // [!code highlight]
-                // twoFactorMethods is e.g. ["totp", "otp"] // [!code highlight]
+                // twoFactorMethods 例如 ["totp", "otp"] // [!code highlight]
                 window.location.href = "/2fa" // 处理 2FA 验证重定向 // [!code highlight]
             } // [!code highlight]
         }) // [!code highlight]
