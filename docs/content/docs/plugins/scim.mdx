@@ -235,13 +235,13 @@ const auth = betterAuth({
 <Tabs items={["migrate", "generate"]}>
   <Tab value="migrate">
     ```bash
-    npx @better-auth/cli migrate
+    npx auth migrate
     ```
   </Tab>
 
   <Tab value="generate">
     ```bash
-    npx @better-auth/cli generate
+    npx auth generate
     ```
   </Tab>
 </Tabs>
@@ -537,7 +537,7 @@ export const scimProviderTableFields = [
 
 ### 如果通过 `providerOwnership.enabled` 启用了提供商所有权：
 
-`scimProvider` schema 会新增以下字段：
+`scimProvider` 模式会新增以下字段：
 
 export const scimProviderOwnershipFields = [
 	{
