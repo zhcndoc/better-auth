@@ -159,10 +159,13 @@ description: 学习如何在你的项目中配置 Better Auth。
       </Tab>
     </Tabs>
 
+    如果你的数据库未在上方列出，请查看我们支持的其他 [数据库](/docs/adapters/other-relational-databases) 了解更多信息，
+    或使用受支持的 ORM 之一。
+
     <Callout>
-      如果你的数据库未在上面列出，请查看我们其他支持的
-      [数据库](/docs/adapters/other-relational-databases) 获取更多信息，
-      或使用受支持的 ORM 之一。
+      如果你正在使用数据库适配器（Drizzle、Prisma、MongoDB 或社区适配器），
+      可以考虑从 `better-auth` 改为从 `better-auth/minimal` 导入 `betterAuth` 以减小包体积。
+      有关更多信息，请参阅 [包体积优化](/docs/guides/optimizing-for-performance#bundle-size-optimization)。
     </Callout>
   </Step>
 

@@ -13,14 +13,14 @@ Better Auth 支持两种状态存储策略 - **database**（默认）和 **cooki
 
 ## 错误代码概览
 
-| Code                      | Message                               | Strategy | 含义                                                                                       |
+| 错误代码                   | 消息                                  | 策略     | 含义                                                                                       |
 | ------------------------- | ------------------------------------- | -------- | --------------------------------------------------------------------------------------------- |
-| `state_mismatch`          | verification not found                | Database | 此状态的验证记录在数据库（或二级存储）中不存在。 |
-| `state_mismatch`          | auth state cookie not found           | Cookie   | 加密的状态 cookie 未随回调请求发送回来。 |
-| `state_mismatch`          | request expired                       | Both     | 找到了状态数据，但其 `expiresAt` 时间戳已过期。 |
-| `state_invalid`           | Failed to decrypt or parse auth state | Cookie   | 状态 cookie 存在但无法解密或解析（例如密钥已更改）。 |
-| `state_security_mismatch` | State not persisted correctly         | Database | 签名的状态 cookie 缺失或与回调 URL 中的状态不匹配。 |
-| `state_generation_error`  | Unable to create verification         | Database | 启动流程时无法写入验证记录。 |
+| `state_mismatch`          | 未找到验证记录                         | 数据库   | 此状态的验证记录在数据库（或二级存储）中不存在。 |
+| `state_mismatch`          | 未找到 auth state cookie           | Cookie   | 加密的状态 cookie 未随回调请求发送回来。 |
+| `state_mismatch`          | 请求已过期                             | 两者     | 找到了状态数据，但其 `expiresAt` 时间戳已过期。 |
+| `state_invalid`           | 无法解密或解析认证状态                 | Cookie   | 状态 cookie 存在但无法解密或解析（例如密钥已更改）。 |
+| `state_security_mismatch` | 状态未正确持久化                       | 数据库   | 签名的状态 cookie 缺失或与回调 URL 中的状态不匹配。 |
+| `state_generation_error`  | 无法创建验证记录                       | 数据库   | 启动流程时无法写入验证记录。 |
 
 ***
 
@@ -110,11 +110,12 @@ Better Auth 支持两种状态存储策略 - **database**（默认）和 **cooki
 
 ### 常见原因
 
-* 签名的 cookie 已过期（其 `maxAge` 为 5 分钟，短于 10 分钟的数据库记录有效期）。
+* 签名 cookie 已过期（其 `maxAge` 为 5 分钟，比 10 分钟的数据库记录过期时间更短）。
 * 第三方 cookie 限制或 `SameSite` 策略阻止了 cookie 的发送。
-* 跨源 POST 回调（SAML IdP 中常见）不发送 `SameSite=Lax` cookie。
-* 预览与生产域不匹配。
-* 用户打开了多个登录标签页 - 每个标签页都会覆盖状态 cookie，因此只有最后一个有效。
+* 跨源 POST 回调（SAML IdP 中很常见）不会发送 `SameSite=Lax` cookie。
+* 预览域与生产域不匹配。
+* 用户打开了多个登录标签页 - 每个标签页都会覆盖状态 cookie，因此只有最后一个打开的标签页有效。
+* **使用秘密不匹配的 OAuth Proxy：** 当使用 [OAuth Proxy 插件](/docs/plugins/oauth-proxy) 且生产/预览环境具有不同的 `BETTER_AUTH_SECRET` 值，而插件选项中又没有配置共享的 `secret` 时，proxy 的 before 钩子无法解密状态包，导致常规回调处理器运行并失败。
 
 ### 如何修复
 
@@ -158,19 +159,20 @@ export const auth = betterAuth({
 
 下表按生产环境中遇到的频率对每个根本原因进行排名，说明其触发的错误代码以及应对措施。
 
-| Likelihood    | Root cause                                                            | Error code                                                      | Fix                                                                                   |
+| 可能性       | 根本原因                                                            | 错误代码                                                      | 修复措施                                                                                   |
 | ------------- | --------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| **Very high** | Cookie blocked or missing (Safari ITP, cross-domain, preview domains) | `state_security_mismatch` or `state_mismatch` (cookie strategy) | 使用稳定的自定义域；验证 `SameSite` / `Secure` 属性                   |
-| **High**      | Callback URL replayed (refresh, back button, redirect loop)           | `state_mismatch` (DB)                                           | 确保您的错误/重定向页面不会重新触发回调                      |
-| **High**      | User took too long (>10 min) on the provider page                     | `state_mismatch` (DB) or request expired                        | 提示用户重试；考虑切换到 cookie 策略                          |
-| **High**      | Multiple tabs / concurrent sign-in attempts                           | `state_security_mismatch`                                       | 只有最后打开的标签页的 cookie 有效；更早打开的标签页会失败                    |
-| **Medium**    | Secondary storage (Redis) key evicted without DB fallback             | `state_mismatch` (DB)                                           | 设置 `verification.storeInDatabase: true` 或确保 Redis 持久化                  |
-| **Medium**    | Serverless / multi-instance without shared database                   | `state_mismatch` (DB)                                           | 使用共享数据库或所有实例都可访问的外部存储                 |
-| **Medium**    | Signed cookie expired (5 min) while DB record is still valid (10 min) | `state_security_mismatch`                                       | cookie 的 TTL 比数据库记录更短；介于 5–10 分钟之间的用户会遇到此问题 |
-| **Low**       | Secret rotation mid-flow                                              | `state_invalid` (cookie) or `state_mismatch` (DB + hashed)      | 在低流量时段轮换密钥                                             |
-| **Low**       | OAuth provider altered the state parameter                            | `state_mismatch` (DB)                                           | 验证提供方是否完全保留 `state`；检查 URL 编码问题          |
-| **Low**       | Missing verification table / migration not run                        | `state_generation_error`                                        | 运行 `npx auth migrate`                                                    |
-| **Very low**  | Clock skew between server instances                                   | request expired                                                 | 在所有服务器上启用 NTP                                                             |
+| **非常高** | Cookie 被阻止或缺失（Safari ITP、跨域、预览域） | `state_security_mismatch` 或 `state_mismatch`（cookie 策略） | 使用稳定的自定义域；验证 `SameSite` / `Secure` 属性                   |
+| **非常高** | OAuth Proxy：生产环境与预览环境使用了不同的密钥               | `state_security_mismatch` 或 `state_mismatch`                   | 在 [OAuth Proxy 插件](/docs/plugins/oauth-proxy) 中配置共享的 `secret`    |
+| **高**      | 回调 URL 被重放（刷新、后退按钮、重定向循环）           | `state_mismatch`（数据库）                                           | 确保您的错误/重定向页面不会重新触发回调                      |
+| **高**      | 用户在提供方页面停留时间过长（超过 10 分钟）                     | `state_mismatch`（数据库）或 请求已过期                        | 提示用户重试；考虑切换到 cookie 策略                          |
+| **高**      | 多个标签页 / 并发登录尝试                           | `state_security_mismatch`                                       | 只有最后打开的标签页的 cookie 有效；更早的标签页将失败                    |
+| **中**    | 二级存储（Redis）键被逐出且没有数据库回退             | `state_mismatch`（数据库）                                           | 设置 `verification.storeInDatabase: true` 或确保 Redis 持久化                  |
+| **中**    | 无服务器 / 多实例且没有共享数据库                   | `state_mismatch`（数据库）                                           | 使用共享数据库或所有实例都可访问的外部存储                 |
+| **中**    | 签名 cookie 已过期（5 分钟），而数据库记录仍有效（10 分钟） | `state_security_mismatch`                                       | Cookie 的 TTL 比数据库记录更短；处于 5–10 分钟之间的用户会遇到此问题 |
+| **低**       | 流程中途轮换密钥                                              | `state_invalid`（cookie）或 `state_mismatch`（数据库 + hashed）      | 在低流量时段轮换密钥                                             |
+| **低**       | OAuth 提供方更改了 state 参数                            | `state_mismatch`（数据库）                                           | 验证提供方是否原样保留 `state`；检查 URL 编码问题          |
+| **低**       | 缺少验证表 / 未运行迁移                        | `state_generation_error`                                        | 运行 `npx auth migrate`                                                                |
+| **极低**  | 服务器实例之间的时钟偏差                                   | 请求已过期                                                 | 在所有服务器上启用 NTP                                                             |
 
 ***
 

@@ -18,6 +18,7 @@ description: Better Auth 的 OAuth 代理插件
       plugins: [
         oAuthProxy({ // [!code highlight]
           productionURL: "https://my-production-app.com", // [!code highlight]
+          secret: process.env.OAUTH_PROXY_SECRET, // [!code highlight]
         }), // [!code highlight]
       ],
       socialProviders: {
@@ -29,7 +30,9 @@ description: Better Auth 的 OAuth 代理插件
     })
     ```
 
-    插件会自动将 OAuth 请求路由到你的生产服务器。
+    将 `OAUTH_PROXY_SECRET` 在所有环境（production、preview、localhost）中设置为相同的值。
+
+    该插件会自动将 OAuth 请求通过你的生产服务器路由。
   </Step>
 
   <Step>
@@ -61,8 +64,19 @@ description: Better Auth 的 OAuth 代理插件
   </Step>
 </Steps>
 
-<Callout type="info">
-  所有参与 OAuth 代理流程的环境必须共享相同的加密密钥。默认情况下，插件使用 `BETTER_AUTH_SECRET`。为了避免跨环境共享主密钥，你可以提供一个专用的 `secret` 选项（参见[选项](#选项)）。
+<Callout type="warn">
+  **重要：需要共享密钥**
+
+  所有环境（production、preview、localhost）都必须使用相同的加密密钥进行通信。在插件选项中配置一个专用的 `secret`：
+
+  ```ts title="auth.ts"
+  oAuthProxy({
+    productionURL: "https://my-production-app.com",
+    secret: process.env.OAUTH_PROXY_SECRET, // 所有环境都使用相同的值 // [!code highlight]
+  })
+  ```
+
+  如果你没有配置共享的 `secret`，插件会回退到 `BETTER_AUTH_SECRET`。由于生产环境和预览环境通常会使用不同的主密钥（这在安全上是正确的做法），OAuth 流程将会失败，并报出 `state_mismatch` 错误。
 </Callout>
 
 ## 工作原理
@@ -94,8 +108,44 @@ await authClient.signIn.social({
 
 **productionURL**：你的生产服务器的 URL。如果此值与 auth 配置中的 `baseURL` 相匹配，请求将不会被代理。默认为 `BETTER_AUTH_URL` 环境变量。
 
-**currentURL**：插件会自动确定应用当前的 URL。它会优先检查请求的 URL、流行托管服务提供商的特定环境变量，最后回退到 auth 配置中的 `baseURL`。只有在环境中无法正确推断 URL 时才需要手动设置。
+**currentURL**：插件会自动确定应用当前的 URL。它会优先检查请求的 URL、常见托管服务提供商的特定环境变量，最后回退到 auth 配置中的 `baseURL`。只有在环境中无法正确推断 URL 时才需要手动设置。
 
 **maxAge**：加密载荷的最大有效期（秒）。超过此时间的载荷将被拒绝以防止重放攻击。保持较短的值（例如 30-60 秒）可以最大程度减少潜在重放攻击的窗口，同时仍允许正常的 OAuth 流程。默认为 `60` 秒。
 
-**secret**：用于 OAuth 代理流程中加密和解密数据的专用密钥。设置后，此密钥**替代**全局的 `BETTER_AUTH_SECRET`。如果密钥在多个环境间共享，泄露的代理密钥无法伪造会话或解密由主密钥保护的其他数据，从而限制爆炸半径。所有参与代理流程的环境必须共享相同的 `secret` 值。
+**secret**：在 OAuth 代理流程中用于加密和解密数据的专用密钥。设置后，将使用它**而不是**全局的 `BETTER_AUTH_SECRET`，从而在跨环境共享密钥时限制影响范围——泄露的代理密钥无法伪造会话或解密受主密钥保护的其他数据。参与代理流程的所有环境必须共享相同的 `secret` 值。
+
+## 故障排查
+
+### `state_mismatch` 或“State not persisted correctly”错误
+
+当生产环境和预览环境使用**不同的密钥**，并且插件选项中没有配置共享的 `secret` 时，通常会出现此错误。
+
+**发生了什么：**
+
+1. 预览环境使用自己的密钥加密 OAuth state
+2. OAuth 提供商重定向到生产环境
+3. 生产环境尝试使用不同的密钥解密 → **失败**
+4. 常规 OAuth 回调运行失败，因为生产环境上不存在 state cookie
+
+**解决方案：** 在**所有**环境的 `oAuthProxy` 选项中配置一个共享的 `secret`：
+
+```ts title="auth.ts"
+oAuthProxy({
+  productionURL: "https://my-production-app.com",
+  secret: process.env.OAUTH_PROXY_SECRET, // [!code highlight]
+})
+```
+
+确保 `OAUTH_PROXY_SECRET` 在 production、preview 和 localhost 上的值相同。
+
+<Callout type="info">
+  建议使用专用的代理密钥（而不是共享 `BETTER_AUTH_SECRET`），这样更安全。如果代理密钥泄露，攻击者无法伪造会话或访问其他加密数据——他们最多只能在较短的 `maxAge` 窗口内劫持 OAuth 流程。
+</Callout>
+
+### OAuth 在生产环境正常，但在 preview/localhost 上失败
+
+请确保以下所有项都已配置：
+
+1. 已配置**共享密钥**（见上文）
+2. **可信来源**包含你的 preview/localhost URL
+3. 已在 OAuth 提供商处注册**生产回调 URL**（例如 `https://production.com/api/auth/callback/github`）

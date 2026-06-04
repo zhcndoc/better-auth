@@ -88,13 +88,13 @@ description: 一个更好的认证插件，使您的认证服务器能够作为 
   </Step>
 
   <Step>
-    ### 添加 `./well-known` 端点
+    ### 确认 `/.well-known` 端点
 
-    请添加所有 [Well-Known 端点](#well-known) 到您的项目。如果不确定，系统会通过警告提示位置。
+    Better Auth 会自动通过 auth handler 提供 OAuth Authorization Server 元数据和 OpenID Connect 发现元数据。如果您的框架只会将请求转发到 catch-all auth 路由，请确保 issuer 元数据 URL 能到达 `auth.handler`。
 
-    * 您**必须**在您的发行者路径上添加 OAuth 授权服务器元数据端点（如果没有路径，则为根路径）。
-    * 如果您使用 `openid` scope，您**必须**在您的发行者路径上添加 openid 配置（如果没有路径，则为根路径）。
-    * 如果您使用资源服务器（例如用于 MCP），您**必须**将资源服务器元数据添加到您的 API 中，并附加发行者路径。
+    * OAuth Authorization Server 元数据可在 `{issuer}/.well-known/oauth-authorization-server` 和 `/.well-known/oauth-authorization-server/[issuer-path]` 两处获得。
+    * 使用 `openid` scope 时，OpenID Connect 发现元数据可在 `{issuer}/.well-known/openid-configuration` 获得。
+    * 如果您使用资源服务器（例如用于 MCP），请将 OAuth Protected Resource 元数据端点添加到接收访问令牌的 API 中。
   </Step>
 
   <Step>
@@ -299,13 +299,13 @@ await auth.api.adminUpdateOAuthClient({
 });
 ```
 
-#### 旋转客户端密钥
+#### 轮换客户端密钥
 
 <Callout type="warn">
   当前实现会立即轮换客户端密钥，并且会立即使旧密钥失效。
 </Callout>
 
-旋转客户端密钥，请使用以下端点：
+轮换客户端密钥，请使用以下端点：
 
 <APIMethod path="/oauth2/client/rotate-secret" method="POST" requireSession>
   ```ts
@@ -614,19 +614,19 @@ UserInfo 端点根据授权时授予的范围返回不同的声明：
 
 `customUserInfoClaims` 函数接收用户对象、请求的 scopes 数组以及传入的访问令牌，允许添加额外响应信息。
 
-### Well known
+### Well-Known
 
-#### Openid 配置
+#### OpenID Configuration
 
-提供 [OpenID Connect 发现元数据](https://openid.net/specs/openid-connect-discovery-1_0.html)，位于 `/.well-known/openid-configuration`。
+在 `{issuer}/.well-known/openid-configuration` 提供 [OpenID Connect 发现元数据](https://openid.net/specs/openid-connect-discovery-1_0.html)。
 
 要求带有 `openid` 范围。
 
-**必须**将该配置添加至发行者路径。如未设置发行者，则为基础路径 `/api/auth`。
+OAuth Provider 插件会自动通过 Better Auth handler 提供此端点。如果您未设置自定义 issuer，则 issuer 路径就是您的 basePath，例如 `/api/auth`。
 
-若发行者路径非根路径，且根路径未提供 openid-configuration，我们推荐在根添加以防客户端硬编码访问 `/.well-known/openid-configuration`（忽视了规范中的发行者路径）。
+对于带路径的 issuer，OpenID Connect 使用路径追加。例如，issuer `https://example.com/api/auth` 使用 `/api/auth/.well-known/openid-configuration`。
 
-注意：对于带路径的发行者，OpenID 使用路径拼接，应在发行者路径后附加 `/.well-known/openid-configuration`。无发行者路径则应从根开始。
+如果您的框架路由未将此 URL 转发到 `auth.handler`，请在 issuer 路径添加路由：
 
 ```ts title="[issuer-path]/.well-known/openid-configuration/route.ts"
 import { oauthProviderOpenIdConfigMetadata } from "@better-auth/oauth-provider";
@@ -641,11 +641,16 @@ export const GET = oauthProviderOpenIdConfigMetadata(auth);
 
 #### OAuth Authorization Server
 
-提供 [RFC8414](https://datatracker.ietf.org/doc/html/rfc8414) 兼容元数据，位于 `/.well-known/oauth-authorization-server`。
+为授权服务器提供符合 [RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414) 的元数据。
 
-**必须**将该配置添加至发行者路径。未设置发行者，则为基础路径 `/api/auth`。
+OAuth Provider 插件会自动通过 Better Auth handler 提供以下两个带路径前缀的 issuer 别名：
 
-注意：带路径的发行者，OAuth 2.1 授权服务器采用路径插入，故在发行者路径后追加 `/.well-known/oauth-authorization-server`。无发行者路径则从根开始添加。
+* `{issuer}/.well-known/oauth-authorization-server`
+* `/.well-known/oauth-authorization-server/[issuer-path]`
+
+例如，issuer `https://example.com/api/auth` 可使用 `/api/auth/.well-known/oauth-authorization-server` 或 `/.well-known/oauth-authorization-server/api/auth`。当请求到达 `auth.handler` 时，两者返回相同的元数据。
+
+如果您的框架路由未将这些 URL 中的某一个转发到 `auth.handler`，请添加路由并调用辅助函数：
 
 ```ts title="/.well-known/oauth-authorization-server/[issuer-path]/route.ts"
 import { oauthProviderAuthServerMetadata } from "@better-auth/oauth-provider";
@@ -1619,7 +1624,7 @@ JWT 访问令牌仍使用真实用户 ID 作为 `sub`，因资源服务器可能
   </Step>
 </Steps>
 
-## Schema
+## 表结构
 
 OAuth 提供者插件新增以下表格：
 
@@ -1901,7 +1906,7 @@ export const oauthRefreshTokenTableFields = [
 
 <DatabaseTable name="oauthRefreshToken" fields={oauthRefreshTokenTableFields} />
 
-### OAuth 访问令牌表
+### OAuth 刷新令牌表
 
 表名：`oauthAccessToken`
 
@@ -2029,9 +2034,9 @@ export const oauthConsentTableFields = [
 
 ### 前缀
 
-可为不透明访问令牌、刷新令牌和客户端密钥添加前缀，有助于秘密扫描工具（如 [GitHub Secret Scanners](https://docs.github.com/code-security/secret-scanning)、[GitGuardian](https://www.gitguardian.com/solutions/secrets-scanning)、[Trufflehog](https://github.com/trufflesecurity/trufflehog)）识别令牌格式。
+可为不透明访问令牌、刷新令牌和客户端密钥添加前缀，这有助于秘密扫描工具（如 [GitHub Secret Scanners](https://docs.github.com/code-security/secret-scanning)、[GitGuardian](https://www.gitguardian.com/solutions/secrets-scanning)、[Trufflehog](https://github.com/trufflesecurity/trufflehog)）识别令牌格式。
 
-推荐在部署前先添加前缀，部署后视为不可变，否则应使用对应的生成函数。
+建议在部署前先添加前缀，部署后视为不可变，否则应使用对应的生成函数。
 
 `prefix` 配置设置下提供以下选项：
 
@@ -2047,17 +2052,17 @@ export const oauthConsentTableFields = [
 
 ### 来自 OIDC Provider 插件
 
-请参见 [OIDC Provider Plugin](/docs/plugins/oidc-provider) 了解之前的实现。
+请参见 [OIDC Provider 插件](/docs/plugins/oidc-provider) 了解之前的实现。
 
 #### 配置变更
 
-* **`idTokenExpiresIn`** 现在默认为 `10 hours`（之前为 `1 hour` 通过 `accessTokenExpiresIn`）
+* **`idTokenExpiresIn`** 现在默认为 `10 hours`（之前通过 `accessTokenExpiresIn` 为 `1 hour`）
 * **`refreshTokenExpiresIn`** 现在默认为 `30 days`（之前为 `7 days`）
-* **`advertisedMetadata`**（之前为 `metadata`）不再支持更改元数据字段，以防止意外配置错误。
+* **`advertisedMetadata`**（之前为 `metadata`）不再支持更改元数据字段，以防止意外的配置错误。
 * **`clientRegistrationDefaultScopes`**（之前为 `defaultScope`）现在采用数组格式，而非空格分隔的字符串。
 * **`consentPage`** 现在为必填项。
 * **`getConsentHTML`** 已被移除，改用 `consentPage`，因为 OAuth 授权端点不支持原始 HTML 作为响应类型。
-* **`requirePKCE`**（全局选项）已被移除。PKCE 现在默认要求遵循 OAuth 2.1。单个客户端可通过注册时的 `require_pkce: false` 选项选择退出以保持向后兼容。
+* **`requirePKCE`**（全局选项）已被移除。PKCE 现在默认要求，遵循 OAuth 2.1。单个客户端可通过注册时的 `require_pkce: false` 选项选择退出，以保持向后兼容。
 * **`allowPlainCodeChallengeMethod`** 被移除，因为 `plain` 代码挑战方法被认为不如默认的 `S256` 方法安全。
 * **`customUserInfoClaims`**（之前为 `getAdditionalUserInfoClaim`）传递 JWT 负载，而不是请求中使用的客户端访问令牌。
 * **`storeClientSecret`** 现在默认为 `hashed`，如果 `disableJwtPlugin: true` 则为 `encrypted`（之前为 `plain`）。
@@ -2141,7 +2146,7 @@ const defaultHasher = async (value: string) => {
 
 ### 来自 MCP 插件
 
-请参见 [MCP Plugin](/docs/plugins/mcp) 了解之前的 MCP 专用端点。
+请参见 [MCP 插件](/docs/plugins/mcp) 了解之前的 MCP 专用端点。
 
 MCP 端点已从 `/mcp` 迁移至 `/oauth2`：
 

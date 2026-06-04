@@ -67,31 +67,31 @@ description: 使用任何 OAuth 提供商进行用户身份验证
   ```ts
   type signInWithOAuth2 = {
       /**
-       * The provider ID for the OAuth provider. 
+       * OAuth 提供商的提供商 ID。 
        */
       providerId: string = "provider-id"
       /**
-       * The URL to redirect to after sign in. 
+       * 登录后重定向到的 URL。 
        */
       callbackURL?: string = "/dashboard"
       /**
-       * The URL to redirect to if an error occurs. 
+       * 发生错误时重定向到的 URL。 
        */
       errorCallbackURL?: string = "/error-page"
       /**
-       * The URL to redirect to after login if the user is new. 
+       * 如果用户是新用户，登录后重定向到的 URL。 
        */
       newUserCallbackURL?: string = "/welcome"
       /**
-       * Disable redirect. 
+       * 禁用重定向。 
        */
       disableRedirect?: boolean = false
       /**
-       * Scopes to be passed to the provider authorization request. 
+       * 要传递给提供商授权请求的作用域。 
        */
       scopes?: string[] = ["my-scope"]
       /**
-       * Explicitly request sign-up. Useful when disableImplicitSignUp is true for this provider. 
+       * 明确请求注册。当此提供商的 disableImplicitSignUp 为 true 时很有用。 
        */
       requestSignUp?: boolean = false
   }
@@ -106,11 +106,11 @@ description: 使用任何 OAuth 提供商进行用户身份验证
   ```ts
   type oAuth2LinkAccount = {
       /**
-       * The OAuth provider ID. 
+       * OAuth 提供商 ID。 
        */
       providerId: string = "my-provider-id"
       /**
-       * The URL to redirect to once the account linking was complete. 
+       * 账号关联完成后重定向到的 URL。 
        */
       callbackURL: string = "/successful-link"
   }
@@ -121,7 +121,7 @@ description: 使用任何 OAuth 提供商进行用户身份验证
 
 插件挂载了一个用于处理 OAuth 回调的路由 `/oauth2/callback/:providerId`。默认情况下，回调 URL 是 `${baseURL}/api/auth/oauth2/callback/:providerId`。请确保你的 OAuth 提供商配置了此回调 URL。
 
-Unlike built-in providers, the `:providerId` parameter is required and must match your configured provider ID.
+与内置提供商不同，`:providerId` 参数是必需的，并且必须与您配置的提供商 ID 匹配。
 
 ## 预配置的提供程序助手
 
@@ -145,7 +145,7 @@ import { betterAuth } from 'better-auth';
 import {
 	// 通用 OAuth 插件
 	genericOAuth,
-	// 提供商
+	// 提供程序
 	auth0,
 	gumroad,
 	hubspot,
@@ -260,6 +260,7 @@ interface GenericOAuthConfig {
   prompt?: string;
   pkce?: boolean;
   accessType?: string;
+  accessTokenExpiresIn?: number;
   getUserInfo?: (tokens: OAuth2Tokens) => Promise<User | null>;
 }
 ```
@@ -298,7 +299,9 @@ interface GenericOAuthConfig {
 
 **accessType**: (可选) 授权请求中的访问类型。使用 `"offline"` 以请求刷新令牌。
 
-**getUserInfo**：（可选）自定义函数，使用 OAuth 令牌从提供商获取用户信息。如果未提供，则使用默认的获取方式。
+**accessTokenExpiresIn**: (可选) 备用访问令牌有效期（秒），仅在提供商的令牌响应省略 `expires_in` 时使用。如果没有已知的过期时间，`getAccessToken` 无法判断令牌已过期，也不会刷新它。请将其设置为令牌的有效期，以便跟踪过期并在需要时刷新令牌。如果提供商返回 `expires_in`，则留空。
+
+**getToken**: (可选) 一个自定义函数，用于将授权码兑换为令牌。如果提供，将使用该函数替代默认的令牌交换逻辑。适用于使用 GET 请求或自定义参数的非标准令牌端点提供商。
 
 **mapProfileToUser**：（可选）函数，用于将提供商的用户资料映射到应用程序的用户对象。适用于自定义字段映射或转换。
 

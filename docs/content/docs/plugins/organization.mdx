@@ -28,14 +28,14 @@ description: 组织插件允许您管理组织的成员和团队。
 
     运行迁移或生成模式，以将必要的字段和表添加到数据库。
 
-    <Tabs items={["migrate", "generate"]}>
-      <Tab value="migrate">
+    <Tabs items={["迁移", "生成"]}>
+      <Tab value="迁移">
         ```package-install
         npx auth migrate
         ```
       </Tab>
 
-      <Tab value="generate">
+      <Tab value="生成">
         ```package-install
         npx auth generate
         ```
@@ -85,7 +85,7 @@ description: 组织插件允许您管理组织的成员和团队。
     /**
     * 组织徽标。
     */
-    logo?: string = "https://example.com/logo.png"
+    logo?: string | null = "https://example.com/logo.png"
     /**
     * 组织的元数据。
     */
@@ -773,9 +773,9 @@ export const auth = betterAuth({
            */
           slug?: string = "updated-slug"
           /**
-           * 组织徽标。 
+           * 组织徽标。
            */
-          logo?: string = "new-logo.url"
+          logo?: string | null = "new-logo.url"
           /**
            * 组织的元数据。 
            */
@@ -918,7 +918,9 @@ export const auth = betterAuth({
 
 #### 邮箱验证要求
 
-如果组织配置中启用了 `requireEmailVerificationOnInvitation`，则用户必须验证邮箱后才能接受邀请，确保只有验证过邮箱的用户能加入组织。
+默认情况下，接受邀请需要使用邮件链接中的邀请 ID，并且当前已登录会话的邮箱必须与邀请邮箱匹配。当 Better Auth 使用内置的不可预测邀请 ID 时，包括默认生成器或 `advanced.database.generateId: "uuid"`，这对于正常的邮件邀请流程已经足够。如果邀请 ID 是外部可控或可预测的，例如 `advanced.database.generateId: "serial"` / `false` 或自定义 ID 生成方式，则 Better Auth 还会要求进行邮箱验证，除非您显式将 `requireEmailVerificationOnInvitation` 设为 `false`。
+
+建议将 `requireEmailVerificationOnInvitation` 设为 `true`，以采用更严格的安全策略。当邀请 ID 可能会被邀请用户邮箱之外的人看到、当应用向成员展示组织邀请列表、当使用自定义邀请投递方式，或允许未验证邮箱/密码会话且组织成员资格较敏感时，尤其建议这样做。在登录前要求邮箱验证，可以在流程更早阶段提供相同的所有权证明。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -969,7 +971,7 @@ export const auth = betterAuth({
 </APIMethod>
 
 <Callout type="info">
-  与接受邀请类似，启用 `requireEmailVerificationOnInvitation` 后，拒绝邀请也需要邮箱验证。未验证邮箱的用户拒绝时会报错。
+  拒绝邀请遵循与按 ID 接受邀请相同的邮箱验证策略。
 </Callout>
 
 ### 获取邀请
@@ -987,6 +989,10 @@ export const auth = betterAuth({
   ```
 </APIMethod>
 
+<Callout type="info">
+  通过 ID 获取邀请遵循与按 ID 接受邀请相同的邮箱验证策略。
+</Callout>
+
 ### 列出邀请
 
 要列出特定组织的所有邀请，可使用客户端的 `listInvitations`。
@@ -1002,6 +1008,8 @@ export const auth = betterAuth({
   ```
 </APIMethod>
 
+响应中包含邀请 ID。请将这些 ID 视为具有操作能力的邀请链接。如果能够列出组织邀请的用户不应使用这些 ID 在未验证的收件人会话中执行操作，请启用 `requireEmailVerificationOnInvitation`，或在应用层为该端点添加权限检查。
+
 ### 列出用户邀请
 
 要列出给特定用户的所有邀请，可使用客户端的 `listUserInvitations`。
@@ -1012,7 +1020,9 @@ import { authClient } from "@/lib/auth-client"
 const invitations = await authClient.organization.listUserInvitations();
 ```
 
-服务器端可通过查询参数传递用户邮箱。
+客户端侧的 `listUserInvitations` 调用要求会话用户的邮箱已验证。此端点会从会话邮箱中枚举待处理的邀请 ID，因此仅靠邮箱字符串匹配不足以证明所有权。
+
+在服务端，您可以通过查询参数传入用户的邮箱地址。
 
 ```ts title="list-user-invitations.ts"
 const invitations = await auth.api.listUserInvitations({
@@ -2140,9 +2150,9 @@ export const memberTableFields = [
 
 <DatabaseTable name="member" fields={memberTableFields} />
 
-### 邀请
+### Invitation
 
-表名：`invitation`
+Table name: `invitation`
 
 export const invitationTableFields = [
 	{
@@ -2231,9 +2241,9 @@ export const sessionActiveOrganizationFields = [
 
 <DatabaseTable name="session" fields={sessionActiveOrganizationFields} />
 
-### Organization Roles (Optional)
+### 组织角色（可选）
 
-Table name: `organizationRole`
+表名：`organizationRole`
 
 export const organizationRoleTableFields = [
 	{
@@ -2496,4 +2506,4 @@ await client.organization.create({
 
 **invitationLimit**: `number` | `((user: User) => Promise<boolean> | boolean)` - 用户允许的最大邀请数。默认 100。
 
-**requireEmailVerificationOnInvitation**: `boolean` - 是否要求用户在接受或拒绝邀请前先验证邮箱。默认 `false`。开启后，未验证邮箱的用户会被拒绝操作邀请。
+**requireEmailVerificationOnInvitation**: `boolean | undefined` - 是否在受邀者调用带有邀请 ID 的邀请相关接口（`acceptInvitation`、`rejectInvitation`、`getInvitation`）之前要求邮箱验证。若未设置，Better Auth 会对内置的、不可见的邀请 ID 保持正常的邮件邀请流程，包括默认生成器以及 `advanced.database.generateId: "uuid"`。对于外部可控或可预测的邀请 ID，例如 `advanced.database.generateId: "serial"` / `false` 或自定义 ID 生成方式，则会要求验证。当邀请 ID 可能在受邀用户邮箱之外可见、当组织邀请列表会向成员公开，或者你希望已验证邮箱作为按 ID 执行邀请操作的所有权证明时，请将此选项设为 `true`。客户端侧的 `listUserInvitations` 始终需要已验证的会话邮箱，因为它会从会话邮箱中枚举邀请 ID。

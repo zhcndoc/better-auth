@@ -1,0 +1,47 @@
+---
+title: state_invalid
+description: 在回调期间无法解密或解析 OAuth state。
+---
+
+## 这是什么？
+
+当使用 **cookie** state 存储策略（`account.storeStateStrategy: "cookie"`）时，Better Auth 会将所有 OAuth state 数据加密到 cookie 中。在回调期间，这个 cookie 会被解密并解析。`state_invalid` 错误表示 cookie 存在，但无法被解密，或者解密后的内容无法被解析为有效的 JSON。
+
+此错误仅适用于 cookie 策略。在默认的数据库策略下，state 失败会以其他代码形式出现（例如 `state_mismatch`），具体取决于失败的原因。
+
+## 常见原因
+
+* **流程中途轮换了密钥。** 在 OAuth 流程开始和回调之间，`BETTER_AUTH_SECRET` 被更改了，因此解密密钥不再与加密该 cookie 的密钥匹配。
+* **传输过程中 cookie 值损坏。** 代理、CDN 或中间件在重定向期间修改或截断了 cookie 值。
+* **cookie 格式不正确。** cookie 被手动修改过，或者读取到了另一个同名但冲突的 cookie。
+
+## 如何解决
+
+### 避免在活动流程期间轮换密钥
+
+在低流量时段部署密钥变更。如果需要轮换密钥，请考虑在过渡期内同时运行旧密钥和新密钥，以便进行中的流程可以完成。
+
+### 检查代理和中间件
+
+确认位于应用前方的任何反向代理、CDN 或中间件都能保留完整且未修改的 cookie 值。检查是否存在 cookie 重写、截断或 URL 编码问题。
+
+### 验证 cookie 名称和值
+
+使用浏览器的开发者工具（Application，然后是 Cookies）确认在重定向前已设置 `better-auth.oauth_state` cookie，并且在回调到达时它仍然存在（且未被修改）。
+
+### 切换到数据库策略
+
+如果 cookie 问题仍然存在，请切换到默认的数据库策略，该策略不依赖 state cookie 进行解密：
+
+```ts title="auth.ts"
+export const auth = betterAuth({
+	account: {
+		storeStateStrategy: "database",
+	},
+});
+```
+
+***
+
+有关所有与 state 相关错误及其根本原因的概览，请参见
+[state\_mismatch](/docs/reference/errors/state_mismatch)。

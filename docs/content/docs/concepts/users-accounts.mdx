@@ -283,7 +283,7 @@ await authClient.deleteUser();
 
 3. 启用邮箱验证（用于 OAuth 用户）
 
-OAuth 用户没有密码，需要发送验证邮件以确认删除意愿。如果已添加 `sendDeleteAccountVerification` 回调，调用 `deleteUser` 无需其他信息即可完成。
+OAuth 用户没有密码，需要发送验证邮件来确认删除意愿。如果已添加 `sendDeleteAccountVerification` 回调，调用 `deleteUser` 无需其他信息即可完成。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
@@ -513,6 +513,8 @@ export const auth = betterAuth({
   });
   ```
 
+  默认情况下，关联账户不会更改现有用户资料。启用 `updateUserInfoOnLink` 后，每次关联账户时都会将提供者的资料复制到用户上。同步的字段与注册时持久化的字段相同（`name`、`image` 以及 `mapProfileToUser` 添加的任何字段）。用户的 `email` 和 `emailVerified` 在关联时绝不会更改，因此关联提供者不会重新绑定账户身份。
+
   ```ts title="auth.ts"
   import { betterAuth } from "better-auth";
 
@@ -527,7 +529,7 @@ export const auth = betterAuth({
 
 * **关联基于凭证的账户**: 要关联基于凭证的账户（例如邮箱和密码），用户可以发起“忘记密码”流程，或者你可以在服务器端调用 `setPassword` 方法。
 
-  ```ts title="set-password.ts"
+  ```ts
   import { auth } from "@/lib/auth"
 
   await auth.api.setPassword({

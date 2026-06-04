@@ -85,13 +85,13 @@ description: 了解如何为 Better-Auth 创建自定义数据库适配器
             create: async ({ data, model, select }) => {
               // ...
             },
-            update: async ({ data, model, select }) => {
+            update: async ({ model, where, update }) => {
               // ...
             },
-            updateMany: async ({ data, model, select }) => {
+            updateMany: async ({ model, where, update }) => {
               // ...
             },
-            delete: async ({ data, model, select }) => {
+            delete: async ({ model, where }) => {
               // ...
             },
             // ...
@@ -114,25 +114,25 @@ description: 了解如何为 Better-Auth 创建自定义数据库适配器
 
 在深入适配器函数之前，让我们先了解可用的参数。
 
-* `options`: Better Auth 的选项。
-* `schema`: 用户 Better Auth 实例的架构。
+* `options`: Better Auth 选项。
+* `schema`: 来自用户 Better Auth 实例的架构。
 * `debugLog`: 调试日志函数。
-* `getFieldName`: 获取数据库转换后的字段名的函数。
-* `getModelName`: 获取数据库转换后的模型名的函数。
-* `getDefaultModelName`: 从架构中获取默认模型名的函数。
-* `getDefaultFieldName`: 从架构中获取默认字段名的函数。
-* `getFieldAttributes`: 获取特定模型和字段的字段属性的函数。
-* `transformInput`: 在保存到数据库之前转换输入数据的函数。
-* `transformOutput`: 从数据库检索后转换输出数据的函数。
-* `transformWhereClause`: 转换数据库查询的 where 子句的函数。
+* `getModelName`: 用于获取数据库中转换后模型名称的函数。
+* `getFieldName`: 用于获取数据库中转换后字段名称的函数。
+* `getDefaultModelName`: 用于从架构中获取默认模型名称的函数。
+* `getDefaultFieldName`: 用于从架构中获取默认字段名称的函数。
+* `getFieldAttributes`: 用于获取特定模型和字段的字段属性的函数。
+* `transformInput`: 用于在保存到数据库之前转换输入数据的函数。
+* `transformOutput`: 用于从数据库检索后转换输出数据的函数。
+* `transformWhereClause`: 用于转换数据库查询 `where` 子句的函数。
 
 ```ts title="示例"
 adapter: ({
   options,
   schema,
   debugLog,
-  getFieldName,
   getModelName,
+  getFieldName,
   getDefaultModelName,
   getDefaultFieldName,
   getFieldAttributes,
@@ -168,12 +168,10 @@ adapter: ({
 * `data`: 要插入数据库的数据。
 * `select`: 要从数据库返回的字段数组。
 
-<Callout>
-确保返回插入到数据库中的数据。
-</Callout>
+**Returns** `Promise<T>`: 插入到数据库中的记录。
 
 ```ts title="示例"
-create: async ({ model, data, select }) => {
+create: async ({ data, model, select }) => {
   // 插入数据的示例
   return await db.insert(model).values(data);
 };
@@ -189,9 +187,7 @@ create: async ({ model, data, select }) => {
 * `where`: 用于更新记录的 `where` 子句。
 * `update`: 用于更新记录的数据。
 
-<Callout>
-确保返回被更新的整条数据，包括未变更的字段。
-</Callout>
+**Returns** `Promise<T | null>`: 更新后的行，如果没有行匹配则为 `null`。对于多个 `where` 子句，某些适配器无法返回它。
 
 ```ts title="示例"
 update: async ({ model, where, update }) => {
@@ -210,7 +206,7 @@ update: async ({ model, where, update }) => {
 * `where`: 用于更新记录的 `where` 子句。
 * `update`: 用于更新记录的数据。
 
-<Callout>确保返回更新的记录数。</Callout>
+**Returns** `Promise<number>`: 已更新的记录数量。
 
 ```ts title="示例"
 updateMany: async ({ model, where, update }) => {
@@ -228,7 +224,9 @@ updateMany: async ({ model, where, update }) => {
 * `model`: 记录将从其中删除的模型/表名。
 * `where`: 用于删除记录的 `where` 子句。
 
-```ts title="示例"
+**Returns** `Promise<void>`: 无返回值。
+
+```ts title="Example"
 delete: async ({ model, where }) => {
   // 删除记录的示例
   await db.delete(model).where(where);
@@ -244,7 +242,7 @@ delete: async ({ model, where }) => {
 * `model`: 记录将从其中删除的模型/表名。
 * `where`: 用于删除记录的 `where` 子句。
 
-<Callout>确保返回删除的记录数。</Callout>
+**Returns** `Promise<number>`: 已删除的记录数量。
 
 ```ts title="示例"
 deleteMany: async ({ model, where }) => {
@@ -252,6 +250,29 @@ deleteMany: async ({ model, where }) => {
   return await db.delete(model).where(where);
 };
 ```
+
+### `consumeOne` 方法（可选）
+
+`consumeOne` 方法会以原子方式删除一条匹配的记录并返回它，从而确保两个并发请求不可能同时消费同一行。它用于一次性凭证，例如一次性验证挑战。实现它是可选的：如果省略，适配器工厂会回退为在 `transaction` 中包装 `findMany` + `deleteMany`，并使用已删除行数作为竞态门控。
+
+参数：
+
+* `model`: 要从中消费记录的模型/表名。
+* `where`: 用于匹配单条记录的 `where` 子句。
+
+**Returns** `Promise<T | null>`: 已消费的记录；如果没有匹配到任何行（包括另一请求已先一步消费时）则为 `null`。实现时最多只能删除一条匹配行。
+
+```ts title="示例"
+consumeOne: async ({ model, where }) => {
+  // 单条 DELETE ... RETURNING 是原子的，因此只有一个调用者能拿到该行。
+  const [row] = await db.delete(model).where(where).returning();
+  return row ?? null;
+};
+```
+
+<Callout type="info">
+  尽管工厂提供了回退方案，仍然建议原生实现 `consumeOne`：该回退方案只有在真实 `transaction` 且删除计数准确时才具备抗竞争条件的安全性。因此，没有多文档事务的存储需要原生的原子删除并返回能力（`DELETE ... RETURNING`、`findOneAndDelete`，或基于版本条件的删除）。
+</Callout>
 
 ### `findOne` 方法
 
@@ -264,7 +285,7 @@ deleteMany: async ({ model, where }) => {
 * `select`: 要返回的选择子句。
 * `join`: 可选的连接配置，用于在一个查询中获取相关记录。
 
-<Callout>确保返回查询到的数据。</Callout>
+**Returns** `Promise<T | null>`: 匹配的记录，如果未找到则为 `null`。
 
 ```ts title="示例"
 findOne: async ({ model, where, select, join }) => {
@@ -281,18 +302,17 @@ findOne: async ({ model, where, select, join }) => {
 
 * `model`: 记录将查找的模型/表名。
 * `where`: 用于查找记录的 `where` 子句。
-* `limit`: 要返回的记录数限制。
-* `sortBy`: 用于排序记录的 `sortBy` 子句。
-* `offset`: 要返回的记录偏移量。
+* `limit`: 返回记录的上限。
+* `select`: 要返回的 `select` 子句。
+* `sortBy`: 用于对记录排序的 `sortBy` 子句。
+* `offset`: 返回记录的偏移量。
 * `join`: 可选的连接配置，用于在一个查询中获取相关记录。
 
-<Callout>
-确保返回查询到的数据数组。
-</Callout>
+**Returns** `Promise<T[]>`: 匹配记录的数组。
 
 ```ts title="示例"
-findMany: async ({ model, where, limit, sortBy, offset, join }) => {
-  // 查找多条记录的示例
+findMany: async ({ model, where, limit, select, sortBy, offset, join }) => {
+  // 在数据库中查找多条记录的示例。
   return await db
     .select()
     .from(model)
@@ -312,7 +332,7 @@ findMany: async ({ model, where, limit, sortBy, offset, join }) => {
 * `model`: 记录将统计的模型/表名。
 * `where`: 用于统计记录的 `where` 子句。
 
-<Callout>确保返回统计出的记录数。</Callout>
+**Returns** `Promise<number>`: 被统计的记录数量。
 
 ```ts title="示例"
 count: async ({ model, where }) => {
@@ -422,6 +442,10 @@ execute();
 
 数据库是否支持数字 ID。如果设为 `false`，而用户配置启用了 `useNumberId`，则会抛出错误。
 
+### `supportsUUIDs`
+
+数据库是否可以原生生成 UUID。默认为 `false`。如果你的数据库会自行生成 UUID，请将此项设为 `true`。
+
 ### `supportsJSON`
 
 数据库是否支持 JSON。如果不支持，我们将使用字符串保存 JSON 数据，并在取出时安全地将字符串解析回 JSON 对象。
@@ -433,6 +457,10 @@ execute();
 ### `supportsBooleans`
 
 数据库是否支持布尔值。如果不支持，将使用 `0` 或 `1` 保存布尔值，取出时安全解析回布尔值。
+
+### `supportsArrays`
+
+数据库是否支持数组。默认为 `false`，在这种情况下，数组字段（`string[]`、`number[]`）会以序列化后的 `string` 形式存储，并在读取时安全地解析回来。如果你的数据库原生支持数组列，请将此项设为 `true`。
 
 ### `usePlural`
 
@@ -600,14 +628,3 @@ console.log(some_data.name);
 <Callout type="warn">
   禁用连接转换可能导致连接功能失效。
 </Callout>
-
-### `supportsJoin`
-
-适配器是否支持原生连接查询。如果设置为 `false`（默认），Better-Auth 会通过多次查询合并结果来处理连接；如果设为 `true`，则适配器需支持原生连接（如 SQL JOIN 操作）。
-
-```ts title="示例"
-// 适配器支持原生 SQL 连接查询
-const adapter = myAdapter({
-  supportsJoin: true,
-});
-```

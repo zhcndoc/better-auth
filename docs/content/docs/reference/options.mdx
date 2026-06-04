@@ -70,7 +70,7 @@ export const auth = betterAuth({
 
 当启用 `crossSubDomainCookies` 时，cookie 域名会基于解析后的请求主机推导，除非你已显式设置 `domain`。
 
-有关部署模式和端到端示例，请参阅 [Dynamic Base URL 指南](/docs/guides/dynamic-base-url)。
+有关部署模式和端到端示例，请参阅 [动态 Base URL 指南](/docs/guides/dynamic-base-url)。
 
 ## `basePath`
 
@@ -107,11 +107,11 @@ export const auth = betterAuth({
 ```ts
 export const auth = betterAuth({
 	trustedOrigins: async (request) => {
-		// 初始化和调用 auth.api 时 request 为 undefined
+		// 在初始化和调用 auth.api 时，request 为 undefined
 		if (!request) {
 			return ["https://my-frontend.com"];
 		}
-		// 根据请求动态逻辑
+		// 根据请求的动态逻辑
 		return ["https://dynamic-origin.com"];
 	}
 })
@@ -230,7 +230,7 @@ export const auth = betterAuth({
 
 Better Auth 支持多种数据库配置，包括 [PostgreSQL](/docs/adapters/postgresql)、[MySQL](/docs/adapters/mysql) 和 [SQLite](/docs/adapters/sqlite)。
 
-Read more about [databases](/docs/concepts/database)。
+阅读更多关于 [数据库](/docs/concepts/database)。
 
 ## `secondaryStorage`
 
@@ -247,7 +247,7 @@ export const auth = betterAuth({
 })
 ```
 
-Read more about [secondary storage](/docs/concepts/database#secondary-storage)。
+阅读更多关于 [二级存储](/docs/concepts/database#secondary-storage)。
 
 ## `emailVerification`
 
@@ -506,7 +506,7 @@ export const auth = betterAuth({
 * `"cookie"`：将状态负载存储在加密 cookie 中。这样 OAuth 状态保持无状态，并避免在流程开始时写入数据库。
 * `"database"`：将状态负载存储在验证存储/表中，在开始流程时设置已签名的 state cookie，并在 OAuth 回调请求中将浏览器发送的已签名 cookie 与存储的状态进行校验。
 
-如果配置了数据库，则默认值为 `"database"`；对于无数据库/无状态设置，则默认为 `"cookie"`。如果你只提供了 `secondaryStorage`，请将其设为 `"database"`，以便将 OAuth 状态存储在那里而不是 cookie 中。
+当配置了数据库或 `secondaryStorage` 时，默认使用 `"database"`；只有在两者都未设置（完全无状态方案）时才使用 `"cookie"`。使用 `secondaryStorage` 时，OAuth 状态会自动存储在那里；你不再需要手动设置。
 
 ### `storeAccountCookie`
 
