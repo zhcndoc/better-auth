@@ -178,7 +178,11 @@ Better Auth 会自动从以下地址抓取并验证提供者的 [OpenID Connect 
   ```ts
   type registerSSOProvider = {
       /**
-       * 提供者的唯一标识符
+       * 提供者的唯一标识符。
+       *
+       * 不得与已配置的社交登录提供者、`accountLinking.trustedProviders` 条目或保留的内置 id
+       *（例如 `credential`）冲突。否则注册将被拒绝（422），因为
+       * SSO 提供者 id 与账号关联提供者命名空间共享，冲突可能会继承原本属于该提供者的信任。
        */
       providerId: string = "okta"
       /**
@@ -1235,7 +1239,7 @@ sso({
 | Option            | 默认值 | 描述                         |
 | ----------------- | ------- | ----------------------------------- |
 | `maxResponseSize` | 256KB   | 最大 SAML 响应大小（字节） |
-| `maxMetadataSize` | 100KB   | 最大 IdP 元数据大小（字节）  |
+| `maxMetadataSize` | 100KB   | 最大 IdP 元数据大小（字节） |
 
 ### 尺寸限制
 

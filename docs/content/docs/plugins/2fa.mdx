@@ -124,7 +124,11 @@ description: 通过双重身份验证增强您的应用安全性。
 
 如果您的应用需要对这些登录方式也强制要求 2FA，请为这些端点添加自定义 hook 处理，并在将登录视为完成之前，把用户重定向到您的 2FA 验证流程中。
 
-您可以在 `onSuccess` 回调中处理，或在插件配置中提供 `onTwoFactorRedirect` 回调。
+<Callout type="warn">
+  当启用了 2FA 的用户通过凭证端点登录时，插件会发起 2FA 挑战，而不是完成登录。作为此过程的一部分，待处理会话会被丢弃，`ctx.context.newSession` 会被重置为 `null`——在用户验证第二因素之前，不会有已认证会话。读取 `ctx.context.newSession` 的服务器端 hooks（例如登录端点上的 `after` hooks）在访问 `newSession.user` 之前必须先检查是否为 `null`，否则在 2FA 挑战进行时它们会抛出错误。
+</Callout>
+
+您可以在 `onSuccess` 回调中处理此情况，或在插件配置中提供 `onTwoFactorRedirect` 回调。
 
 ```tsx
 import { authClient } from "@/lib/auth-client"
@@ -538,9 +542,9 @@ export const twoFactorTotpOptionsType = {
 
 <TypeTable type={twoFactorTotpOptionsType} />
 
-**OTP Options**
+**OTP 选项**
 
-OTP-related configuration.
+与 OTP 相关的配置。
 
 export const twoFactorOtpOptionsType = {
   sendOTP: {

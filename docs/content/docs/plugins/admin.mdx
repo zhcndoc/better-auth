@@ -27,9 +27,9 @@ description: Better Auth 的管理员插件
   </Step>
 
   <Step>
-    ### Migrate the database
+    ### 迁移数据库
 
-    Run the migration or generate the schema to add the necessary fields and tables to the database.
+    运行迁移或生成 schema，以向数据库添加必要的字段和表。
 
     <Tabs items={["migrate", "generate"]}>
       <Tab value="migrate">
@@ -45,7 +45,7 @@ description: Better Auth 的管理员插件
       </Tab>
     </Tabs>
 
-    See the [Schema](#schema) section to add the fields manually.
+    参见 [Schema](#schema) 章节以手动添加这些字段。
   </Step>
 
   <Step>
@@ -78,23 +78,23 @@ description: Better Auth 的管理员插件
   ```ts
   type createUser = {
       /**
-       * The email of the user. 
+       * 用户的电子邮件。 
        */
       email: string = "user@example.com"
       /**
-       * The password of the user. 
+       * 用户的密码。 
        */
       password: string = "some-secure-password"
       /**
-       * The name of the user. 
+       * 用户的名称。 
        */
       name: string = "James Smith"
       /**
-       * A string or array of strings representing the roles to apply to the new user. 
+       * 表示要应用于新用户的角色的字符串或字符串数组。 
        */
       role?: string | string[] = "user"
       /**
-       * Extra fields for the user. Including custom additional fields. 
+       * 用户的额外字段。包括自定义附加字段。 
        */
       data?: Record<string, any> = { customField: "customValue" }
   }
@@ -105,54 +105,54 @@ description: Better Auth 的管理员插件
 
 允许管理员列出数据库中所有用户。
 
-<APIMethod path="/admin/list-users" method="GET" requireSession note={"All properties are optional to configure. By default, 100 rows are returned, you can configure this by the `limit` property."} resultVariable={"users"}>
+<APIMethod path="/admin/list-users" method="GET" requireSession note={"所有属性均可选配置。默认返回 100 行，可通过 `limit` 属性进行配置。"} resultVariable={"users"}>
   ```ts
   type listUsers = {
     /**
-     * The value to search for. 
+     * 要搜索的值。 
      */
     searchValue?: string = "some name"
     /**
-     * The field to search in, defaults to email. Can be `email` or `name`. 
+     * 要搜索的字段，默认是 email。可以是 `email` 或 `name`。 
      */
     searchField?: "email" | "name" = "name"
     /**
-     * The operator to use for the search. Can be `contains`, `starts_with` or `ends_with`. 
+     * 搜索要使用的操作符。可以是 `contains`、`starts_with` 或 `ends_with`。 
      */
     searchOperator?: "contains" | "starts_with" | "ends_with" = "contains"
     /**
-     * The number of users to return. Defaults to 100.
+     * 要返回的用户数量。默认是 100。
      */
     limit?: string | number = 100
     /**
-     * The offset to start from. 
+     * 起始偏移量。 
      */
     offset?: string | number = 100
     /**
-     * The field to sort by. 
+     * 用于排序的字段。 
      */
     sortBy?: string = "name"
     /**
-     * The direction to sort by. 
+     * 排序方向。 
      */
     sortDirection?: "asc" | "desc" = "desc"
     /**
-     * The field to filter by. 
+     * 用于过滤的字段。 
      */
     filterField?: string = "email"
     /**
-     * The value to filter by. 
+     * 用于过滤的值。 
      */
     filterValue?: string | number | boolean | string[] | number[] = "hello@example.com"
     /**
-     * The operator to use for the filter.
+     * 过滤时使用的操作符。
      */
     filterOperator?: "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "in" | "not_in" | "contains" | "starts_with" | "ends_with" = "eq"
   }
   ```
 </APIMethod>
 
-#### Query Filtering
+#### 查询过滤
 
 `listUsers` 支持多种过滤操作符，包括 `eq`、`contains`、`starts_with` 和 `ends_with`。
 
@@ -173,10 +173,10 @@ description: Better Auth 的管理员插件
 
 使用 `total`、`limit` 和 `offset` 计算：
 
-* **Total pages:** `Math.ceil(total / limit)`
-* **Current page:** `(offset / limit) + 1`
-* **Next page offset:** `Math.min(offset + limit, (total - 1))` – The value to use as `offset` for the next page, ensuring it does not exceed the total number of pages.
-* **Previous page offset:** `Math.max(0, offset - limit)` – The value to use as `offset` for the previous page (ensuring it doesn’t go below zero).
+* **总页数：** `Math.ceil(total / limit)`
+* **当前页：** `(offset / limit) + 1`
+* **下一页偏移量：** `Math.min(offset + limit, (total - 1))` – 下一页要使用的 `offset` 值，确保它不超过总页数。
+* **上一页偏移量：** `Math.max(0, offset - limit)` – 上一页要使用的 `offset` 值（确保它不会小于零）。
 
 ##### 示例用法
 
@@ -207,16 +207,16 @@ const totalPages = Math.ceil(totalUsers / pageSize)
   ```ts
   type getUser = {
     /**
-    * The id of the user you want to fetch.
+    * 您要获取的用户的 ID。
     */
     id: string = "user-id"
   }
   ```
 </APIMethod>
 
-#### Returns
+#### 返回值
 
-On success, `data` contains the user object. On failure, `error` is populated by `code`, `message`, `status`, and `statusText`.
+成功时，`data` 包含用户对象。失败时，`error` 会包含 `code`、`message`、`status` 和 `statusText`。
 
 ```ts
 type GetUserResponse = {
@@ -237,11 +237,11 @@ type GetUserResponse = {
   ```ts
   type setRole = {
       /**
-       * The user id which you want to set the role for.
+       * 您要为其设置角色的用户 ID。
        */
       userId?: string = "user-id"
       /**
-       * The role to set, this can be a string or an array of strings. 
+       * 要设置的角色，这可以是字符串或字符串数组。 
        */
       role: string | string[] = "admin"
   }
@@ -250,17 +250,17 @@ type GetUserResponse = {
 
 ### 设置用户密码
 
-更改用户密码。
+为用户设置密码。如果用户还没有凭据账户，则会创建一个。
 
 <APIMethod path="/admin/set-user-password" method="POST" requireSession>
   ```ts
   type setUserPassword = {
       /**
-       * The new password. 
+       * 新密码。 
        */
       newPassword: string = 'new-password'
       /**
-       * The user id which you want to set the password for.
+       * 您要为其设置密码的用户 ID。
        */
       userId: string = 'user-id'
   }
@@ -275,11 +275,11 @@ type GetUserResponse = {
   ```ts
   type adminUpdateUser = {
       /**
-       * The user id which you want to update.
+       * 您要更新的用户 ID。
        */
       userId: string = "user-id"
       /**
-       * The data to update.
+       * 要更新的数据。
        */
       data: Record<string, any> = { name: "John Doe" }
   }
@@ -292,15 +292,15 @@ type GetUserResponse = {
   ```ts
   type banUser = {
       /**
-       * The user id which you want to ban.
+       * 您要禁止的用户 ID。
        */
       userId: string = "user-id"
       /**
-       * The reason for the ban. 
+       * 禁止原因。 
        */
       banReason?: string = "Spamming"
       /**
-       * The number of seconds until the ban expires. If not provided, the ban will never expire. 
+       * 距离封禁过期还有多少秒。如果未提供，则封禁永不过期。 
        */
       banExpiresIn?: number = 60 * 60 * 24 * 7
   }
@@ -315,7 +315,7 @@ type GetUserResponse = {
   ```ts
   type unbanUser = {
       /**
-       * The user id which you want to unban.
+       * 您要解禁的用户 ID。
        */
       userId: string = "user-id"
   }
@@ -330,7 +330,7 @@ type GetUserResponse = {
   ```ts
   type listUserSessions = {
       /**
-       * The user id. 
+       * 用户 ID。 
        */
       userId: string = "user-id"
   }
@@ -343,7 +343,7 @@ type GetUserResponse = {
   ```ts
   type revokeUserSession = {
       /**
-       * The session token which you want to revoke. 
+       * 您要撤销的会话令牌。 
        */
       sessionToken: string = "session_token_here"
   }
@@ -358,7 +358,7 @@ type GetUserResponse = {
   ```ts
   type revokeUserSessions = {
       /**
-       * The user id which you want to revoke all sessions for. 
+       * 您要撤销其所有会话的用户 ID。 
        */
       userId: string = "user-id"
   }
@@ -373,7 +373,7 @@ type GetUserResponse = {
   ```ts
   type impersonateUser = {
       /**
-       * The user id which you want to impersonate. 
+       * 您要模拟的用户 ID。 
        */
       userId: string = "user-id"
   }
@@ -412,7 +412,7 @@ const superAdmin = ac.newRole({
   ```ts
   type removeUser = {
       /**
-       * The user id which you want to remove. 
+       * 您要删除的用户 ID。 
        */
       userId: string = "user-id"
   }
@@ -437,10 +437,10 @@ const superAdmin = ac.newRole({
 
 ### 权限
 
-默认情况下，有两个资源及最多六种权限。
+默认情况下，有两个资源及其对应权限。
 
 **user**:
-`create` `list` `set-role` `ban` `impersonate` `impersonate-admins` `delete` `set-password`
+`create` `list` `set-role` `ban` `impersonate` `impersonate-admins` `delete` `set-password` `set-email` `get` `update`
 
 **session**:
 `list` `revoke` `delete`
@@ -453,9 +453,9 @@ const superAdmin = ac.newRole({
 
 <Steps>
   <Step>
-    #### Create Access Control
+    #### 创建访问控制
 
-    You first need to create an access controller by calling the `createAccessControl` function and passing the statement object. The statement object should have the resource name as the key and the array of actions as the value.
+    您首先需要通过调用 `createAccessControl` 函数并传入 statement 对象来创建访问控制器。statement 对象应以资源名称作为键，以操作数组作为值。
 
     ```ts title="permissions.ts"
     import { createAccessControl } from "better-auth/plugins/access";
@@ -476,7 +476,7 @@ const superAdmin = ac.newRole({
   </Step>
 
   <Step>
-    #### Create Roles
+    #### 创建角色
 
     创建完访问控制器后，即可为定义的权限创建角色。
 
@@ -503,7 +503,7 @@ const superAdmin = ac.newRole({
     }); // [!code highlight]
     ```
 
-    When you create custom roles for existing roles, the predefined permissions for those roles will be overridden. To add the existing permissions to the custom role, you need to import `defaultStatements` and merge it with your new statement, plus merge the roles' permissions set with the default roles.
+    当您为已有角色创建自定义角色时，这些角色预定义的权限将被覆盖。若要将已有权限添加到自定义角色中，您需要导入 `defaultStatements` 并将其与新 statement 合并，同时将这些角色的权限集与默认角色合并。
 
     ```ts title="permissions.ts"
     import { createAccessControl } from "better-auth/plugins/access";
@@ -524,9 +524,9 @@ const superAdmin = ac.newRole({
   </Step>
 
   <Step>
-    #### Pass Roles to the Plugin
+    #### 将角色传递给插件
 
-    Once you have created the roles you can pass them to the admin plugin both on the client and the server.
+    创建角色后，您可以在客户端和服务端都将它们传递给管理员插件。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
@@ -547,7 +547,7 @@ const superAdmin = ac.newRole({
     });
     ```
 
-    You also need to pass the access controller and the roles to the client plugin.
+    您还需要将访问控制器和角色传递给客户端插件。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -578,20 +578,20 @@ const superAdmin = ac.newRole({
   ```ts
   type userHasPermission = {
       /**
-       * The user id which you want to check the permissions for. 
+       * 您要检查其权限的用户 ID。 
        */
       userId?: string = "user-id"
       /**
-       * Check role permissions.
+       * 检查角色权限。
        * @serverOnly
        */
       role?: string = "admin"
       /**
-       * Optionally check if a single permission is granted. Must use this, or permissions. 
+       * 可选地检查是否授予单个权限。必须使用此字段或 permissions。 
        */
-      permission?: Record<string, string[]> = { "project": ["create", "update"] } /* Must use this, or permissions */,
+      permission?: Record<string, string[]> = { "project": ["create", "update"] } /* 必须使用此字段或 permissions */,
       /**
-       * Optionally check if multiple permissions are granted. Must use this, or permission. 
+       * 可选地检查是否授予多个权限。必须使用此字段或 permission。 
        */
       permissions?: Record<string, string[]>
   }
@@ -618,7 +618,7 @@ const canCreateProjectAndCreateSale = await authClient.admin.hasPermission({
 });
 ```
 
-If you want to check a user's permissions server-side, you can use the `userHasPermission` action provided by the `api` to check the user's permissions.
+如果您想在服务端检查用户权限，可以使用 `api` 提供的 `userHasPermission` 操作来检查用户权限。
 
 ```ts title="permission.ts"
 import { auth } from "@/lib/auth"
@@ -654,7 +654,7 @@ await auth.api.userHasPermission({
 });
 ```
 
-**Check Role Permission**:
+**检查角色权限**：
 
 注意此函数不会直接检查当前登录用户权限，而是检查指定角色拥有哪些权限。该函数为同步函数，调用时无需 `await`。
 
@@ -761,8 +761,6 @@ admin({
 });
 ```
 
-### Admin Roles
-
 ### 管理员角色
 
 指定哪些角色被视为管理员角色。默认为 `["admin"]`。自定义角色（例如 `superadmin`）必须在自定义访问控制中定义。
@@ -775,9 +773,9 @@ admin({
 ```
 
 <Callout type="warning">
-  **Note:** The `adminRoles` option is **not required** when using custom access control (via `ac` and `roles`). When you define custom roles with specific permissions, those roles will have exactly the permissions you grant them through the access control system.
+  **注意：** 使用自定义访问控制（通过 `ac` 和 `roles`）时，**不需要** `adminRoles` 选项。当您定义带有特定权限的自定义角色时，这些角色将仅具有您通过访问控制系统授予它们的权限。
 
-  **Warning:** When **not** using custom access control, only `admin` and `user` exist as valid roles. Any role that isn't in the `adminRoles` list will **not** be able to perform admin operations.
+  **警告：** 在**未**使用自定义访问控制时，仅有 `admin` 和 `user` 是有效角色。任何不在 `adminRoles` 列表中的角色都将**无法**执行管理员操作。
 </Callout>
 
 ### 管理员用户 ID

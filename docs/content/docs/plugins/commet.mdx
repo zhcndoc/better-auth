@@ -1,0 +1,299 @@
+---
+title: Commet
+description: 使用 Commet 的账单和订阅 Better Auth 插件
+---
+
+[Commet](https://commet.co) 是一个 Merchant of Record，负责处理订阅、基于用量的计费、功能门控、税费以及全球支付。这个插件将 Commet 与 Better Auth 集成，通过一组可组合的子插件，将你的身份验证层与计费和功能访问连接起来。
+
+<Callout>
+  此插件由 Commet 团队维护。若有漏洞、问题或功能请求，请访问 [Commet GitHub
+  仓库](https://github.com/commet-labs/commet)。
+</Callout>
+
+## 功能
+
+* 在注册时自动创建客户
+* 提供自助计费管理的客户门户
+* 订阅管理（获取、取消）
+* 功能访问控制（布尔型、按用量计费和按席位）
+* 按用量计费的使用情况跟踪
+* 按用户定价的席位管理
+* 带签名验证的安全 webhook 处理
+
+## 安装
+
+```package-install
+better-auth @commet/better-auth @commet/node
+```
+
+## 准备工作
+
+从 [Commet 控制台](https://commet.co) 获取你的 API 密钥，并将其添加到你的环境中。
+
+```bash title=".env"
+COMMET_API_KEY=ck_...
+```
+
+<Callout>
+  在开发时使用你的沙盒 API 密钥，在生产环境中使用正式密钥。
+  Commet 会根据密钥本身来确定环境，因此无需单独配置选项。
+</Callout>
+
+### 配置 BetterAuth 服务端
+
+Commet 插件附带了一组子插件，用于为你的技术栈增加功能。只添加你需要的部分。
+
+* Portal — 将客户重定向到自助计费门户
+* Subscriptions — 获取并取消客户的订阅
+* Features — 为已认证用户检查功能访问权限
+* Usage — 跟踪按用量计费的使用事件
+* Seats — 管理基于席位的许可证
+* Webhooks — 处理带签名验证的 Commet webhooks
+
+```typescript title="auth.ts"
+import { betterAuth } from "better-auth";
+import {
+  commet,
+  portal,
+  subscriptions,
+  features,
+  usage,
+  seats,
+} from "@commet/better-auth";
+import { Commet } from "@commet/node";
+
+const commetClient = new Commet({
+  apiKey: process.env.COMMET_API_KEY!,
+});
+
+export const auth = betterAuth({
+  // ... Better Auth 配置
+  plugins: [
+    commet({
+      client: commetClient,
+      createCustomerOnSignUp: true,
+      use: [
+        portal({ returnUrl: "/dashboard" }),
+        subscriptions(),
+        features(),
+        usage(),
+        seats(),
+      ],
+    }),
+  ],
+});
+```
+
+### 配置 BetterAuth 客户端
+
+你将使用 Better Auth 客户端来与 Commet 的功能交互。
+
+```typescript title="auth-client.ts"
+import { createAuthClient } from "better-auth/react";
+import { commetClient } from "@commet/better-auth/client";
+
+export const authClient = createAuthClient({
+  plugins: [commetClient()],
+});
+```
+
+## 配置选项
+
+```typescript title="auth.ts"
+commet({
+  client: commetClient,
+  createCustomerOnSignUp: true,
+  getCustomerCreateParams: ({ user }) => ({
+    fullName: user.name,
+    metadata: { source: "signup" },
+  }),
+  use: [
+    // Commet 子插件
+  ],
+});
+```
+
+### 必需选项
+
+* `client`: Commet SDK 客户端实例
+* `use`: Commet 子插件数组（至少一个）
+
+### 可选选项
+
+* `createCustomerOnSignUp`: 用户注册时自动创建 Commet 客户
+* `getCustomerCreateParams`: 提供额外客户创建参数的自定义函数（`fullName`、`domain`、`metadata`）
+
+### 客户
+
+当启用 `createCustomerOnSignUp` 时，新用户注册后会自动创建一个 Commet 客户。该客户的 `id` 会设置为 Better Auth 用户 ID，因此你无需在用户与 Commet 客户之间进行任何映射。
+
+## Portal 插件
+
+将客户重定向到 Commet 客户门户，以进行自助计费管理。
+
+```typescript title="auth.ts"
+import { commet, portal } from "@commet/better-auth";
+
+commet({
+  client: commetClient,
+  use: [portal({ returnUrl: "/dashboard" })],
+});
+```
+
+Portal 插件会在 `authClient.customer` 下添加一个作用域为 `portal` 的方法，它会将用户重定向到 Commet 客户门户。
+
+```typescript title="dashboard.ts"
+await authClient.customer.portal();
+```
+
+### 配置
+
+* `returnUrl`: 客户离开门户后返回的 URL
+
+## Subscriptions 插件
+
+获取并取消已认证用户的订阅。
+
+```typescript title="auth.ts"
+import { commet, subscriptions } from "@commet/better-auth";
+
+commet({
+  client: commetClient,
+  use: [subscriptions()],
+});
+```
+
+```typescript title="dashboard.ts"
+// 获取当前订阅
+const { data: subscription } = await authClient.subscription.get();
+
+// 取消订阅
+await authClient.subscription.cancel({
+  reason: "太贵了",
+  immediate: false, // 在计费周期结束时取消
+});
+```
+
+`cancel` 方法接受可选的 `reason` 和 `immediate` 标志。默认情况下，取消会在当前计费周期结束时生效。
+
+## Features 插件
+
+为已认证用户检查功能访问权限。支持布尔型、按用量计费和按席位的功能。
+
+```typescript title="auth.ts"
+import { commet, features } from "@commet/better-auth";
+
+commet({
+  client: commetClient,
+  use: [features()],
+});
+```
+
+```typescript title="dashboard.ts"
+// 列出所有功能
+const { data: features } = await authClient.features.list();
+
+// 获取特定功能
+const { data: feature } = await authClient.features.get("api_calls");
+
+// 检查布尔型功能是否已启用
+const { data: check } = await authClient.features.check("sso");
+// { allowed: boolean }
+
+// 检查用户是否还能使用一次按用量计费功能的单位
+const { data: canUse } = await authClient.features.canUse("api_calls");
+// { allowed: boolean, willBeCharged: boolean }
+```
+
+## Usage 插件
+
+跟踪按用量计费的使用事件。
+
+```typescript title="auth.ts"
+import { commet, usage } from "@commet/better-auth";
+
+commet({
+  client: commetClient,
+  use: [usage()],
+});
+```
+
+```typescript title="dashboard.ts"
+await authClient.usage.track({
+  feature: "api_calls",
+  value: 1,
+  idempotencyKey: "evt_123",
+  properties: { endpoint: "/api/generate" },
+});
+```
+
+已认证用户会自动与该事件关联。`feature` 字段对应于你 Commet 方案中的功能代码。
+
+## Seats 插件
+
+管理已认证用户的按席位许可证。
+
+```typescript title="auth.ts"
+import { commet, seats } from "@commet/better-auth";
+
+commet({
+  client: commetClient,
+  use: [seats()],
+});
+```
+
+```typescript title="dashboard.ts"
+// 列出所有席位余额
+const { data: seatBalances } = await authClient.seats.list();
+
+// 添加席位
+await authClient.seats.add({ featureCode: "member", count: 5 });
+
+// 移除席位
+await authClient.seats.remove({ featureCode: "member", count: 2 });
+
+// 设置精确数量
+await authClient.seats.set({ featureCode: "admin", count: 3 });
+
+// 一次性设置多种席位类型
+await authClient.seats.setAll({ admin: 2, member: 10, viewer: 50 });
+```
+
+## Webhooks 插件
+
+通过签名验证处理 Commet webhooks。webhooks 是可选的——你始终可以通过其他子插件查询当前状态。
+
+```typescript title="auth.ts"
+import { commet, webhooks } from "@commet/better-auth";
+
+commet({
+  client: commetClient,
+  use: [
+    webhooks({
+      secret: process.env.COMMET_WEBHOOK_SECRET!,
+      onSubscriptionActivated: (payload) => {},
+      onSubscriptionCanceled: (payload) => {},
+      onPaymentReceived: (payload) => {},
+      onPayload: (payload) => {}, // 通用处理
+    }),
+  ],
+});
+```
+
+在你的 Commet 控制台中配置一个指向 `/api/auth/commet/webhooks` 的 webhook 端点，并将签名密钥添加到你的环境中。
+
+```bash title=".env"
+COMMET_WEBHOOK_SECRET=whsec_...
+```
+
+该插件支持所有 Commet webhook 事件的处理器：
+
+* `onPayload` — 任意传入事件的通用处理器
+* `onSubscriptionCreated` — 在订阅创建时触发
+* `onSubscriptionActivated` — 在订阅变为活跃时触发
+* `onSubscriptionCanceled` — 在订阅被取消时触发
+* `onSubscriptionUpdated` — 在订阅更新时触发
+* `onSubscriptionPlanChanged` — 在订阅变更方案时触发
+* `onPaymentReceived` — 在收到付款时触发
+* `onPaymentFailed` — 在付款失败时触发
+* `onInvoiceCreated` — 在发票创建时触发

@@ -122,7 +122,11 @@ if (data) {
 }
 ```
 
-### 链上示例
+<Callout type="warning">
+  `message` 必须是一个有效的 [ERC-4361](https://eips.ethereum.org/EIPS/eip-4361) 消息（所有标准 SIWE 客户端都会生成这种消息）。在接受签名之前，插件会解析该消息，并要求其 **nonce**、**domain**、**address** 和 **Chain ID** 与服务器签发的 nonce 以及你配置的 `domain` 匹配，同时还会遵守消息中的 `Expiration Time` / `Not Before` 时间范围。仅凭签名恢复本身并**不足够**——这种绑定确保签名只能与其生成时对应的消息一起被接受，并且该消息绑定到当前服务器签发的 nonce。若任一字段不匹配，验证将失败并返回 401（`UNAUTHORIZED_SIWE_MESSAGE_MISMATCH`）。
+</Callout>
+
+### 链特定示例
 
 以下为不同区块链网络的示例：
 
@@ -139,7 +143,7 @@ const { data, error } = await authClient.siwe.verify({
 ```
 
 ```ts
-// Polygon (chainId 必填)
+// Polygon（chainId 必填）
 import { authClient } from "@/lib/auth-client";
 
 const { data, error } = await authClient.siwe.verify({
@@ -151,7 +155,7 @@ const { data, error } = await authClient.siwe.verify({
 ```
 
 ```ts
-// Arbitrum (chainId 必填)
+// Arbitrum（chainId 必填）
 import { authClient } from "@/lib/auth-client";
 
 const { data, error } = await authClient.siwe.verify({
@@ -163,7 +167,7 @@ const { data, error } = await authClient.siwe.verify({
 ```
 
 ```ts
-// Base (chainId 必填)
+// Base（chainId 必填）
 import { authClient } from "@/lib/auth-client";
 
 const { data, error } = await authClient.siwe.verify({
@@ -184,12 +188,12 @@ const { data, error } = await authClient.siwe.verify({
 
 SIWE 插件接受以下配置选项：
 
-* **domain**: 你的应用程序域名（生成 SIWE 消息时必需）
-* **emailDomainName**: 创建用户账户时的电子邮件域名（不使用匿名模式时）。默认为基础 URL 的域名
-* **anonymous**: 是否允许匿名登录（无需电子邮件）。默认值为 `true`
-* **getNonce**: 生成每个登录尝试的唯一 nonce 的函数。你必须实现此函数以返回加密安全的随机字符串。必须返回 `Promise<string>`
-* **verifyMessage**: 验证已签名 SIWE 消息的函数。接收消息详情并应返回 `Promise<boolean>`
-* **ensLookup**: 可选函数，用于查询以太坊地址的 ENS 名称和头像
+* **domain**: 你的应用程序的域名（生成 SIWE 消息所必需）
+* **emailDomainName**: 在不使用匿名模式时用于创建用户账户的电子邮件域名。默认使用基础 URL 中的域名
+* **anonymous**: 是否允许无需电子邮件的匿名登录。默认值为 `true`
+* **getNonce**: 为每次登录尝试生成唯一 nonce 的函数。你必须实现此函数，使其返回一个密码学安全的随机字符串。必须返回 `Promise<string>`
+* **verifyMessage**: 验证 SIWE 消息签名的函数。它只需要对提供的地址执行签名恢复（例如 viem 的 `verifyMessage`），并返回 `Promise<boolean>` —— 插件会在创建会话前独立验证消息的 nonce、domain、address、Chain ID 和时间范围
+* **ensLookup**: 可选函数，用于查询 Ethereum 地址的 ENS 名称和头像
 
 ### 客户端配置
 

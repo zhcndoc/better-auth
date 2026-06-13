@@ -234,6 +234,53 @@ console.log(result.webauthn?.clientExtensionResults);
   ```
 </APIMethod>
 
+### 按认证器命名 passkey
+
+当用户注册 passkey 时如果未为其命名，存储的 `name` 会保持为空。您可以在 UI 中显示一个友好的默认名称，该名称可根据创建该凭证的认证器推导得出。
+
+每一条 passkey 记录都带有一个 `aaguid`，即认证器*型号*的标识符（例如 Google Password Manager 或 1Password）。Better Auth 会在注册时存储它，并在 `listPasskeys` 中返回，因此您可以在渲染 passkey 时确定显示标签。由于解析发生在读取时，更新后的提供商列表也会应用于已存在的 passkey。
+
+该插件为最常见的认证器附带了一个小型、尽力而为的查找表：
+
+```ts title="passkey-list.tsx"
+import { getAuthenticatorName } from "@better-auth/passkey";
+
+const passkeys = await authClient.passkey.listUserPasskeys();
+
+for (const passkey of passkeys.data ?? []) {
+    const label = passkey.name || getAuthenticatorName(passkey.aaguid) || "Passkey";
+}
+```
+
+内置列表刻意保持较小，并不具有权威性。许多认证器都缺失，而且注重隐私的平台会报告一个全零的 AAGUID，从而无法解析出任何结果（Apple 设备在默认的 `attestation: "none"` 流程下就是这样）。您可以使用导出的 `commonAuthenticatorNames` 映射来扩展它，或者对照社区维护的数据源以获得完整覆盖：
+
+* [passkeydeveloper/passkey-authenticator-aaguids](https://github.com/passkeydeveloper/passkey-authenticator-aaguids)
+
+```ts title="passkey-list.tsx"
+import { commonAuthenticatorNames } from "@better-auth/passkey";
+
+const names = { ...commonAuthenticatorNames, "your-aaguid": "Your Provider" };
+```
+
+要在注册时于服务端设置默认标签，请在 `registration.afterVerification` 中返回一个 `name`。AAGUID 可通过 `verification.registrationInfo.aaguid` 获取，而且客户端提供的名称始终优先：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { passkey, getAuthenticatorName } from "@better-auth/passkey";
+
+export const auth = betterAuth({
+    plugins: [
+        passkey({
+            registration: {
+                afterVerification: async ({ verification }) => ({
+                    name: getAuthenticatorName(verification.registrationInfo?.aaguid),
+                }),
+            },
+        }),
+    ],
+});
+```
+
 ### 删除 passkey
 
 您可以通过调用 `passkey.delete` 并提供 passkey ID 来删除 passkey。
@@ -281,9 +328,9 @@ console.log(result.webauthn?.clientExtensionResults);
     `webauthn` 值也应该是 `autocomplete` 属性中的最后一个条目。
 
     ```html
-    <label for="name">Username:</label>
+    <label for="name">用户名：</label>
     <input type="text" name="name" autocomplete="username webauthn">
-    <label for="password">Password:</label>
+    <label for="password">密码：</label>
     <input type="password" name="password" autocomplete="current-password webauthn">
     ```
   </Step>

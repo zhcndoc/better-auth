@@ -272,7 +272,7 @@ export const auth = betterAuth({
 
 ### 创建组织拥有的密钥
 
-创建组织拥有的 API 密钥时，需传入 `organizationId` 而非 `userId`：
+创建组织拥有的 API 密钥时，请将 `organizationId` 与用户上下文一起传入。该用户必须是组织成员，并且有权限创建 API 密钥。该用户会从会话（请求 `headers`）中获取；如果是纯服务端调用且不传 `headers`，则改为在 body 中传入 `userId`：
 
 ```ts title="create-org-api-key.ts"
 import { auth } from "@/lib/auth"
@@ -280,7 +280,8 @@ import { auth } from "@/lib/auth"
 const orgKey = await auth.api.createApiKey({
   body: {
     configId: "org-keys",
-    organizationId: "org_123", // 组织拥有密钥必填
+    organizationId: "org_123", // 拥有该密钥的组织
+    userId: "user_123", // 允许创建密钥的成员；如果传入会话 headers，则省略
   },
 });
 ```
@@ -546,25 +547,25 @@ export const auth = betterAuth({
 });
 ```
 
-## Rate Limiting
+## 速率限制
 
-Each API key can have its own rate limiting settings. Every time an API key is verified, built-in rate limiting is applied, including:
+每个 API 密钥都可以有自己的速率限制设置。每次验证 API 密钥时，都会应用内置的速率限制，包括：
 
-* When verifying an API key through the `/api-key/verify` endpoint
-* When creating a session using an API key (if `enableSessionForAPIKeys` is enabled), rate limiting applies to all endpoints used with that API key
+* 通过 `/api-key/verify` 端点验证 API 密钥时
+* 使用 API 密钥创建会话时（如果启用了 `enableSessionForAPIKeys`），速率限制将应用于该 API 密钥所使用的所有端点
 
-For other endpoints/methods that do not use API keys, use Better Auth’s [built-in rate limiting](/docs/concepts/rate-limit).
+对于其他不使用 API 密钥的端点/方法，请使用 Better Auth 的 [内置速率限制](/docs/concepts/rate-limit)。
 
 <Callout type="warn">
-  **Double rate limit increments**: If you manually verify an API key with `verifyApiKey()` and then obtain a session using `getSession()` with the same API key header, both operations will increment the rate limit counter, causing two increments for a single request. To avoid this:
+  **双重速率限制计数增加**：如果你手动使用 `verifyApiKey()` 验证 API 密钥，然后又使用同一个 API 密钥请求头通过 `getSession()` 获取会话，这两个操作都会增加速率限制计数器，导致一次请求被增加两次。为避免这种情况：
 
-  * Use `enableSessionForAPIKeys: true` so Better Auth handles session creation automatically (recommended)
-  * Or verify the API key only once and reuse the verified result instead of calling both methods separately
+  * 使用 `enableSessionForAPIKeys: true`，让 Better Auth 自动处理会话创建（推荐）
+  * 或者只验证 API 密钥一次，并复用已验证的结果，而不是分别调用这两个方法
 </Callout>
 
-You can refer to the default rate limiting configuration in the [API Key plugin options](/docs/plugins/api-key/reference#api-key-plugin-options).
+你可以在 [API Key 插件选项](/docs/plugins/api-key/reference#api-key-plugin-options) 中查看默认的速率限制配置。
 
-Example default configuration:
+默认配置示例：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -575,18 +576,18 @@ export const auth = betterAuth({
     apiKey({
       rateLimit: {
         enabled: true,
-        timeWindow: 1000 * 60 * 60 * 24, // 1 day
-        maxRequests: 10, // Up to 10 requests per day
+        timeWindow: 1000 * 60 * 60 * 24, // 1 天
+        maxRequests: 10, // 每天最多 10 个请求
       },
     }),
   ],
 });
 ```
 
-Each API key can customize rate limiting options at creation time.
+每个 API 密钥都可以在创建时自定义速率限制选项。
 
 <Callout>
-  Rate limiting options can only be customized in the server-side auth instance.
+  速率限制选项只能在服务端的 auth 实例中自定义。
 </Callout>
 
 ```ts title="create-api-key.ts"
@@ -595,68 +596,68 @@ import { auth } from "@/lib/auth"
 const apiKey = await auth.api.createApiKey({
   body: {
     rateLimitEnabled: true,
-    rateLimitTimeWindow: 1000 * 60 * 60 * 24, // 1 day
-    rateLimitMax: 10, // Up to 10 requests per day
+    rateLimitTimeWindow: 1000 * 60 * 60 * 24, // 1 天
+    rateLimitMax: 10, // 每天最多 10 个请求
   },
-  headers: await headers() // Request headers containing the user session token
+  headers: await headers() // 包含用户会话令牌的请求头
 });
 ```
 
-### How It Works
+### 工作原理
 
-Rate limiting uses a sliding window approach:
+速率限制使用滑动窗口方式：
 
-1. **First request**: When an API key is used for the first time (no `lastRequest`), the request is allowed and `requestCount` is set to 1.
+1. **第一次请求**：当 API 密钥首次使用时（没有 `lastRequest`），请求被允许，且 `requestCount` 被设为 1。
 
-2. **Requests within the window**: Subsequent requests within `timeWindow` increment `requestCount`. When `rateLimitMax` is reached, the request is rejected with a `RATE_LIMITED` error.
+2. **窗口内请求**：在 `timeWindow` 内的后续请求会增加 `requestCount`。当达到 `rateLimitMax` 时，请求会被拒绝并返回 `RATE_LIMITED` 错误。
 
-3. **Window reset**: If the time since the last request exceeds `timeWindow`, the window resets: `requestCount` is reset to 1, and the `lastRequest` time is updated.
+3. **窗口重置**：如果距离上次请求的时间超过 `timeWindow`，窗口将重置：`requestCount` 重置为 1，并更新 `lastRequest` 时间。
 
-4. **Over-limit hint**: When over the limit, the response includes a `tryAgainIn` field (milliseconds) indicating how long until the next reset.
+4. **超限提示**：当超过限制时，响应会包含 `tryAgainIn` 字段（毫秒），表示距离下次重置还需多久。
 
-**Disabling rate limiting**:
+**禁用速率限制**：
 
-* **Global**: Set `rateLimit.enabled: false` in the plugin options
-* **Per key**: Set `rateLimitEnabled: false` when creating or updating an API key
-* **Null values**: If `rateLimitTimeWindow` or `rateLimitMax` is `null`, rate limiting for that key is effectively disabled
+* **全局**：在插件选项中设置 `rateLimit.enabled: false`
+* **单个密钥**：在创建或更新 API 密钥时设置 `rateLimitEnabled: false`
+* **空值**：如果 `rateLimitTimeWindow` 或 `rateLimitMax` 为 `null`，则该密钥的速率限制实际上被禁用
 
-When disabled, requests are still allowed, but `lastRequest` will be updated for tracking.
+在禁用时，请求仍然会被允许，但 `lastRequest` 仍会更新用于追踪。
 
-## Remaining Quota, Refill, and Expiration
+## 剩余额度、补充与过期
 
-Remaining quota indicates how many requests an API key can still make.
-Refill interval indicates how many milliseconds must pass before the remaining quota is refilled (if conditions are met).
-Expiration time indicates when the API key expires.
+剩余额度表示 API 密钥仍可发出的请求数量。
+补充间隔表示在满足条件时，剩余额度在被补充前必须经过的毫秒数。
+过期时间表示 API 密钥何时过期。
 
-### How It Works
+### 工作原理
 
-#### Remaining Quota
+#### 剩余额度
 
-Each time an API key is used, the `remaining` quota is updated.
-If `remaining` is `null`, usage is unlimited.
-Otherwise, `remaining` is decremented by 1.
-If it reaches 0, the API key is disabled and removed.
+每次使用 API 密钥时，都会更新 `remaining` 额度。
+如果 `remaining` 为 `null`，则可无限使用。
+否则，`remaining` 会减 1。
+如果它降到 0，API 密钥将被禁用并移除。
 
-#### Refill Interval & Refill Amount
+#### 补充间隔与补充数量
 
-When an API key is created, `refillInterval` and `refillAmount` are set to `null` by default.
-This means the API key will not auto-refill.
-However, if both `refillInterval` and `refillAmount` are set, then each time the API key is used:
+创建 API 密钥时，`refillInterval` 和 `refillAmount` 默认设置为 `null`。
+这意味着 API 密钥不会自动补充。
+不过，如果同时设置了 `refillInterval` 和 `refillAmount`，那么每次使用 API 密钥时：
 
-* The system checks whether the time since the last refill (or the first refill after creation) exceeds `refillInterval`
-* If the interval has passed, the `remaining` count is reset to `refillAmount` (not incremented)
-* The `lastRefillAt` timestamp is updated to the current time
+* 系统会检查距离上次补充（或创建后的首次补充）是否超过 `refillInterval`
+* 如果间隔已过，`remaining` 数量会重置为 `refillAmount`（不是递增）
+* `lastRefillAt` 时间戳会更新为当前时间
 
-#### Expiration Time
+#### 过期时间
 
-By default, `expiresAt` is `null` at creation, meaning it never expires.
-If `expiresIn` is set, the key will expire after the specified time.
+默认情况下，创建时 `expiresAt` 为 `null`，表示永不过期。
+如果设置了 `expiresIn`，密钥将在指定时间后过期。
 
-## Custom Key Generation and Validation
+## 自定义密钥生成与验证
 
-You can customize key generation and validation logic directly in the plugin options.
+你可以直接在插件选项中自定义密钥生成和验证逻辑。
 
-Example:
+示例：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -685,7 +686,7 @@ export const auth = betterAuth({
 ```
 
 <Callout>
-  If you do not use the `length` property provided by `customKeyGenerator`, you **must** set the `defaultKeyLength` property to the length of the generated key.
+  如果你没有使用 `customKeyGenerator` 提供的 `length` 属性，**必须**将 `defaultKeyLength` 属性设置为生成密钥的长度。
 
   ```ts title="auth.ts"
   import { betterAuth } from "better-auth"
@@ -697,22 +698,22 @@ export const auth = betterAuth({
         customKeyGenerator: () => {
           return crypto.randomUUID();
         },
-        defaultKeyLength: 36, // Or the key length
+        defaultKeyLength: 36, // 或密钥长度
       }),
     ],
   });
   ```
 </Callout>
 
-If an API key is verified through `customAPIKeyValidator`, we still need to compare it against the key in the database.
-However, by providing this custom method, you can improve validation performance,
-and all invalid keys can be quickly rejected without accessing the database.
+如果 API 密钥通过 `customAPIKeyValidator` 验证，我们仍然需要将其与数据库中的密钥进行比较。
+不过，通过提供这个自定义方法，你可以提升验证性能，
+并且所有无效密钥都可以在不访问数据库的情况下快速拒绝。
 
-## Metadata
+## 元数据
 
-Allows you to store metadata for API keys, such as subscription plan information.
+允许你为 API 密钥存储元数据，例如订阅计划信息。
 
-Make sure metadata is not disabled in the plugin options:
+请确保在插件选项中未禁用 metadata：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -727,7 +728,7 @@ export const auth = betterAuth({
 });
 ```
 
-Then you can store information in the `metadata` field of the API key object.
+然后你就可以将信息存储到 API 密钥对象的 `metadata` 字段中。
 
 ```ts title="create-api-key.ts"
 import { auth } from "@/lib/auth"
@@ -741,7 +742,7 @@ const apiKey = await auth.api.createApiKey({
 });
 ```
 
-You can then read the metadata from the API key object.
+之后你可以从 API 密钥对象中读取 metadata。
 
 ```ts title="get-api-key.ts"
 import { auth } from "@/lib/auth"

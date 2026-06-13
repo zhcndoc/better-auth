@@ -102,6 +102,6 @@ npx auth@latest secret
 
 **错误：无法找到模块 X**
 
-如果出现此错误，说明 CLI 无法解析 Better Auth 配置文件中的导入模块。我们正在修复许多此类问题，但在此之前，你可以尝试：
+The CLI resolves most imports for you: `tsconfig.json` path aliases (including SvelteKit's `$lib`) and stubbed framework virtual modules (`$env/*`, `$app/*`, `cloudflare:workers`, Vite assets like `?raw`). For SvelteKit, run `svelte-kit sync` first so `.svelte-kit/tsconfig.json` exists.
 
-* 移除配置文件中的任何导入别名，改用相对路径。运行 CLI 后，可以恢复使用别名。
+A few module types can't load outside their bundler (e.g. `.svelte` components or `import.meta.glob`). Keep those out of your config file's import graph.

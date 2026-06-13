@@ -28,10 +28,10 @@ export const auth = betterAuth({
   [SqliteDialect](https://kysely-org.github.io/kysely-apidoc/classes/SqliteDialect.html)。
 </Callout>
 
-### Node.js 内置 SQLite（实验性）
+### Node.js 内置 SQLite（候选发布版）
 
-<Callout type="warning">
-  `node:sqlite` 模块仍处于实验阶段，可能随时发生变化。需要 Node.js 22.5.0 或更高版本。
+<Callout type="info">
+  `node:sqlite` 模块在 Node.js 24.15.0 中是一个**候选发布版**。它要求 Node.js 版本为 22.5.0 或更高，并且自 Node.js 22.13.0 / 23.4.0 起不再需要 `--experimental-sqlite` 标志。
 </Callout>
 
 从 Node.js 22.5.0 开始，您可以使用内置的 [SQLite](https://nodejs.org/api/sqlite.html) 模块：
@@ -87,8 +87,8 @@ export const auth = betterAuth({
 
   <tbody>
     <tr className="h-10">
-      <td>✅ Supported</td>
-      <td>✅ Supported</td>
+      <td>✅ 支持</td>
+      <td>✅ 支持</td>
     </tr>
   </tbody>
 </table>
