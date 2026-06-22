@@ -341,23 +341,23 @@ export const auth = betterAuth({
 })
 ```
 
-* `clientId`: 来自提供商的 OAuth 客户端 ID
-* `clientSecret`: 来自提供商的 OAuth 客户端密钥
-* `clientKey`: 客户端密钥（某些提供商如 TikTok 使用 clientKey 而不是 clientId）（可选）
-* `redirectURI`: OAuth 回调的自定义重定向 URI（可选）
-* `scope`: 额外需要请求的 OAuth scopes（可选）
-* `mapProfileToUser`: 自定义函数，将提供商的个人资料映射为用户（可选）
-* `disableSignUp`: 禁止新用户注册（可选）
-* `disableImplicitSignUp`: 禁止对新用户进行隐式注册（可选）
-* `overrideUserInfoOnSignIn`: 登录时用提供商的用户信息覆盖用户信息（可选）
-* `prompt`: 授权码请求所使用的提示（`"select_account"`, `"consent"`, `"login"`, `"none"`, `"select_account consent"`）（可选）
-* `responseMode`: 要使用的响应模式（`"query"`, `"form_post"`）（可选）
-* `getUserInfo`: 自定义函数，从提供商获取用户信息（可选）
-* `refreshAccessToken`: 自定义函数，用于刷新令牌（可选）
-* `verifyIdToken`: 自定义函数，用于验证 ID token（可选）
-* `disableIdTokenSignIn`: 禁用使用客户端发送的 ID token 登录（可选）
-* `disableDefaultScope`: 禁用提供商的默认 scopes（可选）
-* `authorizationEndpoint`: 自定义授权端点 URL（可选）
+* `clientId`: OAuth client ID from the provider
+* `clientSecret`: OAuth client secret from the provider
+* `clientKey`: Client key (used by some providers like TikTok instead of clientId) (optional)
+* `redirectURI`: Custom redirect URI for the OAuth callback (optional)
+* `scope`: Additional OAuth scopes to request (optional)
+* `mapProfileToUser`: Custom function to map the provider profile to a user (optional)
+* `disableSignUp`: Disable sign up for new users (optional)
+* `disableImplicitSignUp`: Disable implicit sign up for new users (optional)
+* `overrideUserInfoOnSignIn`: Override user info with provider user info on sign in (optional)
+* `prompt`: The prompt to use for the authorization code request (`"select_account"`, `"consent"`, `"login"`, `"none"`, `"select_account consent"`) (optional)
+* `responseMode`: The response mode to use (`"query"`, `"form_post"`) (optional)
+* `getUserInfo`: Custom function to get user info from the provider (optional)
+* `refreshAccessToken`: Custom function to refresh a token. Receives the stored refresh token and returns new OAuth tokens. (optional)
+* `verifyIdToken`: Custom function to verify the ID token (optional)
+* `disableIdTokenSignIn`: Disable sign in with ID token sent from the client (optional)
+* `disableDefaultScope`: Disable the provider's default scopes (optional)
+* `authorizationEndpoint`: Custom authorization endpoint URL (optional)
 
 ## `plugins`
 
@@ -477,8 +477,8 @@ export const auth = betterAuth({
 			userId: "user_id"
 		},
 		encryptOAuthTokens: true, // 在存入数据库前加密 OAuth 令牌
-		storeStateStrategy: "database", // 将 OAuth 状态负载存储在验证存储中
-		storeAccountCookie: true, // 在 OAuth 流程后将账号数据存入 cookie（适用于无数据库流程）
+		storeStateStrategy: "database", // 在验证存储中存储 OAuth 状态负载
+		storeAccountCookie: true, // 在 OAuth 流程后将提供商账号数据存储在加密 cookie 中（对无数据库流程很有用）
 		accountLinking: {
 			enabled: true,
 			trustedProviders: ["google", "github", "email-password"], // 或异步函数 (request) => ["google", "github"]
@@ -510,12 +510,16 @@ export const auth = betterAuth({
 
 ### `storeAccountCookie`
 
-OAuth 流程后将账号数据（访问令牌、刷新令牌等）存入 cookie，适用于无数据库模式。
+在 OAuth 流程后将提供商账号数据存储在加密 cookie 中。这对无数据库流程很有用，因为此时必须在没有账号表的情况下获取 OAuth 令牌材料，例如 access token、refresh token、ID token、作用域和令牌过期信息。
 
 * 默认值：`false`
 * 如果未提供数据库，会自动设置为 `true`
 
-启用后，可以通过 `better-auth/cookies` 的 `getAccountCookie` 在钩子或中间件中读取解密后的账号 cookie：
+账号 cookie 的最大有效期为五分钟，并会在 Better Auth 写入更新后的提供商账号数据时刷新，例如在 `getAccessToken` 或 `/refresh-token` 刷新提供商令牌后。发生这种情况时，如果是在服务端代码中，请将返回的 `Set-Cookie` 头转发给浏览器，以保留刷新的账号 cookie。
+
+Better Auth 会对过大的账号 cookie 进行分片，但浏览器和代理仍可能限制 cookie 或 header 的总大小。对于会签发较大 JWT 的提供商，或需要持久令牌存储的生产流程，优先使用基于数据库的账号存储。
+
+启用此选项后，你可以在 hooks 或 middleware 中通过 `better-auth/cookies` 的 `getAccountCookie` 读取解密后的账号 cookie：
 
 ```ts
 import { createAuthMiddleware } from "better-auth/api";

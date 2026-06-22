@@ -386,7 +386,7 @@ export const auth = betterAuth({
     },
     account: {
         storeStateStrategy: "cookie",
-        storeAccountCookie: true, // OAuth 流程后将账号数据存入 Cookie（适用于无数据库）
+        storeAccountCookie: true, // OAuth 流程后将提供方账户数据存储在加密 Cookie 中
     }
 });
 ```
@@ -394,6 +394,10 @@ export const auth = betterAuth({
 <Callout type="info">
   如果未提供数据库配置，默认会为你提供上述配置。
 </Callout>
+
+在无状态 OAuth 流程中，`storeAccountCookie` 会将提供方账户数据（包括 OAuth 令牌材料）存储在加密的 `account_data` Cookie 中。当 `getAccessToken` 发现账户 Cookie 中包含刷新令牌和已知的访问令牌过期时间时，可以刷新过期的提供方访问令牌。令牌刷新响应会设置更新后的账户 Cookie，因此服务器端集成必须将返回的 `Set-Cookie` 头转发给浏览器。
+
+Better Auth 会对过大的账户 Cookie 进行分块，但浏览器和代理仍可能限制总 Cookie 或请求头大小。对于发放大型 JWT 的提供方，或需要持久化令牌存储的生产流程，请使用由数据库支持的账户存储。
 
 ### 理解 `refreshCache`
 
@@ -495,7 +499,7 @@ export const auth = betterAuth({
 
 这将向会话响应中添加 `roles` 和用户的 `newField` 字段。
 
-**客户侧推断类型**
+**客户端侧推断类型**
 
 ```ts title="auth-client.ts"
 import { customSessionClient } from "better-auth/client/plugins";

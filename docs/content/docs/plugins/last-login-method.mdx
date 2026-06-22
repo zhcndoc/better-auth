@@ -16,7 +16,7 @@ description: 跟踪并显示用户最后使用的身份验证方式
     import { lastLoginMethod } from "better-auth/plugins" // [!code highlight]
 
     export const auth = betterAuth({
-        // ... other config options
+        // ... 其他配置选项
         plugins: [
             lastLoginMethod() // [!code highlight]
         ]
@@ -303,7 +303,8 @@ import { lastLoginMethodClient } from "better-auth/client/plugins"
 export const authClient = createAuthClient({
     plugins: [
         lastLoginMethodClient({
-            cookieName: "better-auth.last_used_login_method" // 默认: "better-auth.last_used_login_method"
+            cookieName: "better-auth.last_used_login_method", // Default: "better-auth.last_used_login_method"
+            domain: ".example.com" // Required for cross-subdomain cookie clearing
         })
     ]
 })
@@ -315,14 +316,20 @@ export const authClient = createAuthClient({
 * 必须与服务端的 `cookieName` 配置匹配
 * 默认: `"better-auth.last_used_login_method"`
 
+**domain**: `string`
+
+* 用于清除 Cookie 的域
+* 在使用 `crossSubDomainCookies` 时必需，这样客户端才能正确清除服务端设置的 Cookie
+* 应与服务端 `crossSubDomainCookies` 配置中的 `domain` 值匹配
+
 ### 默认方式解析
 
 插件默认跟踪以下身份验证方式：
 
-* **Email authentication**: `"email"`
-* **OAuth providers**: Provider ID（例如 `"google"`, `"github"`, `"discord"`）
-* **OAuth2 callbacks**: URL 路径中的提供程序 ID
-* **Sign up methods**: 与登录方式相同
+* **邮箱认证**: `"email"`
+* **OAuth 提供程序**: 提供程序 ID（例如 `"google"`, `"github"`, `"discord"`）
+* **OAuth2 回调**: URL 路径中的提供程序 ID
+* **注册方式**: 与登录方式相同
 
 插件自动从以下端点检测方式：
 
@@ -339,6 +346,23 @@ export const authClient = createAuthClient({
 * **跨源设置**: `api.company.com` → `app.different.com`
 
 当在 Better Auth 配置中启用 `crossSubDomainCookies` 或 `crossOriginCookies` 时，插件会自动使用与会话 Cookie 相同的域、secure 和 sameSite 设置，确保应用中的一致行为。
+
+<Callout type="warn">
+  当使用 `crossSubDomainCookies` 时，你必须向 `lastLoginMethodClient()` 传递 `domain` 选项，这样 `clearLastUsedLoginMethod()` 才能正确让 Cookie 过期。否则，浏览器会静默忽略清除请求，因为域名不匹配。
+</Callout>
+
+```ts title="auth-client.ts"
+import { createAuthClient } from "better-auth/client"
+import { lastLoginMethodClient } from "better-auth/client/plugins"
+
+export const authClient = createAuthClient({
+    plugins: [
+        lastLoginMethodClient({
+            domain: ".example.com" // 必须与服务端 crossSubDomainCookies 的 domain 一致 // [!code highlight]
+        })
+    ]
+})
+```
 
 ## 高级示例
 

@@ -46,7 +46,8 @@ description: Discord 提供程序的设置和使用。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
-const authClient =  createAuthClient()
+
+const authClient = createAuthClient()
 
 const signIn = async () => {
     const data = await authClient.signIn.social({

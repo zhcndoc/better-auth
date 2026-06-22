@@ -306,7 +306,8 @@ const { error } = await authClient.subscription.upgrade({
     successUrl: "/dashboard",
     cancelUrl: "/pricing",
 });
-if(error) {
+
+if (error) {
     alert(error.message);
 }
 ```
@@ -854,7 +855,7 @@ stripe({
 | Option                     | Type                         | Description                                                                                                                                                                |
 | -------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `enabled`                  | `boolean`                    | 是否启用订阅功能。**必需。**                                                                                                                |
-| `plans`                    | `StripePlan[]` or `function` | 订阅计划数组，或返回计划的异步函数。启用时**必需**。                                                                           |
+| `plans`                   | `StripePlan[]` or `function` | 订阅计划数组，或返回计划的异步函数。启用时**必需**。                                                                           |
 | `requireEmailVerification` | `boolean`                    | 在允许订阅升级前是否要求邮箱验证。默认：`false`。                                                                             |
 | `authorizeReference`       | `function`                   | 授权 reference ID。接收 `{ user, session, referenceId, action }` 以及上下文。                                                                                    |
 | `getCheckoutSessionParams` | `function`                   | 自定义 Stripe Checkout 会话参数。接收 `{ user, session, plan, subscription }`、请求和上下文。                                                      |

@@ -6,8 +6,7 @@ author:
   name: "Bereket Engida"
   avatar: "/avatars/beka.jpg"
   twitter: "bekacru"
-image: "https://docs.better-auth.com/release-og/1-4.png"
-tags: ["1.4", "无状态会话", "SCIM", "数据库索引", "数据库连接", "SSO 域验证", "uuid", "设备授权"]
+tags: ["1.4", "stateless sessions", "SCIM", "database indexing", "database join", "SSO domain verification", "uuid", "device authorization"]
 ---
 
 ## Better Auth 1.4 发布
@@ -26,7 +25,7 @@ npm install better-auth@1.4
 
 ### 无状态认证
 
-You can now enable stateless session management without any database by omitting the `database` option in your auth config.
+现在只需在认证配置中省略 `database` 选项，即可在不使用任何数据库的情况下启用无状态会话管理。
 
 [👉 详情请阅读无状态认证](/docs/concepts/session-management#stateless-session-management)
 
@@ -44,7 +43,7 @@ export const auth = betterAuth({
 });
 ```
 
-此外，还支持无数据库环境下获取 `accessToken`、`accountInfo` 和 `refreshToken` 端点。
+此外，还支持在无数据库环境下使用 `accessToken`、`accountInfo` 和 `refreshToken` 端点。
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -133,7 +132,7 @@ export const auth = betterAuth({
 
 API-Key 插件新增对二级存储的支持，加快密钥查询速度！
 
-[👉 Read more about secondary storage for API keys](/docs/plugins/api-key#storage-modes)
+[👉 了解 API 密钥二级存储的更多信息](/docs/plugins/api-key#storage-modes)
 
 ```ts
 import { apiKey } from "@better-auth/api-key";
@@ -165,8 +164,8 @@ export const auth = betterAuth({
 
     这样数据库中已有的密钥仍可访问，新密钥则存储于二级存储中。
 
-    2. **Migrate existing keys** (optional): For faster initial cache population, you can write a migration script
-       to copy all keys from the database to the secondary storage. However, this is optional since the cache will warm up automatically as keys are accessed.
+    2. **迁移现有密钥**（可选）：为了更快完成初始缓存填充，你可以编写迁移脚本
+       将数据库中的所有密钥复制到二级存储中。不过这一步是可选的，因为密钥在被访问时缓存会自动预热。
 
     3. **禁用回退**：当所有密钥迁移完毕或缓存已充分填充后：
 
@@ -192,18 +191,17 @@ export const auth = betterAuth({
 
 域验证可让应用自动信任新的 SSO 提供者，通过自动验证关联域的所有权来实现：
 
-[👉 Read more about error page improvements](/docs/reference/options#onapierror)
+[👉 了解关于错误页面改进的更多信息](/docs/reference/options#onapierror)
 
-<img src="/images/blogs/1-4_error.png" alt="Error Page" className="w-full max-w-2xl mx-auto rounded-lg border border-border" />
+<img src="/images/blogs/1-4_error.png" alt="错误页面" className="w-full max-w-2xl mx-auto rounded-lg border border-border" />
 
 ***
 
-### SSO Domain Verification
+### SSO 域验证
 
-Domain verification allows your application to automatically trust a new SSO provider
-by automatically validating ownership via the associated domain:
+域验证可让你的应用通过自动验证关联域的所有权，自动信任新的 SSO 提供者：
 
-👉 [Read more about domain verification](/docs/plugins/sso#domain-verification)
+👉 [了解关于域验证的更多信息](/docs/plugins/sso#domain-verification)
 
 ```ts
 import { sso } from "@better-auth/sso";
@@ -245,7 +243,7 @@ export const auth = betterAuth({
 });
 ```
 
-👉 [Read more about JWT key rotation](/docs/plugins/jwt#key-rotation)
+👉 [了解关于 JWT 密钥轮换的更多信息](/docs/plugins/jwt#key-rotation)
 
 ### 改进的通用 OAuth 插件
 
@@ -314,8 +312,7 @@ export const auth = betterAuth({
 
 ### 改进的邮箱更改流程
 
-For added security, you can now require users to confirm the change via their **current** email before
-the verification email is sent to the new address.
+为增强安全性，现在可以要求用户先通过其**当前**邮箱确认更改，然后才会向新地址发送验证邮件。
 
 [👉 详情请阅读改进的邮箱更改流程](/docs/concepts/users-accounts#confirming-with-current-email)
 
@@ -383,11 +380,11 @@ export const auth = betterAuth({
 - **忘记密码流程**：将 `authClient.forgotPassword` 改名为 `authClient.requestPasswordReset`。
 - **账户信息端点**：`accountInfo` 端点从 `POST /account-info` 改为 `GET /account-info`。
 
-* **Change-Email Flow**: We've removed `sendChangeEmailVerification` from the `changeEmail` flow to use `emailVerification.sendVerificationEmail` instead.
-* **Forgot Password Flow**: `authClient.forgotPassword` is now `authClient.requestPasswordReset`.
-* **Account Info Endpoint**: The `accountInfo` endpoint has changed from `POST /account-info` to `GET /account-info`.
+* **邮箱更改流程**：已从 `changeEmail` 流程中移除 `sendChangeEmailVerification`，改为使用 `emailVerification.sendVerificationEmail`。
+* **忘记密码流程**：`authClient.forgotPassword` 现在改为 `authClient.requestPasswordReset`。
+* **账户信息端点**：`accountInfo` 端点已从 `POST /account-info` 改为 `GET /account-info`。
 
-  This means any auth.api calls must change from:
+  这意味着所有 `auth.api` 调用都需要从：
 
   ```ts
   auth.api.accountInfo({
@@ -412,36 +409,36 @@ export const auth = betterAuth({
 多个插件回调中的 `request` 参数改为 `ctx`。  
 Passkey 插件独立成包，API Key 的模拟会话默认关闭。
 
-* **Passkey Plugin**: The passkey plugin is now moved to its own package.
+* **Passkey 插件**：Passkey 插件现已移至独立包。
 
-  Install it today:
+  立即安装：
 
   ```package-install
   npm install @better-auth/passkey
   ```
 
-* **Email OTP Plugin**: Plugin options for `sendVerificationOTP` and `generateOTP` now use `ctx` instead of `request` in its callback function. You can still access request via `ctx.request`.
+* **Email OTP 插件**：`sendVerificationOTP` 和 `generateOTP` 的插件选项现在在其回调函数中使用 `ctx` 而不是 `request`。你仍然可以通过 `ctx.request` 访问请求。
 
-* **Magic Link Plugin**: Plugin options for `sendMagicLink` now uses `ctx` instead of `request` for one of its callback options. You can still access request via `ctx.request`.
+* **Magic Link 插件**：`sendMagicLink` 的插件选项现在在其某个回调选项中使用 `ctx` 而不是 `request`。你仍然可以通过 `ctx.request` 访问请求。
 
-* **Phone Number Plugin**: Plugin options for `sendOTP`, `sendPasswordResetOTP` & `callbackOnVerification` have now replaced request with `ctx` in one of its callback options. You can still access request via `ctx.request`.
+* **电话号码插件**：`sendOTP`、`sendPasswordResetOTP` 和 `callbackOnVerification` 的插件选项现在在其某个回调选项中用 `ctx` 替代了 `request`。你仍然可以通过 `ctx.request` 访问请求。
 
-* **Organization Plugin**: Plugin options for `teams.defaultTeam.customCreateDefaultTeam` & `teams.maximumTeams` have now replaced request with `ctx` for one of its callback options. You can still access request via `ctx.request`.
+* **组织插件**：`teams.defaultTeam.customCreateDefaultTeam` 和 `teams.maximumTeams` 的插件选项现在在其某个回调选项中用 `ctx` 替代了 `request`。你仍然可以通过 `ctx.request` 访问请求。
 
-* **OIDC Plugin**: The field `redirectURLs` have been updated to `redirectUrls`, this requires database migration.
+* **OIDC 插件**：`redirectURLs` 字段已更新为 `redirectUrls`，这需要进行数据库迁移。
 
-* **API Key Plugin**: Mock-sessions by api-keys are now disabled by default, and should be enabled through the auth-config first.
+* **API Key 插件**：基于 api-key 的模拟会话现在默认禁用，应先通过认证配置显式启用。
 
 ### 认证配置变更
 
 数据库配置选项调整。
 
-* **`advanced.generateId` removed**: The long-deprecated `advanced.generateId` has been removed. Please use `advanced.database.generateId` instead.
-* **`advanced.database.useNumberId` moved**: `advanced.database.useNumberId` has been moved to `advanced.database.generateId: "serial"` instead.
+* **已移除 `advanced.generateId`**：长期弃用的 `advanced.generateId` 已被移除。请改用 `advanced.database.generateId`。
+* **`advanced.database.useNumberId` 已迁移**：`advanced.database.useNumberId` 已迁移到 `advanced.database.generateId: "serial"`。
 
 ### Tanstack Start
 
-The Better-Auth offered `reactStartCookies` plugin is now moved to `tanstackStartCookies` plugin.
+Better-Auth 提供的 `reactStartCookies` 插件现已迁移为 `tanstackStartCookies` 插件。
 
 ```diff
 - import { reactStartCookies } from "better-auth/react-start";
@@ -611,5 +608,3 @@ export const releaseContributorUsernames = [
 ];
 
 <Contributors usernames={releaseContributorUsernames} />
-
-***
