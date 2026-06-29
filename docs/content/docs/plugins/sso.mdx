@@ -190,7 +190,7 @@ Better Auth 会自动从以下地址抓取并验证提供者的 [OpenID Connect 
        */
       issuer: string = "https://your-org.okta.com"
       /**
-       * 用于此提供者的电子邮件域
+       * 此提供者的裸邮箱域名，或以逗号分隔的多个裸邮箱域名
        */
       domain: string = "yourcompany.com"
       /**
@@ -1366,8 +1366,8 @@ sso({ redirectURI: "https://login.example.com/callback" })
 
 ### 验证您的域
 
-启用域名验证后，所有新注册的 SSO 提供者初始均为未信任状态。
-这意味着新用户注册或登录会被允许，直至完成域所有权验证。
+启用域名验证后，每个新的 SSO 提供者一开始都会是不受信任的。
+这意味着在域名所有权验证完成之前，不允许新的注册或登录。
 
 进行域名验证流程：
 
@@ -1386,6 +1386,8 @@ sso({ redirectURI: "https://login.example.com/callback" })
 
     * **Host:** `_better-auth-token-{your-provider-id}` (**注意：** 为遵循 DNS 基础设施的子域命名约定，系统会自动在前面添加一个下划线。`better-auth-token` 部分可通过 `domainVerification.tokenPrefix` 选项进行自定义)
     * **Value:** 为您提供的验证令牌。
+
+    如果 SSO 提供者列出了多个以逗号分隔的域名，请在每个列出的域名下都添加此 `TXT` 记录。例如，若提供者的 `domain: "company.com,subsidiary.com"`，则必须分别为 `company.com` 和 `subsidiary.com` 发布该记录。
 
     **保存记录并等待其传播。** 这可能需要长达 48 小时，但通常会快得多。
   </Step>
@@ -1445,6 +1447,8 @@ SAML 回调端点 (`/api/auth/sso/saml2/callback/{providerId}`) 支持：
 * **IdP 发起**: 用户在 IdP 仪表板中点击应用图标（Okta、Azure AD 等）→ IdP 将 SAMLResponse POST 到回调端点
 
 **重要**：您 SAML 配置中的 `callbackUrl` 用作断言消费者服务（ACS）URL。请将其设置为该提供者的 SAML 回调路由（例如 `https://yourapp.com/api/auth/sso/saml2/sp/acs/my-provider`）。如果省略，Better Auth 会根据您的 `baseURL` 和 `providerId` 自动推导。
+
+您的 IdP 必须为此 SP 包含一个 `AudienceRestriction`。可接受的受众是 SP 实体 ID；如果您需要匹配特定于 IdP 的 SP 标识符，则可以使用 `samlConfig` 中显式设置的 `audience` 值。Better Auth 还会根据该提供者的 ACS 端点检查承载方 `Recipient` 和响应 `Destination` 值。
 
 登录后的重定向目标由客户端 `signIn.sso()` 调用中的 `callbackURL` 参数控制：
 
@@ -1649,7 +1653,7 @@ export const ssoOptionsType = {
 			type: "object",
 			properties: {
 				domain: {
-					description: "The domain to match for this default provider.",
+					description: "The bare email domain, or comma-separated bare email domains, to match for this default provider.",
 					type: "string",
 					required: true,
 				},

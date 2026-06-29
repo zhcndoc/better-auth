@@ -424,7 +424,9 @@ const auth = betterAuth({
 
 #### 删除用户资源
 
-从数据库中彻底删除用户资源。此操作仅能删除与 SCIM 令牌相同提供商和组织的用户。
+移除一个用户资源。此操作仅影响属于与 SCIM 令牌相同提供商（以及组织）的用户。
+
+对于组织范围的令牌，用户会从组织中取消分配：其成员资格和提供商账户会被移除，而全局用户记录会保留。对于非组织令牌，仅当该提供商账户是其唯一身份时才会删除全局用户；否则只会解除该账户的关联。
 
 <APIMethod path="/scim/v2/Users/:userId" method="DELETE" forceAsParam requireBearerToken isExternalOnly note="删除现有的用户资源。请参考 https://datatracker.ietf.org/doc/html/rfc7644#section-3.6">
   ```ts
@@ -499,7 +501,9 @@ const auth = betterAuth({
 * `account.accountId`：默认为 `externalId`，如果没有则回退到 `userName`
 * `member.organizationId`：与提供商关联的组织
 
-## 模式
+SCIM 的 `active` 属性映射到用户的禁用状态。`active: false` 会停用用户（通过 [admin](/docs/plugins/admin) 插件的 `banned` 状态）并撤销其会话；`active: true` 会重新启用。要生效 `active` 需要 admin 插件。通过 SCIM 更改用户邮箱也会重置其已验证状态。
+
+## Schema
 
 该插件需要在 `scimProvider` 表中添加额外字段以存储提供商的配置。
 
@@ -616,7 +620,7 @@ const approvedScimOperators = new Set(["some-admin-user-id"]);
 
 scim({
     beforeSCIMTokenGenerated: async ({ user, member, scimToken }) => {
-        // 对于个人连接，`member` 为 null。
+        // 对于个人连接，`member` 为空。
         // 在令牌持久化之前添加您需要的任何额外限制。
         if (!approvedScimOperators.has(user.id)) {
             throw new APIError("FORBIDDEN", { message: "User does not have enough permissions" });

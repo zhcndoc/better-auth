@@ -143,6 +143,22 @@ await authClient.signIn.social({
   数组仅会扩展 ID Token 的受众验证。授权码流程仍然使用第一个条目，并与单个 `clientSecret` 和 `redirectURI` 配对，因此在同一个提供者块内，这些值不能按平台分别变化。
 </Callout>
 
+### 将登录限制为 Google Workspace
+
+在 Google 提供者上设置 `hd`，以要求经过验证的 Google Workspace 主机域名声明。Google 也会将此值作为账户选择提示传递，但 Better Auth 会在 Google 签署响应后强制检查返回的 ID token/资料声明。
+
+```ts title="auth.ts"
+socialProviders: {
+    google: {
+        clientId: process.env.GOOGLE_CLIENT_ID as string,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+        hd: "company.com", // [!code highlight]
+    },
+}
+```
+
+将 `hd: "*"` 设置为允许任意 Google Workspace 主机域名。只要配置了 `hd`，没有 `hd` 声明的令牌都会被拒绝。
+
 ### 始终要求选择账户
 
 如果你希望始终要求用户选择账户，可以在提供者中传递 `prompt` 参数，并将其设置为 `select_account`。

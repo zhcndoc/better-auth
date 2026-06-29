@@ -420,6 +420,8 @@ export const auth = betterAuth({
 
 当你希望从提供商的资料中填充用户对象的额外字段，或改变默认的映射方式时非常有用。
 
+`mapProfileToUser` 遵循 `user.additionalFields` 的输入规则。它可以填充允许输入的额外字段，但在 OAuth 注册、登录时的个人资料覆盖以及账户关联时的资料同步过程中，会忽略提供商为标记为 `input: false` 的字段提供的值。请使用服务端预置代码来设置由服务器管理的字段，例如角色、封禁状态或内部标记。
+
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
@@ -441,8 +443,10 @@ export const auth = betterAuth({
 ```
 
 <Callout type="info">
-你可能想在 `mapProfileToUser` 中传入用户对象的额外字段，需先配置 `user.additionalFields` [选项](/docs/concepts/database#extending-core-schema)。
-（无状态认证设置同理）
+  你可能希望在 `mapProfileToUser` 中向用户对象传入额外字段，
+  为此，你必须配置 `user.additionalFields` [选项](/docs/concepts/database#extending-core-schema)
+  并允许这些字段作为输入。
+  （对于无状态认证方案，同样适用）
 </Callout>
 
 ### refreshAccessToken

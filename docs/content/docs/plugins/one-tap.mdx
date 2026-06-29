@@ -204,6 +204,15 @@ await authClient.oneTap({
 * `disableSignUp`: 禁用注册选项，仅允许现有用户登录。默认是 false。
 * `clientId`: 如果社交提供程序配置中未提供客户端 ID，可以在此处选择性传递客户端 ID。
 
-### 授权的 JavaScript 来源
+<Callout type="info">
+  **限制为 Google Workspace 域（`hd`）**
+
+  One Tap 回调会应用 `socialProviders.google.hd` 中配置的受托管域限制，与标准的 Google 登录流程一致：
+  当 `hd` 设置为某个域时，如果令牌的 `hd` 声明缺失或不匹配，则会被拒绝。将 `hd` 设为 `"*"` 可允许任意 Google Workspace 托管域，同时仍会拒绝没有 `hd` 声明的令牌。
+
+  该值从 `socialProviders.google` 中读取，因此只有在您配置了 Google 提供程序时，限制才会生效。如果您只使用 `oneTap({ clientId })` 而不配置 `socialProviders.google`，则不会应用受托管域限制。若要将 One Tap 登录限制为某个 Workspace 域，请在 `socialProviders.google` 中配置 `hd`。
+</Callout>
+
+### 已授权的 JavaScript 来源
 
 请确保为您的客户端 ID 配置已授权的 JavaScript 来源（例如 [http://localhost:3000](http://localhost:3000), [https://example.com](https://example.com)）。这是 Google One Tap API 的必需步骤，除非正确设置了来源，否则无法正常工作。

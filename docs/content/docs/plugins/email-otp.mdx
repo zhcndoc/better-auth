@@ -62,11 +62,11 @@ description: 用于 Better Auth 的电子邮件 OTP 插件。
   ```ts
   type sendVerificationOTP = {
       /**
-       * Email address to send the OTP. 
+       * 发送 OTP 的电子邮件地址。 
        */
       email: string = "user@example.com"
       /**
-       * Type of the OTP. `sign-in`, `email-verification`, or `forget-password`. 
+       * OTP 的类型。`sign-in`、`email-verification` 或 `forget-password`。 
        */
       type: "email-verification" | "sign-in" | "forget-password" = "sign-in"
   }
@@ -81,15 +81,15 @@ description: 用于 Better Auth 的电子邮件 OTP 插件。
   ```ts
   type checkVerificationOTP = {
       /**
-       * Email address to send the OTP. 
+       * 发送 OTP 的电子邮件地址。 
        */
       email: string = "user@example.com"
       /**
-       * Type of the OTP. `sign-in`, `email-verification`, or `forget-password`. 
+       * OTP 的类型。`sign-in`、`email-verification` 或 `forget-password`。 
        */
       type: "email-verification" | "sign-in" | "forget-password" = "sign-in"
       /**
-       * OTP sent to the email. 
+       * 发送到电子邮件的 OTP。 
        */
       otp: string = "123456"
   }
@@ -104,11 +104,11 @@ description: 用于 Better Auth 的电子邮件 OTP 插件。
   ```ts
   type sendVerificationOTP = {
       /**
-       * Email address to send the OTP. 
+       * 发送 OTP 的电子邮件地址。 
        */
       email: string = "user@example.com"
       /**
-       * Type of the OTP.
+       * OTP 的类型。
        */
       type: "sign-in" = "sign-in"
   }
@@ -121,19 +121,19 @@ description: 用于 Better Auth 的电子邮件 OTP 插件。
   ```ts
   type signInEmailOTP = {
       /**
-       * Email address to sign in.
+       * 登录所用的电子邮件地址。
        */
       email: string = "user@example.com"
       /**
-       * OTP sent to the email.
+       * 发送到电子邮件的 OTP。
        */
       otp: string = "123456"
       /**
-       * User display name. Only used when the user is registering for the first time.
+       * 用户显示名称。仅在用户首次注册时使用。
        */
       name?: string = "John Doe"
       /**
-       * User profile image URL. Only used when the user is registering for the first time.
+       * 用户头像 URL。仅在用户首次注册时使用。
        */
       image?: string = "https://example.com/image.png"
   }
@@ -141,7 +141,11 @@ description: 用于 Better Auth 的电子邮件 OTP 插件。
 </APIMethod>
 
 <Callout>
-  If the user is not registered, they'll be automatically registered. Configured [additional fields](/docs/concepts/typescript#additional-fields) are also accepted for new users. To prevent automatic sign-up, pass `disableSignUp` as `true` in the [options](#options).
+  如果用户未注册，他们将自动注册。为新用户也会接受已配置的[附加字段](/docs/concepts/typescript#additional-fields)。若要阻止自动注册，请在[选项](#选项)中将 `disableSignUp` 设为 `true`。
+</Callout>
+
+<Callout>
+  当签名 OTP 确认了一个已有账户且该账户的电子邮件从未验证过时，该账户上任何现有密码都会被移除，其会话也会被撤销。用户会通过 OTP 登录，并可通过密码重置设置新密码。这样可确保由 OTP 证明的邮箱所有权作为该账户的事实来源。
 </Callout>
 
 ### 使用 OTP 验证电子邮件
@@ -152,11 +156,11 @@ description: 用于 Better Auth 的电子邮件 OTP 插件。
   ```ts
   type sendVerificationOTP = {
       /**
-       * Email address to send the OTP. 
+       * 发送 OTP 的电子邮件地址。 
        */
       email: string = "user@example.com"
       /**
-       * Type of the OTP.
+       * OTP 的类型。
        */
       type: "email-verification" = "email-verification"
   }
@@ -169,11 +173,11 @@ description: 用于 Better Auth 的电子邮件 OTP 插件。
   ```ts
   type verifyEmailOTP = {
       /**
-       * Email address to verify. 
+       * 要验证的电子邮件地址。 
        */
       email: string = "user@example.com"
       /**
-       * OTP to verify. 
+       * 用于验证的 OTP。 
        */
       otp: string = "123456"
   }
@@ -188,7 +192,7 @@ description: 用于 Better Auth 的电子邮件 OTP 插件。
   ```ts
   type requestPasswordResetEmailOTP = {
       /**
-       * Email address to send the OTP.
+       * 发送 OTP 的电子邮件地址。
        */
       email: string = "user@example.com"
   }
@@ -196,7 +200,7 @@ description: 用于 Better Auth 的电子邮件 OTP 插件。
 </APIMethod>
 
 <Callout type="warn">
-  The `/forget-password/email-otp` endpoint is deprecated. Please use `/email-otp/request-password-reset` instead.
+  `/forget-password/email-otp` 端点已弃用。请改用 `/email-otp/request-password-reset`。
 </Callout>
 
 用户提供 OTP 后，可以选择使用 `checkVerificationOtp()` 方法验证 OTP 是否有效。
@@ -205,15 +209,15 @@ description: 用于 Better Auth 的电子邮件 OTP 插件。
   ```ts
   type checkVerificationOTP = {
       /**
-       * Email address to send the OTP. 
+       * 发送 OTP 的电子邮件地址。 
        */
       email: string = "user@example.com"
       /**
-       * Type of the OTP.
+       * OTP 的类型。
        */
       type: "forget-password" = "forget-password"
       /**
-       * OTP sent to the email. 
+       * 发送到电子邮件的 OTP。 
        */
       otp: string = "123456"
   }
@@ -226,15 +230,15 @@ description: 用于 Better Auth 的电子邮件 OTP 插件。
   ```ts
   type resetPasswordEmailOTP = {
       /**
-       * Email address to reset the password. 
+       * 用于重置密码的电子邮件地址。 
        */
       email: string = "user@example.com"
       /**
-       * OTP sent to the email. 
+       * 发送到电子邮件的 OTP。 
        */
       otp: string = "123456"
       /**
-       * New password. 
+       * 新密码。 
        */
       password: string = "new-secure-password"
   }
@@ -269,11 +273,11 @@ export const auth = betterAuth({
   ```ts
   type requestEmailChangeEmailOTP = {
       /**
-       * New email address to send the OTP.
+       * 要发送 OTP 的新电子邮件地址。
        */
       newEmail: string = "user@example.com"
       /**
-       * OTP sent to the current email. This is required when the `changeEmail.verifyCurrentEmail` option is set to `true`.
+       * 发送到当前邮箱的 OTP。 当 `changeEmail.verifyCurrentEmail` 选项设置为 `true` 时必需。
        */
       otp?: string = "123456"
   }
@@ -286,11 +290,11 @@ export const auth = betterAuth({
   ```ts
   type changeEmailEmailOTP = {
       /**
-       * New email address to change to. 
+       * 要更改为的新电子邮件地址。 
        */
       newEmail: string = "user@example.com"
       /**
-       * OTP sent to the new email. 
+       * 发送到新邮箱的 OTP。 
        */
       otp: string = "123456"
   }
@@ -322,11 +326,11 @@ export const auth = betterAuth({
   ```ts
   type sendVerificationOTP = {
       /**
-       * Email address to send the OTP. 
+       * 发送 OTP 的电子邮件地址。 
        */
       email: string = "user@example.com"
       /**
-       * Type of the OTP. Must be `email-verification` for confirming email change.
+       * OTP 的类型。必须为 `email-verification`，用于确认邮箱更改。
        */
       type: string = "email-verification"
   }

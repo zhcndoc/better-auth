@@ -72,6 +72,37 @@ export const auth = betterAuth({
 })
 ```
 
+默认情况下，Better Auth 不信任以逗号分隔的转发 IP 链，因为在追加型代理后，最左侧的 `X-Forwarded-For` 标记由客户端控制。位于反向代理或负载均衡器之后时，请执行以下任一操作。
+
+将 `ipAddressHeaders` 指向您的代理设置的单个可信请求头（例如 `x-real-ip` 或 `cf-connecting-ip`）：
+
+```ts title="auth.ts"
+export const auth = betterAuth({
+    advanced: {
+        ipAddress: {
+            ipAddressHeaders: ["x-real-ip"],
+        },
+    },
+})
+```
+
+或者在 `trustedProxies` 中列出您的代理。Better Auth 会从右到左遍历链路，跳过受信任的跳数，并将第一个不受信任的地址视为客户端：
+
+```ts title="auth.ts"
+export const auth = betterAuth({
+    advanced: {
+        ipAddress: {
+            // 您的代理地址，不要使用会同时覆盖客户端的大范围私有网段
+            trustedProxies: ["192.0.2.10", "10.0.0.0/24"],
+        },
+    },
+})
+```
+
+<Callout type="warning">
+  `trustedProxies` 仅会解析转发请求头链，无法验证直接发送方。请确保您的源站只能通过这些代理访问，并让每个代理覆盖或清理转发的 IP 请求头。否则，客户端可以直接设置 `X-Forwarded-For` 并伪造其地址。
+</Callout>
+
 #### IPv6 地址支持
 
 Better Auth 会自动规范 IPv6 地址，以防止攻击者通过使用同一 IPv6 地址的不同表示形式绕过限制（例如 `2001:db8::1` 与 `2001:0db8:0000:0000:0000:0000:0000:0001`）。这样可以确保对于速率限制来说，所有同一 IPv6 地址的表现形式都被视为相同。

@@ -126,7 +126,11 @@ if (data) {
   `message` 必须是一个有效的 [ERC-4361](https://eips.ethereum.org/EIPS/eip-4361) 消息（所有标准 SIWE 客户端都会生成这种消息）。在接受签名之前，插件会解析该消息，并要求其 **nonce**、**domain**、**address** 和 **Chain ID** 与服务器签发的 nonce 以及你配置的 `domain` 匹配，同时还会遵守消息中的 `Expiration Time` / `Not Before` 时间范围。仅凭签名恢复本身并**不足够**——这种绑定确保签名只能与其生成时对应的消息一起被接受，并且该消息绑定到当前服务器签发的 nonce。若任一字段不匹配，验证将失败并返回 401（`UNAUTHORIZED_SIWE_MESSAGE_MISMATCH`）。
 </Callout>
 
-### 链特定示例
+<Callout type="warning">
+  SIWE 签名只能证明对钱包的控制权，而不能证明你传入的 `email` 的所有权。插件会将该电子邮件按未验证状态存储，并且仅在它尚未被使用时将其绑定到新账户。当 `anonymous` 为 `false` 且所提供的电子邮件已属于另一个账户时，新钱包账户会改为使用基于钱包派生的地址创建，因此一次登录无法附加另一个账户已拥有的电子邮件。
+</Callout>
+
+### Chain-Specific Examples
 
 以下为不同区块链网络的示例：
 

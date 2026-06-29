@@ -341,23 +341,23 @@ export const auth = betterAuth({
 })
 ```
 
-* `clientId`: OAuth client ID from the provider
-* `clientSecret`: OAuth client secret from the provider
-* `clientKey`: Client key (used by some providers like TikTok instead of clientId) (optional)
-* `redirectURI`: Custom redirect URI for the OAuth callback (optional)
-* `scope`: Additional OAuth scopes to request (optional)
-* `mapProfileToUser`: Custom function to map the provider profile to a user (optional)
-* `disableSignUp`: Disable sign up for new users (optional)
-* `disableImplicitSignUp`: Disable implicit sign up for new users (optional)
-* `overrideUserInfoOnSignIn`: Override user info with provider user info on sign in (optional)
-* `prompt`: The prompt to use for the authorization code request (`"select_account"`, `"consent"`, `"login"`, `"none"`, `"select_account consent"`) (optional)
-* `responseMode`: The response mode to use (`"query"`, `"form_post"`) (optional)
-* `getUserInfo`: Custom function to get user info from the provider (optional)
-* `refreshAccessToken`: Custom function to refresh a token. Receives the stored refresh token and returns new OAuth tokens. (optional)
-* `verifyIdToken`: Custom function to verify the ID token (optional)
-* `disableIdTokenSignIn`: Disable sign in with ID token sent from the client (optional)
-* `disableDefaultScope`: Disable the provider's default scopes (optional)
-* `authorizationEndpoint`: Custom authorization endpoint URL (optional)
+* `clientId`: 提供商的 OAuth 客户端 ID
+* `clientSecret`: 提供商的 OAuth 客户端密钥
+* `clientKey`: 客户端密钥（某些提供商如 TikTok 会用它替代 clientId）（可选）
+* `redirectURI`: OAuth 回调的自定义重定向 URI（可选）
+* `scope`: 要请求的额外 OAuth 权限范围（可选）
+* `mapProfileToUser`: 将提供商资料映射为用户的自定义函数（可选）
+* `disableSignUp`: 禁用新用户注册（可选）
+* `disableImplicitSignUp`: 禁用新用户的隐式注册（可选）
+* `overrideUserInfoOnSignIn`: 登录时使用提供商用户信息覆盖用户信息（可选）
+* `prompt`: 授权码请求使用的 prompt（`"select_account"`、`"consent"`、`"login"`、`"none"`、`"select_account consent"`）（可选）
+* `responseMode`: 使用的 response mode（`"query"`、`"form_post"`）（可选）
+* `getUserInfo`: 从提供商获取用户信息的自定义函数（可选）
+* `refreshAccessToken`: 刷新令牌的自定义函数。接收存储的刷新令牌并返回新的 OAuth 令牌。（可选）
+* `verifyIdToken`: 验证 ID token 的自定义函数（可选）
+* `disableIdTokenSignIn`: 禁用使用客户端发送的 ID token 登录（可选）
+* `disableDefaultScope`: 禁用提供商的默认权限范围（可选）
+* `authorizationEndpoint`: 自定义授权端点 URL（可选）
 
 ## `plugins`
 
@@ -535,9 +535,11 @@ const hook = createAuthMiddleware(async (ctx) => {
 账号关联配置。
 
 * `enabled`: 启用账号关联（默认：`true`）
-* `trustedProviders`: 受信任的提供商列表。可以是静态数组，也可以是异步函数，该函数基于请求动态返回提供商（类似 `trustedOrigins`）
-* `allowDifferentEmails`: 允许用户使用不同邮箱地址来关联账号
-* `allowUnlinkingAll`: 允许用户解除所有关联账号的解绑
+* `disableImplicitLinking`: 禁用 OAuth 登录时的自动账号关联。当为 `true` 时，具有相同邮箱的现有用户在 OAuth 登录时会返回 `account_not_linked`，而不会被隐式关联（即使邮箱已验证或属于 `trustedProviders`）。新用户仍然可以通过 OAuth 注册，已认证用户也仍然可以通过 `linkSocial()` 显式关联提供商。（默认：`false`）
+* `trustedProviders`: 受信任提供商列表。可以是静态数组，也可以是根据请求动态返回提供商的异步函数（类似 `trustedOrigins`）
+* `allowDifferentEmails`: 允许用户使用不同的电子邮件地址关联账号
+* `allowUnlinkingAll`: 允许用户解除所有账号关联
+* `updateUserInfoOnLink`: 关联时，将提供商资料（`name`、`image` 以及任何 `mapProfileToUser` 字段）复制到本地用户。不会更改本地 `email` 和 `emailVerified`。（默认：`false`）
 
 ## `verification`
 
@@ -604,7 +606,7 @@ import { betterAuth } from "better-auth";
 export const auth = betterAuth({
 	advanced: {
 		ipAddress: {
-			ipAddressHeaders: ["x-client-ip", "x-forwarded-for"],
+			ipAddressHeaders: ["x-client-ip", "x-real-ip"],
 			disableIpTracking: false
 		},
 		useSecureCookies: true,
@@ -653,17 +655,20 @@ export const auth = betterAuth({
 ```
 
 * `ipAddress`: 用于速率限制和会话跟踪的 IP 地址配置
-* `useSecureCookies`: 默认情况下，在生产环境中 cookie 是安全的。设置为 `true` 以强制在所有环境中使用 `Secure` cookie 属性。
-* `disableCSRFCheck`: 禁用所有 CSRF 保护，包括 origin 头验证和 Fetch Metadata 检查（⚠️ 安全风险）
-* `disableOriginCheck`: 禁用对 `callbackURL`、`redirectTo` 以及其他重定向 URL 的校验（⚠️ 安全风险）
-* `crossSubDomainCookies`: 配置 cookie 在子域之间共享
+  * `disableIpTracking`: 禁用 IP 地址跟踪。
+  * `ipAddressHeaders`: 用于读取客户端 IP 地址的受信任请求头名称。
+  * `trustedProxies`: 反向代理 IP 或 CIDR 范围。转发链会从右向左遍历，跳过受信任的跳点，首个不受信任的地址会被用作客户端 IP。
+* `useSecureCookies`: 默认情况下，生产环境中的 cookie 是安全的。将其设为 `true` 可在所有环境中强制使用 `Secure` cookie 属性。
+* `disableCSRFCheck`: 禁用所有 CSRF 防护，包括来源头验证和 Fetch Metadata 检查（⚠️ 安全风险）
+* `disableOriginCheck`: 禁用 `callbackURL`、`redirectTo` 以及其他重定向 URL 的 URL 验证（⚠️ 安全风险）
+* `crossSubDomainCookies`: 配置可跨子域共享的 cookie
 * `cookies`: 自定义 cookie 名称和属性
 * `defaultCookieAttributes`: 所有 cookie 的默认属性
 * `cookiePrefix`: cookie 前缀
 * `database`: 数据库配置选项
-* `backgroundTasks`: 配置后台任务处理，用于延迟操作
-* `skipTrailingSlashes`: 在路由匹配中跳过尾部斜杠校验。（默认：`false`）
-* OAuth 状态配置选项（`storeStateStrategy`, `skipStateCookieCheck`）现已属于 `account` 选项
+* `backgroundTasks`: 配置延迟操作的后台任务处理
+* `skipTrailingSlashes`: 在路由匹配中跳过尾随斜杠验证。（默认：`false`）
+* OAuth 状态配置选项（`storeStateStrategy`、`skipStateCookieCheck`）现在属于 `account` 选项
 
 <h3 id="advanced-database"><code>database</code></h3>
 
@@ -726,7 +731,7 @@ export const auth = betterAuth({
       },
     });
 
-    // 在请求处理时用 execCtxStorage.run(ctx, ...) 包裹
+    // 在请求处理中用 execCtxStorage.run(ctx, ...) 包裹
     ```
   </Tab>
 </Tabs>
@@ -919,11 +924,11 @@ export const auth = betterAuth({
 	hooks: {
 		before: createAuthMiddleware(async (ctx) => {
 			// 请求处理前执行
-			console.log("Request path:", ctx.path);
+			console.log("请求路径:", ctx.path);
 		}),
 		after: createAuthMiddleware(async (ctx) => {
 			// 请求处理后执行
-			console.log("Response:", ctx.context.returned);
+			console.log("响应:", ctx.context.returned);
 		})
 	},
 })

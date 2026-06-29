@@ -95,6 +95,10 @@ description: 魔法链接插件
   如果未提供 `callbackURL`，用户将被重定向到根网址。
 </Callout>
 
+<Callout>
+  当链接验证了一个已存在的账户，而该账户的邮箱从未被确认时，该账户上现有的密码将被移除，其会话也会被撤销。用户会通过该链接登录，并可通过密码重置设置新密码。这将以链接所证明的邮箱所有权作为账户的事实依据。
+</Callout>
+
 如果你想手动处理验证（例如，如果你向用户发送了不同的 URL），可以使用 `verify` 函数。
 
 <APIMethod path="/magic-link/verify" method="GET" requireSession>
@@ -125,7 +129,7 @@ description: 魔法链接插件
 
 **expiresIn**：指定魔法链接过期的时间（以秒为单位）。默认值为 `300` 秒（5 分钟）。
 
-**allowedAttempts** (已弃用)：现在每次验证调用都会在首次尝试时以原子方式消费令牌，因此无论此设置如何，重试都会始终失败并返回 `?error=INVALID_TOKEN`（参见 [GHSA-hc7v-rggr-4hvx](https://github.com/better-auth/better-auth/security/advisories/GHSA-hc7v-rggr-4hvx)）。该选项仅为保持源码兼容而保留，但会被忽略；不再支持多次尝试兑换。将其设置为除 `1` 之外的任何值都会在启动时发出 `console.warn`（包括 `0`，它以前会立即拒绝，而现在不再生效）。
+**allowedAttempts** (deprecated): 每次验证调用现在都会在首次尝试时以原子方式消耗令牌，因此无论此设置如何，重试都会始终失败并返回 `?error=INVALID_TOKEN`。保留此选项仅为保持源码兼容性，但会被忽略；不再支持多次尝试兑换。将其设置为除 `1` 之外的任何值都会在启动时发出 `console.warn`（包括 `0`，它以前会立即拒绝，而现在没有任何效果）。
 
 **disableSignUp**：如果设置为 `true`，用户将无法使用魔法链接进行注册。默认值为 `false`。
 
@@ -148,5 +152,5 @@ description: 魔法链接插件
 存储后端本身由全局 [`verification`](/docs/reference/options#verification) 配置控制。如果你配置了 `secondaryStorage`，魔法链接验证记录可以存储在那里，而不是数据库中。
 
 <Callout type="warn">
-  当 `secondaryStorage` 承载验证（`verification.storeInDatabase: false`）时，来自 [GHSA-hc7v-rggr-4hvx](https://github.com/better-auth/better-auth/security/advisories/GHSA-hc7v-rggr-4hvx) 的原子性单次使用保证要求你的 secondary storage 提供 `getAndDelete`（Redis `GETDEL`，KV `getAndDelete`）。如果实现只提供 `get` 和 `delete`，则消费操作会回退到进程内的 JavaScript 锁，而该锁无法在多个应用实例之间协调。使用 secondary-storage 验证的多实例部署必须配置一个实现了 `getAndDelete` 的后端。
+  当 `secondaryStorage` 承载验证（`verification.storeInDatabase: false`）时，原子性的单次使用保证要求你的 secondary storage 提供 `getAndDelete`（Redis `GETDEL`、KV `getAndDelete`）。如果实现只提供 `get` 和 `delete`，则消耗过程会回退到进程内的 JavaScript 锁，而该锁无法在多个应用实例之间协调。使用 secondary-storage 验证的多实例部署必须配置实现了 `getAndDelete` 的后端。
 </Callout>
