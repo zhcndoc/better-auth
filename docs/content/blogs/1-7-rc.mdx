@@ -68,34 +68,34 @@ OAuth 工作的另一半，是关于 Better Auth 作为接收登录的应用。
 
 **使用外部提供商登录你的用户**
 
-| Provider or setup                                         | What was blocked                                                      | How it works now                                                         |
-| --------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| **Amazon Cognito** 联合登录                                   | 你无法在每次登录时将用户路由到特定的上游提供商。 | 使用类型化的 `identityProvider` 和按请求传入的 `additionalParams`。         |
-| **Microsoft Entra ID** 证书登录                            | 仅支持共享密钥登录。                               | 使用 `clientAssertion` 进行证书登录，并在每次登录时使用 `domain_hint`。 |
-| **Google** 离线和增量访问                                  | 选项是全局性的，并且每次登录都会覆盖已授予的 scope。  | 使用按请求配置的选项、保留的 scopes 和 `includeGrantedScopes`。   |
-| **通过发现机制接入的任何 OpenID 提供商**                     | 未验证提供商的身份令牌。                         | 指向一个 discovery URL，令牌会自动验证。         |
-| **Zitadel、Auth0 以及其他多租户 OIDC 提供商** | 刷新令牌时无法发送额外参数。              | 刷新时使用 `refreshTokenParams`，无需完整重定向。            |
-| **需要签名断言登录的提供商**              | 仅支持基于密钥的登录。                                | 使用带签名 JWT 的 `tokenEndpointAuth`。                               |
-| **Clever 以及类似的教育类提供商**                | 由提供商发起的登录会失败。                               | 使用 `allowIdpInitiated: true` 安全地重新启动流程。                |
+| Provider or setup                  | What was blocked              | How it works now                                      |
+| ---------------------------------- | ----------------------------- | ----------------------------------------------------- |
+| **Amazon Cognito** 联合登录            | 你无法在每次登录时将用户路由到特定的上游提供商。      | 使用类型化的 `identityProvider` 和按请求传入的 `additionalParams`。 |
+| **Microsoft Entra ID** 证书登录        | 仅支持共享密钥登录。                    | 使用 `clientAssertion` 进行证书登录，并在每次登录时使用 `domain_hint`。  |
+| **Google** 离线和增量访问                 | 选项是全局性的，并且每次登录都会覆盖已授予的 scope。 | 使用按请求配置的选项、保留的 scopes 和 `includeGrantedScopes`。       |
+| **通过发现机制接入的任何 OpenID 提供商**         | 未验证提供商的身份令牌。                  | 指向一个 discovery URL，令牌会自动验证。                           |
+| **Zitadel、Auth0 以及其他多租户 OIDC 提供商** | 刷新令牌时无法发送额外参数。                | 刷新时使用 `refreshTokenParams`，无需完整重定向。                   |
+| **需要签名断言登录的提供商**                   | 仅支持基于密钥的登录。                   | 使用带签名 JWT 的 `tokenEndpointAuth`。                      |
+| **Clever 以及类似的教育类提供商**             | 由提供商发起的登录会失败。                 | 使用 `allowIdpInitiated: true` 安全地重新启动流程。               |
 
 **其他应用通过你进行登录**
 
-| Setup                                          | What was blocked                        | How it works now                                                             |
-| ---------------------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------- |
-| **需要防盗用令牌的 API**        | 只有普通 bearer token。               | 使用与客户端密钥绑定的 DPoP token。                                   |
-| **一个登录服务器后面的多个 API**       | 一个 token 可以在任何 API 上使用。     | 使用按 API 划分的资源，因此 token 只会绑定到它被签发给的 API。 |
-| **自行注册的机器客户端**     | 注册必须依赖已登录用户。 | 使用预共享的注册 token。                                          |
-| **MCP 客户端（Claude、Codex、Factory Droid）** | 它们的注册会被拒绝。        | 它们会被自动接受，并支持 Client ID Metadata Document。   |
-| **跨应用单点登出**                | 登出不会通知其他应用。     | 使用 OIDC Back-Channel Logout。                                                |
-| **强制重新登录**                            | 请求会被忽略。                | `max_age` 会被强制执行。                                                       |
+| Setup                                   | What was blocked        | How it works now                          |
+| --------------------------------------- | ----------------------- | ----------------------------------------- |
+| **需要防盗用令牌的 API**                        | 只有普通 bearer token。      | 使用与客户端密钥绑定的 DPoP token。                   |
+| **一个登录服务器后面的多个 API**                    | 一个 token 可以在任何 API 上使用。 | 使用按 API 划分的资源，因此 token 只会绑定到它被签发给的 API。   |
+| **自行注册的机器客户端**                          | 注册必须依赖已登录用户。            | 使用预共享的注册 token。                           |
+| **MCP 客户端（Claude、Codex、Factory Droid）** | 它们的注册会被拒绝。              | 它们会被自动接受，并支持 Client ID Metadata Document。 |
+| **跨应用单点登出**                             | 登出不会通知其他应用。             | 使用 OIDC Back-Channel Logout。              |
+| **强制重新登录**                              | 请求会被忽略。                 | `max_age` 会被强制执行。                         |
 
 **企业级 SSO**
 
-| Setup                                | What was blocked                      | How it works now                                    |
-| ------------------------------------ | ------------------------------------- | --------------------------------------------------- |
-| **SAML 证书轮换**        | 只接受一个证书。    | 轮换期间会接受证书列表。 |
-| **SCIM 组供应**          | 没有持久化的组资源。           | 组拥有一级生命周期端点。        |
-| **Cloudflare Workers 上的 OpenID SSO** | 重定向端点会破坏流程。 | 它们会以清晰的配置错误失败。         |
+| Setup                                | What was blocked | How it works now |
+| ------------------------------------ | ---------------- | ---------------- |
+| **SAML 证书轮换**                        | 只接受一个证书。         | 轮换期间会接受证书列表。     |
+| **SCIM 组供应**                         | 没有持久化的组资源。       | 组拥有一级生命周期端点。     |
+| **Cloudflare Workers 上的 OpenID SSO** | 重定向端点会破坏流程。      | 它们会以清晰的配置错误失败。   |
 
 ***
 
@@ -155,89 +155,89 @@ export const auth = betterAuth({
 
 ### 重大变更
 
-| 变更                                                      | 该怎么做                                                                                                                                         |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 受保护资源取代 `validAudiences`                          | 将每个 audience 移到 `resources` 中，将客户端关联到资源，并运行模式迁移。                                                                          |
-| DPoP 更改令牌验证                                          | 将 bearer-token 辅助函数重命名，在需要的地方使用 DPoP 请求验证器，并运行模式迁移。                                                                 |
-| 后通道注销会吊销与会话绑定的令牌                            | 运行模式迁移，并预期与已登出会话绑定的令牌变为无效。                                                                                               |
-| 通用 OAuth 使用社交提供方路径                              | 更新登录调用、关联调用、回调 URL 和客户端插件。                                                                                                   |
-| 自定义社交提供方使用单一身份令牌验证器                      | 将提供方的 `verifyIdToken` 方法替换为 `idToken` 配置。                                                                                           |
-| 旧的 `oidcProvider` 插件已移除                             | 将提供方设置迁移到 `@better-auth/oauth-provider`。                                                                                               |
-| MCP 迁移到 `@better-auth/mcp`                             | 更新导入、端点路径、辅助函数名、配置结构和模式。                                                                                                  |
-| SAML 默认值和配置已更改                                    | 更新已移除的字段，更新回调 URL，并检查 IdP 发起的流程。                                                                                           |
-| SCIM 连接需要手动回收                                       | 在重新生成其令牌之前，为 1.7 之前的连接分配 `organizationId`，或删除无主行。                                                                      |
-| 默认情况下不信任代理头                                      | 仅当你的代理需要时，才通过 `advanced.trustedProxyHeaders: true` 显式启用。                                                                        |
-| 自定义适配器和存储需要原子方法                              | 实现 `incrementOne` 和 `consumeOne`（适配器），`increment` 和 `getAndDelete`（二级存储），或 `consume`（限流存储）。                               |
-| 验证码规则匹配完整路径                                      | 将 `/sign-in` 之类的部分路径替换为 `/sign-in/*` 或 `/sign-in/**`。                                                                                |
-| 自定义 scheme 的受信任来源按主机匹配                        | 像 `myapp://callback` 这样的带主机条目不再接受 `myapp://callback.attacker.tld`。请重新检查原生和移动端的 `trustedOrigins`。                       |
-| Electron 需要 S256 PKCE                                     | 一起升级 Electron 客户端和服务端。                                                                                                               |
-| OIDC ID 令牌不再包含 profile/email scope 声明               | 从 UserInfo 端点读取 profile 和 email 声明，而不是从 ID 令牌中读取。                                                                               |
-| 移除了同步 OAuth2 请求构建器                                | 用异步等价方法替换 `createAuthorizationCodeRequest`、`createRefreshAccessTokenRequest` 和 `createClientCredentialsTokenRequest`。                |
-| `jwt.sign` 回调必须与 `keyPairConfig.alg` 匹配             | 将你自定义的 ID 令牌签名算法与配置的密钥对保持一致，否则会拒绝签发。                                                                              |
-| 动态客户端注册验证更严格                                    | 发送相互对应的 `response_types`/`grant_types`（`code` 响应类型需要 `authorization_code` 授权）。                                                   |
-| 未认证注册会保留客户端认证方式                              | 默认情况下，注册是机密型的。对于必须保持为公有的客户端，请设置 `token_endpoint_auth_method: "none"`。                                               |
-| `/oauth2/revoke` 拒绝有效的 JWT 访问令牌                    | 预期返回 `400 unsupported_token_type`。请改为吊销 refresh token 或不透明令牌。                                                                      |
-| OAuth 回调错误码重命名                                      | 将 `email_doesn't_match` 的处理更新为 `email_does_not_match`。                                                                                    |
-| `generateState()` 签名已更改                                | 改为使用新的选项对象调用它，而不是位置参数 `(c, link, additionalData)`。                                                                           |
-| SCIM 连接按组织作用域划分                                   | `organizationId` 变为必需，`userId` 被移除，`defaultSCIM` 变为 `staticProviders`，`trustedDomains` 被移除。运行迁移。                              |
-| SCIM 需要组织插件                                           | 没有它时 SCIM 不再初始化，并且每个令牌都必须绑定到一个组织。                                                                                        |
-| SCIM 账户 ID 按组织命名空间隔离                             | 将现有的 SCIM 关联账户迁移为 `scim:{organizationId}:{providerId}` 形式的 provider-id。                                                               |
-| SSO SAML 配置注册变更                                       | 提供签名证书来源，并期望完整的小写 ACS 错误重定向代码，而不是短别名。                                                                              |
-| `/sso/update-provider` 拒绝部分映射                         | 发送完整的 OIDC/SAML 映射对象，而不是部分对象。                                                                                                    |
-| auth CLI 需要 Node.js 22.12+                                | 升级用于运行 CLI 的 Node.js。                                                                                                                       |
-| 新的组织列                                                | 运行 `team.memberCount` 和 `teamMember.membershipKey` 的迁移。                                                                                      |
-| Stripe 组织订阅需要 `organization.enabled`                  | 除非在 Stripe 插件配置中设置 `organization: { enabled: true }`，否则 `referenceMiddleware` 会拒绝组织作用域订阅。                                 |
-| 默认的 Drizzle 模式使用单数关系键                            | 重新生成并检查你的 Drizzle 模式关系。                                                                                                               |
-| 需要 Stripe `onSubscriptionCancel` 事件                     | 更新回调以期望一个非可选的 `event`。                                                                                                                |
-| 仅支持双因素 OTP 启用                                        | `enableTwoFactor` 接受一个新的 `method` 参数并返回一个可辨别联合类型响应。更新调用方。                                                               |
-| 公共导出 `getIp` 已重命名为 `getIP`                         | 更新 IP 辅助函数的导入。                                                                                                                            |
+| 变更                                      | 该怎么做                                                                                                                  |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 受保护资源取代 `validAudiences`                | 将每个 audience 移到 `resources` 中，将客户端关联到资源，并运行模式迁移。                                                                      |
+| DPoP 更改令牌验证                             | 将 bearer-token 辅助函数重命名，在需要的地方使用 DPoP 请求验证器，并运行模式迁移。                                                                   |
+| 后通道注销会吊销与会话绑定的令牌                        | 运行模式迁移，并预期与已登出会话绑定的令牌变为无效。                                                                                            |
+| 通用 OAuth 使用社交提供方路径                      | 更新登录调用、关联调用、回调 URL 和客户端插件。                                                                                            |
+| 自定义社交提供方使用单一身份令牌验证器                     | 将提供方的 `verifyIdToken` 方法替换为 `idToken` 配置。                                                                             |
+| 旧的 `oidcProvider` 插件已移除                 | 将提供方设置迁移到 `@better-auth/oauth-provider`。                                                                              |
+| MCP 迁移到 `@better-auth/mcp`              | 更新导入、端点路径、辅助函数名、配置结构和模式。                                                                                              |
+| SAML 默认值和配置已更改                          | 更新已移除的字段，更新回调 URL，并检查 IdP 发起的流程。                                                                                      |
+| SCIM 连接需要手动回收                           | 在重新生成其令牌之前，为 1.7 之前的连接分配 `organizationId`，或删除无主行。                                                                     |
+| 默认情况下不信任代理头                             | 仅当你的代理需要时，才通过 `advanced.trustedProxyHeaders: true` 显式启用。                                                              |
+| 自定义适配器和存储需要原子方法                         | 实现 `incrementOne` 和 `consumeOne`（适配器），`increment` 和 `getAndDelete`（二级存储），或 `consume`（限流存储）。                           |
+| 验证码规则匹配完整路径                             | 将 `/sign-in` 之类的部分路径替换为 `/sign-in/*` 或 `/sign-in/**`。                                                                 |
+| 自定义 scheme 的受信任来源按主机匹配                  | 像 `myapp://callback` 这样的带主机条目不再接受 `myapp://callback.attacker.tld`。请重新检查原生和移动端的 `trustedOrigins`。                      |
+| Electron 需要 S256 PKCE                   | 一起升级 Electron 客户端和服务端。                                                                                                |
+| OIDC ID 令牌不再包含 profile/email scope 声明   | 从 UserInfo 端点读取 profile 和 email 声明，而不是从 ID 令牌中读取。                                                                     |
+| 移除了同步 OAuth2 请求构建器                      | 用异步等价方法替换 `createAuthorizationCodeRequest`、`createRefreshAccessTokenRequest` 和 `createClientCredentialsTokenRequest`。 |
+| `jwt.sign` 回调必须与 `keyPairConfig.alg` 匹配 | 将你自定义的 ID 令牌签名算法与配置的密钥对保持一致，否则会拒绝签发。                                                                                  |
+| 动态客户端注册验证更严格                            | 发送相互对应的 `response_types`/`grant_types`（`code` 响应类型需要 `authorization_code` 授权）。                                        |
+| 未认证注册会保留客户端认证方式                         | 默认情况下，注册是机密型的。对于必须保持为公有的客户端，请设置 `token_endpoint_auth_method: "none"`。                                                 |
+| `/oauth2/revoke` 拒绝有效的 JWT 访问令牌         | 预期返回 `400 unsupported_token_type`。请改为吊销 refresh token 或不透明令牌。                                                         |
+| OAuth 回调错误码重命名                          | 将 `email_doesn't_match` 的处理更新为 `email_does_not_match`。                                                                |
+| `generateState()` 签名已更改                 | 改为使用新的选项对象调用它，而不是位置参数 `(c, link, additionalData)`。                                                                    |
+| SCIM 连接按组织作用域划分                         | `organizationId` 变为必需，`userId` 被移除，`defaultSCIM` 变为 `staticProviders`，`trustedDomains` 被移除。运行迁移。                      |
+| SCIM 需要组织插件                             | 没有它时 SCIM 不再初始化，并且每个令牌都必须绑定到一个组织。                                                                                     |
+| SCIM 账户 ID 按组织命名空间隔离                    | 将现有的 SCIM 关联账户迁移为 `scim:{organizationId}:{providerId}` 形式的 provider-id。                                               |
+| SSO SAML 配置注册变更                         | 提供签名证书来源，并期望完整的小写 ACS 错误重定向代码，而不是短别名。                                                                                 |
+| `/sso/update-provider` 拒绝部分映射           | 发送完整的 OIDC/SAML 映射对象，而不是部分对象。                                                                                         |
+| auth CLI 需要 Node.js 22.12+              | 升级用于运行 CLI 的 Node.js。                                                                                                 |
+| 新的组织列                                   | 运行 `team.memberCount` 和 `teamMember.membershipKey` 的迁移。                                                               |
+| Stripe 组织订阅需要 `organization.enabled`    | 除非在 Stripe 插件配置中设置 `organization: { enabled: true }`，否则 `referenceMiddleware` 会拒绝组织作用域订阅。                             |
+| 默认的 Drizzle 模式使用单数关系键                   | 重新生成并检查你的 Drizzle 模式关系。                                                                                               |
+| 需要 Stripe `onSubscriptionCancel` 事件     | 更新回调以期望一个非可选的 `event`。                                                                                                |
+| 仅支持双因素 OTP 启用                           | `enableTwoFactor` 接受一个新的 `method` 参数并返回一个可辨别联合类型响应。更新调用方。                                                             |
+| 公共导出 `getIp` 已重命名为 `getIP`              | 更新 IP 辅助函数的导入。                                                                                                        |
 
 ### 行为变化
 
-| 变更                                                          | 具体变化                                                                                                                        |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `max_age` 现在会被强制执行                                      | 现在，请求新鲜登录的客户端会真正获得新登录，而不再被忽略。                                                               |
-| Token introspection 保持一致                                     | 不透明 token 返回与 JWT 相同的 claims，而且资源服务器可以 introspect 另一个客户端的 token。                         |
-| ID token claims 保持协议安全                                     | 自定义 claims 不再能覆盖保留的协议 claims，并且 ID token 会报告 `acr: "0"`。                                    |
-| 已授予的 scopes 会被保留                                        | 后续登录不再会清除之前授予的 scopes。                                                                                |
-| Google One Tap 更严格地验证 token                               | 格式错误的 identity token 会被拒绝并返回 `400`，`requireEmailVerification` 会返回 `403`。                                    |
-| Magic-link 和 email-OTP 登录可以清除未经证实的凭据             | 在同一账户上，已验证的邮箱控制权会优先于未确认的密码。                                                       |
-| `userinfo` 会用 401 拒绝错误的 access token                     | 无效 token 会返回 `401 invalid_token`，并带有 `WWW-Authenticate` 头。                                                            |
-| OAuth authorize 会将缺少 `response_type` 的错误重定向           | 错误会发送到已验证的客户端 `redirect_uri`，而不是通用错误页。                                                    |
-| OAuth 客户端创建返回 `201`                                      | 创建客户端会返回 `201 Created` 而不是 `200 OK`，并且注册过程会强制执行相同的权限检查。                  |
-| Drizzle adapter 会验证受影响行数                                | 无效的受影响行数会直接抛出错误，而不是返回 `0`。                                                                      |
-| `organization.updateTeam` 会忽略不可变字段                      | 请求体中不再接受 `id`、`createdAt` 和 `updatedAt`。                                                      |
-| `updateMemberRole` 会先检查授权                                 | 角色是否存在的校验会在授权检查之后执行。                                                                          |
-| CLI `generate --output` 到目录                                   | 会选择与适配器相关的默认文件名。                                                                                         |
-| 生成的 schema 会跳过禁用迁移的模型                              | 会省略对已禁用迁移的模型的引用。                                                                          |
-| Cookie-cache session 绑定到其 cookie                            | 缓存的 session 会绑定到 `session_token` cookie。                                                                           |
-| SSRF 主机检查覆盖更多保留范围                                   | 出站主机分类现在会阻止额外的保留范围（6to4 relay anycast、site-local IPv6，以及 IPv4-compatible IPv6）。 |
-| OAuth token 兑换错误使用标准代码                                | 授权码兑换失败会返回 `400 invalid_grant`，而不是 `401 invalid_client` 或 `invalid_request`。             |
-| Sign-out 在外部 session 存储下运行 session-delete hooks         | 即使使用 `secondaryStorage` 和 `preserveSessionInDatabase`，`session.delete` hooks 也会在登出时运行。                            |
-| 双因素失效失败有了自己的错误码                                  | 失败的双因素 challenge 清理现在会返回 `FAILED_TO_INVALIDATE_TWO_FACTOR_CHALLENGE`。                                      |
+| 变更                                              | 具体变化                                                                                   |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `max_age` 现在会被强制执行                              | 现在，请求新鲜登录的客户端会真正获得新登录，而不再被忽略。                                                          |
+| Token introspection 保持一致                        | 不透明 token 返回与 JWT 相同的 claims，而且资源服务器可以 introspect 另一个客户端的 token。                       |
+| ID token claims 保持协议安全                          | 自定义 claims 不再能覆盖保留的协议 claims，并且 ID token 会报告 `acr: "0"`。                               |
+| 已授予的 scopes 会被保留                                | 后续登录不再会清除之前授予的 scopes。                                                                 |
+| Google One Tap 更严格地验证 token                     | 格式错误的 identity token 会被拒绝并返回 `400`，`requireEmailVerification` 会返回 `403`。               |
+| Magic-link 和 email-OTP 登录可以清除未经证实的凭据            | 在同一账户上，已验证的邮箱控制权会优先于未确认的密码。                                                            |
+| `userinfo` 会用 401 拒绝错误的 access token            | 无效 token 会返回 `401 invalid_token`，并带有 `WWW-Authenticate` 头。                             |
+| OAuth authorize 会将缺少 `response_type` 的错误重定向     | 错误会发送到已验证的客户端 `redirect_uri`，而不是通用错误页。                                                 |
+| OAuth 客户端创建返回 `201`                             | 创建客户端会返回 `201 Created` 而不是 `200 OK`，并且注册过程会强制执行相同的权限检查。                                |
+| Drizzle adapter 会验证受影响行数                        | 无效的受影响行数会直接抛出错误，而不是返回 `0`。                                                             |
+| `organization.updateTeam` 会忽略不可变字段              | 请求体中不再接受 `id`、`createdAt` 和 `updatedAt`。                                               |
+| `updateMemberRole` 会先检查授权                       | 角色是否存在的校验会在授权检查之后执行。                                                                   |
+| CLI `generate --output` 到目录                     | 会选择与适配器相关的默认文件名。                                                                       |
+| 生成的 schema 会跳过禁用迁移的模型                           | 会省略对已禁用迁移的模型的引用。                                                                       |
+| Cookie-cache session 绑定到其 cookie                | 缓存的 session 会绑定到 `session_token` cookie。                                               |
+| SSRF 主机检查覆盖更多保留范围                               | 出站主机分类现在会阻止额外的保留范围（6to4 relay anycast、site-local IPv6，以及 IPv4-compatible IPv6）。        |
+| OAuth token 兑换错误使用标准代码                          | 授权码兑换失败会返回 `400 invalid_grant`，而不是 `401 invalid_client` 或 `invalid_request`。           |
+| Sign-out 在外部 session 存储下运行 session-delete hooks | 即使使用 `secondaryStorage` 和 `preserveSessionInDatabase`，`session.delete` hooks 也会在登出时运行。 |
+| 双因素失效失败有了自己的错误码                                 | 失败的双因素 challenge 清理现在会返回 `FAILED_TO_INVALIDATE_TWO_FACTOR_CHALLENGE`。                  |
 
 ### 新增内容
 
-| 变更                                   | 现在可用的内容                                                                                       |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| 原生客户端的刷新令牌重试               | 在短暂的重用窗口内重放相同的刷新响应。                                                               |
-| OAuth 提供程序扩展面                 | 添加授权类型、客户端身份验证方法、发现元数据和声明。                                                |
-| 客户端 ID 元数据文档                   | 允许客户端使用托管的元数据文档来标识自己。                                                           |
-| 每次请求的登录选项                    | 在一次登录请求中传递特定于提供程序的登录选项。                                                       |
-| 证书和签名断言登录                    | 对 Microsoft Entra ID 使用证书登录，并对通用 OAuth 使用签名 JWT。                                   |
-| Private-key-JWT 客户端认证            | 使用签名 JWT（RFC 7523）而不是共享密钥来认证 OAuth 提供程序和 SSO 客户端。                           |
-| SCIM 组                                | 使用持久的生命周期端点管理 SCIM 组。                                                                 |
-| 请求特定的用户声明                    | 使用 `claims.userinfo` 参数请求单个用户详情。                                                        |
-| 支持 Drizzle Relations v2            | 新的 `@better-auth/drizzle-adapter/relations-v2` 入口点会与你应用的 relations 合并。                 |
-| 会话和工具                             | 使用公钥会话验证、`hydrateSession`、i18n 和 `create-admin`。                                         |
+| 变更                      | 现在可用的内容                                                                |
+| ----------------------- | ---------------------------------------------------------------------- |
+| 原生客户端的刷新令牌重试            | 在短暂的重用窗口内重放相同的刷新响应。                                                    |
+| OAuth 提供程序扩展面           | 添加授权类型、客户端身份验证方法、发现元数据和声明。                                             |
+| 客户端 ID 元数据文档            | 允许客户端使用托管的元数据文档来标识自己。                                                  |
+| 每次请求的登录选项               | 在一次登录请求中传递特定于提供程序的登录选项。                                                |
+| 证书和签名断言登录               | 对 Microsoft Entra ID 使用证书登录，并对通用 OAuth 使用签名 JWT。                       |
+| Private-key-JWT 客户端认证   | 使用签名 JWT（RFC 7523）而不是共享密钥来认证 OAuth 提供程序和 SSO 客户端。                      |
+| SCIM 组                  | 使用持久的生命周期端点管理 SCIM 组。                                                  |
+| 请求特定的用户声明               | 使用 `claims.userinfo` 参数请求单个用户详情。                                       |
+| 支持 Drizzle Relations v2 | 新的 `@better-auth/drizzle-adapter/relations-v2` 入口点会与你应用的 relations 合并。 |
+| 会话和工具                   | 使用公钥会话验证、`hydrateSession`、i18n 和 `create-admin`。                       |
 
 ### 弃用与移除
 
-| 更改                                       | 替代方案                             |
-| ------------------------------------------ | ------------------------------------ |
-| `oidcProvider` 插件已移除               | 使用 `@better-auth/oauth-provider`。 |
-| MCP 插件路径已移出 `better-auth`        | 使用 `@better-auth/mcp`。            |
-| 通用 OAuth 客户端 API 已更改            | 使用标准的社交客户端 API。           |
+| 更改                        | 替代方案                              |
+| ------------------------- | --------------------------------- |
+| `oidcProvider` 插件已移除      | 使用 `@better-auth/oauth-provider`。 |
+| MCP 插件路径已移出 `better-auth` | 使用 `@better-auth/mcp`。            |
+| 通用 OAuth 客户端 API 已更改      | 使用标准的社交客户端 API。                   |
 
 ***
 
@@ -253,16 +253,16 @@ better-auth@rc
 
 然后对任何架构变更运行 `npx auth@rc generate`；未加作用域的 `npx auth` 目前仍会解析到 1.6 版 CLI，直到 1.7 稳定发布。下表显示这些变更是否会影响你。有关详细迁移指南，请参阅 [1.7 升级指南](/docs/guides/1-7-upgrade-guide)。
 
-| 如果你使用                                   | 预期情况                                                                                           |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| 基础 Better Auth 配置                        | 通常只需要安装 `@rc` 版本以及任何生成的架构变更                                                   |
-| 社交登录、通用 OAuth、One Tap 或 SSO         | 新的登录客户端行为，尤其是通用 OAuth、身份令牌验证和 Google One Tap                               |
-| `@better-auth/oauth-provider`                | 变更最多：资源、DPoP、反向通道注销、`max_age`，以及更安全的 OAuth 检查                            |
-| MCP                                          | 包迁移到 `@better-auth/mcp`、新的导入、新的端点路径，以及架构迁移                                  |
-| SAML 或 SCIM                                 | 更安全的 SAML 和 SSO 检查，以及手动的 SCIM 所有权清理                                             |
-| Magic link 或邮箱 OTP                        | 对邮箱从未确认过的账户进行更安全的处理                                                              |
-| 自定义适配器、存储或限流存储                 | 需要新的原子方法                                                                                            |
-| 自定义代理或 TLS 终止                        | 在依赖 DPoP 或身份提供方重定向之前，检查你的应用如何计算其公共源地址                                 |
+| 如果你使用                         | 预期情况                                          |
+| ----------------------------- | --------------------------------------------- |
+| 基础 Better Auth 配置             | 通常只需要安装 `@rc` 版本以及任何生成的架构变更                   |
+| 社交登录、通用 OAuth、One Tap 或 SSO   | 新的登录客户端行为，尤其是通用 OAuth、身份令牌验证和 Google One Tap  |
+| `@better-auth/oauth-provider` | 变更最多：资源、DPoP、反向通道注销、`max_age`，以及更安全的 OAuth 检查 |
+| MCP                           | 包迁移到 `@better-auth/mcp`、新的导入、新的端点路径，以及架构迁移    |
+| SAML 或 SCIM                   | 更安全的 SAML 和 SSO 检查，以及手动的 SCIM 所有权清理           |
+| Magic link 或邮箱 OTP            | 对邮箱从未确认过的账户进行更安全的处理                           |
+| 自定义适配器、存储或限流存储                | 需要新的原子方法                                      |
+| 自定义代理或 TLS 终止                 | 在依赖 DPoP 或身份提供方重定向之前，检查你的应用如何计算其公共源地址         |
 
 ***
 
@@ -363,4 +363,4 @@ export const releaseContributorUsernames = [
 	// cspell:enable
 ];
 
-<贡献者 usernames={releaseContributorUsernames} />
+<Contributors usernames={releaseContributorUsernames} />
