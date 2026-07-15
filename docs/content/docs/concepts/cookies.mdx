@@ -23,7 +23,7 @@ export const auth = betterAuth({
 
 在服务器运行于生产模式时，所有 Cookies 都是 `httpOnly` 和 `secure` 的。
 
-如果您想设置自定义的 Cookie 名称和属性，可以通过在认证选项的 `advanced` 对象中设置 `cookieOptions` 来实现。
+如果您想设置自定义 cookie 名称和属性，可以通过在认证选项的 `advanced` 对象中设置 `cookies` 来实现。
 
 默认情况下，Better Auth 使用以下 Cookies：
 
@@ -138,7 +138,7 @@ https://domainA.com/api/auth/*
 您可以调用：
 
 ```
-https://app.domainA.com/api/auth/*
+https://app.domainB.com/api/auth/*
 ```
 
 然后配置您的托管服务，将请求代理到实际的 API 服务器。

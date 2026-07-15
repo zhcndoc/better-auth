@@ -2465,12 +2465,12 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				),
 			},
 			{
-				title: "Dynamic Base URL",
+				title: "动态基础 URL",
 				href: "/docs/guides/dynamic-base-url",
 				icon: () => <Route className="w-4 h-4 text-current" />,
 			},
 			{
-				title: "SAML SSO with Okta",
+				title: "使用 Okta 的 SAML SSO",
 				href: "/docs/guides/saml-sso-with-okta",
 				icon: () => (
 					<svg
@@ -2488,6 +2488,18 @@ C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8S302.1,62,302.2,62c0.2,0,0.2,
 				title: "性能优化",
 				href: "/docs/guides/optimizing-for-performance",
 				icon: () => <Gauge className="size-4" />,
+			},
+			{
+				title: "升级",
+				group: true,
+				icon: () => null,
+				href: "",
+			},
+			{
+				title: "1.7 升级指南",
+				href: "/docs/guides/1-7-upgrade-guide",
+				icon: () => <ScrollTextIcon className="size-4" />,
+				isNew: true,
 			},
 			{
 				title: "迁移",

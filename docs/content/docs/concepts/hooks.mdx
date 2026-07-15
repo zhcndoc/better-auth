@@ -118,7 +118,7 @@ export const auth = betterAuth({
 ```
 
 <Callout>
-每个钩子（`before` / `after`）都只接受一个中间件函数，而不是数组。若要为不同端点运行逻辑，请在该单个函数内部基于 `ctx.path` 分支处理。
+  每个钩子（`before` / `after`）只接受一个中间件函数，而不是数组。要为不同端点运行逻辑，请在这个单一函数内部基于 `ctx.path` 进行分支判断。
 </Callout>
 
 ## Ctx
@@ -166,8 +166,8 @@ const hook = createAuthMiddleware(async (ctx) => {
 
 #### Cookie
 
-* Set cookies: `ctx.setCookie` 或 `ctx.setSignedCookie`。
-* Get cookies: `ctx.getCookie` 或 `ctx.getSignedCookie`。
+* 设置 Cookie：`ctx.setCookie` 或 `ctx.setSignedCookie`。
+* 获取 Cookie：`ctx.getCookie` 或 `ctx.getSignedCookie`。
 
 示例：
 

@@ -56,9 +56,9 @@ const { data: session } = await authClient.useSession(useFetch);
 
 对于像弹出层或菜单这类仅在客户端使用的组件，直接调用 `authClient.useSession()`，不要传参数。它会返回一个响应式 ref，并在登录和退出时自动更新。
 
-## 保护页面
+## Protecting Pages
 
-创建一个命名路由中间件，并通过 `definePageMeta` 将页面纳入其中：
+Create a named route middleware and include the page in it via `definePageMeta`:
 
 ```ts title="app/middleware/auth.ts"
 import { authClient } from "~~/lib/auth-client";
@@ -77,7 +77,7 @@ definePageMeta({ middleware: "auth" });
 </script>
 ```
 
-将文件重命名为 `app/middleware/auth.global.ts`，即可在每个路由上运行它。务必 `return` `navigateTo(...)` 调用，因为不加 `return` 时它不会生效。
+Rename the file to `app/middleware/auth.global.ts` to run it on every route. Be sure to `return` the `navigateTo(...)` call, because without `return` it will not take effect.
 
 ## 保护服务端路由
 
@@ -89,7 +89,7 @@ import { auth } from "~~/lib/auth";
 export default defineEventHandler(async (event) => {
 	const session = await auth.api.getSession({ headers: event.headers });
 	if (!session?.user) {
-		throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
+		throw createError({ statusCode: 401, statusMessage: "未授权" });
 	}
 	return { user: session.user };
 });
@@ -139,9 +139,9 @@ const { data: accounts } = await useAsyncData("accounts", () =>
 </script>
 ```
 
-## 与 Nuxt layer 复用
+## 与 Nuxt 层复用
 
-当你想在多个 Nuxt 应用之间复用同一套 auth 配置时（例如一个营销站和一个仪表盘），可以将 `lib/auth.ts`、`server/`、`app/middleware/` 和 `app/composables/` 提取到一个 [Nuxt layer](https://nuxt.com/docs/4.x/getting-started/layers) 中，并在每个应用里继承它：
+当你想在多个 Nuxt 应用之间复用同一套 auth 配置时（例如一个营销站和一个仪表盘），可以将 `lib/auth.ts`、`server/`、`app/middleware/` 和 `app/composables/` 提取到一个 [Nuxt 层](https://nuxt.com/docs/4.x/getting-started/layers) 中，并在每个应用里继承它：
 
 ```ts title="nuxt.config.ts"
 export default defineNuxtConfig({
@@ -153,9 +153,9 @@ export default defineNuxtConfig({
 
 {/* cspell:disable */}
 
+* [`nuxt-modules/better-auth`](https://github.com/nuxt-modules/better-auth)
 * [`atinux/nuxthub-better-auth`](https://github.com/atinux/nuxthub-better-auth)
 * [`leamsigc/nuxt-better-auth-drizzle`](https://github.com/leamsigc/nuxt-better-auth-drizzle)
-* [`NuxSaaS/NuxSaaS`](https://github.com/NuxSaaS/NuxSaaS)
 * [`nuxtone/nuxt-one`](https://github.com/nuxtone/nuxt-one)
 
 {/* cspell:enable */}

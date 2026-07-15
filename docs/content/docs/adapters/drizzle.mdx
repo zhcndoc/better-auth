@@ -81,6 +81,33 @@ export const auth = betterAuth({
   此外，你需要将每个关联关系通过 drizzle 适配器的模式对象传入。
 </Callout>
 
+当一个表拥有指向同一张表的多个外键时，每一对关联都必须使用匹配的 [`relationName`](https://orm.drizzle.team/docs/relations#disambiguating-relations)。
+CLI 会自动生成这些名称。如果你是用较旧版本的 CLI 生成的模式，请重新生成，或者在两侧都添加匹配的名称。
+
+`relationName` 前缀遵循你的表命名：在 `usePlural: true` 时使用复数形式（`tests_userId`），否则使用单数形式（`test_userId`）。两侧必须保持完全一致。
+
+```ts title="schema.ts"
+export const usersRelations = relations(users, ({ many }) => ({
+  testsByUserId: many(tests, { relationName: "tests_userId" }),
+  testsByManagerId: many(tests, { relationName: "tests_managerId" }),
+}));
+
+export const testsRelations = relations(tests, ({ one }) => ({
+  user: one(users, {
+    fields: [tests.userId],
+    references: [users.id],
+    relationName: "tests_userId",
+  }),
+  manager: one(users, {
+    fields: [tests.managerId],
+    references: [users.id],
+    relationName: "tests_managerId",
+  }),
+}));
+```
+
+不要为同一个外键同时保留单数和复数别名（例如同时使用 `user` 和 `users`）。Drizzle 会将它们视为不同的关联，因而无法推断联接应该使用哪一个反向关联。
+
 ## 修改表名
 
 Drizzle 适配器期望你定义的模式与表名一致。例如，如果 Drizzle 模式将 `user` 表映射为 `users`，你需要手动传入模式并映射到 user 表。

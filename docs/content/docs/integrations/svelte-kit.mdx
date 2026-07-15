@@ -70,8 +70,8 @@ export const auth = betterAuth({
 
 创建一个客户端实例。你可以任意命名该文件。这里示例是在 `lib/` 目录下创建了 `client.ts` 文件。
 
-```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/svelte"; // 确保导入自 better-auth/svelte
+```ts title="lib/client.ts"
+import { createAuthClient } from "better-auth/svelte"; // 确保从 better-auth/svelte 导入
 
 export const authClient = createAuthClient({
   // 你可以传入客户端配置

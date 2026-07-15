@@ -341,22 +341,22 @@ export const auth = betterAuth({
 })
 ```
 
-* `clientId`: 提供商的 OAuth 客户端 ID
-* `clientSecret`: 提供商的 OAuth 客户端密钥
-* `clientKey`: 客户端密钥（某些提供商如 TikTok 会用它替代 clientId）（可选）
+* `clientId`: 来自提供商的 OAuth 客户端 ID
+* `clientSecret`: 来自提供商的 OAuth 客户端密钥
+* `clientKey`: 客户端密钥（某些提供商如 TikTok 使用它而不是 clientId）（可选）
 * `redirectURI`: OAuth 回调的自定义重定向 URI（可选）
-* `scope`: 要请求的额外 OAuth 权限范围（可选）
+* `scope`: 要请求的额外 OAuth 作用域（可选）
 * `mapProfileToUser`: 将提供商资料映射为用户的自定义函数（可选）
 * `disableSignUp`: 禁用新用户注册（可选）
 * `disableImplicitSignUp`: 禁用新用户的隐式注册（可选）
 * `overrideUserInfoOnSignIn`: 登录时使用提供商用户信息覆盖用户信息（可选）
 * `prompt`: 授权码请求使用的 prompt（`"select_account"`、`"consent"`、`"login"`、`"none"`、`"select_account consent"`）（可选）
-* `responseMode`: 使用的 response mode（`"query"`、`"form_post"`）（可选）
+* `responseMode`: 使用的响应模式（`"query"`、`"form_post"`）（可选）
 * `getUserInfo`: 从提供商获取用户信息的自定义函数（可选）
-* `refreshAccessToken`: 刷新令牌的自定义函数。接收存储的刷新令牌并返回新的 OAuth 令牌。（可选）
-* `verifyIdToken`: 验证 ID token 的自定义函数（可选）
-* `disableIdTokenSignIn`: 禁用使用客户端发送的 ID token 登录（可选）
-* `disableDefaultScope`: 禁用提供商的默认权限范围（可选）
+* `refreshAccessToken`: 刷新令牌的自定义函数。接收已存储的刷新令牌并返回新的 OAuth 令牌。（可选）
+* `verifyIdToken`: 验证 ID token 的自定义函数。接收 `(token, nonce?, ctx?)`，其中 `ctx` 是请求端点上下文（可选）。设置后会替换提供商内置的验证。
+* `disableIdTokenSignIn`: 禁用使用从客户端发送的 ID token 登录（可选）
+* `disableDefaultScope`: 禁用提供商的默认作用域（可选）
 * `authorizationEndpoint`: 自定义授权端点 URL（可选）
 
 ## `plugins`
@@ -697,7 +697,7 @@ export const auth = betterAuth({
 例如：在 Vercel 上使用 `@vercel/functions` 的 `waitUntil`，或 Cloudflare Workers 上的 `ctx.waitUntil`。详见下面示例。
 
 <Callout type="warn">
-  启用该功能会引入最终一致性，即响应返回的是乐观数据，数据库尚未更新。仅当你的应用能接受此权衡以换取延迟优化时启用。
+  启用该功能会引入最终一致性，即响应返回的是乐观数据，数据库尚未更新。仅当你的应用能接受这种权衡以换取延迟优化时启用。
 </Callout>
 
 <Tabs items={["Vercel", "Cloudflare Workers"]}>
@@ -800,20 +800,20 @@ export const auth = betterAuth({
 		user: {
 			create: {
 				before: async (user) => {
-					// 创建用户前修改数据
+					// 在创建用户之前修改数据
 					return { data: { ...user, customField: "value" } };
 				},
 				after: async (user) => {
-					// 创建用户后执行操作
+					// 在创建用户之后执行操作
 				}
 			},
 			update: {
 				before: async (userData) => {
-					// 更新用户前修改数据
+					// 在更新用户之前修改数据
 					return { data: { ...userData, updatedAt: new Date() } };
 				},
 				after: async (user) => {
-					// 更新用户后执行操作
+					// 在更新用户之后执行操作
 				}
 			}
 		},
@@ -914,7 +914,7 @@ export const auth = betterAuth({
 
 ## `hooks`
 
-请求生命周期钩子。
+Request lifecycle hooks.
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -923,11 +923,11 @@ import { createAuthMiddleware } from "better-auth/api";
 export const auth = betterAuth({
 	hooks: {
 		before: createAuthMiddleware(async (ctx) => {
-			// 请求处理前执行
+			// 执行于请求处理前
 			console.log("请求路径:", ctx.path);
 		}),
 		after: createAuthMiddleware(async (ctx) => {
-			// 请求处理后执行
+			// 执行于请求处理后
 			console.log("响应:", ctx.context.returned);
 		})
 	},

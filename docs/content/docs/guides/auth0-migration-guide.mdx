@@ -6,7 +6,7 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
 在本指南中，我们将介绍如何将项目从 Auth0 迁移到 Better Auth —— 包括支持适当哈希的邮箱/密码、社交/外部账户、双因素认证等。
 
 <Callout type="warn">
-  此迁移将使所有活跃会话失效。当前本指南未展示如何迁移组织，但可以通过额外步骤和 [组织](/docs/plugins/organization) 插件实现。
+  此迁移将使所有活动会话失效。当启用 [Organization](/docs/plugins/organization) 插件时，脚本还会尽力迁移 Auth0 组织、其成员以及每个成员的角色。邀请和已启用连接的配置不会被迁移，应在 Better Auth 中手动重新配置。
 </Callout>
 
 ## 迁移前准备
@@ -215,21 +215,21 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
         const date = new Date(milliseconds);
 
         if (isNaN(date.getTime())) {
-            console.warn(`Invalid timestamp: ${timestamp}, falling back to current date`);
+            console.warn(`无效的时间戳：${timestamp}，回退到当前日期`);
             return new Date();
         }
 
-        // Check for unreasonable dates (before 2000 or after 2100)
+        // 检查是否为不合理的日期（2000 年之前或 2100 年之后）
         const year = date.getFullYear();
         if (year < 2000 || year > 2100) {
-            console.warn(`Suspicious date year: ${year}, falling back to current date`);
+            console.warn(`可疑的年份：${year}，回退到当前日期`);
             return new Date();
         }
 
         return date;
     }
 
-    // Helper function to generate backup codes for 2FA
+    // 生成 2FA 备用验证码的辅助函数
     async function generateBackupCodes(secret: string) {
         const key = secret;
         const backupCodes = Array.from({ length: 10 })
@@ -248,7 +248,7 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
         if (typeof auth0Roles === 'string') return auth0Roles;
         if (Array.isArray(auth0Roles)) return auth0Roles.join(',');
     }
-    // Helper function to migrate password from Auth0 to Better Auth for custom hashes and algorithms
+    // 将 Auth0 中的密码迁移到 Better Auth 的辅助函数，适用于自定义哈希和算法
     async function migratePassword(auth0User: any) {
         if (auth0User.password_hash) {
             if (auth0User.password_hash.startsWith('$2a$') || auth0User.password_hash.startsWith('$2b$')) {
@@ -321,7 +321,7 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
                     });
                 }
             } catch (error) {
-                console.error(`Failed to migrate MFA factor for user ${userId}:`, error);
+                console.error(`为用户 ${userId} 迁移 MFA 因子失败：`, error);
             }
         }
     }
@@ -346,7 +346,7 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
                         tokenType: identity.token_type,
                         refreshToken: identity.refresh_token,
                         accessTokenExpiresAt: identity.expires_in ? new Date(Date.now() + identity.expires_in * 1000) : undefined,
-                        // If you are an enterprise user, you can obtain refresh tokens or all tokensets - auth0Client.users.getAllTokensets 
+                        // 如果你是企业用户，可以获取刷新令牌或全部 token set - auth0Client.users.federatedConnectionsTokensets.list(auth0User.user_id)
                         refreshTokenExpiresAt: identity.refresh_token_expires_in ? new Date(Date.now() + identity.refresh_token_expires_in * 1000) : undefined,
 
                         scope: identity.scope,
@@ -356,14 +356,14 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
                     },
                     forceAllowId: true
                 }).catch((error: Error) => {
-                    console.error(`Failed to create OAuth account for user ${userId} with provider ${providerId}:`, error);
+                    console.error(`为用户 ${userId} 使用提供者 ${providerId} 创建 OAuth 账户失败：`, error);
                     return ctx.adapter.create({
-                        // Try creating without optional fields if the first attempt failed
+                        // 如果第一次尝试失败，则尝试在不使用可选字段的情况下创建
                         model: "account",
                         data: {
                             id: `${auth0User.user_id}|${identity.provider}|${identity.user_id}`,
                             userId: userId,
-                            password: migratePassword(auth0User),
+                            password: await migratePassword(auth0User),
                             providerId: providerId,
                             accountId: identity.user_id,
                             accessToken: identity.access_token,
@@ -380,17 +380,24 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
                     });
                 });
 
-                console.log(`Successfully migrated OAuth account for user ${userId} with provider ${providerId}`);
+                console.log(`成功为用户 ${userId} 迁移了提供者 ${providerId} 的 OAuth 账户`);
             } catch (error) {
-                console.error(`Failed to migrate OAuth account for user ${userId}:`, error);
+                console.error(`为用户 ${userId} 迁移 OAuth 账户失败：`, error);
             }
         }
     }
 
     async function migrateOrganizations(ctx: any) {
         try {
-            const organizations = await auth0Client.organizations.getAll();
-            for (const org of organizations.data || []) {
+            const organizations: any[] = [];
+            let orgPage = await auth0Client.organizations.list({ take: 50 });
+            organizations.push(...orgPage.data);
+            while (orgPage.hasNextPage()) {
+                orgPage = await orgPage.getNextPage();
+                organizations.push(...orgPage.data);
+            }
+
+            for (const org of organizations) {
                 try {
                     await ctx.adapter.create({
                         model: "organization",
@@ -404,14 +411,29 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
                         },
                         forceAllowId: true
                     });
-                    const members = await auth0Client.organizations.getMembers({ id: org.id });
-                    for (const member of members.data || []) {
+
+                    const members: any[] = [];
+                    let memberPage = await auth0Client.organizations.members.list(org.id, { take: 50 });
+                    members.push(...memberPage.data);
+                    while (memberPage.hasNextPage()) {
+                        memberPage = await memberPage.getNextPage();
+                        members.push(...memberPage.data);
+                    }
+
+                    for (const member of members) {
                         try {
-                            const userRoles = await auth0Client.organizations.getMemberRoles({
-                                id: org.id,
-                                user_id: member.user_id
-                            });
-                            const role = mapAuth0RoleToBetterAuthRole(userRoles.data?.map(r => r.name) || []);
+                            const userRoles: any[] = [];
+                            let rolePage = await auth0Client.organizations.members.roles.list(
+                                org.id,
+                                member.user_id,
+                                { per_page: 50, page: 0 }
+                            );
+                            userRoles.push(...(rolePage.data || []));
+                            while (rolePage.hasNextPage()) {
+                                rolePage = await rolePage.getNextPage();
+                                userRoles.push(...(rolePage.data || []));
+                            }
+                            const role = mapAuth0RoleToBetterAuthRole(userRoles.map(r => r.name));
                             await ctx.adapter.create({
                                 model: "member",
                                 data: {
@@ -424,20 +446,20 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
                                 forceAllowId: true
                             });
 
-                            console.log(`Successfully migrated member ${member.user_id} for organization ${org.display_name || org.id}`);
+                            console.log(`成功迁移组织 ${org.display_name || org.id} 的成员 ${member.user_id}`);
                         } catch (error) {
-                            console.error(`Failed to migrate member ${member.user_id} for organization ${org.display_name || org.id}:`, error);
+                            console.error(`迁移组织 ${org.display_name || org.id} 的成员 ${member.user_id} 失败：`, error);
                         }
                     }
 
-                    console.log(`Successfully migrated organization: ${org.display_name || org.id}`);
+                    console.log(`成功迁移组织：${org.display_name || org.id}`);
                 } catch (error) {
-                    console.error(`Failed to migrate organization ${org.display_name || org.id}:`, error);
+                    console.error(`迁移组织 ${org.display_name || org.id} 失败：`, error);
                 }
             }
-            console.log('Organization migration completed');
+            console.log('组织迁移完成');
         } catch (error) {
-            console.error('Failed to migrate organizations:', error);
+            console.error('迁移组织失败：', error);
         }
     }
 
@@ -447,38 +469,31 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
             const isAdminEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "admin");
             const isUsernameEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "username");
             const isOrganizationEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "organization");
-            const perPage = 100;
             const auth0Users: any[] = [];
-            let pageNumber = 0;
 
-            while (true) {
-                try {
-                    const params = {
-                        per_page: perPage,
-                        page: pageNumber,
-                        include_totals: true,
-                    };
-                    const response = (await auth0Client.users.getAll(params)).data as any;
-                    const users = response.users || [];
-                    if (users.length === 0) break;
-                    auth0Users.push(...users);
-                    pageNumber++;
-
-                    if (users.length < perPage) break;
-                } catch (error) {
-                    console.error('Error fetching users:', error);
-                    break;
+            try {
+                let userPage = await auth0Client.users.list({
+                    per_page: 100,
+                    page: 0,
+                    include_totals: true,
+                });
+                auth0Users.push(...userPage.data);
+                while (userPage.hasNextPage()) {
+                    userPage = await userPage.getNextPage();
+                    auth0Users.push(...userPage.data);
                 }
+            } catch (error) {
+                console.error('获取用户时出错：', error);
             }
 
 
-            console.log(`Found ${auth0Users.length} users to migrate`);
+            console.log(`找到 ${auth0Users.length} 个要迁移的用户`);
 
             for (const auth0User of auth0Users) {
                 try {
-                    // Determine if this is a password-based or OAuth user
+                    // 确定这是基于密码的用户还是 OAuth 用户
                     const isOAuthUser = auth0User.identities?.some((identity: any) => identity.provider !== 'auth0');
-                    // Base user data that's common for both types
+                    // 两种类型通用的基础用户数据
                     const baseUserData = {
                         id: auth0User.user_id,
                         email: auth0User.email,
@@ -507,34 +522,33 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
                     });
 
                     if (!createdUser?.id) {
-                        throw new Error('Failed to create user');
+                        throw new Error('创建用户失败');
                     }
 
 
                     await migrateOAuthAccounts(auth0User, createdUser.id, ctx)
-                    console.log(`Successfully migrated user: ${auth0User.email}`);
+                    console.log(`成功迁移用户：${auth0User.email}`);
                 } catch (error) {
-                    console.error(`Failed to migrate user ${auth0User.email}:`, error);
+                    console.error(`迁移用户 ${auth0User.email} 失败：`, error);
                 }
             }
             if (isOrganizationEnabled) {
                 await migrateOrganizations(ctx);
             }
-            // the reset of migration will be here.
-            console.log('Migration completed successfully');
+            console.log('迁移成功完成');
         } catch (error) {
-            console.error('Migration failed:', error);
+            console.error('迁移失败：', error);
             throw error;
         }
     }
 
     migrateFromAuth0()
         .then(() => {
-            console.log('Migration completed');
+            console.log('迁移完成');
             process.exit(0);
         })
         .catch((error) => {
-            console.error('Migration failed:', error);
+            console.error('迁移失败：', error);
             process.exit(1);
         }); 
     ```
@@ -635,7 +649,7 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
 
       return (
         <form onSubmit={handleSignIn}>
-          <button type="submit">Sign in</button>
+          <button type="submit">登录</button>
         </form>
       );
     };
@@ -695,7 +709,7 @@ description: 从 Auth0 迁移到 Better Auth 的逐步指南。
 
 ### 速率限制
 
-迁移脚本包含分页功能，用于处理大量用户。请根据你的需求和 Auth0 的速率限制调整 `perPage` 值。
+迁移脚本包含分页处理以应对大量用户。请根据你的需求和 Auth0 的速率限制，调整传递给 Auth0 `list()` 调用的 `per_page`（偏移分页）和 `take`（检查点分页）值。
 
 ## 总结
 

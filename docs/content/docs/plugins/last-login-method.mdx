@@ -152,7 +152,7 @@ export function SignInPage() {
 
     插件会自动将 `lastLoginMethod` 字段添加到您的用户表中。运行迁移以应用更改：
 
-    <Tabs items={["migrate", "generate"]}>
+    <Tabs items={["迁移", "生成"]}>
       <Tab value="migrate">
         ```package-install
         npx auth@latest migrate
@@ -255,7 +255,15 @@ export const auth = betterAuth({
                 return null
             },
             
-            // 模式定制 (启用 storeInDatabase 时)
+            // GDPR 合规钩子
+            beforeStoreCookie: async (ctx, lastUsedLoginMethod) => {
+                // 检查用户是否已同意非必要 Cookie
+                // 返回 false 可阻止 Cookie 存储
+                const hasConsent = await checkUserCookieConsent(ctx)
+                return hasConsent
+            },
+            
+            // Schema 自定义（当 storeInDatabase 为 true 时）
             schema: {
                 user: {
                     lastLoginMethod: "custom_field_name"
@@ -279,15 +287,49 @@ export const auth = betterAuth({
 
 **storeInDatabase**: `boolean`
 
-* 是否将最后登录方式存储在数据库中
+* 是否将最后登录方式存储到数据库
 * 默认: `false`
-* 启用时，会在用户表中添加 `lastLoginMethod` 字段
+* 启用后，会向用户表添加一个 `lastLoginMethod` 字段
+* 如需仅将方式存储在数据库中（不使用 Cookie），可与 `beforeStoreCookie: () => false` 结合：
+
+```ts title="auth.ts"
+lastLoginMethod({
+    storeInDatabase: true,
+    beforeStoreCookie: () => false, // 从不设置非必要 Cookie
+})
+```
 
 **customResolveMethod**: `(ctx: GenericEndpointContext) => string | null`
 
 * 用于从请求上下文中确定登录方式的自定义函数
 * 返回 `null` 使用默认解析逻辑
 * 对自定义 OAuth 提供程序或身份验证流程很有用
+
+**beforeStoreCookie**: `(ctx: GenericEndpointContext, lastUsedLoginMethod: string) => Promise<boolean> | boolean`
+
+* 在存储上次登录方式 Cookie 之前运行的钩子函数
+* 返回 `true` 允许设置 Cookie，返回 `false` 则阻止设置
+* 适用于 GDPR 合规或其他要求 Cookie 存储需用户同意的法规
+* 如果函数抛出错误，Cookie 将不会被设置（会记录错误，但不会中断身份验证）
+* **示例**：在存储 Cookie 前检查用户同意
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+import { lastLoginMethod } from "better-auth/plugins"
+
+export const auth = betterAuth({
+    plugins: [
+        lastLoginMethod({
+            beforeStoreCookie: async (ctx, lastUsedLoginMethod) => {
+                // 检查用户是否已同意非必要 Cookie
+                // 这对 GDPR 合规很重要
+                const hasConsent = await checkUserCookieConsent(ctx)
+                return hasConsent
+            }
+        })
+    ]
+})
+```
 
 **schema**: `object`
 
@@ -303,8 +345,8 @@ import { lastLoginMethodClient } from "better-auth/client/plugins"
 export const authClient = createAuthClient({
     plugins: [
         lastLoginMethodClient({
-            cookieName: "better-auth.last_used_login_method", // Default: "better-auth.last_used_login_method"
-            domain: ".example.com" // Required for cross-subdomain cookie clearing
+            cookieName: "better-auth.last_used_login_method", // 默认: "better-auth.last_used_login_method"
+            domain: ".example.com" // 跨子域清除 Cookie 所必需
         })
     ]
 })
@@ -364,6 +406,44 @@ export const authClient = createAuthClient({
 })
 ```
 
+## GDPR 合规
+
+最后登录方式 cookie 在 GDPR 法规下被视为非必要 cookie。
+为了符合 GDPR 及类似隐私法规，只有在用户明确同意后，你才应该存储此 cookie。
+
+`beforeStoreCookie` 钩子允许你在存储 cookie 之前实现同意检查：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+import { lastLoginMethod } from "better-auth/plugins"
+
+export const auth = betterAuth({
+    plugins: [
+        lastLoginMethod({
+            beforeStoreCookie: async (ctx, lastUsedLoginMethod) => {
+                // 示例 1：从会话或数据库中检查同意
+                const session = await getSessionFromCtx(ctx)
+                if (session?.user) {
+                    // 用于访问数据库检查用户是否已同意的自定义函数
+                    const userConsent = await checkUserConsent(session.user.id)
+                    return userConsent?.allowsNonEssentialCookies ?? false
+                }
+
+                // 示例 2：从请求头（cookie 横幅）中检查同意
+                // 当没有同意时，parseConsentCookie 应返回 false/null/undefined
+                const consentCookie = ctx.request?.headers?.get("cookie")
+                const hasConsent = parseConsentCookie(consentCookie)
+                return !!hasConsent
+            }
+        })
+    ]
+})
+```
+
+<Callout type="warn">
+  当 `beforeStoreCookie` 返回 `false` 或抛出错误时，cookie 将不会被设置。认证仍然会正常成功 - 只会阻止 cookie 的存储。
+</Callout>
+
 ## 高级示例
 
 ### 自定义提供商跟踪
@@ -378,7 +458,7 @@ export const auth = betterAuth({
     plugins: [
         lastLoginMethod({
             customResolveMethod: (ctx) => {
-                // 跟踪自定义 SAML 提供商
+                // 跟踪自定义 SAML 提供程序
                 if (ctx.path === "/saml/callback") {
                     return "saml"
                 }

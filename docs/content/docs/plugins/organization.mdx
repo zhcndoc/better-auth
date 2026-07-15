@@ -171,7 +171,7 @@ export const auth = betterAuth({
       organizationHooks: {
         // 组织创建前钩子
         beforeCreateOrganization: async ({ organization, user }) => {
-          // 创建组织前运行自定义逻辑
+          // 在创建组织前运行自定义逻辑
           // 可选地修改组织数据
           return {
             data: {
@@ -201,7 +201,7 @@ export const auth = betterAuth({
         },
 
         afterUpdateOrganization: async ({ organization, user, member }) => {
-          // 同步更改到外部系统
+          // 将更改同步到外部系统
           await syncOrganizationToExternalSystems(organization);
         },
       },
@@ -817,11 +817,12 @@ const auth = betterAuth({
     organization({
       disableOrganizationDeletion: true, // 完全禁用删除功能
       organizationHooks: {
-        beforeDeleteOrganization: async (data, request) => {
-          // 删除组织前回调
+        beforeDeleteOrganization: async (data, ctx) => {
+          // 在删除组织之前运行的回调
+          // `ctx` 是端点上下文（例如 `ctx?.request`）
         },
-        afterDeleteOrganization: async (data, request) => {
-          // 删除组织后回调
+        afterDeleteOrganization: async (data, ctx) => {
+          // 在删除组织之后运行的回调
         },
       },
     }),
@@ -2150,9 +2151,9 @@ export const memberTableFields = [
 
 <DatabaseTable name="member" fields={memberTableFields} />
 
-### Invitation
+### 邀请
 
-Table name: `invitation`
+表名：`invitation`
 
 export const invitationTableFields = [
 	{
@@ -2354,7 +2355,7 @@ export const teamsFeatureTeamTableFields0 = [
 
 <DatabaseTable name="teamMember" fields={teamsFeatureTeamTableFields0} />
 
-表名：`invitation`
+表名：`邀请`
 
 export const teamsFeatureTeamTableFields1 = [
 	{
