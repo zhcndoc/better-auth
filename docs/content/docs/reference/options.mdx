@@ -3,7 +3,7 @@ title: 选项
 description: Better Auth 配置选项参考。
 ---
 
-Better Auth 配置的所有可用选项列表。详见 [Better Auth Options](https://github.com/better-auth/better-auth/blob/main/packages/core/src/types/init-options.ts)。
+Better Auth 配置的所有可用选项列表。详见 [Better Auth 选项](https://github.com/better-auth/better-auth/blob/main/packages/core/src/types/init-options.ts)。
 
 ## `appName`
 
@@ -136,21 +136,21 @@ export const auth = betterAuth({
 
 #### 模式语法
 
-| Pattern | Description                                          |
-| ------- | ---------------------------------------------------- |
-| `?`     | 匹配恰好一个字符（不包括 `/`）           |
-| `*`     | 匹配零个或多个不跨越 `/` 的字符 |
-| `**`    | 匹配零个或多个字符（包括 `/`）        |
+| 模式   | 描述                 |
+| ---- | ------------------ |
+| `?`  | 匹配恰好一个字符（不包括 `/`）  |
+| `*`  | 匹配零个或多个不跨越 `/` 的字符 |
+| `**` | 匹配零个或多个字符（包括 `/`）  |
 
 #### 模式示例
 
-| Pattern                  | Matches                                                                                  | Does Not Match                                      |
+| 模式                       | 匹配                                                                                       | 不匹配                                                 |
 | ------------------------ | ---------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | `http://*.example.com`   | `http://api.example.com`<br />`http://app.example.com`<br />`http://api.app.example.com` | `https://api.example.com`<br />`http://example.com` |
 | `https://**.example.com` | `https://api.example.com`<br />`https://api.app.example.com`                             | `http://api.example.com`                            |
 | `https://example.com`    | `https://example.com`<br />`https://example.com/path`                                    | `https://api.example.com`<br />`http://example.com` |
 | `exp://192.168.*.*:*/**` | `exp://192.168.1.100:8081/path`<br />`exp://192.168.50.200:19000/auth/callback`          | `exp://10.0.0.29:8081/path`                         |
-| `myapp://`               | 所有以 `myapp://` 开头的 URL                                                        | -                                                   |
+| `myapp://`               | 所有以 `myapp://` 开头的 URL                                                                   | -                                                   |
 
 <Callout type="info">
   **注意**
@@ -174,9 +174,11 @@ export const auth = betterAuth({
 默认情况下，Better Auth 会查找以下环境变量：
 
 * `process.env.BETTER_AUTH_SECRET`
+
 * `process.env.AUTH_SECRET`
 
 * `process.env.BETTER_AUTH_SECRET`
+
 * `process.env.AUTH_SECRET`
 
 如果两者都未设置，默认为 `"better-auth-secret-12345678901234567890"`。在生产环境中如果未设置将抛出错误。
@@ -317,7 +319,7 @@ export const auth = betterAuth({
 * `resetPasswordTokenExpiresIn`: 重置密码令牌的有效期（秒）（默认：`3600` 秒）
 * `onExistingUserSignUp`: 当有人使用已注册的邮箱进行注册时触发的回调。仅在 `requireEmailVerification` 为 `true` 或 `autoSignIn` 为 `false` 时调用（默认：`undefined`）。
 * `customSyntheticUser`: 用于邮箱枚举防护的自定义合成用户构建函数。当插件向用户表添加字段时请使用。参见 [邮箱枚举防护](/docs/authentication/email-password#plugins-that-add-user-fields)。
-* `password`: 自定义密码哈希与验证函数
+* `password`: 自定义密码哈希与验证函数。
 
 ## `socialProviders`
 
@@ -357,7 +359,7 @@ export const auth = betterAuth({
 * `verifyIdToken`: 验证 ID token 的自定义函数。接收 `(token, nonce?, ctx?)`，其中 `ctx` 是请求端点上下文（可选）。设置后会替换提供商内置的验证。
 * `disableIdTokenSignIn`: 禁用使用从客户端发送的 ID token 登录（可选）
 * `disableDefaultScope`: 禁用提供商的默认作用域（可选）
-* `authorizationEndpoint`: 自定义授权端点 URL（可选）
+* `authorizationEndpoint`: 自定义授权端点 URL（可选）。
 
 ## `plugins`
 
@@ -423,7 +425,7 @@ export const auth = betterAuth({
 * `fields`: 将字段映射到不同的列名
 * `additionalFields`: 用户表的附加字段
 * `changeEmail`: 更改邮箱的配置
-* `deleteUser`: 用户删除的配置
+* `deleteUser`: 用户删除的配置。
 
 ## `session`
 
@@ -462,7 +464,7 @@ export const auth = betterAuth({
 * `additionalFields`: 会话表的附加字段
 * `storeSessionInDatabase`: 在提供二级存储时，将会话存入数据库（默认：`false`）
 * `preserveSessionInDatabase`: 当从二级存储删除会话时，在数据库中保留会话记录（默认：`false`）
-* `cookieCache`: 启用在 cookie 中缓存会话
+* `cookieCache`: 启用在 cookie 中缓存会话。
 
 ## `account`
 
@@ -562,7 +564,7 @@ export const auth = betterAuth({
 * `modelName`: 验证表的模型名称
 * `fields`: 将字段映射到不同的列名
 * `disableCleanup`: 当获取某个验证值时，禁用清理过期值
-* `storeIdentifier`: 如何存储诸如 token 和 OTP key 之类的验证标识符。支持 `"plain"`, `"hashed"` 或自定义哈希器。你也可以使用 `{ default, overrides }` 来对每个标识符前缀应用不同策略。
+* `storeIdentifier`: 如何存储诸如 token 和 OTP key 之类的验证标识符。支持 `"plain"`、`"hashed"` 或自定义哈希器。你也可以使用 `{ default, overrides }` 来对每个标识符前缀应用不同策略。
 * `storeInDatabase`: 即使配置了 `secondaryStorage`，也将验证记录存入数据库。默认值：`false`。
 
 如果配置了 `secondaryStorage`，验证记录默认存储在二级存储中。此行为适用于使用 Better Auth 共享验证层的流程，包括 OTP 和魔法链接（magic-link）风格的流程。
@@ -694,7 +696,7 @@ export const auth = betterAuth({
 
 用于配置延迟操作的后台任务处理。后台任务允许非关键操作（如清理、分析、时序攻击缓解或速率限制计数更新）在响应发送后执行，显著提升无服务器平台的响应速度。
 
-例如：在 Vercel 上使用 `@vercel/functions` 的 `waitUntil`，或 Cloudflare Workers 上的 `ctx.waitUntil`。详见下面示例。
+一些示例包括 Vercel 上来自 `@vercel/functions` 的 `waitUntil`，以及 Cloudflare Workers 上来自 `cloudflare:workers` 的 `waitUntil`。更多详情请参阅下面的示例。
 
 <Callout type="warn">
   启用该功能会引入最终一致性，即响应返回的是乐观数据，数据库尚未更新。仅当你的应用能接受这种权衡以换取延迟优化时启用。
@@ -719,19 +721,15 @@ export const auth = betterAuth({
   <Tab value="Cloudflare Workers">
     ```ts
     import { betterAuth } from "better-auth";
-    import { AsyncLocalStorage } from "node:async_hooks";
-
-    const execCtxStorage = new AsyncLocalStorage<ExecutionContext>();
+    import { waitUntil } from "cloudflare:workers";
 
     export const auth = betterAuth({
       advanced: {
         backgroundTasks: {
-          handler: (p) => execCtxStorage.getStore()?.waitUntil(p),
+          handler: waitUntil,
         },
       },
     });
-
-    // 在请求处理中用 execCtxStorage.run(ctx, ...) 包裹
     ```
   </Tab>
 </Tabs>
@@ -880,41 +878,41 @@ export const auth = betterAuth({
 })
 ```
 
-* `throw`: 发生 API 错误时抛出异常（默认：`false`）
-* `onError`: 自定义错误处理函数
-* `errorURL`: 发生错误时重定向的 URL（默认：`/api/auth/error`）
-* `customizeDefaultErrorPage`: 配置 Better Auth 提供的默认错误页面。启动开发服务器并访问 `/api/auth/error` 查看错误页面。
-  * `colors`: 自定义错误页面的配色方案
-    * `background`: 背景颜色
-    * `foreground`: 前景/文本颜色
-    * `primary`: 主要强调色
-    * `primaryForeground`: 主要背景上的文本颜色
-    * `mutedForeground`: 弱化文本颜色
-    * `border`: 边框颜色
-    * `destructive`: 错误/破坏性颜色
-    * `titleBorder`: 标题的边框颜色
-    * `titleColor`: 标题文本颜色
-    * `gridColor`: 背景网格颜色
-    * `cardBackground`: 卡片背景颜色
-    * `cornerBorder`: 角落装饰的边框颜色
-  * `size`: 自定义尺寸和间距
-    * `radiusSm`: 小边框半径
-    * `radiusMd`: 中等边框半径
-    * `radiusLg`: 大边框半径
-    * `textSm`: 小文本大小
-    * `text2xl`: 2xl 文本大小
-    * `text4xl`: 4xl 文本大小
-    * `text6xl`: 6xl 文本大小
-  * `font`: 自定义字体族
-    * `defaultFamily`: 默认字体族
-    * `monoFamily`: 等宽字体族
-  * `disableTitleBorder`: 禁用标题周围的边框（默认：`false`）
-  * `disableCornerDecorations`: 禁用角落装饰（默认：`false`）
-  * `disableBackgroundGrid`: 禁用背景网格图案（默认：`false`）
+* `throw`：发生 API 错误时抛出异常（默认：`false`）
+* `onError`：自定义错误处理函数
+* `errorURL`：发生错误时重定向的 URL（默认：`/api/auth/error`）
+* `customizeDefaultErrorPage`：配置 Better Auth 提供的默认错误页面。启动开发服务器并访问 `/api/auth/error` 查看错误页面。
+  * `colors`：自定义错误页面的配色方案
+    * `background`：背景颜色
+    * `foreground`：前景/文本颜色
+    * `primary`：主要强调色
+    * `primaryForeground`：主要背景上的文本颜色
+    * `mutedForeground`：弱化文本颜色
+    * `border`：边框颜色
+    * `destructive`：错误/破坏性颜色
+    * `titleBorder`：标题的边框颜色
+    * `titleColor`：标题文本颜色
+    * `gridColor`：背景网格颜色
+    * `cardBackground`：卡片背景颜色
+    * `cornerBorder`：角落装饰的边框颜色
+  * `size`：自定义尺寸和间距
+    * `radiusSm`：小边框半径
+    * `radiusMd`：中等边框半径
+    * `radiusLg`：大边框半径
+    * `textSm`：小文本大小
+    * `text2xl`：2xl 文本大小
+    * `text4xl`：4xl 文本大小
+    * `text6xl`：6xl 文本大小
+  * `font`：自定义字体族
+    * `defaultFamily`：默认字体族
+    * `monoFamily`：等宽字体族
+  * `disableTitleBorder`：禁用标题周围的边框（默认：`false`）
+  * `disableCornerDecorations`：禁用角落装饰（默认：`false`）
+  * `disableBackgroundGrid`：禁用背景网格图案（默认：`false`）
 
 ## `hooks`
 
-Request lifecycle hooks.
+请求生命周期钩子。
 
 ```ts
 import { betterAuth } from "better-auth";

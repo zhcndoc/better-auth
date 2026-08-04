@@ -82,7 +82,7 @@ const { headers, response } = await auth.api.signUpEmail({
 
 ```ts
 const cookies = headers.getSetCookie();
-const headers = headers.get("x-custom-header");
+const customHeader = headers.get("x-custom-header");
 ```
 
 #### 获取 `Response` 对象

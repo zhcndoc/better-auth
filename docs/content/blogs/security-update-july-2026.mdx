@@ -1,0 +1,67 @@
+---
+title: "Auth.js 安全更新：2026 年 7 月"
+description: "本周期修复了 Auth.js 中的四项安全公告，涉及 @auth/core、next-auth v4 和 next-auth v5，并列出了各版本应更新到的版本。"
+date: 2026-07-21
+author:
+  name: "Better Auth 维护者"
+  avatar: ""
+tags: ["security", "advisories", "release", "authjs"]
+---
+
+# Auth.js 安全更新：2026 年 7 月
+
+确保 [Auth.js](https://authjs.dev)（NextAuth.js）的安全是我们工作的一部分。本周期我们修复了涉及 `@auth/core`、`next-auth` v4 和 `next-auth` v5 的四项安全公告。
+
+如果你使用了受影响的软件包，请更新到对应版本线的版本：
+
+* **`next-auth` v5**（`beta` 通道）→ **5.0.0-beta.32**
+* **`next-auth` v4**（`latest` 通道）→ **4.24.15**
+* **`@auth/core`** → **0.41.3**（`@auth/*` 框架和适配器软件包已按照各自的版本线重新发布，以纳入该版本）
+
+```bash title="终端"
+# next-auth v4
+pnpm add next-auth@latest
+
+# next-auth v5
+pnpm add next-auth@beta
+```
+
+如果你通过 `@auth/sveltekit`、`@auth/express` 或某个数据库适配器等框架或适配器软件包使用 `@auth/core`，请更新该软件包。每个 `@auth/*` 软件包都会精确固定 `@auth/core` 的版本，因此修复后的 core（`0.41.3`）会随软件包更新一同到达，而不是单独发布。
+
+我们专门的安全审查工作流涵盖报告分流、重点代码审查、自动化和人工扫描、变体分析、补丁审查、发布协调以及安全公告发布，现在也涵盖 Auth.js。
+
+## 已发布的安全公告
+
+下表涵盖了本周期发布的安全公告。完整的历史列表仍可在[安全公告选项卡](https://github.com/nextauthjs/next-auth/security/advisories)中查看。
+
+| 安全公告                                                                                                   | 领域                                 | 严重性 | 修复版本                                                              |
+| ------------------------------------------------------------------------------------------------------ | ---------------------------------- | --- | ----------------------------------------------------------------- |
+| [GHSA-7rqj-j65f-68wh](https://github.com/nextauthjs/next-auth/security/advisories/GHSA-7rqj-j65f-68wh) | Unicode 规范化之前验证电子邮件（同形异义字符 `@` 绕过） | 高   | `@auth/core@0.41.3`、`next-auth@4.24.15`、`next-auth@5.0.0-beta.32` |
+| [GHSA-xmf8-cvqr-rfgj](https://github.com/nextauthjs/next-auth/security/advisories/GHSA-xmf8-cvqr-rfgj) | `getToken` 在格式错误的授权标头上抛出异常         | 高   | `@auth/core@0.41.3`、`next-auth@4.24.15`、`next-auth@5.0.0-beta.32` |
+| [GHSA-x445-f3h2-j279](https://github.com/nextauthjs/next-auth/security/advisories/GHSA-x445-f3h2-j279) | OAuth 检查 Cookie 未绑定到其签发提供商         | 中   | `@auth/core@0.41.3`、`next-auth@4.24.15`、`next-auth@5.0.0-beta.32` |
+| [GHSA-8fpg-xm3f-6cx3](https://github.com/nextauthjs/next-auth/security/advisories/GHSA-8fpg-xm3f-6cx3) | 提供商配置错误时身份验证检查默认放行                 | 低   | `next-auth@5.0.0-beta.32`                                         |
+
+已为这些安全公告申请 CVE 标识符，并将在分配后添加到相应的安全公告中。每份安全公告都包含确切的受影响版本范围、修复版本和软件包名称。此表仅作为快速索引，不能替代安全公告正文。
+
+## 发布渠道
+
+这些软件包通过三个独立的渠道发布，具体采用哪种修复方式取决于你使用的是哪个渠道。
+
+* **`next-auth` v4** 是当前的 LTS 版本线，并通过 `latest` 标签发布。修复版本为 **4.24.15**。
+* **`next-auth` v5** 仍处于 beta 阶段，并通过 `beta` 标签发布。直接执行 `pnpm add next-auth@latest` 会解析到 v4 版本线，因此 v5 项目必须使用 `beta` 标签安装，才能获取 **5.0.0-beta.32**。此版本还固定使用 `@auth/core@0.41.3`。
+* **`@auth/core`** 发布版本为 **0.41.3**。严格固定 `@auth/core` 版本的 `@auth/*` 框架和适配器软件包，也已分别按照各自的版本线重新发布，以依赖修复后的 core 版本。
+
+仅 v5 中间件受到 fail-open 安全公告（GHSA-8fpg-xm3f-6cx3）的影响，因此该问题仅在 `5.0.0-beta.32` 中得到修复。其他三个安全公告直接影响 `@auth/core`，已在这三个渠道中全部修复。
+
+## 如何保持最新
+
+* **将 `next-auth` v4 项目更新至 `next-auth@latest`。** 截至本次更新，版本为 4.24.15。
+* **将 `next-auth` v5 项目更新至 `next-auth@beta`。** 截至本次更新，版本为 5.0.0-beta.32。
+* **更新你的 `@auth/*` 框架和适配器包。** 它们会精确固定 `@auth/core` 的版本，因此更新这些包会引入已修复的 0.41.3 版本。
+* **关注仓库发布信息。** [Releases 页面](https://github.com/nextauthjs/next-auth/releases)会显示每个版本。
+* **关注安全公告源。** [Security Advisories 选项卡](https://github.com/nextauthjs/next-auth/security/advisories)是受影响版本范围和已修复版本范围的权威来源。
+* **针对你的锁定文件运行审计工具。** GitHub Dependabot 和 `npm audit` 都会使用安全公告元数据。
+
+## 致谢
+
+感谢报告这些问题并测试修复方案的研究人员和用户。如果您在 Auth.js（NextAuth.js）中发现安全问题，请遵循[安全政策](https://github.com/nextauthjs/next-auth/security)，私下进行报告，以便我们在问题公开之前发布补丁。

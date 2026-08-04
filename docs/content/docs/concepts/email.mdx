@@ -5,23 +5,31 @@ description: 学习如何设置邮件验证、要求登录时验证邮件、验�
 
 邮件是 Better Auth 的关键部分，所有用户无论使用何种认证方式都必须使用邮件。Better Auth 开箱即用提供邮件和密码认证，并提供了很多工具帮助你管理邮件验证、密码重置等功能。
 
+## 自带电子邮件服务商
+
+Better Auth 可与任何事务性电子邮件服务商配合使用，让您完全掌控身份验证邮件的发送方式。要发送邮件，请先设置您偏好的服务商。
+
+例如，您可以考虑以下电子邮件服务商：
+
+* [Resend](https://resend.com/better-auth)
+
 ## 邮件验证
 
 ### 在你的应用中添加邮件验证
 
 要启用邮件验证，你需要传入一个发送验证邮件的函数，该邮件带有一个链接。
 
+* **sendVerificationEmail**：当邮件验证启动时触发的函数。它接收一个包含以下属性的数据对象：
+  * `user`：包含邮件地址的用户对象。
+  * `url`：用户必须点击以验证邮件的验证链接。
+  * `token`：验证令牌，用于完成邮件验证，可用于自定义验证链接的实现。
+
 - **sendVerificationEmail**：当邮件验证启动时触发的函数。它接收一个包含以下属性的数据对象：
-  - `user`：包含邮件地址的用户对象。
-  - `url`：用户必须点击以验证邮件的验证链接。
-  - `token`：验证令牌，用于完成邮件验证，可用于自定义验证链接的实现。
+  * `user`：包含邮件地址的用户对象。
+  * `url`：用户必须点击以验证邮件的验证 URL。
+  * `token`：用于完成邮件验证的验证令牌，可在实现自定义验证 URL 时使用。
 
-* **sendVerificationEmail**: This function is triggered when email verification starts. It accepts a data object with the following properties:
-  * `user`: The user object containing the email address.
-  * `url`: The verification URL the user must click to verify their email.
-  * `token`: The verification token used to complete the email verification to be used when implementing a custom verification URL.
-
-and a `request` object as the second parameter.
+以及作为第二个参数传入的 `request` 对象。
 
 ```ts title="auth.ts"
 import { betterAuth } from 'better-auth';
@@ -41,8 +49,7 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warn">
-  Avoid awaiting the email sending to prevent
-  timing attacks. On serverless platforms, use `waitUntil` or similar to ensure the email is sent.
+  避免等待邮件发送完成，以防止时序攻击。在无服务器平台上，请使用 `waitUntil` 或类似方法来确保邮件发送成功。
 </Callout>
 
 ### 触发邮件验证
@@ -51,7 +58,7 @@ export const auth = betterAuth({
 
 #### 1. 注册时
 
-To automatically send a verification email at signup, set `emailVerification.sendOnSignUp` to `true`.
+要在注册时自动发送验证邮件，请将 `emailVerification.sendOnSignUp` 设置为 `true`。
 
 ```ts title="auth.ts"
 import { betterAuth } from 'better-auth';
@@ -66,7 +73,7 @@ export const auth = betterAuth({
 这样用户注册时会发送验证邮件。对于社交登录，邮件验证状态会从 SSO 读取。
 
 <Callout>
-  With `sendOnSignUp` enabled, when the user logs in with an SSO that does not claim the email as verified, Better Auth will dispatch a verification email, but the verification is not required to login even when `requireEmailVerification` is enabled.
+  启用 `sendOnSignUp` 后，当用户使用未声明邮件已验证的 SSO 登录时，Better Auth 会发送验证邮件，但即使启用了 `requireEmailVerification`，用户仍然无需验证邮件即可登录。
 </Callout>
 
 #### 2. 强制邮件验证
@@ -74,7 +81,7 @@ export const auth = betterAuth({
 如果启用强制邮件验证，用户必须验证邮件后才能登录。每次用户尝试登录时，都会调用 `sendVerificationEmail`。
 
 <Callout>
-  This only works if you have `sendVerificationEmail` implemented, if `sendOnSignIn` is set to true and if the user is trying to sign in with email and password.
+  只有在实现了 `sendVerificationEmail`、将 `sendOnSignIn` 设置为 `true`，并且用户尝试使用邮件和密码登录时，此功能才会生效。
 </Callout>
 
 ```ts title="auth.ts"
@@ -199,7 +206,7 @@ export const auth = betterAuth({
 当有人尝试使用已经存在的邮箱注册时，会触发 `onExistingUserSignUp` 回调。这对于通知现有用户有人尝试使用他们的邮箱地址注册非常有用。
 
 <Callout>
-  This callback is only called when `emailAndPassword.requireEmailVerification` is set to `true`, which enables the generic duplicate response (synthetic user) instead of throwing a duplicate-email error.
+  仅当 `emailAndPassword.requireEmailVerification` 设置为 `true` 时，才会调用此回调。此设置会启用通用重复响应（合成用户），而不是抛出邮箱重复错误。
 </Callout>
 
 ```ts title="auth.ts"
@@ -241,8 +248,7 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warn">
-  Avoid awaiting the email sending to prevent
-  timing attacks. On serverless platforms, use `waitUntil` or similar to ensure the email is sent.
+  避免等待邮件发送完成，以防止计时攻击。在无服务器平台上，请使用 `waitUntil` 或类似机制来确保邮件能够发送。
 </Callout>
 
 更多关于如何在应用中实现密码重置的信息，请查看 [邮件和密码](/docs/authentication/email-password#request-password-reset) 指南。

@@ -31,7 +31,7 @@ npx auth@latest migrate
 
 ### 生成架构
 
-Better Auth 还提供了 `generate` 命令，用于生成 Better Auth 所需的架构。若你使用的是 Prisma 或 Drizzle 等数据库适配器，此命令会为你的 ORM 生成正确的架构。如果使用内置的 Kysely 适配器，它将生成一个 SQL 文件，可直接运行于你的数据库。
+Better Auth 还提供了用于生成 Better Auth 所需架构的 `generate` 命令。如果你使用 Prisma 或 Drizzle 等数据库适配器，此命令会为你的 ORM 生成正确的架构。如果你使用内置的 Kysely 适配器，它会生成一个可以直接在数据库上运行的 SQL 文件。
 
 ```package-install
 npx auth@latest generate
@@ -600,10 +600,11 @@ Better Auth 提供了类型安全的方式来扩展 `user` 和 `session` 架构�
 
 要添加自定义字段，请在身份验证配置的 `user` 或 `session` 对象中使用 `additionalFields` 属性。`additionalFields` 对象使用字段名作为键，值是一个包含以下属性的 `FieldAttributes` 对象：
 
-* `type`：字段的数据类型（例如 "string"、"number"、"boolean"）。
-* `required`：布尔值，指示该字段是否为必填项。
-* `defaultValue`：字段的默认值（注意：这仅在 JavaScript 层生效；在数据库中，该字段将是可选的）。
-* `input`：这决定了创建新记录时是否可以提供值（默认为 `true`）。如果有像 `role` 这样的额外字段，您不希望用户在注册期间设置它，可以将其设置为 `false`。
+* `type`：字段的数据类型（例如 `"string"`、`"number"`、`"boolean"`）。
+* `required`：一个布尔值，表示该字段是否为必填项。
+* `defaultValue`：字段的默认值（注意：这仅适用于 JavaScript 层；在数据库中，该字段仍为可选字段）。
+* `input`：Better Auth 在创建或更新记录时是否接受该字段（默认为 `true`）。对于用户字段，这包括来自 API 输入和 `mapProfileToUser` 的值。对于 `role` 等由服务器管理的字段，请将其设置为 `false`。
+* `returned`：Better Auth 是否在响应正文中包含存储的字段（默认为 `true`）。这不会影响输入是否可以写入该字段。
 
 以下是将用户架构扩展为包含额外字段的示例：
 
@@ -643,7 +644,7 @@ const res = await auth.api.signUpEmail({
 });
 
 // 用户对象
-res.user.role; // > "admin"
+res.user.role; // > "user"
 res.user.lang; // > "fr"
 ```
 
@@ -651,9 +652,16 @@ res.user.lang; // > "fr"
   有关如何在客户端推断额外字段信息的更多详细信息，请参阅 [TypeScript](/docs/concepts/typescript#inferring-additional-fields-on-client) 文档。
 </Callout>
 
-If you're using social / OAuth providers, you may want to provide `mapProfileToUser` to map the profile data to the user object. This can populate additional fields from the provider's profile when those fields allow input.
+对于 `user.additionalFields`，`input` 和 `returned` 是相互独立的：
 
-Fields marked `input: false` stay server-owned during OAuth provisioning. Provider profile values for those fields are ignored, and configured `defaultValue` values still apply when OAuth creates a user.
+| 配置                                  | 输入行为                                                                      | 响应行为     |
+| ----------------------------------- | ------------------------------------------------------------------------- | -------- |
+| `{ input: true, returned: true }`   | API 输入和提供商配置文件映射可以提供该字段。                                                  | 包含存储的字段。 |
+| `{ input: true, returned: false }`  | API 输入和提供商配置文件映射可以提供该字段。                                                  | 忽略存储的字段。 |
+| `{ input: false, returned: true }`  | API 输入和提供商配置文件映射无法提供该字段。配置的 `defaultValue` 可以对其进行初始化；否则请使用应用程序管理的数据库写入操作。 | 包含存储的字段。 |
+| `{ input: false, returned: false }` | API 输入和提供商配置文件映射无法提供该字段。配置的 `defaultValue` 可以对其进行初始化；否则请使用应用程序管理的数据库写入操作。 | 忽略存储的字段。 |
+
+如果您使用社交登录或 OAuth 提供商，`mapProfileToUser` 可以在这些字段允许输入时，从提供商配置文件中填充额外字段。映射器在您的服务器上运行，但 Better Auth 仍会将其返回值视为提供商输入。标记为 `input: false` 的字段仍由服务器管理，提供商为这些字段提供的值会被忽略，并且当 OAuth 创建用户时，配置的 `defaultValue` 值仍会生效。有关安全处理模式，请参阅[服务器管理的字段和授权声明](/docs/concepts/oauth#server-owned-fields-and-authorization-claims)。
 
 **将配置映射到用户的示例：映射 `firstName` 和 `lastName`**
 
@@ -823,7 +831,7 @@ export const auth = betterAuth({
 
 此配置允许您：
 
-* 使用数据库自动递增（serial、auto_increment 等）作为用户表
+* 使用数据库自动递增（serial、auto\_increment 等）作为用户表
 * 为所有其他表（session、account、verification）生成 UUID
 * 与使用不同 ID 类型的现有架构保持兼容
 
@@ -923,7 +931,7 @@ export const auth = betterAuth({
             // 您的自定义条件
             // 抛出 API 错误
             throw new APIError("BAD_REQUEST", {
-              message: "Users must agree to the terms of service before registering.",
+              message: "用户必须同意服务条款后才能注册。",
             });
           }
           return {

@@ -159,6 +159,13 @@ socialProviders: {
 
 将 `hd: "*"` 设置为允许任意 Google Workspace 主机域名。只要配置了 `hd`，没有 `hd` 声明的令牌都会被拒绝。
 
+<Callout type="warn">
+  自定义的 `getUserInfo` 回调会替换 Google 内置的回调路径 `hd`
+  检查。请从受信任的提供者响应中验证该声明，并在声明缺失或不匹配时返回 `null`。
+  直接使用 ID token 登录会遵循提供者的 ID token 验证路径，而 Google One Tap
+  会单独强制执行已配置的 `hd`。
+</Callout>
+
 ### 始终要求选择账户
 
 如果你希望始终要求用户选择账户，可以在提供者中传递 `prompt` 参数，并将其设置为 `select_account`。

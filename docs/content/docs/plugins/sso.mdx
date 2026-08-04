@@ -227,13 +227,13 @@ Better Auth 会自动从以下地址抓取并验证提供者的 [OpenID Connect 
 
 * `issuer`: `"https://your-org.okta.com"`
 * `token_endpoint`: `"/v1/tokens"`
-* normalized `token_endpoint`: `"https://your-org.okta.com/v1/tokens"`
+* 规范化的 `token_endpoint`: `"https://your-org.okta.com/v1/tokens"`
 
 具有基础路径的发行者和相对端点示例：
 
 * `issuer`: `"https://your-org.okta.com/v1"`
 * `token_endpoint`: `"/tokens"`
-* normalized `token_endpoint`: `"https://your-org.okta.com/v1/tokens"`
+* 规范化的 `token_endpoint`: `"https://your-org.okta.com/v1/tokens"`
 
 <Callout type="info">
   如果在 `oidcConfig` 中显式设置了这些字段，您的值将覆盖发现到的值。
@@ -249,9 +249,9 @@ Better Auth 会自动从以下地址抓取并验证提供者的 [OpenID Connect 
 trustedOrigins: ["https://your-org.okta.com"],
 ```
 
-如果需要支持多个已知的 IDP（例如 Okta），我们建议：
+如果需要支持多个已知的 IdP（例如 Okta），我们建议：
 
-1. 事先注册一批已知的 IDP 源：
+1. 事先注册一批已知的 IdP 源：
 
 ```ts
 trustedOrigins: [
@@ -298,16 +298,16 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
 
 如果身份提供者配置错误或无法访问，注册将失败并返回结构化错误：
 
-| 错误代码                      | 含义                                                                                                                             |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `issuer_mismatch`               | IdP 的发现文档报告的 `issuer` 与您配置的 `issuer` 不同                                                                               |
-| `discovery_incomplete`          | 必需字段（`authorization_endpoint`、`token_endpoint`、`jwks_uri`）缺失                                                             |
-| `discovery_not_found`           | 发现文档端点返回 404                                                                                                                |
-| `discovery_timeout`             | IdP 在超时窗口内（默认：10 秒）未响应                                                                                               |
-| `discovery_invalid_url`         | 发现 URL 格式错误或使用了不支持的协议                                                                                               |
-| `discovery_untrusted_origin`    | 发现 URL 或在此过程中解析到的任何 URL 未被应用的受信来源配置信任                                                                   |
-| `discovery_invalid_json`        | 发现响应为空或不是有效的 JSON                                                                                                       |
-| `unsupported_token_auth_method` | IdP 仅支持 Better Auth 不支持的令牌身份验证方法                                                                                     |
+| 错误代码                            | 含义                                                           |
+| ------------------------------- | ------------------------------------------------------------ |
+| `issuer_mismatch`               | IdP 的发现文档报告的 `issuer` 与您配置的 `issuer` 不同                      |
+| `discovery_incomplete`          | 必需字段（`authorization_endpoint`、`token_endpoint`、`jwks_uri`）缺失 |
+| `discovery_not_found`           | 发现文档端点返回 404                                                 |
+| `discovery_timeout`             | IdP 在超时窗口内（默认：10 秒）未响应                                       |
+| `discovery_invalid_url`         | 发现 URL 格式错误或使用了不支持的协议                                        |
+| `discovery_untrusted_origin`    | 发现 URL 或在此过程中解析到的任何 URL 未被应用的受信来源配置信任                        |
+| `discovery_invalid_json`        | 发现响应为空或不是有效的 JSON                                            |
+| `unsupported_token_auth_method` | IdP 仅支持 Better Auth 不支持的令牌身份验证方法                             |
 
 **支持的令牌身份验证方法：**
 
@@ -335,7 +335,7 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
 * 显式用户配置始终会覆盖发现结果
 * 如果 IdP 配置错误，注册会快速失败
 * 发现错误是结构化且定义明确的
-* 公共客户端 IdP 或模拟服务器可能需要覆盖 `tokenEndpointAuthentication`
+* 公共客户端 IdP 或模拟服务器可能需要覆盖 `tokenEndpointAuthentication`。
 
 ### 注册 SAML 提供者
 
@@ -691,23 +691,33 @@ const auth = betterAuth({
 `provisionUser` 函数接收：
 
 * **user**: 数据库中的用户对象
+
 * **userInfo**: SSO 提供者返回的用户信息（包含属性、邮箱、姓名等）
+
 * **token**: OAuth2 token（仅 OIDC 提供者，SAML 可能未定义）
+
 * **provider**: SSO 提供者配置
 
 * **user**：数据库中的用户对象
+
 * **userInfo**：SSO 提供者返回的用户信息（包含属性、邮箱、姓名等）
+
 * **token**：OAuth2 token（仅 OIDC 提供者，SAML 可能未定义）
+
 * **provider**：SSO 提供者配置
 
 ### 组织预置
 
 * 企业 SSO 场景，一个公司/域对应一个组织
+
 * 基于 SSO 属性自动角色分配
+
 * 通过 SSO 管理团队成员身份
 
 * 企业 SSO 场景，一个公司/域对应一个组织
+
 * 基于 SSO 属性自动角色分配
+
 * 通过 SSO 管理团队成员身份
 
 #### 基础组织预置
@@ -1043,11 +1053,11 @@ const auth = betterAuth({
 
 #### 选项说明
 
-| Option                         | Type      | Default          | Description                                                                                                                              |
-| ------------------------------ | --------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `enableInResponseToValidation` | `boolean` | `true`           | 为 SP 发起流程启用 InResponseTo 校验。                                                                                                   |
-| `allowIdpInitiated`            | `boolean` | `true`           | 允许 IdP 发起的 SSO（无 InResponseTo 的响应）。若要更严格的安全性请设为 `false`。仅在启用校验时适用。                                        |
-| `requestTTL`                   | `number`  | `300000` (5 min) | AuthnRequest 记录的生存时间（毫秒）。超过此时间的请求将被拒绝。                                                                           |
+| 选项                             | 类型        | 默认值            | 描述                                                                 |
+| ------------------------------ | --------- | -------------- | ------------------------------------------------------------------ |
+| `enableInResponseToValidation` | `boolean` | `true`         | 为 SP 发起流程启用 InResponseTo 校验。                                       |
+| `allowIdpInitiated`            | `boolean` | `true`         | 允许 IdP 发起的 SSO（无 InResponseTo 的响应）。若要更严格的安全性请设为 `false`。仅在启用校验时适用。 |
+| `requestTTL`                   | `number`  | `300000`（5 分钟） | AuthnRequest 记录的生存时间（毫秒）。超过此时间的请求将被拒绝。                             |
 
 #### 错误处理
 
@@ -1134,10 +1144,10 @@ const auth = betterAuth({
 
 #### 选项说明
 
-| Option              | Type      | Default          | Description                                                                                                                                  |
-| ------------------- | --------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `clockSkew`         | `number`  | `300000` (5 min) | 允许的时钟偏差，单位毫秒。用于容忍 IdP 与 SP 服务器间的时间差。                                                                              |
-| `requireTimestamps` | `boolean` | `false`          | 当为 `true` 时，未包含 `NotBefore`/`NotOnOrAfter` 条件的断言将被拒绝；当为 `false` 时，断言会被接受，但会记录警告。                             |
+| 选项                  | 类型        | 默认值            | 描述                                                                               |
+| ------------------- | --------- | -------------- | -------------------------------------------------------------------------------- |
+| `clockSkew`         | `number`  | `300000`（5 分钟） | 允许的时钟偏差，单位毫秒。用于容忍 IdP 与 SP 服务器间的时间差。                                             |
+| `requireTimestamps` | `boolean` | `false`        | 当为 `true` 时，未包含 `NotBefore`/`NotOnOrAfter` 条件的断言将被拒绝；当为 `false` 时，断言会被接受，但会记录警告。 |
 
 #### 何时启用 `requireTimestamps`
 
@@ -1196,11 +1206,11 @@ sso({
 })
 ```
 
-| Value      | 行为                                    |
-| ---------- | ------------------------------------------- |
-| `"warn"`   | 记录警告，允许认证（默认）                 |
-| `"reject"` | 抛出错误，阻止认证                         |
-| `"allow"`  | 静默，不进行校验                           |
+| 值          | 行为            |
+| ---------- | ------------- |
+| `"warn"`   | 记录警告，允许认证（默认） |
+| `"reject"` | 抛出错误，阻止认证     |
+| `"allow"`  | 静默，不进行校验      |
 
 生产环境严格配置示例：
 
@@ -1228,18 +1238,21 @@ sso({
 **废弃（触发警告/拒绝）：**
 
 * `RSA-SHA1`（签名）
+
 * `SHA1`（摘要）
+
 * `RSA 1.5`（密钥加密）
+
 * `3DES`（数据加密）
 
 * `SHA256`、`SHA384`、`SHA512`
 
 **废弃（触发警告/拒绝）：**
 
-| Option            | 默认值 | 描述                         |
-| ----------------- | ------- | ----------------------------------- |
-| `maxResponseSize` | 256KB   | 最大 SAML 响应大小（字节） |
-| `maxMetadataSize` | 100KB   | 最大 IdP 元数据大小（字节） |
+| 选项                | 默认值   | 描述               |
+| ----------------- | ----- | ---------------- |
+| `maxResponseSize` | 256KB | 最大 SAML 响应大小（字节） |
+| `maxMetadataSize` | 100KB | 最大 IdP 元数据大小（字节） |
 
 ### 尺寸限制
 
@@ -1459,7 +1472,9 @@ await authClient.signIn.sso({
 });
 ```
 
-回调路由自动支持 GET 和 POST，无需您额外创建路由处理。
+对于未请求的 **IdP 发起**流程，如果未使用 `signIn.sso()`（因此未设置客户端 `callbackURL`），请在提供者的 `samlConfig` 或全局 `saml` 插件选项中配置 `idpInitiatedCallbackUrl`。提供者级别的设置优先于全局设置，同样的回退机制也适用于验证错误重定向。Better Auth 生成的 `RelayState` 成功和错误回调具有更高的优先级。如果未配置任何回退选项，则保留现有的重定向行为。
+
+回调路由会自动支持 GET 和 POST 方法，因此您无需在所使用的框架中创建其他路由处理程序。
 
 ## Schema
 
@@ -1543,10 +1558,10 @@ Better Auth 支持 **IdP 发起的 SSO 流程**，用户从身份提供者仪表
 3. Better Auth 处理断言，创建会话，并重定向到你的应用
 4. 浏览器跟随重定向发起 GET 请求（自动处理）
 
-**无需额外配置**，回调接口自动支持 GET 和 POST。
+无需额外的路由处理器。回调路由会自动处理 GET 和 POST 请求。
 
 <Callout type="warn">
-  IdP 发起的流程不携带 RelayState，因此登录后的重定向会回退到你应用的基础 URL。要控制在 SP 发起的 SSO 之后用户落地到哪里，请在 `signIn.sso()` 调用中通过 `callbackURL` 传入目标地址。
+  IdP 发起的流程不包含由 Better Auth 生成的 RelayState，其中没有客户端回调 URL，因此重定向会回退到 Better Auth 基础 URL。在前端应用与 Better Auth 服务器位于不同源的拆分源设置中，这会跳转到身份验证服务器源，并可能导致 404。请在 `saml` 插件选项下全局配置 `idpInitiatedCallbackUrl`，或在每个提供商的 `samlConfig` 下进行配置（例如 `https://app.example.com/dashboard`），以便将成功登录和验证错误返回到前端。
 </Callout>
 
 <Callout type="info">

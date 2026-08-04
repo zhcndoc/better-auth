@@ -43,7 +43,7 @@ description: Facebook 提供者的设置和使用。
     </Callout>
 
     <Callout>
-      Facebook 即使在权限已授予的情况下，也可能不会返回 `email`（例如仅有手机号的账户、撤销同意，或 Meta 标记为无效的地址）。有关推荐的 `mapProfileToUser` 兜底处理，请参阅 [Handling Providers Without Email](/docs/concepts/oauth#handling-providers-without-email)。
+      Facebook 即使在权限已授予的情况下，也可能不会返回 `email`（例如仅有手机号的账户、撤销同意，或 Meta 标记为无效的地址）。有关推荐的 `mapProfileToUser` 兜底处理，请参阅[处理不提供电子邮件的提供者](/docs/concepts/oauth#handling-providers-without-email)。
     </Callout>
   </Step>
 
@@ -55,7 +55,7 @@ description: Facebook 提供者的设置和使用。
     * `provider`：要使用的提供者，应设置为 `facebook`。
 
     ```ts title="auth-client.ts"
-    import { createAuthClient } from "better-auth/auth-client"
+    import { createAuthClient } from "better-auth/client"
     const authClient = createAuthClient()
 
     const signIn = async () => {

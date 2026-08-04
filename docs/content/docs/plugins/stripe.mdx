@@ -15,7 +15,7 @@ Stripe 插件将 Stripe 的支付与订阅功能集成到 Better Auth 中。由�
 * 支持试用期和订阅升级
 * **自动试用期滥用防护** - 每个账户在所有计划中只能获得一次试用
 * 灵活的引用系统，用于关联订阅与用户或组织
-* 支持带席位管理的团队订阅
+* 支持带席位管理的团队订阅。
 
 ## 安装
 
@@ -53,7 +53,7 @@ Stripe 插件将 Stripe 的支付与订阅功能集成到 Better Auth 中。由�
     import Stripe from "stripe"
 
     const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-        apiVersion: "2026-03-25.dahlia", // Stripe SDK v22.0.0 最新的 API 版本
+        apiVersion: "2026-06-24.dahlia", // 截至 Stripe SDK v22.0.0 的最新 API 版本
     })
 
     export const auth = betterAuth({
@@ -441,13 +441,13 @@ stripe({
 
   Stripe 支持不同类型的取消，插件会追踪所有状态：
 
-  | 字段 | 描述 |
-  |------|------|
+  | 字段                  | 描述                                               |
+  | ------------------- | ------------------------------------------------ |
   | `cancelAtPeriodEnd` | 订阅是否（如果状态为 active）或已（如果状态为 canceled）在当前计费周期结束时取消 |
-  | `cancelAt` | 如果订阅计划被取消，这是取消生效的时间 |
-  | `canceledAt` | 如果订阅已被取消，这是取消的时间 |
-  | `endedAt` | 如果订阅已结束，这是订阅结束的日期 |
-  | `status` | 仅在订阅实际结束后更改为 "canceled" |
+  | `cancelAt`          | 如果订阅计划被取消，这是取消生效的时间                              |
+  | `canceledAt`        | 如果订阅已被取消，这是取消的时间                                 |
+  | `endedAt`           | 如果订阅已结束，这是订阅结束的日期                                |
+  | `status`            | 仅在订阅实际结束后更改为 "canceled"                          |
 </Callout>
 
 #### 恢复订阅
@@ -490,9 +490,9 @@ stripe({
   ```ts
   type createBillingPortal = {
       /**
-      * 客户门户显示的语言环境 IETF 标签。
-      * 如果未提供或设置为 "auto"，则使用浏览器语言环境。
-      */
+       * 客户门户显示的语言环境 IETF 标签。
+       * 如果未提供或设置为 "auto"，则使用浏览器语言环境。
+       */
       locale?: string
       /**
        * 订阅的引用 ID。
@@ -672,7 +672,7 @@ subscription: {
 
 ### 用户
 
-表名：`user`
+表名：`user`。
 
 export const stripeUserTableFields = [
 	{
@@ -838,48 +838,48 @@ stripe({
 
 ## 选项
 
-| 选项                       | 类型         | 说明                                                                                  |
-| ------------------------- | ------------ | ------------------------------------------------------------------------------------- |
-| `stripeClient`            | `Stripe`     | Stripe 客户端实例。**必需**。                                                        |
-| `stripeWebhookSecret`     | `string`     | Stripe webhook 签名密钥。**必需**。                                                  |
-| `createCustomerOnSignUp`  | `boolean`    | 用户注册时是否自动创建 Stripe 客户。默认：`false`。                                 |
-| `onCustomerCreate`        | `function`   | 客户创建后回调，参数 `{ stripeCustomer, user }` 和上下文。                           |
-| `getCustomerCreateParams` | `function`   | 自定义 Stripe 客户创建参数，参数是 `user` 和上下文。                                |
-| `onEvent`                 | `function`   | 收到任何 Stripe webhook 事件时回调，参数为 `Stripe.Event`。                         |
-| `subscription`            | `object`     | 订阅配置。详见下文 [订阅选项](#subscription-options)。                               |
-| `organization`            | `object`     | 启用组织客户支持。详见下文 [组织选项](#organization-options)。                       |
-| `schema`                  | `object`     | 自定义 Stripe 插件的数据库 schema。                                                  |
+| 选项                        | 类型         | 说明                                            |
+| ------------------------- | ---------- | --------------------------------------------- |
+| `stripeClient`            | `Stripe`   | Stripe 客户端实例。**必需**。                          |
+| `stripeWebhookSecret`     | `string`   | Stripe webhook 签名密钥。**必需**。                   |
+| `createCustomerOnSignUp`  | `boolean`  | 用户注册时是否自动创建 Stripe 客户。默认：`false`。             |
+| `onCustomerCreate`        | `function` | 客户创建后回调，参数 `{ stripeCustomer, user }` 和上下文。   |
+| `getCustomerCreateParams` | `function` | 自定义 Stripe 客户创建参数，参数是 `user` 和上下文。            |
+| `onEvent`                 | `function` | 收到任何 Stripe webhook 事件时回调，参数为 `Stripe.Event`。 |
+| `subscription`            | `object`   | 订阅配置。详见下文 [订阅选项](#subscription-options)。      |
+| `organization`            | `object`   | 启用组织客户支持。详见下文 [组织选项](#organization-options)。  |
+| `schema`                  | `object`   | 自定义 Stripe 插件的数据库 schema。                     |
 
 ### 订阅选项
 
-| Option                     | Type                         | Description                                                                                                                                                                |
-| -------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enabled`                  | `boolean`                    | 是否启用订阅功能。**必需。**                                                                                                                |
-| `plans`                   | `StripePlan[]` or `function` | 订阅计划数组，或返回计划的异步函数。启用时**必需**。                                                                           |
-| `requireEmailVerification` | `boolean`                    | 在允许订阅升级前是否要求邮箱验证。默认：`false`。                                                                             |
-| `authorizeReference`       | `function`                   | 授权 reference ID。接收 `{ user, session, referenceId, action }` 以及上下文。                                                                                    |
-| `getCheckoutSessionParams` | `function`                   | 自定义 Stripe Checkout 会话参数。接收 `{ user, session, plan, subscription }`、请求和上下文。                                                      |
-| `onSubscriptionComplete`   | `function`                   | 通过 checkout 创建订阅时调用。接收 `{ event, stripeSubscription, subscription, plan }` 和上下文。                                              |
-| `onSubscriptionCreated`    | `function`                   | 在 checkout 之外创建订阅时调用。接收 `{ event, stripeSubscription, subscription, plan }`。                                                      |
-| `onSubscriptionUpdate`     | `function`                   | 订阅更新时调用。接收 `{ event, subscription, stripeSubscription }`。像 `cancellation_details` 这类原始 Stripe 字段请使用 `stripeSubscription`。 |
-| `onSubscriptionCancel`     | `function`                   | 订阅取消时调用。接收 `{ event, subscription, stripeSubscription, cancellationDetails }`。                                                       |
-| `onSubscriptionDeleted`    | `function`                   | 订阅删除时调用。接收 `{ event, stripeSubscription, subscription }`。                                                                             |
+| 选项                         | 类型                          | 说明                                                                                                                        |
+| -------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`                  | `boolean`                   | 是否启用订阅功能。**必需。**                                                                                                          |
+| `plans`                    | `StripePlan[]` 或 `function` | 订阅计划数组，或返回计划的异步函数。启用时**必需**。                                                                                              |
+| `requireEmailVerification` | `boolean`                   | 在允许订阅升级前是否要求邮箱验证。默认：`false`。                                                                                              |
+| `authorizeReference`       | `function`                  | 授权 reference ID。接收 `{ user, session, referenceId, action }` 以及上下文。                                                        |
+| `getCheckoutSessionParams` | `function`                  | 自定义 Stripe Checkout 会话参数。接收 `{ user, session, plan, subscription }`、请求和上下文。                                               |
+| `onSubscriptionComplete`   | `function`                  | 通过 checkout 创建订阅时调用。接收 `{ event, stripeSubscription, subscription, plan }` 和上下文。                                          |
+| `onSubscriptionCreated`    | `function`                  | 在 checkout 之外创建订阅时调用。接收 `{ event, stripeSubscription, subscription, plan }`。                                              |
+| `onSubscriptionUpdate`     | `function`                  | 订阅更新时调用。接收 `{ event, subscription, stripeSubscription }`。像 `cancellation_details` 这类原始 Stripe 字段请使用 `stripeSubscription`。 |
+| `onSubscriptionCancel`     | `function`                  | 订阅取消时调用。接收 `{ event, subscription, stripeSubscription, cancellationDetails }`。                                            |
+| `onSubscriptionDeleted`    | `function`                  | 订阅删除时调用。接收 `{ event, stripeSubscription, subscription }`。                                                                 |
 
 #### 计划配置
 
-| Option                    | Type         | Description                                                                                                   |
-| ------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------- |
-| `name`                    | `string`     | 计划名称。**必需。**                                                                           |
-| `priceId`                 | `string`     | Stripe price ID。除非使用 `lookupKey`，否则为**必需**。                                                   |
-| `lookupKey`               | `string`     | Stripe price lookup key。可替代 `priceId`。                                                        |
-| `annualDiscountPriceId`   | `string`     | 年付账单的 price ID。                                                                                |
-| `annualDiscountLookupKey` | `string`     | 年付账单的 Stripe price lookup key。                                                               |
-| `limits`                  | `object`     | 计划限制（例如 `{ projects: 10, storage: 5 }`）。                                                        |
-| `group`                   | `string`     | 用于对计划分组的组名。                                                                          |
-| `seatPriceId`             | `string`     | 按席位计费的 price ID。需要 `organization` 插件。                                                |
+| 选项                        | 类型           | 说明                                                                     |
+| ------------------------- | ------------ | ---------------------------------------------------------------------- |
+| `name`                    | `string`     | 计划名称。**必需。**                                                           |
+| `priceId`                 | `string`     | Stripe price ID。除非使用 `lookupKey`，否则为**必需**。                            |
+| `lookupKey`               | `string`     | Stripe price lookup key。可替代 `priceId`。                                 |
+| `annualDiscountPriceId`   | `string`     | 年付账单的 price ID。                                                        |
+| `annualDiscountLookupKey` | `string`     | 年付账单的 Stripe price lookup key。                                         |
+| `limits`                  | `object`     | 计划限制（例如 `{ projects: 10, storage: 5 }`）。                               |
+| `group`                   | `string`     | 用于对计划分组的组名。                                                            |
+| `seatPriceId`             | `string`     | 按席位计费的 price ID。需要 `organization` 插件。                                  |
 | `prorationBehavior`       | `string`     | 订阅更新时的按比例计费行为：`"create_prorations"`（默认）、`"always_invoice"` 或 `"none"`。 |
-| `lineItems`               | `LineItem[]` | 在 checkout 会话中包含的附加条目。                                                     |
-| `freeTrial`               | `object`     | 试用配置。见[下文](#free-trial-configuration)。                                                  |
+| `lineItems`               | `LineItem[]` | 在 checkout 会话中包含的附加条目。                                                 |
+| `freeTrial`               | `object`     | 试用配置。见[下文](#free-trial-configuration)。                                 |
 
 <Callout type="info">
   Stripe 不支持通过 Checkout Sessions 进行 [混合计费周期订阅](https://docs.stripe.com/billing/subscriptions/mixed-interval)。checkout 中的所有条目都应使用**相同的计费周期**（例如全部按月或全部按年）。如果周期不同，Stripe API 会拒绝该请求。
@@ -887,26 +887,26 @@ stripe({
 
 #### 免费试用配置
 
-| Option           | Type       | Description                                                                          |
-| ---------------- | ---------- | ------------------------------------------------------------------------------------ |
-| `days`           | `number`   | 试用天数。**必需。**                                                  |
-| `onTrialStart`   | `function` | 试用开始时调用。接收 `subscription`。                                 |
-| `onTrialEnd`     | `function` | 试用结束时调用。接收 `{ subscription }` 和上下文。                   |
+| 选项               | 类型         | 说明                                  |
+| ---------------- | ---------- | ----------------------------------- |
+| `days`           | `number`   | 试用天数。**必需。**                        |
+| `onTrialStart`   | `function` | 试用开始时调用。接收 `subscription`。          |
+| `onTrialEnd`     | `function` | 试用结束时调用。接收 `{ subscription }` 和上下文。 |
 | `onTrialExpired` | `function` | 试用在未转化时过期调用。接收 `subscription` 和上下文。 |
 
 ### 组织选项
 
-| Option                    | Type       | Description                                                                                                |
-| ------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
-| `enabled`                 | `boolean`  | 启用组织客户支持。**必需。**                                                        |
-| `getCustomerCreateParams` | `function` | 自定义组织的 Stripe 客户创建参数。接收 `organization` 和上下文。      |
+| 选项                        | 类型         | 说明                                                    |
+| ------------------------- | ---------- | ----------------------------------------------------- |
+| `enabled`                 | `boolean`  | 启用组织客户支持。**必需。**                                      |
+| `getCustomerCreateParams` | `function` | 自定义组织的 Stripe 客户创建参数。接收 `organization` 和上下文。          |
 | `onCustomerCreate`        | `function` | 组织客户创建后调用。接收 `{ stripeCustomer, organization }` 和上下文。 |
 
 ## 高级用法
 
 ### 与组织插件一起使用
 
-Stripe 插件集成了 [organization 插件](/docs/plugins/organization)，支持组织作为 Stripe 客户。订阅的计费对象由个人用户转为组织，适合 B2B 场景。
+Stripe 插件集成了 [组织插件](/docs/plugins/organization)，支持组织作为 Stripe 客户。订阅的计费对象由个人用户转为组织，适合 B2B 场景。
 
 <Callout type="info">
   **启用组织客户时：**
@@ -1102,6 +1102,7 @@ subscription: {
 4. 用户将立即支付 Premium 计划费用
 
 **示例：**
+
 1. 用户订阅“Starter”计划，有 7 天试用
 2. 用户试用后取消订阅
 3. 用户尝试订阅“Premium”计划，试用被禁止
@@ -1115,18 +1116,18 @@ subscription: {
 
 若 Webhook 未正确处理：
 
-1. 确认 Stripe 仪表盘中配置的 Webhook URL 是否正确  
-2. 验证 Webhook 签名密钥是否正确  
-3. 检查是否勾选了全部必需事件  
-4. 查看服务器日志是否有处理错误  
+1. 确认 Stripe 仪表盘中配置的 Webhook URL 是否正确
+2. 验证 Webhook 签名密钥是否正确
+3. 检查是否勾选了全部必需事件
+4. 查看服务器日志是否有处理错误
 
 ### 订阅状态异常
 
 若订阅状态未正确更新：
 
-1. 确认 Webhook 事件已接收并处理  
-2. 确认 `stripeCustomerId` 与 `stripeSubscriptionId` 是否正确填写  
-3. 核对应用中引用 ID 是否与 Stripe 一致  
+1. 确认 Webhook 事件已接收并处理
+2. 确认 `stripeCustomerId` 与 `stripeSubscriptionId` 是否正确填写
+3. 核对应用中引用 ID 是否与 Stripe 一致
 
 ### 本地测试 Webhook
 

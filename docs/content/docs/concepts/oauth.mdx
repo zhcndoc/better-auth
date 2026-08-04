@@ -275,15 +275,15 @@ Better Auth 目前要求每条用户记录都必须有电子邮件地址。大�
 
 下表总结了每个受影响的提供商：何时可能缺少 `email`、在 `mapProfileToUser` 中可作为回退的稳定标识符，以及对提供商 `email_verified` 信号的可信度。
 
-| Provider           | When `email` may be absent                                                                                                                                               | Stable fallback ID                                  | `email_verified` trust                                                                                                                                              |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Apple              | 每次登录（除首次外）（Apple 只会在首次同意时发出 `email`）                                                                                                                 | `profile.sub`（对每个 Apple Team 稳定）             | 可靠；中继地址也会被标记为已验证                                                                                                                                    |
-| Discord            | 仅有手机号的账号；未授予 `email` scope                                                                                                                                    | `profile.id`（雪花 ID）                             | 可靠（有专门的 `verified` 字段）                                                                                                                                     |
-| Facebook           | 即使授予了 `email` 权限，文件中也没有有效邮箱                                                                                                                             | `profile.id`（应用作用域）                          | 未知：Graph API 不提供按邮箱的验证标志                                                                                                                               |
-| GitHub             | 用户将邮箱设为私密；GitHub App 缺少 “Email addresses” 权限                                                                                                              | `profile.id`（数字）                                | 可靠                                                                                                                                                                |
-| LinkedIn           | 成员没有已确认邮箱；未授予 `email` scope                                                                                                                                | `profile.sub`（每个应用成对唯一）                   | 存在时可靠                                                                                                                                                           |
-| Microsoft Entra ID | 未管理用户没有 `mail` 属性，除非将 `email` 配置为 [可选声明](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims)                                  | `profile.oid` 加 `profile.tid`（或 `profile.sub`） | **不可信**：Microsoft [明确警告](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference) 不要将其用于授权 |
-| Roblox             | 默认的 Roblox 资料流程不会返回邮箱；Better Auth 目前回退到 `preferred_username`                                                                                        | `profile.sub`（Roblox 用户 ID）                    | 默认资料流程下未知                                                                                                                                                |
+| Provider           | When `email` may be absent                                                                                          | Stable fallback ID                             | `email_verified` trust                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Apple              | 每次登录（除首次外）（Apple 只会在首次同意时发出 `email`）                                                                                | `profile.sub`（对每个 Apple Team 稳定）               | 可靠；中继地址也会被标记为已验证                                                                                                       |
+| Discord            | 仅有手机号的账号；未授予 `email` scope                                                                                          | `profile.id`（雪花 ID）                            | 可靠（有专门的 `verified` 字段）                                                                                                 |
+| Facebook           | 即使授予了 `email` 权限，文件中也没有有效邮箱                                                                                         | `profile.id`（应用作用域）                            | 未知：Graph API 不提供按邮箱的验证标志                                                                                               |
+| GitHub             | 用户将邮箱设为私密；GitHub App 缺少 “Email addresses” 权限                                                                        | `profile.id`（数字）                               | 可靠                                                                                                                     |
+| LinkedIn           | 成员没有已确认邮箱；未授予 `email` scope                                                                                         | `profile.sub`（每个应用成对唯一）                        | 存在时可靠                                                                                                                  |
+| Microsoft Entra ID | 未管理用户没有 `mail` 属性，除非将 `email` 配置为 [可选声明](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims) | `profile.oid` 加 `profile.tid`（或 `profile.sub`） | **不可信**：Microsoft [明确警告](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference) 不要将其用于授权 |
+| Roblox             | 默认的 Roblox 资料流程不会返回邮箱；Better Auth 目前回退到 `preferred_username`                                                        | `profile.sub`（Roblox 用户 ID）                    | 默认资料流程下未知                                                                                                              |
 
 ### 使用 `mapProfileToUser` 合成占位邮箱
 
@@ -458,11 +458,9 @@ export const auth = betterAuth({
 
 ### mapProfileToUser
 
-一个自定义函数，将提供商返回的用户信息映射到数据库中的用户对象。
+使用 `mapProfileToUser` 更改默认的用户映射，或根据提供商个人资料填充其他用户字段。
 
-当你希望从提供商的资料中填充用户对象的额外字段，或改变默认的映射方式时非常有用。
-
-`mapProfileToUser` 遵循 `user.additionalFields` 的输入规则。它可以填充允许输入的额外字段，但在 OAuth 注册、登录时的个人资料覆盖以及账户关联时的资料同步过程中，会忽略提供商为标记为 `input: false` 的字段提供的值。请使用服务端预置代码来设置由服务器管理的字段，例如角色、封禁状态或内部标记。
+Better Auth 会将该函数的返回值视为提供商输入，尽管该函数是在你的服务器上运行的。它会在 OAuth 注册、登录时覆盖个人资料，以及账户关联时同步个人资料的过程中，应用 `user.additionalFields` 中的输入规则。允许输入的映射字段会被解析并存储，而对于标记为 `input: false` 的字段，其映射值会被忽略。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -485,11 +483,20 @@ export const auth = betterAuth({
 ```
 
 <Callout type="info">
-  你可能希望在 `mapProfileToUser` 中向用户对象传入额外字段，
-  为此，你必须配置 `user.additionalFields` [选项](/docs/concepts/database#extending-core-schema)
-  并允许这些字段作为输入。
-  （对于无状态认证方案，同样适用）
+  在 `user.additionalFields`
+  [选项](/docs/concepts/database#extending-core-schema)中声明映射字段，
+  并允许这些字段作为输入。无状态身份验证配置同样适用此规则。
 </Callout>
+
+#### 服务器拥有的字段与授权声明
+
+将角色、封禁状态、内部标记和组织成员身份等安全敏感字段设置为 `input: false`。不要仅为了让 `mapProfileToUser` 持久化提供商声明就启用输入，因为同一设置也会允许通用注册和用户更新请求提供该字段。
+
+`input` 和 `returned` 控制不同的方向。例如，`{ input: false, returned: true }` 定义了一个可读取的服务器拥有字段。API 输入和 `mapProfileToUser` 无法提供该字段，但 Better Auth 会在响应中包含其存储的值。
+
+如果提供商声明决定了谁可以登录，请在 Better Auth 完成 OAuth 登录之前执行该策略。不要等到登录完成后再检查，因为 Better Auth 可能已经签发了有效会话。提供商存在专用选项时，优先使用该选项，例如 Google 提供商用于限制 Google Workspace 域名的 [`hd` 选项](/docs/authentication/google#restrict-sign-in-to-google-workspace)。对于调用 [`getUserInfo`](/docs/concepts/oauth#getuserinfo) 的流程，可以通过自定义实现验证提供商响应，并在策略验证失败时返回 `null`。对于不调用 `getUserInfo` 的独立登录路径，也要配置等效的强制执行逻辑。
+
+如果还需要存储经过验证的声明，请将字段保持为 `input: false`，并使用应用程序的数据库层写入该字段。仅当静态值适用于通过该身份验证配置创建的每个用户时，才使用 `defaultValue`；不要将其用于存储从提供商个人资料中派生的值。
 
 ### refreshAccessToken
 
