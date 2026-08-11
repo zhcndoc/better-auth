@@ -41,7 +41,7 @@ Better Auth 包含多重防护措施以防止跨站请求伪造（CSRF）攻击�
 2. **来源验证**
    每个请求的 `Origin` 头部都会被验证，以确认它来自您的应用或其他明确受信任的来源。来自不可信来源的请求会被拒绝。默认情况下，Better Auth 信任您应用的基础 URL，但您可以通过 `trustedOrigins` 配置选项指定其他受信任的来源。
 
-3. **安全 Cookie 设置**  
+3. **安全 Cookie 设置**\
    会话 Cookie 默认使用 `SameSite=Lax` 属性，防止浏览器在大多数跨站请求中发送 Cookie。您可以通过 `defaultCookieAttributes` 选项覆盖此行为。
 
 4. **首次登录的 Fetch Metadata 防护**
@@ -87,7 +87,7 @@ Better Auth 提供了两个独立选项，用于禁用不同方面的安全检�
 ```
 
 <Callout type="warning">
-禁用 CSRF 检查将允许任意来源的请求携带 Cookie 并以用户身份执行操作，这会使您的应用暴露于 CSRF 攻击风险。
+  禁用 CSRF 检查将允许任意来源的请求携带 Cookie 并以用户身份执行操作，这会使您的应用暴露于 CSRF 攻击风险。
 </Callout>
 
 #### `disableOriginCheck`
@@ -108,19 +108,19 @@ Better Auth 提供了两个独立选项，用于禁用不同方面的安全检�
 ```
 
 <Callout type="warning">
-禁用来源检查将允许任意 URL 用于重定向和回调，这会使您的应用暴露于开放重定向漏洞。
+  禁用来源检查将允许任意 URL 用于重定向和回调，这会使您的应用暴露于开放重定向漏洞。
 </Callout>
 
 <Callout type="info">
-为保持向后兼容，设置 `disableOriginCheck: true` 也会禁用 CSRF 保护。如果您只想禁用 URL 验证而不影响 CSRF 保护，目前尚不可行——启用此选项时，两者会被一起禁用。
+  为保持向后兼容，设置 `disableOriginCheck: true` 也会禁用 CSRF 保护。如果您只想禁用 URL 验证而不影响 CSRF 保护，目前尚不可行——启用此选项时，两者会被一起禁用。
 </Callout>
 
 #### 总结
 
-| 选项 | 禁用的内容 |
-|------|------------|
-| `disableCSRFCheck` | 仅 CSRF 保护（来源头部验证、Fetch Metadata 检查） |
-| `disableOriginCheck` | URL 验证以及 CSRF 保护（向后兼容） |
+| 选项                   | 禁用的内容                               |
+| -------------------- | ----------------------------------- |
+| `disableCSRFCheck`   | 仅 CSRF 保护（来源头部验证、Fetch Metadata 检查） |
+| `disableOriginCheck` | URL 验证以及 CSRF 保护（向后兼容）              |
 
 ## OAuth 状态与 PKCE
 
@@ -170,7 +170,7 @@ Better Auth 使用客户端 IP 地址进行速率限制和安全监控。默认�
 {
   advanced: {
     ipAddress: {
-      // your proxies' addresses, not a broad private range that also covers clients
+      // 您的代理地址，而不是也涵盖客户端的宽泛私有地址范围
       trustedProxies: ['192.0.2.10', '10.0.0.0/24']
     }
   }
@@ -199,7 +199,7 @@ Better Auth 使用客户端 IP 地址进行速率限制和安全监控。默认�
 ```
 
 <Callout type="warning">
-仅当您信任到达应用程序的代理头部时才启用此选项。您的反向代理或负载均衡器必须正确配置以设置 `X-Forwarded-Host` 和 `X-Forwarded-Proto` 头部，且终端用户不得能够直接设置这些头部。如果不可信客户端伪造这些头部，他们可能会操纵重定向和回调 URL。
+  仅当您信任到达应用程序的代理头部时才启用此选项。您的反向代理或负载均衡器必须正确配置以设置 `X-Forwarded-Host` 和 `X-Forwarded-Proto` 头部，且终端用户不得能够直接设置这些头部。如果不可信客户端伪造这些头部，他们可能会操纵重定向和回调 URL。
 </Callout>
 
 启用后，基础 URL 解析优先级如下：
@@ -215,9 +215,9 @@ Better Auth 使用客户端 IP 地址进行速率限制和安全监控。默认�
 * 设置 **`trustedOrigins`** 为允许域名白名单（见下文）
 * 保持 `crossSubDomainCookies` 已禁用——Cookie 默认仅限主机，每个域拥有独立会话
 
-- **省略配置中的 `baseURL`**，使其基于代理头按请求动态推断  
-- 将 **`trustedOrigins`** 设为您批准域名的白名单（见下文）  
-- 保持 `crossSubDomainCookies` 未启用——默认 Cookie 仅限于主机，每个域拥有独立会话
+- **省略配置中的 `baseURL`**，使其基于代理头按请求动态推断
+- 将 **`trustedOrigins`** 设为您批准域名的白名单（见下文）
+- 保持 `crossSubDomainCookies` 未启用——默认 Cookie 仅限于主机，每个域拥有独立会话。
 
 ## 受信任来源
 
@@ -238,7 +238,7 @@ Better Auth 使用客户端 IP 地址进行速率限制和安全监控。默认�
 ```
 
 <Callout type="warning">
-不要在生产环境的认证实例的受信任来源列表中保留 localhost 来源。
+  不要在生产环境的认证实例的受信任来源列表中保留 localhost 来源。
 </Callout>
 
 ### 通配符来源
@@ -302,11 +302,11 @@ Better Auth 支持受信任来源中的通配符模式，允许通过单条规�
   **重要**：此函数将在每次传入请求时调用，因此如果您决定动态获取可信域名列表，请务必小心。
 </Callout>
 
-## Outbound OAuth Requests
+## 出站 OAuth 请求
 
 在登录过程中，Better Auth 会向 OAuth 和 OIDC 提供方端点发起服务器端请求：令牌交换、令牌刷新、令牌自省以及密钥集（JWKS）请求。这些请求不会跟随 HTTP 重定向。符合规范的提供方会以直接响应方式回答这些端点，并且绝不会重定向，因此标准集成不会受到影响。拒绝重定向可以防止提供方端点将服务器端请求引导到非预期的内部地址。
 
-## Email Enumeration Protection
+## 邮箱枚举保护
 
 Better Auth 在注册和更改邮箱端点防止邮箱枚举。当启用 `requireEmailVerification` 或 `autoSignIn` 设置为 `false` 时，注册端点对已注册和未注册邮箱返回相同的 `200` 响应，遵循 [OWASP 认证最佳实践](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-and-error-messages)。通过模拟密码哈希处理重复注册请求以减缓时间攻击。
 
@@ -314,4 +314,4 @@ Better Auth 在注册和更改邮箱端点防止邮箱枚举。当启用 `requir
 
 ## 安全漏洞报告
 
-如果您发现 Better Auth 的安全漏洞，请通过 [security@better-auth.com](mailto:security@better-auth.com) 向我们报告。我们将及时处理所有报告，并对经验证的漏洞发现予以鸣谢。
+如果您发现 Better Auth 存在安全漏洞，请通过 [GitHub Security Advisories](https://github.com/better-auth/better-auth/security/advisories/new) 进行报告。我们会及时处理所有报告，并为经验证的发现者提供致谢。

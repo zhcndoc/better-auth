@@ -52,7 +52,20 @@ npx auth@latest init
 * `--database` - 要使用的数据库。目前唯一支持的数据库是 `SQLite`。
 * `--package-manager` - 要使用的包管理器。目前唯一支持的包管理器是 `npm`、`pnpm`、`yarn`、`bun`（默认为初始化 CLI 时使用的包管理器）。
 
-## 信息 (Info)
+## 升级
+
+`upgrade` 命令会将较旧版本的 `better-auth` 和官方 `@better-auth/*` 依赖更新到当前运行的 CLI 版本。版本相同或更高的依赖保持不变。
+
+```package-install title="Terminal"
+npx auth@latest upgrade
+```
+
+### 选项
+
+* `--cwd` - 包含要更新的 `package.json` 的项目目录。默认为当前目录。
+* `--yes` - 跳过确认提示，直接安装更新。
+
+## 信息
 
 `info` 命令提供 Better Auth 设置和环境的诊断信息，适合调试和寻求帮助时共享。
 
@@ -98,10 +111,10 @@ CLI 还提供了生成 Better Auth 实例密钥的方法。
 npx auth@latest secret
 ```
 
-## 常见问题 (Common Issues)
+## 常见问题 (常见问题)
 
 **错误：无法找到模块 X**
 
-The CLI resolves most imports for you: `tsconfig.json` path aliases (including SvelteKit's `$lib`) and stubbed framework virtual modules (`$env/*`, `$app/*`, `cloudflare:workers`, Vite assets like `?raw`). For SvelteKit, run `svelte-kit sync` first so `.svelte-kit/tsconfig.json` exists.
+CLI 会为你解析大多数导入：`tsconfig.json` 路径别名（包括 SvelteKit 的 `$lib`）以及框架提供的虚拟模块存根（`$env/*`、`$app/*`、`cloudflare:workers`，以及带有 `?raw` 的 Vite 资源）。对于 SvelteKit，请先运行 `svelte-kit sync`，以确保 `.svelte-kit/tsconfig.json` 存在。
 
-A few module types can't load outside their bundler (e.g. `.svelte` components or `import.meta.glob`). Keep those out of your config file's import graph.
+有少数模块类型无法在其打包器环境之外加载（例如 `.svelte` 组件或 `import.meta.glob`）。请不要将这些模块放入配置文件的导入依赖图中。
