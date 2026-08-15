@@ -425,7 +425,7 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
                     privateKeyPass: "your-sp-private-key-password",
                     isAssertionEncrypted: true,
                     encPrivateKey: "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----",
-                    encPrivateKeyPass: "your-sp-encryption-key-password"
+                    encPrivateKeyPass: "your-encryption-key-password"
                 },
                 mapping: {
                     id: "nameID",
@@ -801,7 +801,12 @@ await auth.api.registerSSOProvider({
 });
 ```
 
-来自 `acmecorp.com` 的用户登录此提供者时，自动加入 Acme Corp 组织并分配对应角色。
+通过此提供者登录的用户会自动加入“Acme
+Corp”组织，因为该提供者已明确关联到该组织。通过其他登录方式基于域名进行的分配，则需要域名验证、已验证且存储的用户邮箱，以及一个明确的组织匹配项。
+
+<Callout type="info">
+  自动 SSO 预置不会接受或取消待处理的邀请。受邀用户必须先完成现有的邀请流程，之后 Better Auth 才会为同一组织创建自动成员身份。
+</Callout>
 
 #### 自助 SSO 管理面板
 
@@ -1322,9 +1327,11 @@ sso({ redirectURI: "https://login.example.com/callback" })
 
 ## 域名验证
 
-域名验证让您的应用自动信任新的 SSO 提供者，通过关联域名自动验证所有权。
+域名验证允许您的应用在验证每个关联域名的所有权后信任新的 SSO 提供者。
 
 验证域名后，该域对应的提供者被允许 **自动账户关联**。即用户使用 SSO 登录且邮箱匹配已存在账户时，会自动关联两者，前提是用户邮箱的域名已通过验证。
+
+在用户通过另一个身份提供者（例如社交提供者）登录后，域名验证也是自动分配组织所必需的。Better Auth 使用已存储用户的已验证邮箱，并且仅在已验证域名恰好映射到一个组织时分配该组织。
 
 <Tabs items={["client", "server"]}>
   <Tab value="client">
@@ -1377,7 +1384,11 @@ sso({ redirectURI: "https://login.example.com/callback" })
 
 请参考 [Schema](#if-you-have-enabled-domain-verification) 部分手动添加字段。
 
-### 验证您的域
+<Callout type="info">
+  禁用域名验证后，Better Auth 不会根据电子邮件域名匹配关系创建组织成员资格。通过明确关联到某个组织的提供者登录仍会正常配置，而 `signIn.sso` 仍会通过电子邮件或域名解析提供者。
+</Callout>
+
+### 验证您的域名
 
 启用域名验证后，每个新的 SSO 提供者一开始都会是不受信任的。
 这意味着在域名所有权验证完成之前，不允许新的注册或登录。
@@ -1416,6 +1427,8 @@ sso({ redirectURI: "https://login.example.com/callback" })
 
 配置好 DNS 记录后，您可以通过 `auth` 实例提交域名验证请求。
 请求会判定所有权是否验证成功，验证完成则标记该 SSO 提供者对应域名为已验证。
+
+验证会应用于请求开始时提供者的确切域名配置。如果在 DNS 验证进行期间提供者被更新或删除，请求会返回带有 `SSO_PROVIDER_CHANGED` 代码的 `409` 响应。重新加载提供者，确认其当前域名，然后重试验证。如果当前提供者没有有效的验证令牌，请先申请新的令牌。
 
 <APIMethod path="/sso/verify-domain" method="POST" requireSession>
   ```ts
@@ -1583,13 +1596,13 @@ Better Auth 支持 **IdP 发起的 SSO 流程**，用户从身份提供者仪表
 * **defaultOverrideUserInfo**：默认用提供者信息覆盖用户信息。
 * **disableImplicitSignUp**：禁用隐式自动注册，需显式请求注册。
 
-**provisionUserOnEveryLogin**: 如果为 `true`，则每次登录都会调用 `provisionUser` 回调，而不只是新用户注册时。默认值为 `false`。
+**provisionUserOnEveryLogin**：如果为 `true`，则每次登录都会调用 `provisionUser` 回调，而不只是新用户注册时。默认值为 `false`。
 
-**organizationProvisioning**: 将用户预置到组织中的选项。
+**organizationProvisioning**：将用户预置到组织中的选项。
 
-**defaultOverrideUserInfo**: 默认用提供者信息覆盖用户信息。
+**defaultOverrideUserInfo**：默认用提供者信息覆盖用户信息。
 
-**disableImplicitSignUp**: 禁用隐式注册。
+**disableImplicitSignUp**：禁用隐式注册。
 
 如果您想为特定受信任的提供者允许账户关联，请在 auth 配置中启用 `accountLinking` 选项，并在 `trustedProviders` 列表中指定这些提供者。
 

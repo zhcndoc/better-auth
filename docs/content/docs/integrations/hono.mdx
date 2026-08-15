@@ -3,184 +3,185 @@ title: Hono 集成
 description: 将 Better Auth 集成到 Hono 中。
 ---
 
-在开始之前，请确保你已经配置了 Better Auth 实例。如果还没有，请查看[安装指南](/docs/installation)。
+Hono 和 Better Auth 都使用 Web Standard `Request` 和 `Response` API，因此你可以直接在 Hono 应用中挂载 Better Auth，而无需适配器。
 
-### 挂载处理器
+开始之前，请确保你已配置 Better Auth 实例。如果还没有，请按照[安装指南](/docs/installation)操作。
 
-我们需要将处理器挂载到 Hono 的端点。
+## 设置
 
-```ts
+### 创建 Hono 应用
+
+如果你要开始一个新项目，请创建一个 Hono 应用，并为你的运行时或平台选择模板：
+
+```package-install
+npx create-hono@latest
+```
+
+如果你已经有 Hono 应用，则可以跳过此步骤。请参阅[create-hono 文档](https://hono.dev/docs/guides/create-hono)了解可用的模板和选项，或参阅 Hono 的[入门指南](https://hono.dev/docs/getting-started/basic)了解特定运行时的设置和部署。
+
+### 挂载 Auth 处理程序
+
+将高亮显示的路由添加到现有的 Hono 应用中：
+
+```ts title="src/index.ts"
 import { Hono } from "hono";
 import { auth } from "./auth";
-import { serve } from "@hono/node-server";
 
 const app = new Hono();
 
-app.on(["POST", "GET"], "/api/auth/*", (c) => {
-	return auth.handler(c.req.raw);
-});
+app.all("/api/auth/*", (c) => auth.handler(c.req.raw)); // [!code highlight]
 
-serve(app);
+export default app;
 ```
 
-### 跨域资源共享 (Cors)
+这样就完成了将 Better Auth 连接到 Hono 所需的全部操作！
 
-要配置 CORS，你需要使用 `hono/cors` 提供的 `cors` 插件。
+如果你使用的是其他运行时，请保留现有入口点，并添加相同的 `app.all()` 路由。
 
-```ts
+`app.all()` 使用来自 `c.req.raw` 的原始 Web Standard `Request` 将每个 HTTP 方法转发给 Better Auth。Better Auth 会验证方法，并返回一个由 Hono 直接发送的 `Response`。请在任何可能先处理请求的全捕获路由之前注册 Auth 路由。
+
+<Callout type="info">
+  最终的 Hono 路由必须匹配你的 Better Auth `basePath`，其默认值为 `/api/auth`。如果你的应用已经使用了 `new
+      Hono().basePath("/api")`，请将 Better Auth 挂载到 `/auth/*`：
+
+  ```ts
+  const app = new Hono().basePath("/api");
+
+  app.all("/auth/*", (c) => auth.handler(c.req.raw));
+  ```
+</Callout>
+
+### 其他配置
+
+#### Cloudflare Workers
+
+Better Auth 使用 `AsyncLocalStorage`。请将 [`nodejs_compat` 兼容性标志](https://developers.cloudflare.com/workers/configuration/compatibility-flags/#nodejs-compatibility-flag)添加到你的 Wrangler 配置中：
+
+```jsonc title="wrangler.jsonc"
+{
+  // Use "nodejs_als" instead if you only need AsyncLocalStorage.
+  "compatibility_flags": ["nodejs_compat"],
+}
+```
+
+## CORS
+
+要允许跨源身份验证请求，请在 Better Auth 路由之前注册 Hono 的[CORS 中间件](https://hono.dev/docs/middleware/builtin/cors)：
+
+```ts title="src/index.ts"
 import { Hono } from "hono";
+import { cors } from "hono/cors"; // [!code highlight]
 import { auth } from "./auth";
-import { serve } from "@hono/node-server";
-import { cors } from "hono/cors";
- 
+
 const app = new Hono();
 
-app.use(
-	"/api/auth/*", // 或替换为 "*" 以启用所有路由的 cors
-	cors({
-		origin: "http://localhost:3001", // 替换为你的源地址
-		allowHeaders: ["Content-Type", "Authorization"],
-		allowMethods: ["POST", "GET", "OPTIONS"],
-		exposeHeaders: ["Content-Length"],
-		maxAge: 600,
-		credentials: true,
-	}),
-);
+app.use( // [!code highlight]
+	"/api/auth/*", // [!code highlight]
+	cors({ // [!code highlight]
+		origin: "http://localhost:3001", // [!code highlight]
+		credentials: true, // [!code highlight]
+	}), // [!code highlight]
+); // [!code highlight]
 
-app.on(["POST", "GET"], "/api/auth/*", (c) => {
-	return auth.handler(c.req.raw);
-});
+app.all("/api/auth/*", (c) => auth.handler(c.req.raw));
 
-serve(app);
+export default app;
 ```
 
-> **重要提示：** CORS 中间件必须在路由之前注册。这确保跨域请求在到达认证端点前能够被正确处理。
+将相同的源添加到 Better Auth 的 `trustedOrigins` 配置中：
 
-### 中间件
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
 
-你可以添加一个中间件，用于将 `session` 和 `user` 保存在 `context` 中，并且为每个路由添加验证。
+export const auth = betterAuth({
+	trustedOrigins: ["http://localhost:3001"], // [!code highlight]
+});
+```
 
-```ts
-import { Hono } from "hono";
+启用 `credentials` 后，请配置明确的 CORS 源，而不是使用 `*`，并将相同的源添加到 Better Auth 的 `trustedOrigins` 中。请参阅 [Cookies](/docs/concepts/cookies) 了解跨域和跨子域 Cookie 的行为。
+
+## 中间件
+
+你还可以使用自定义中间件，通过 Hono 的上下文提供当前会话：
+
+```ts title="src/session-middleware.ts"
+import { createMiddleware } from "hono/factory";
 import { auth } from "./auth";
-import { serve } from "@hono/node-server";
-import { cors } from "hono/cors";
- 
-const app = new Hono<{
+
+type Env = {
 	Variables: {
-		user: typeof auth.$Infer.Session.user | null;
-		session: typeof auth.$Infer.Session.session | null;
-	}
-}>();
+		session: typeof auth.$Infer.Session | null;
+	};
+};
 
-app.use("*", async (c, next) => {
-	const session = await auth.api.getSession({ headers: c.req.raw.headers });
-
-  	if (!session) {
-    	c.set("user", null);
-    	c.set("session", null);
-    	await next();
-        return;
-  	}
-
-  	c.set("user", session.user);
-  	c.set("session", session.session);
-  	await next();
-});
-
-app.on(["POST", "GET"], "/api/auth/*", (c) => {
-	return auth.handler(c.req.raw);
-});
-
-serve(app);
-```
-
-这样你就可以在所有路由中访问 `user` 和 `session` 对象了。
-
-```ts
-app.get("/session", (c) => {
-	const session = c.get("session");
-	const user = c.get("user");
-	
-	if (!user) return c.body(null, 401);
-
-  	return c.json({
-	  session,
-	  user,
+export const sessionMiddleware = createMiddleware<Env>(async (c, next) => {
+	const session = await auth.api.getSession({
+		headers: c.req.raw.headers,
 	});
+
+	c.set("session", session);
+
+	await next();
 });
 ```
 
-### 跨域 Cookie
+将中间件添加到任何需要访问当前会话的路由：
 
-默认情况下，所有 Better Auth 的 Cookie 都设置为 `SameSite=Lax`。如果你需要跨不同域使用 Cookie，则需要将 `SameSite` 设置为 `None` 且 `Secure=true`。不过我们建议尽可能使用子域名，这样就可以保持 `SameSite=Lax`。要启用跨子域 Cookie，只需在你的认证配置中开启 `crossSubDomainCookies`。
+```ts title="src/index.ts"
+import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
+import { sessionMiddleware } from "./session-middleware";
 
-```ts title="auth.ts"
-export const auth = createAuth({
-  advanced: {
-    crossSubDomainCookies: {
-      enabled: true
-    }
-  }
-})
-```
+const app = new Hono();
 
-如果你仍然需要设置 `SameSite=None` 和 `Secure=true`，可以通过 `createAuth` 配置里的 `cookieOptions` 全局调整这些属性。
+app.get("/hello", sessionMiddleware, (c) => {
+	const session = c.get("session");
 
-```ts title="auth.ts"
-export const auth = createAuth({
-  advanced: {
-    defaultCookieAttributes: {
-      sameSite: "none",
-      secure: true,
-      partitioned: true // 新浏览器标准会强制要求此项用于跨域 Cookie
-    }
-  }
-})
-```
+	if (!session) {
+		throw new HTTPException(401);
+	}
 
-你也可以在 `cookies` 中单独为各个 Cookie 自定义属性。
-
-```ts title="auth.ts"
-export const auth = createAuth({
-  advanced: {
-    cookies: {
-      sessionToken: {
-        attributes: {
-          sameSite: "none",
-          secure: true,
-          partitioned: true // 新浏览器标准会强制要求此项用于跨域 Cookie
-        }
-      }
-    }
-  }
-})
-```
-
-### 客户端配置
-
-当使用 Hono 客户端（`@hono/client`）请求受 Better Auth 保护的端点时，需要配置其发送带有凭证（Cookies）的跨域请求。
-
-```ts title="api.ts"
-import { hc } from "hono/client";
-import type { AppType } from "./server"; // 你的 Hono 应用类型
-
-const client = hc<AppType>("http://localhost:8787/", {
-  init: {
-    credentials: "include", // 发送跨域 Cookie 必需
-  },
+	return c.json({ message: `Hello, ${session.user.name}.` });
 });
 
-// 现在你的客户端请求将包含凭证
-const response = await client.someProtectedEndpoint.$get();
+export default app;
 ```
 
-这在以下情况下是必要的：
+此示例将中间件应用于单个路由。有关其他模式，请参阅 Hono 的[中间件指南](https://hono.dev/docs/guides/middleware)。
 
-* 你的客户端和服务器在开发期间位于不同的域/端口
-* 你正在进行跨域请求
-* 你需要发送认证 Cookie
+## Hono RPC
 
-`credentials: "include"` 选项告诉 fetch 客户端即使是跨域请求也要发送 Cookie。这需要服务器端的 CORS 配置允许凭证，即设置了 `credentials: true`。
+Better Auth 客户端默认使用 `credentials: "include"`。如果你使用 Hono RPC 从其他源调用需要身份验证的 Hono 路由，请将 RPC 客户端配置为同样包含凭据：
 
-> **注意：** 确保你的服务器端 CORS 配置与客户端域名匹配，并且 `credentials: true` 在服务器的 CORS 配置和客户端的 fetch 配置中都已设置。
+<Tabs items={["Client", "Server"]}>
+  <Tab value="Client">
+    ```ts title="src/client.ts"
+    import { hc } from "hono/client";
+    import type { AppType } from "./server";
+
+    const client = hc<AppType>("http://localhost:8787", {
+        init: { // [!code highlight]
+            credentials: "include", // [!code highlight]
+        }, // [!code highlight]
+    });
+
+    const response = await client.hello.$get();
+    ```
+  </Tab>
+
+  <Tab value="Server">
+    ```ts title="src/server.ts"
+    import { Hono } from "hono";
+
+    // Assume this route requires an authenticated session. // [!code highlight]
+    const app = new Hono().get("/hello", (c) => {
+        return c.json({ message: "Hello!" });
+    });
+
+    export type AppType = typeof app;
+    export default app;
+    ```
+  </Tab>
+</Tabs>
+
+此配置仅适用于跨源请求。有关更多信息，请参阅 Hono 的[RPC Cookie 指南](https://hono.dev/docs/guides/rpc#cookies)。
