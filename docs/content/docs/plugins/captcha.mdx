@@ -84,9 +84,9 @@ description: 验证码插件
 
 ## 插件选项
 
-* **`provider` (必需)**: 您的验证码提供者。
-* **`secretKey` (必需)**: 用于服务器端验证的提供者密钥。
-* `endpoints` (可选): 替换默认的受验证码验证保护的路径数组。如果设置，则仅指定的路径会受到保护。默认值为 `["/sign-up/email", "/sign-in/email", "/request-password-reset"]`。
-* `minScore` (可选 - 仅 *Google ReCAPTCHA v3*): 最低分数阈值。默认值为 `0.5`。
-* `siteKey` (可选 - 仅 *hCaptcha* 和 *CaptchaFox*): 防止使用一个站点密钥生成的令牌在另一处兑换。
-* `siteVerifyURLOverride` (可选): 覆盖验证码验证请求的端点 URL。
+* **`provider`（必填）**：您的验证码提供商。
+* **`secretKey`（必填）**：您的提供商用于服务端验证的密钥。
+* `endpoints`（可选）：替换强制执行验证码验证的默认路径数组。如果设置，则仅保护指定的路径。除非路径包含通配符，否则路径必须完全匹配，例如 `/sign-in/*` 匹配一个层级，`/sign-in/**` 匹配嵌套路由。默认值为 `["/sign-up/email", "/sign-in/email", "/request-password-reset"]`。
+* `minScore`（可选 — 仅适用于 *Google ReCAPTCHA v3*）：最低分数阈值。默认值为 `0.5`。
+* `siteKey`（可选 — 仅适用于 *hCaptcha* 和 *CaptchaFox*）：防止在一个 sitekey 上签发的令牌在其他位置被兑换。
+* `siteVerifyURLOverride`（可选）：覆盖验证码验证请求的端点 URL。

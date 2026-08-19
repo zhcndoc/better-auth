@@ -1,50 +1,68 @@
 ---
 title: MCP
-description: 用于 Better Auth 的 MCP 提供者插件
+description: 将您的 Better Auth 服务器变成 MCP 客户端的 OAuth 提供商
 ---
 
 `OAuth` `MCP`
 
-<Callout type="warn">
-  该插件很快将被弃用，转而使用 [OAuth 提供者插件](/docs/plugins/oauth-provider)。
-</Callout>
+**MCP** 插件可让您的应用充当 [Model Context Protocol](https://modelcontextprotocol.io) 客户端的 OAuth 授权服务器和受保护资源。它基于 [OAuth 2.1 Provider](/docs/plugins/oauth-provider) 构建，因此 MCP 客户端可以发现您的端点，并通过标准 OAuth 流程获取与资源绑定的访问令牌。
 
-**MCP** 插件让你的应用可以作为 MCP 客户端的 OAuth 提供者。它处理认证，并简化了为 MCP 应用颁发和管理访问令牌的流程。
+`mcp()` 会为 OAuth 提供商配置 MCP 资源绑定，并提供 [RFC 9728](https://datatracker.ietf.org/doc/html/rfc9728) 受保护资源元数据。对于 MCP 2026-07-28 配置文件，请将其与 [Client ID Metadata Documents](/docs/plugins/cimd) 组合使用，并选择固定使用 CIMD draft-00 的配置文件。MCP 已弃用 Dynamic Client Registration（DCR），因此 Better Auth 绝不会隐式启用 DCR。
 
-<Callout type="warn">
-  该插件基于 OIDC 提供者插件。将来它会迁移到 OAuth 提供者插件。
+<Callout>
+  安装 `@better-auth/mcp`、推荐的 `@better-auth/cimd` 配套软件包，以及官方 MCP TypeScript SDK 的第 2 版。
 </Callout>
 
 ## 安装
 
 <Steps>
   <Step>
-    ### 添加插件
+    ### 安装软件包
 
-    将 MCP 插件添加到你的认证配置中，并指定登录页面路径。
+    ```package-install
+    @better-auth/mcp @better-auth/cimd @modelcontextprotocol/server zod
+    ```
+  </Step>
+
+  <Step>
+    ### 配置授权
+
+    将 MCP 插件与 [JWT 插件](/docs/plugins/jwt) 一起添加到您的身份验证配置中。JWT 插件是必需的：它提供用于 ID 令牌和访问令牌的稳定签名密钥，并暴露资源服务器用来验证令牌的 `/jwks` 端点。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";
-    import { mcp } from "better-auth/plugins"; // [!code highlight]
+    import { jwt } from "better-auth/plugins"; // [!code highlight]
+    import { cimd } from "@better-auth/cimd"; // [!code highlight]
+    import { mcp } from "@better-auth/mcp"; // [!code highlight]
+    import { fetchClientMetadataResource } from "@better-auth/cimd/node"; // [!code highlight]
 
     export const auth = betterAuth({
         plugins: [
+            jwt(), // [!code highlight]
             mcp({ // [!code highlight]
-                loginPage: "/sign-in" // 登录页面路径 // [!code highlight]
-            }) // [!code highlight]
+                loginPage: "/sign-in", // path to your login page // [!code highlight]
+                consentPage: "/consent", // path to your consent page // [!code highlight]
+                resource: "https://api.example.com/mcp" // protected resource identifier // [!code highlight]
+            }), // [!code highlight]
+            cimd({ // [!code highlight]
+                fetchClientMetadataResource, // [!code highlight]
+                metadataProfile: "mcp-2026-07-28", // [!code highlight]
+            }), // [!code highlight]
         ]
     });
     ```
 
+    Node.js 部署可以使用上面所示的内置传输。Bun、Deno、Workers 以及其他运行时必须注入等效传输，该传输需要解析每个主机名一次，拒绝 RFC 6890 特殊用途地址，为连接固定已批准的地址，并拒绝重定向。该传输会获取 Client ID Metadata Document 以及 `jwks_uri` 等由发现机制管理的资源。完整契约请参阅 [CIMD security boundary](/docs/plugins/cimd#security-boundary)。
+
     <Callout>
-      此插件没有客户端插件，因此无需对 authClient 进行任何更改。
+      `mcp()` 就是 OAuth 提供商。不要在同一个应用中另外注册单独的 `oauthProvider()` 插件。
     </Callout>
   </Step>
 
   <Step>
     ### 生成架构
 
-    运行迁移或生成架构，以向数据库添加必要的字段和表。
+    运行迁移或生成架构，以便将必要的表添加到数据库中。
 
     <Tabs items={["migrate", "generate"]}>
       <Tab value="migrate">
@@ -60,250 +78,277 @@ description: 用于 Better Auth 的 MCP 提供者插件
       </Tab>
     </Tabs>
 
-    MCP 插件使用与 OIDC 提供者插件相同的架构。请参阅 [OIDC 提供者架构](/docs/plugins/oidc-provider#schema) 部分了解详细信息。
+    MCP 插件使用与 OAuth Provider 插件相同的架构（`oauthClient`、`oauthAccessToken`、`oauthRefreshToken`、`oauthConsent`、`oauthClientAssertion`）。详情请参阅 [OAuth Provider Schema](/docs/plugins/oauth-provider#schema) 部分。
   </Step>
 </Steps>
 
+## 端点
+
+`mcp()` 在 `/oauth2/*` 下提供标准 OAuth 2.1 端点：
+
+| 端点          | 路径                  |
+| ----------- | ------------------- |
+| 授权          | `/oauth2/authorize` |
+| 令牌          | `/oauth2/token`     |
+| 动态注册（显式启用时） | `/oauth2/register`  |
+| UserInfo    | `/oauth2/userinfo`  |
+
+发现机制遵循 OAuth 2.0 Authorization Server Metadata（[RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414)）和 Protected Resource Metadata（[RFC 9728](https://datatracker.ietf.org/doc/html/rfc9728)）。众所周知的 URL 根据 issuer 派生，因此带有基础路径的服务器会在插入 issuer 的位置提供这些 URL，而不是在根路径直接提供。只有在安装了 `cimd()` 时，发现信息才会公布 `client_id_metadata_document_supported`；只有启用 DCR 时，才会公布 `registration_endpoint`。
+
+<Callout type="info">
+  Better Auth 负责 OAuth 发现、客户端注册和发现、PKCE 授权、资源绑定、令牌签发和刷新，以及受保护资源质询。官方 MCP TypeScript SDK v2 负责无状态 MCP 协议和传输。配置服务器时使用 `legacy: "reject"`，采用此配置文件时将 SDK 客户端版本协商固定为 `2026-07-28`。
+</Callout>
+
 ## 使用
 
-### OAuth 发现元数据
+### 为您自己的 CLI 添加设备授权
 
-Better Auth 已自动处理 `/api/auth/.well-known/oauth-authorization-server` 路由，但有些客户端可能无法解析 `WWW-Authenticate` 头，而是默认访问 `/.well-known/oauth-authorization-server`（例如，当 CORS 配置未暴露 `WWW-Authenticate` 时）。因此，建议添加路由以公开 MCP 客户端的 OAuth 元数据：
+MCP 客户端通常会从受保护资源元数据中发现授权服务器，然后使用带 PKCE 的授权码流程。为保证通用 MCP 兼容性，请保留该流程。
 
-```ts title=".well-known/oauth-authorization-server/route.ts"
-import { oAuthDiscoveryMetadata } from "better-auth/plugins";
-import { auth } from "../../../lib/auth";
+如果您的产品还提供命令行应用，同一个授权服务器可以让 CLI 通过浏览器完成授权，而无需打开本地回调监听器。添加 OAuth Device Authorization 集成：
 
-export const GET = oAuthDiscoveryMetadata(auth);
-```
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { jwt } from "better-auth/plugins";
+import { oauthDeviceAuthorization } from "@better-auth/oauth-provider";
+import { mcp } from "@better-auth/mcp";
 
-### OAuth 受保护资源元数据
-
-Better Auth 同样自动处理 `/api/auth/.well-known/oauth-protected-resource` 路由，但某些客户端也可能无法解析 `WWW-Authenticate` 头，而是默认访问 `/.well-known/oauth-protected-resource`。因此，建议添加路由以公开 MCP 客户端的 OAuth 元数据：
-
-```ts title="/.well-known/oauth-protected-resource/route.ts"
-import { oAuthProtectedResourceMetadata } from "better-auth/plugins";
-import { auth } from "@/lib/auth";
-
-export const GET = oAuthProtectedResourceMetadata(auth);
-```
-
-### MCP 会话处理
-
-```ts title="api/[transport]/route.ts"
-import { auth } from "@/lib/auth";
-import { createMcpHandler } from "@vercel/mcp-adapter";
-import { withMcpAuth } from "better-auth/plugins";
-import { z } from "zod";
-
-const handler = withMcpAuth(auth, (req, session) => {
-    // session 包含带有作用域和用户 ID 的访问令牌记录
-    return createMcpHandler(
-        (server) => {
-            server.tool(
-                "echo",
-                "Echo a message",
-                { message: z.string() },
-                async ({ message }) => {
-                    return {
-                        content: [{ type: "text", text: `Tool echo: ${message}` }],
-                    };
-                },
-            );
-        },
-        {
-            capabilities: {
-                tools: {
-                    echo: {
-                        description: "Echo a message",
-                    },
-                },
-            },
-        },
-        {
-            redisUrl: process.env.REDIS_URL,
-            basePath: "/api",
-            verboseLogs: true,
-            maxDuration: 60,
-        },
-    )(req);
+export const auth = betterAuth({
+  plugins: [
+    jwt(),
+    mcp({
+      loginPage: "/sign-in",
+      consentPage: "/consent",
+      resource: "https://api.example.com/mcp",
+      scopes: ["openid", "profile", "offline_access", "mcp:read"],
+    }),
+    oauthDeviceAuthorization({ verificationUri: "/device" }),
+  ],
 });
-
-export { handler as GET, handler as POST, handler as DELETE };
 ```
 
-你也可以使用 `auth.api.getMcpSession` 通过 MCP 客户端发送的访问令牌获取会话：
+`mcp()` 已经是 OAuth Provider，因此这种组合不会添加单独的 `oauthProvider()` 插件。MCP 客户端继续使用发现机制和带 PKCE 的授权码流程。已注册的公共 CLI 可以通过 `/device/code` 请求相同的 MCP 资源，并轮询 `/oauth2/token` 以获取受众绑定的访问令牌。
 
-```ts title="api/[transport]/route.ts"
+仅在 MCP 客户端明确实现了 [RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628) 时使用设备授权。向服务器添加 `oauthDeviceAuthorization()` 不会改变现有 MCP 客户端选择的标准流程。有关客户端注册和令牌轮询，请参阅[授权 CLI 调用 API](/docs/plugins/device-authorization#authorize-a-cli-to-call-an-api)。
+
+### 受保护资源元数据
+
+[RFC 9728](https://datatracker.ietf.org/doc/html/rfc9728) `/.well-known/oauth-protected-resource` 文档会自动在众所周知的根路径（以及插入资源路径的别名）提供。它会告知 MCP 客户端哪个授权服务器保护该资源、支持哪些作用域、访问令牌必须绑定到哪个 `resource` 标识符，以及支持哪些 DPoP 证明算法。
+
+将 `resource` 设置为 MCP 客户端请求且访问令牌会作为 `aud` 携带的受保护资源标识符：
+
+```ts title="auth.ts"
+mcp({
+    loginPage: "/sign-in",
+    consentPage: "/consent",
+    resource: "https://api.example.com/mcp"
+})
+```
+
+`resource` 必须是没有查询参数、片段或凭据的 HTTPS URL；仅在本地开发的回环主机上接受 HTTP。URL 需要查询组件的资源不能使用 `mcp()`、`requireMcpAuth` 或 `createMcpProtectedRequestHandler`。请使用 `better-auth/oauth2` 中的 `verifyAccessTokenRequest` 验证其令牌，并使用 `@better-auth/oauth-provider` 中的 `createResourceServerChallenge` 构建质询。
+
+`mcp()` 还会将此标识符注册为默认的客户端注册资源。即使动态注册的客户端在其注册请求中省略了非标准的 `resources` 字段，该客户端也会与 MCP 资源关联。您提供的任何 `clientRegistrationDefaultResources` 都会保留，并且 MCP 资源只会追加一次。
+
+### 可选的 DCR 回退
+
+CIMD 是推荐的客户端身份机制。如果您确实需要支持仍然要求 DCR 的旧客户端，请显式启用这两个提供商控制项：
+
+```ts
+mcp({
+  loginPage: "/sign-in",
+  consentPage: "/consent",
+  resource: "https://api.example.com/mcp",
+  allowDynamicClientRegistration: true,
+  allowUnauthenticatedClientRegistration: true,
+})
+```
+
+除非启用 DCR，否则发现信息中不会包含注册端点。DCR 请求不需要 Better Auth 的 `resources` 扩展：`mcp()` 会将其规范资源添加为服务器拥有的默认资源。
+
+### 保护 MCP 路由
+
+MCP 2026-07-28 使用无状态的请求和响应模型：每个客户端 JSON-RPC 请求或通知都是独立的 HTTP `POST`，服务器不会在请求之间维护协议级会话。使用官方 MCP TypeScript SDK v2 实现该传输，然后使用 `requireMcpAuth` 包装其 `POST` 处理程序。
+
+以下 Next.js 路由会为每个请求创建一个新的 MCP 服务器，并拒绝来自面向会话的 2025 协议的流量。它只导出 `POST`，因此框架会对 `GET` 和 `DELETE` 返回 `405 Method Not Allowed`。
+
+```ts title="app/api/mcp/route.ts"
 import { auth } from "@/lib/auth";
-import { createMcpHandler } from "@vercel/mcp-adapter";
-import { z } from "zod";
+import { requireMcpAuth } from "@better-auth/mcp"; // [!code highlight]
+import { createMcpHandler, McpServer } from "@modelcontextprotocol/server"; // [!code highlight]
+import * as z from "zod";
 
-const handler = async (req: Request) => {
-     // session 包含带有作用域和用户 ID 的访问令牌记录
-    const session = await auth.api.getMcpSession({
-        headers: req.headers
-    })
-    if(!session){
-        // 这一步很重要，必须返回 401
-        return new Response(null, {
-            status: 401
-        })
-    }
-    return createMcpHandler(
-        (server) => {
-            server.tool(
-                "echo",
-                "Echo a message",
-                { message: z.string() },
-                async ({ message }) => {
-                    return {
-                        content: [{ type: "text", text: `Tool echo: ${message}` }],
-                    };
-                },
-            );
-        },
-        {
-            capabilities: {
-                tools: {
-                    echo: {
-                        description: "Echo a message",
-                    },
-                },
+const resource = "https://api.example.com/mcp";
+
+const mcpServerHandler = createMcpHandler(
+    () => {
+        const server = new McpServer({
+            name: "example-mcp-server",
+            version: "1.0.0",
+        });
+
+        server.registerTool(
+            "echo",
+            {
+                description: "Echo a message",
+                inputSchema: z.object({
+                    message: z.string(),
+                }),
             },
-        },
-        {
-            redisUrl: process.env.REDIS_URL,
-            basePath: "/api",
-            verboseLogs: true,
-            maxDuration: 60,
-        },
-    )(req);
-}
+            async ({ message }) => ({
+                content: [{ type: "text", text: `Tool echo: ${message}` }],
+            }),
+        );
 
-export { handler as GET, handler as POST, handler as DELETE };
+        return server;
+    },
+    {
+        legacy: "reject", // accept only the MCP 2026-07-28 protocol // [!code highlight]
+    },
+);
+
+const POST = requireMcpAuth(
+    auth,
+    (request) => mcpServerHandler.fetch(request),
+    {
+        resource, // must match mcp({ resource }) // [!code highlight]
+    },
+);
+
+export { POST };
 ```
+
+`createMcpHandler` 会根据操作需要返回 JSON 或请求范围内的 Server-Sent Events（SSE）；它不需要由 Redis 支持的 MCP 会话存储。如果您要在多个服务器实例之间实现 `subscriptions/listen`，请为该扩展向 SDK 提供共享事件总线。OAuth 客户端、同意记录、授权码、刷新令牌、CIMD 元数据和 DPoP 重放检测仍使用持久化状态，因为它们是授权和安全记录，而不是 MCP 传输会话。
+
+`requireMcpAuth` 会读取 `Authorization` 标头，针对授权服务器的 JSON Web Key Set（JWKS）验证访问令牌，并检查签名、issuer、受众和过期时间。当访问令牌绑定了 DPoP 时，它还会强制执行 [RFC 9449](https://datatracker.ietf.org/doc/html/rfc9449) Demonstrating Proof of Possession（DPoP）。未经身份验证的请求会收到带有 RFC 9728 `WWW-Authenticate` 标头的 JSON-RPC `401`，因此 MCP 客户端可以开始授权流程。缺少必要作用域的令牌会收到带有 [RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750#section-3.1) `insufficient_scope` 质询的 `403`，MCP 客户端会使用该质询提升其授权级别。
+
+包装器会将经过验证的访问令牌声明作为第二个回调参数传递，而不是作为数据库记录传递。示例将身份验证保留在路由边界；如果工具需要令牌上下文，请将这些声明转换为 SDK 的 `AuthInfo`，并通过 `mcpServerHandler.fetch(request, { authInfo })` 传递。`requireMcpAuth` 永远不会暴露刷新令牌，并且会针对 JWKS 在本地检查访问令牌，而无需访问数据库。DPoP 重放保护默认使用您的 auth 实例的数据库适配器，因此可以跨服务器实例工作；只有在需要其他共享存储时，才传入 `dpop.replayStore`。
+
+默认情况下，`requireMcpAuth` 会从 auth 上下文读取服务器解析后的 Better Auth URL，并将其用作预期的 issuer、资源和 JWKS 基础 URL。如果 `mcp({ resource })` 使用了不同的标识符，请将相同的值传递给 `requireMcpAuth`，如上所示。当 `jwt.issuer` 为自定义值或授权服务器独立运行时，可以覆盖 issuer 或 JWKS URL：
+
+```ts
+requireMcpAuth(auth, handler, {
+    resource: "https://api.example.com/mcp", // protected resource identifier
+    issuer: "https://auth.example.com", // override when jwt.issuer is custom
+    jwksUrl: "https://auth.example.com/api/auth/jwks",
+    challengeScopes: ["openid", "profile"] // advertised in the 401 challenge
+})
+```
+
+要要求作用域，请传入 `requiredScopes`。缺少其中任何作用域的令牌都会被拒绝，并收到带有 `insufficient_scope` 质询的 `403`；该质询会列出所有缺失的作用域，因此客户端可以一次性针对所有作用域重新授权（[step-up authorization](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization#step-up-authorization-flow)）：
+
+```ts
+requireMcpAuth(auth, handler, {
+    resource: "https://api.example.com/mcp",
+    requiredScopes: ["mcp:tools"], // enforced against the token's scope claim
+})
+```
+
+当所需作用域取决于请求时（某个工具需要的作用域多于另一个工具），请在处理程序中抛出 `createInsufficientScopeError`，以便仅针对这些作用域发起质询：
+
+```ts
+import { createInsufficientScopeError } from "better-auth/oauth2";
+
+requireMcpAuth(auth, async (request, accessTokenClaims) => {
+    if (isAdminTool(request) && !hasScope(accessTokenClaims, "mcp:admin")) {
+        throw createInsufficientScopeError(["mcp:admin"]);
+    }
+    return executeMcpRequest(request, accessTokenClaims);
+})
+```
+
+<Callout type="warn">
+  仅在重新授权确实能够解决问题时才使用此方式。如果用户无法通过授予作用域来解决拒绝原因（例如，他们不是组织成员，或记录属于其他人），则应保持为普通的 `403`：发起质询会让他们进入同意流程，但不会产生任何效果。您的处理程序因任何其他原因抛出的错误都会原样传播到框架。
+</Callout>
 
 ## 配置
 
-MCP 插件接受以下配置选项：
+`mcp()` 扩展了 [OAuth Provider](/docs/plugins/oauth-provider#configuration) 选项。所有 OAuth provider 选项都会以扁平形式传递（不存在嵌套的 `oidcConfig`）。必需的 MCP 专属选项是 `resource`。
+
+对于通过 `mcp()` 配置的每个客户端，插件会将 `refreshTokenReuseInterval` 默认设置为 30 秒。这样，当另一个请求已经使用了某个刷新令牌时，客户端可以使用旧令牌重试，并收到相同的轮换令牌响应。OAuth Provider 本身默认仍然严格；在 `mcp()` 上设置 `refreshTokenReuseInterval: 0` 可禁用重叠时间窗口。
 
 export const mcpPluginOptionsType = {
   loginPage: {
-    description: "Path to the login page where users will be redirected for authentication",
+    description: "Path to the login page where users are redirected for authentication.",
+    type: "string",
+    required: true,
+  },
+  consentPage: {
+    description: "Path to the consent page where users grant the requested scopes.",
     type: "string",
     required: true,
   },
   resource: {
-    description: "The resource that should be returned by the protected resource metadata endpoint",
+    description: "The protected resource identifier (RFC 8707 / RFC 9728) that access tokens are bound to. Advertised in the protected resource metadata and used as the expected token audience.",
     type: "string",
-    required: false,
-  },
-  oidcConfig: {
-    description: "Optional OIDC configuration options",
-    type: "object",
-    required: false,
+    required: true,
   },
 }
 
 <TypeTable type={mcpPluginOptionsType} />
 
-### OIDC 配置
+以下是最常调整的 OAuth provider 选项。完整列表请参阅 [OAuth Provider Configuration](/docs/plugins/oauth-provider#configuration)。
 
-通过 `oidcConfig` 参数，插件支持额外的 OIDC 配置选项：
-
-export const mcpOidcConfigOptionsType = {
-  codeExpiresIn: {
-    description: "Expiration time for authorization codes in seconds",
-    type: "number",
-    default: 600,
-  },
-  accessTokenExpiresIn: {
-    description: "Expiration time for access tokens in seconds",
-    type: "number",
-    default: 3600,
-  },
-  refreshTokenExpiresIn: {
-    description: "Expiration time for refresh tokens in seconds",
-    type: "number",
-    default: 604800,
-  },
-  defaultScope: {
-    description: "Default scope for OAuth requests",
-    type: "string",
-    default: "openid",
-  },
+export const mcpOauthOptionsType = {
   scopes: {
-    description: "Additional scopes to support",
+    description: "Scopes advertised by the authorization server.",
     type: "string[]",
     default: '["openid", "profile", "email", "offline_access"]',
   },
-}
-
-<TypeTable type={mcpOidcConfigOptionsType} />
-
-export const mcpClientOptionsType = {
-  authURL: {
-    description: "Full URL to Better Auth endpoints (baseURL + basePath)",
-    type: "string",
-    required: true,
+  resources: {
+    description: "Protected resources the authorization server can issue access tokens for.",
+    type: "Array<string | OAuthResourceInput>",
   },
-  resource: {
-    description: "Resource identifier for the protected resource metadata. Defaults to the origin of the server URL.",
-    type: "string",
-    required: false,
+  accessTokenExpiresIn: {
+    description: "Lifetime of access tokens in seconds.",
+    type: "number",
+    default: 3600,
   },
-  allowedOrigin: {
-    description: "Allowed CORS origin. Defaults to the authURL origin. Set to '*' to allow all origins (not recommended for production).",
-    type: "string",
-    required: false,
+  idTokenExpiresIn: {
+    description: "Lifetime of ID tokens in seconds.",
+    type: "number",
+    default: 36000,
   },
-  fetch: {
-    description: "Custom fetch implementation. Defaults to global fetch.",
-    type: "typeof fetch",
-    required: false,
+  refreshTokenExpiresIn: {
+    description: "Lifetime of refresh tokens in seconds.",
+    type: "number",
+    default: 2592000,
   },
-}
-
-<TypeTable type={mcpClientOptionsType} />
-
-### 会话对象
-
-`verifyToken` 返回并传递给处理函数的会话对象包含：
-
-export const mcpSessionObjectType = {
-  accessToken: {
-    description: "The opaque access token",
-    type: "string",
+  refreshTokenReuseInterval: {
+    description: "Seconds that a rotated refresh token can be reused to receive the same token response. OAuth Provider defaults to strict handling at 0; MCP defaults to 30 for every client configured through the plugin. Set 0 on MCP to disable the overlap window.",
+    type: "number",
+    default: 30,
   },
-  refreshToken: {
-    description: "The refresh token",
-    type: "string",
-  },
-  accessTokenExpiresAt: {
-    description: "When the access token expires",
-    type: "string",
-  },
-  refreshTokenExpiresAt: {
-    description: "When the refresh token expires",
-    type: "string",
-  },
-  clientId: {
-    description: "The OAuth client ID that requested the token",
-    type: "string",
-  },
-  userId: {
-    description: "The authenticated user's ID",
-    type: "string",
-  },
-  scopes: {
-    description: "Space-separated list of granted scopes",
-    type: "string",
+  codeExpiresIn: {
+    description: "Lifetime of authorization codes in seconds.",
+    type: "number",
+    default: 600,
   },
 }
 
-<TypeTable type={mcpSessionObjectType} />
+<TypeTable type={mcpOauthOptionsType} />
 
-## Schema
+## 远程 MCP Server
 
-MCP 插件使用与 OIDC Provider 插件相同的 Schema。详情请参阅[OIDC Provider Schema](/docs/plugins/oidc-provider#schema)章节。
+`requireMcpAuth` 会根据你的 Better Auth 服务器的 JWKS 验证令牌，因此只要能够访问该 JWKS URL，MCP 路由就可以在任何地方运行。当资源服务器与授权服务器分开运行，或使用动态的 `baseURL` 时，请使用带有显式验证选项的 `createMcpProtectedRequestHandler`，而不是 `requireMcpAuth`。
+
+```ts title="mcp-server.ts"
+import { createMcpProtectedRequestHandler } from "@better-auth/mcp"; // [!code highlight]
+
+const handler = createMcpProtectedRequestHandler( // [!code highlight]
+    {
+        issuer: "https://auth.example.com",
+        audience: "https://api.example.com/mcp",
+        jwksUrl: "https://auth.example.com/api/auth/jwks",
+    },
+    async (request, accessTokenClaims) => { // [!code highlight]
+        // accessTokenClaims holds the verified access-token claims // [!code highlight]
+        return new Response(JSON.stringify({
+            jsonrpc: "2.0",
+            result: { sub: accessTokenClaims.sub },
+            id: 1
+        }))
+    }
+)
+```
+
+`createMcpProtectedRequestHandler` 会为未经身份验证的请求返回相同的 RFC 9728 `WWW-Authenticate` 响应。在其选项中设置 `requiredScopes` 可要求指定的 scope；缺少其中任意 scope 的令牌会收到与 `requireMcpAuth` 相同的 `403` `insufficient_scope` challenge。在同一个选项对象中设置 `challengeScopes`，可在未经身份验证的 challenge 中公布 scope 提示。

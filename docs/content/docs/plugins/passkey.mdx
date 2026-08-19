@@ -120,8 +120,11 @@ await auth.api.generatePasskeyRegistrationOptions({
 await authClient.passkey.addPasskey({
   name: "Primary passkey",
   context: "signed-registration-token",
+  createSession: true,
 })
 ```
+
+当 `createSession` 为 `true` 时，成功验证会设置会话 cookie，并返回与已注册 passkey 关联的 `session` 和 `user`。如果您想避免在 WebAuthn 流程成功之前创建用户，请在 `registration.afterVerification` 中创建或加载用户，并返回其 `userId`。
 
 ## 用法
 
@@ -134,11 +137,11 @@ await authClient.passkey.addPasskey({
   type addPasskey = {
       /**
        * 可选的名称，用于标记正在注册的认证器账户。如果未提供，默认将使用用户的电子邮件地址或用户 ID
-      */
+       */
       name?: string = "example-passkey-name"
       /**
        * 还可以指定要注册的认证器类型。默认行为允许注册平台密钥和跨平台密钥
-      */
+       */
       authenticatorAttachment?: "platform" | "cross-platform" = "cross-platform"
       /**
        * 可选的 WebAuthn 扩展（例如 PRF、credProps、largeBlob）
@@ -152,6 +155,10 @@ await authClient.passkey.addPasskey({
        * 用于 passkey-first 注册流程的可选上下文。转发到 `registration.resolveUser`。
        */
       context?: string
+      /**
+       * 成功注册 passkey 后创建会话。启用后，响应中会包含 session 和 user。
+       */
+      createSession?: boolean
   }
   ```
 </APIMethod>
@@ -169,7 +176,7 @@ await authClient.passkey.addPasskey({
   type signInPasskey = {
       /**
        * 浏览器自动填充，也称为条件 UI。阅读更多：https://simplewebauthn.dev/docs/packages/browser#浏览器自动填充-aka-条件-ui
-      */
+       */
       autoFill?: boolean = true
       /**
        * 可选的 WebAuthn 扩展（例如 PRF、credProps、largeBlob）
@@ -359,7 +366,7 @@ export const auth = betterAuth({
   </Step>
 </Steps>
 
-表名：`passkey`
+表名：`passkey`。
 
 export const passkeyTableFields = [
 	{

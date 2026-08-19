@@ -730,7 +730,29 @@ export const auth = betterAuth({
   </Tab>
 </Tabs>
 
-### 获取完整组织信息
+### 获取组织
+
+要获取不包含成员或邀请的组织元数据，请使用 `getOrganization`。
+默认情况下，如果不传递任何属性，它将使用活跃组织。
+
+当您只需要 `id`、`name`、`slug`、`logo` 和 `metadata` 等字段时，优先使用此方法，而不是 `getFullOrganization`。
+
+<APIMethod path="/organization/get-organization" method="GET" requireSession>
+  ```ts
+  type getOrganization = {
+      /**
+       * The organization ID to get. By default, it will use the active organization.  
+       */
+      organizationId?: string = "org-id"
+      /**
+       * The organization slug to get.  
+       */
+      organizationSlug?: string = "org-slug"
+  }
+  ```
+</APIMethod>
+
+### 获取完整组织
 
 要获取组织的完整详情，可以使用 `getFullOrganization` 函数。默认情况下，如果不传任何属性，将使用活跃组织。
 
@@ -1789,8 +1811,8 @@ export const authClient = createAuthClient({
   ```ts
   type listOrganizationTeams = {
       /**
-      * 要列出的团队所属的组织 ID。默认为用户当前活跃组织。 
-      */
+       * 要列出的团队所属的组织 ID。默认为用户当前活跃组织。 
+       */
       organizationId?: string = "organization-id"
   }
   ```
@@ -1869,11 +1891,22 @@ export const authClient = createAuthClient({
 
 #### 列出用户团队
 
-列出当前用户所属的所有团队。
+列出用户所属的所有团队。默认为当前用户，并返回该用户所属每个组织中的团队。
+
+* 传入 `userId` 可列出其他成员所属的团队。此操作受目标组织中 `member:update` 权限的限制。
+* 传入 `organizationId` 可将结果限定为单个组织，无需切换会话的活跃组织。省略时，查询其他用户将使用会话的活跃组织。
 
 <APIMethod path="/organization/list-user-teams" method="GET" requireSession>
   ```ts
   type listUserTeams = {
+    /**
+     * 要列出其团队的用户 ID。默认为当前会话用户。
+     */
+    userId?: string
+    /**
+     * 用于限定团队列表范围的组织 ID。对自身进行查询时若省略，则返回该用户所属每个组织中的团队。查询其他用户时，则回退到会话的活跃组织。
+     */
+    organizationId?: string
   }
   ```
 </APIMethod>
@@ -1970,6 +2003,8 @@ export const authClient = createAuthClient({
   }
   ```
 
+  `maximumMembersPerTeam` 在接受团队邀请、将现有组织成员添加到团队，以及通过 `teamId` 添加新组织成员时强制执行。
+
 * `allowRemovingAllTeams`: 控制是否可以移除最后一个团队
   ```ts
   teams: {
@@ -2009,6 +2044,11 @@ export const teamsFeatureTeamTableFields = [
 		name: "name",
 		type: "string",
 		description: "The name of the team",
+	},
+	{
+		name: "memberCount",
+		type: "number",
+		description: "Durable member count used to enforce team capacity",
 	},
 	{
 		name: "organizationId",
@@ -2056,6 +2096,12 @@ export const teamsFeatureTeamMemberTableFields = [
 		references: { model: "user", field: "id" },
 	},
 	{
+		name: "membershipKey",
+		type: "string",
+		description: "Internal unique key for the team and user membership pair",
+		isOptional: true,
+	},
+	{
 		name: "createdAt",
 		type: "Date",
 		description: "Timestamp of when the team member was created",
@@ -2071,7 +2117,7 @@ export const teamsFeatureTeamMemberTableFields = [
 
 ### 组织
 
-表名：`organization`
+表名：`organization`。
 
 export const organizationTableFields = [
 	{
@@ -2301,6 +2347,11 @@ export const optionalTeamTableFields = [
 		description: "The name of the team",
 	},
 	{
+		name: "memberCount",
+		type: "number",
+		description: "Durable member count used to enforce team capacity",
+	},
+	{
 		name: "organizationId",
 		type: "string",
 		description: "The ID of the organization",
@@ -2344,6 +2395,12 @@ export const teamsFeatureTeamTableFields0 = [
 		description: "The ID of the user",
 		isForeignKey: true,
 		references: { model: "user", field: "id" },
+	},
+	{
+		name: "membershipKey",
+		type: "string",
+		description: "Internal unique key for the team and user membership pair",
+		isOptional: true,
 	},
 	{
 		name: "createdAt",

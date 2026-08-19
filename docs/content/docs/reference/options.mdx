@@ -42,7 +42,7 @@ export const auth = betterAuth({
 
 ### 动态 Base URL
 
-当你的应用可以通过多个域名访问时（例如预览部署、分支环境或多个生产主机），请使用对象形式。Better Auth 会从传入请求中提取主机，使用 `allowedHosts` 校验，并基于该匹配构造与请求相关的 base URL。
+当你的应用可以通过多个域名访问时，例如预览部署、分支环境或多个生产主机，请使用对象形式。Better Auth 会从 `Host` 请求头以及请求 URL 中获取主机，然后根据 `allowedHosts` 对其进行验证，并根据匹配结果构造请求专属的 baseURL。除非你显式设置 `advanced.trustedProxyHeaders: true`，否则会忽略转发的主机和协议请求头。
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -60,9 +60,9 @@ export const auth = betterAuth({
 })
 ```
 
-* `allowedHosts`: 允许的主机模式列表。支持精确匹配（`myapp.com`）、通配符（`*.vercel.app`、`preview-*.myapp.com`）以及端口通配符（`localhost:*`）。会自动添加到 [`trustedOrigins`](#trustedorigins)（localhost 条目会同时加入 `http` 和 `https`）
-* `protocol`: 用于构造 URL 的协议。可为 `"http"`、`"https"` 或 `"auto"`（默认）。`"auto"` 会先从 `x-forwarded-proto` 读取，其次从请求 URL 推断，最后默认使用 HTTPS。该选项也会影响 cookie 的 `Secure` 标志：`"https"` → 安全，`"http"` → 不安全，`"auto"` 或未设置 → `NODE_ENV === "production"`。可通过 `advanced.useSecureCookies` 进行覆盖
-* `fallback`: 当传入主机不匹配时使用的 URL。若未设置，未知主机将会抛出错误。其来源也会被加入到 `trustedOrigins`
+* `allowedHosts`：接受的主机模式列表。支持精确匹配（`myapp.com`）、通配符（`*.vercel.app`、`preview-*.myapp.com`）和端口通配符（`localhost:*`）。会自动添加到 [`trustedOrigins`](#trustedorigins)（localhost 条目同时添加 `http` 和 `https`）
+* `protocol`：用于 URL 构造的协议。`"http"`、`"https"` 或 `"auto"`（默认值）。仅当 `advanced.trustedProxyHeaders` 为 `true` 时，`"auto"` 才会使用 `x-forwarded-proto`，然后依次使用请求 URL、适用于本地回环主机的 HTTP，否则使用 HTTPS。也会影响 cookie 的 `Secure` 标志：`"https"` → 安全，`"http"` → 不安全，`"auto"` 或未设置 → `NODE_ENV === "production"`。可通过 `advanced.useSecureCookies` 覆盖
+* `fallback`：当没有可用的请求主机或传入主机不匹配时使用的 URL。未设置时，无法解析或未知的主机会抛出错误。其来源也会添加到 `trustedOrigins`
 
 <Callout type="warn">
   请谨慎使用 `fallback`。它可能会掩盖本应明显失败的部署或代理配置错误。
@@ -155,9 +155,9 @@ export const auth = betterAuth({
 <Callout type="info">
   **注意**
 
-  * 对于 `http://` 和 `https://` URL，模式匹配完整的来源（origin）。路径和查询字符串会被忽略。
-  * 对于自定义协议（如 `exp://` 或 `myapp://`），当通配符存在时，模式会与包含路径的完整 URL 进行匹配；当没有通配符时，则使用前缀匹配。
-  * 分隔符是 `/`（正斜杠）。这意味着 `http://*.example.com` 会同时匹配 `http://api.example.com` 和 `http://api.app.example.com`。
+  * 对于 `http://` 和 `https://` URL，模式会匹配完整来源。路径和查询字符串会被忽略。
+  * 对于自定义协议（如 `exp://` 或 `myapp://`），通配符模式会针对包含路径在内的完整 URL 进行匹配。非通配符模式会根据协议和权限进行匹配：不包含主机的条目（如 `myapp://` 或 `exp://`）会信任该协议的所有主机，而包含主机的条目（如 `myapp://callback`）必须精确匹配该主机（因此不会被 `myapp://callback.attacker.tld` 满足）。
+  * 分隔符是 `/`（正斜杠）。这意味着 `http://*.example.com` 同时匹配 `http://api.example.com` 和 `http://api.app.example.com`。
 </Callout>
 
 ## `secret`
@@ -343,23 +343,24 @@ export const auth = betterAuth({
 })
 ```
 
-* `clientId`: 来自提供商的 OAuth 客户端 ID
-* `clientSecret`: 来自提供商的 OAuth 客户端密钥
-* `clientKey`: 客户端密钥（某些提供商如 TikTok 使用它而不是 clientId）（可选）
+* `clientId`: 提供商提供的 OAuth 客户端 ID
+* `clientSecret`: 提供商提供的 OAuth 客户端密钥
+* `clientKey`: 客户端密钥（某些提供商（如 TikTok）使用它代替 clientId）（可选）
 * `redirectURI`: OAuth 回调的自定义重定向 URI（可选）
-* `scope`: 要请求的额外 OAuth 作用域（可选）
-* `mapProfileToUser`: 将提供商资料映射为用户的自定义函数（可选）
-* `disableSignUp`: 禁用新用户注册（可选）
-* `disableImplicitSignUp`: 禁用新用户的隐式注册（可选）
+* `scope`: 要请求的其他 OAuth 作用域（可选）
+* `mapProfileToUser`: 将提供商资料映射到用户的自定义函数（可选）
+* `disableSignUp`: 禁止新用户注册（可选）
+* `disableImplicitSignUp`: 禁止新用户隐式注册（可选）
 * `overrideUserInfoOnSignIn`: 登录时使用提供商用户信息覆盖用户信息（可选）
-* `prompt`: 授权码请求使用的 prompt（`"select_account"`、`"consent"`、`"login"`、`"none"`、`"select_account consent"`）（可选）
+* `requireEmailVerification`: 在创建会话前要求验证此提供商的邮箱。按提供商单独启用，并且独立于 `emailAndPassword.requireEmailVerification`。仅对报告可信 `email_verified` 信号的提供商启用（可选）
+* `prompt`: 授权码请求使用的提示方式（`"select_account"`、`"consent"`、`"login"`、`"none"`、`"select_account consent"`）（可选）
 * `responseMode`: 使用的响应模式（`"query"`、`"form_post"`）（可选）
 * `getUserInfo`: 从提供商获取用户信息的自定义函数（可选）
-* `refreshAccessToken`: 刷新令牌的自定义函数。接收已存储的刷新令牌并返回新的 OAuth 令牌。（可选）
-* `verifyIdToken`: 验证 ID token 的自定义函数。接收 `(token, nonce?, ctx?)`，其中 `ctx` 是请求端点上下文（可选）。设置后会替换提供商内置的验证。
-* `disableIdTokenSignIn`: 禁用使用从客户端发送的 ID token 登录（可选）
+* `refreshAccessToken`: 刷新令牌的自定义函数。接收存储的刷新令牌并返回新的 OAuth 令牌（可选）
+* `verifyIdToken`: 验证 ID 令牌的自定义函数。接收 `(token, nonce?, ctx?)`，其中 `ctx` 是请求端点上下文（可选）。设置后会替代提供商内置的验证逻辑
+* `disableIdTokenSignIn`: 禁止使用从客户端发送的 ID 令牌登录（可选）
 * `disableDefaultScope`: 禁用提供商的默认作用域（可选）
-* `authorizationEndpoint`: 自定义授权端点 URL（可选）。
+* `authorizationEndpoint`: 自定义授权端点 URL（可选）
 
 ## `plugins`
 
@@ -450,8 +451,9 @@ export const auth = betterAuth({
 		storeSessionInDatabase: true, // 提供二级存储时存数据库（默认：`false`）
 		preserveSessionInDatabase: false, // 在二级存储删除后保留数据库中会话记录（默认：`false`）
 		cookieCache: {
-			enabled: true, // 启用 cookie 缓存会话（默认：`false`）
-			maxAge: 300 // 5 分钟
+			enabled: true, // Enable caching session in cookie (default: `false`)	
+			maxAge: 300, // 5 minutes
+			strategy: "jwt"
 		}
 	},
 })
@@ -519,7 +521,9 @@ export const auth = betterAuth({
 
 账号 cookie 的最大有效期为五分钟，并会在 Better Auth 写入更新后的提供商账号数据时刷新，例如在 `getAccessToken` 或 `/refresh-token` 刷新提供商令牌后。发生这种情况时，如果是在服务端代码中，请将返回的 `Set-Cookie` 头转发给浏览器，以保留刷新的账号 cookie。
 
-Better Auth 会对过大的账号 cookie 进行分片，但浏览器和代理仍可能限制 cookie 或 header 的总大小。对于会签发较大 JWT 的提供商，或需要持久令牌存储的生产流程，优先使用基于数据库的账号存储。
+在 `getAccessToken`、`refreshToken` 或 `accountInfo` 中传入 `useAccountCookie: true`，即可让已签名 cookie 选择账号。这些 API 要求显式提供 `accountId` 或 `useAccountCookie: true`；两者都省略则无效。
+
+Better Auth 会将过大的账号 cookie 分块，但浏览器和代理仍可能限制 cookie 或请求头的总大小。对于会签发大型 JWT 的提供商，或需要持久化令牌存储的生产流程，建议使用基于数据库的账号存储。
 
 启用此选项后，你可以在 hooks 或 middleware 中通过 `better-auth/cookies` 的 `getAccountCookie` 读取解密后的账号 cookie：
 
@@ -646,7 +650,7 @@ export const auth = betterAuth({
 				return "my-super-unique-id";
 			})) | false | "serial" | "uuid",
 			defaultFindManyLimit: 100,
-			experimentalJoins: false,
+			joins: false,
 		},
 		backgroundTasks: {
 			handler: (promise) => { /* 如 waitUntil(promise) */ }
@@ -674,10 +678,11 @@ export const auth = betterAuth({
 
 <h3 id="advanced-database"><code>database</code></h3>
 
-为 ID 生成和 findMany 查询设置自定义策略。
+为 ID 生成、findMany 查询和数据库连接设置自定义策略。
 
-* `generateId`: 控制记录 ID 的生成方式。接受自定义函数、`false`、`"serial"` 或 `"uuid"`（默认：[随机 base62 字符串](https://github.com/better-auth/better-auth/blob/main/packages/core/src/utils/id.ts)）。更多信息请参阅[数据库文档](/docs/concepts/database#id-generation)。
-* `defaultFindManyLimit`: `findMany` 适配器方法返回的默认最大记录数。（默认：`100`）
+* `generateId`: 控制记录 ID 的生成方式。接受自定义函数、`false`、`"serial"` 或 `"uuid"`（默认值：[随机 base62 字符串](https://github.com/better-auth/better-auth/blob/main/packages/core/src/utils/id.ts)）。更多信息请参阅[数据库文档](/docs/concepts/database#id-generation)。
+* `defaultFindManyLimit`: `findMany` 适配器方法返回的记录默认最大数量（默认值：`100`）
+* `joins`: 为支持连接的适配器启用数据库连接。禁用时（默认值），相关数据会通过单独查询获取。更多信息请参阅[数据库文档](/docs/concepts/database#joins)。（默认值：`false`）
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -687,6 +692,7 @@ export const auth = betterAuth({
 		database: {
 			generateId: "uuid",
 			defaultFindManyLimit: 50,
+			joins: true,
 		},
 	},
 });

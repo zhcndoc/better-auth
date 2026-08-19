@@ -131,6 +131,8 @@ Better Auth 的辅助存储允许您使用键值存储来管理会话数据、�
 ```typescript
 interface SecondaryStorage {
   get: (key: string) => Promise<unknown>;
+  getAndDelete: (key: string) => Promise<unknown>;
+  increment: (key: string, ttl: number) => Promise<number>;
   set: (key: string, value: string, ttl?: number) => Promise<void>;
   delete: (key: string) => Promise<void>;
 }
@@ -193,11 +195,29 @@ import { betterAuth } from "better-auth";
 const redis = createClient();
 await redis.connect();
 
+const incrementScript = `
+local value = redis.call("INCR", KEYS[1])
+if value == 1 then
+  redis.call("EXPIRE", KEYS[1], ARGV[1])
+end
+return value
+`;
+
 export const auth = betterAuth({
 	// ... 其他选项
 	secondaryStorage: {
 		get: async (key) => {
 			return await redis.get(key);
+		},
+		getAndDelete: async (key) => {
+			return await redis.getDel(key);
+		},
+		increment: async (key, ttl) => {
+			const value = await redis.eval(incrementScript, {
+				keys: [key],
+				arguments: [String(ttl)],
+			});
+			return Number(value);
 		},
 		set: async (key, value, ttl) => {
 			if (ttl) await redis.set(key, value, { EX: ttl });
@@ -316,7 +336,7 @@ Better Auth 需要数据库中存在以下表。下面是 `typescript` 格式的
 
 ### 用户表
 
-表名：`user`
+表名：`user`。
 
 export const userTableFields = [
 	{
@@ -420,11 +440,13 @@ export const sessionTableFields = [
 
 表名：`account`
 
+账户表示与用户关联的一种身份验证方式。Better Auth 通过 `issuer` 和 `accountId` 组成的唯一对来识别提供商端身份，而 `id` 用于标识本地账户行。当账户 API 要求提供 `accountId` 时，请使用 `id`。
+
 export const accountTableFields = [
 	{
 		name: "id",
 		type: "string",
-		description: "Unique identifier for each account",
+		description: "Unique identifier for the local account record",
 		isPrimaryKey: true,
 	},
 	{
@@ -435,15 +457,20 @@ export const accountTableFields = [
 		references: { model: "user", field: "id", onDelete: "cascade" },
 	},
 	{
-		name: "accountId",
+		name: "issuer",
 		type: "string",
 		description:
-			"The ID of the account as provided by the SSO or equal to userId for credential accounts",
+			"The trusted authority that issued the provider account identifier",
+	},
+	{
+		name: "accountId",
+		type: "string",
+		description: "The stable account identifier within the issuer namespace",
 	},
 	{
 		name: "providerId",
 		type: "string",
-		description: "The ID of the provider",
+		description: "The provider configuration used to authenticate the account",
 	},
 	{
 		name: "accessToken",
@@ -502,7 +529,9 @@ export const accountTableFields = [
 
 <DatabaseTable name="account" fields={accountTableFields} />
 
-### 验证表
+数据库会对 `issuer` 和 `accountId` 强制实施唯一复合索引。使用受信任 issuer 的 Providers 会使用该权限，包括用于 OpenID Connect 的已验证 issuer。没有 issuer 的 OAuth Providers 会使用合成的 `local:oauth:<encoded providerId>` 命名空间，其中 provider ID 部分会进行百分号编码。Credential accounts 使用 `local:credential` 和所关联用户的稳定 `id`。
+
+### 验证
 
 表名：`verification`
 
@@ -985,31 +1014,37 @@ export const auth = betterAuth({
 
 ## 实验性关联查询
 
-从 Better Auth `1.4` 开始，实验性的数据库关联查询功能已添加。
-这允许 Better Auth 在单个请求中执行多个数据库查询，减少数据库往返次数。
-超过 50 个端点支持关联查询，并且我们正在持续添加更多。
+## 连接
 
-在内部，我们的适配器系统原生支持关联查询。即使你没有启用实验性关联查询，
-它仍然会回退到执行多个查询并合并结果。
+自 Better-Auth `1.4` 版本起，我们引入了数据库连接支持。
+这使 Better-Auth 能够在单个请求中执行多个数据库查询，从而减少数据库往返次数。
+目前已有超过 50 个端点支持连接，我们也在不断添加更多端点。
 
-要启用关联查询，请在你的认证配置中添加以下内容：
+在底层，我们的适配器系统原生支持连接。禁用连接时（默认设置），
+Better-Auth 会回退到执行多个数据库查询并合并结果。
+
+要启用连接，请使用以下配置更新您的身份验证配置：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-  experimental: { joins: true }
+  advanced: {
+    database: {
+      joins: true,
+    },
+  },
 });
 ```
 
-Better Auth `1.4` CLI 会自动为 DrizzleORM 和 PrismaORM 生成关联关系，因此如果你尚未添加它们，请运行迁移或生成命令以更新到最新的必需架构。
+请确保您的 DrizzleORM 或 PrismaORM 架构包含必要的关系——运行我们的迁移或生成 CLI 命令以保持最新状态。
 
-我们强烈建议阅读对应适配器的实验性关联查询文档：
+请阅读与您所用适配器相关的连接文档：
 
-* [DrizzleORM](/docs/adapters/drizzle#joins-experimental)
-* [PrismaORM](/docs/adapters/prisma#joins-experimental)
-* [SQLite](/docs/adapters/sqlite#joins-experimental)
-* [MySQL](/docs/adapters/mysql#joins-experimental)
-* [PostgreSQL](/docs/adapters/postgresql#joins-experimental)
-* [MSSQL](/docs/adapters/mssql#joins-experimental)
-* [MongoDB](/docs/adapters/mongo#joins-experimental)
+* [DrizzleORM](/docs/adapters/drizzle#joins)
+* [PrismaORM](/docs/adapters/prisma#joins)
+* [SQLite](/docs/adapters/sqlite#joins)
+* [MySQL](/docs/adapters/mysql#joins)
+* [PostgreSQL](/docs/adapters/postgresql#joins)
+* [MSSQL](/docs/adapters/mssql#joins)
+* [MongoDB](/docs/adapters/mongo#joins)

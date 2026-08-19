@@ -9,6 +9,12 @@ JWT 插件提供了用于获取 JWT 令牌的端点以及用于验证令牌的 J
   该插件并非用来替代 session。它适用于需要使用 JWT 令牌的服务。如果你想使用 JWT 令牌进行身份验证，请查看 [Bearer 插件](/docs/plugins/bearer)。
 </Callout>
 
+<Callout type="info">
+  JWT 插件的 `/token` 端点和 `set-auth-jwt` 头会生成可由 JWKS 验证的 JWT，供外部服务使用。它们与 Better Auth 的主 `session_token` cookie 相互独立。
+
+  如果启用 `session.cookieCache.strategy = "jwt"`，`session_data` cookie 默认仍使用 Better Auth 密钥和 HS256。若要让该 cookie-cache JWT 也能通过 JWT 插件的 JWKS 进行验证，请在 `jwt()` 上设置 `sessionCookieCache: true`。
+</Callout>
+
 ## 安装
 
 <Steps>
@@ -338,7 +344,7 @@ jwt({
 
 #### 远程签名示例
 
-如果使用远程密钥管理服务（例如 [Google KMS](https://cloud.google.com/kms/docs/encrypt-decrypt-rsa#kms-encrypt-asymmetric-nodejs)、[Amazon KMS](https://docs.aws.amazon.com/kms/latest/APIReference/API_Sign.html) 或 [Azure Key Vault](https://learn.microsoft.com/en-us/rest/api/keyvault/keys/sign/sign?view=rest-keyvault-keys-7.4&tabs=HTTP)），此功能非常有用。
+如果使用远程密钥管理服务（例如 [Google KMS](https://cloud.google.com/kms/docs/encrypt-decrypt-rsa#kms-encrypt-asymmetric-nodejs)、[Amazon KMS](https://docs.aws.amazon.com/kms/latest/APIReference/API_Sign.html) 或 [Azure Key Vault](https://learn.microsoft.com/en-us/rest/api/keyvault/keys/sign/sign?view=rest-keyvault-keys-7.4\&tabs=HTTP)），此功能非常有用。
 
 ```ts title="auth.ts"
 jwt({
@@ -375,7 +381,7 @@ JWT 插件会向数据库添加以下表：
 
 ### JWKS
 
-表名：`jwks`
+表名：`jwks`。
 
 export const jwksTableFields = [
 	{
@@ -414,6 +420,16 @@ export const jwksTableFields = [
 </Callout>
 
 ## 选项
+
+### 会话 Cookie 缓存
+
+将 `sessionCookieCache` 设置为 `true`，使用插件本地管理的密钥对会话 Cookie 缓存值进行签名。这要求将 `session.cookieCache.strategy` 设置为 `"jwt"`。
+
+```ts title="auth.ts"
+jwt({
+  sessionCookieCache: true
+})
+```
 
 ### 密钥对算法
 

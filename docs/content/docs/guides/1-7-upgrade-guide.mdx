@@ -1,87 +1,175 @@
 ---
 title: 升级到 Better Auth 1.7
-description: 将 Better Auth 从 1.6 升级到 1.7，包括 OAuth、OpenID Connect、MCP、SAML、SCIM、代理和自定义适配器的变更。
+description: 将 Better Auth 从 1.6 升级到 1.7，包括 Expo、OAuth、OpenID Connect、MCP、SAML、SCIM、代理和自定义适配器变更。
 ---
 
 Better Auth 1.7 的大多数变更都是新增性的。大多数项目只需先执行一条命令：
 
 ```package-install
-npx auth@rc upgrade
+npx auth upgrade
 ```
 
-<Callout type="warn">
-  本指南中的命令使用 `rc` 标签，因为 1.7 还是候选发布版。`latest` 标签目前仍会解析到 1.6 版本的 CLI，直到 1.7 稳定为止，因此 `auth@latest` 或未指定标签的 `auth` 都会生成 1.6 的 schema。也请将 `better-auth` 和所有 `@better-auth/*` 包升级到 `rc` 版本。一旦 1.7 稳定后，请使用 `@latest` 或直接去掉标签。
-</Callout>
+将 `better-auth` 和每个 `@better-auth/*` 软件包一起升级，以便 CLI 和库都保持在 1.7。
 
 某些领域需要更多注意：OAuth、OpenID Connect、SAML、SCIM、双因素认证、MCP、自定义存储和代理设置。请使用下表选择适用于你项目的章节。
 
-| 如果你的项目                                                         | 阅读                                                                            |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| 完全使用 Better Auth                                                   | [升级前准备](#before-you-upgrade) 和 [位于代理之后](#behind-a-proxy) |
-| 使用社交登录、通用 OAuth、One Tap 或 SSO                              | [作为登录客户端](#as-a-login-client)                                         |
-| 运行自己的 OAuth 或 OpenID 提供方                                      | [作为身份提供方](#as-an-identity-provider)                             |
-| 运行 MCP                                                               | [MCP](#mcp)                                                                     |
-| 使用 SAML、SSO 域名验证或 SCIM                                         | [企业 SSO](#enterprise-sso)                                               |
-| 使用 Stripe 计费                                                     | [Stripe](#stripe)                                                               |
-| 使用双因素认证、魔法链接或电子邮件 OTP                               | [双因素与无密码安全](#two-factor-and-passwordless-security)   |
-| 使用自定义数据库适配器、辅助存储或限流存储                           | [自定义适配器和存储](#custom-adapters-and-storage)                     |
+| 如果你的项目                              | 阅读                                          |
+| ----------------------------------- | ------------------------------------------- |
+| 使用 Better Auth                      | [升级之前](#升级之前) 和 [代理之后](#代理之后)               |
+| 使用邮箱和密码、社交登录、通用 OAuth、One Tap 或 SSO | [作为登录客户端](#作为登录客户端)                         |
+| 使用 Expo 或 React Native              | [Expo 和 React Native](#expo-和-react-native) |
+| 运行自己的 OAuth 或 OpenID 提供方            | [作为身份提供方](#作为身份提供方)                         |
+| 运行 MCP                              | [MCP](#mcp)                                 |
+| 使用 SAML 或 SSO 域验证                   | [企业级 SSO](#企业级-sso)                         |
+| 使用 SCIM                             | [SCIM](#scim)                               |
+| 使用 Stripe 计费                        | [Stripe](#stripe)                           |
+| 使用双因素认证、魔法链接或邮箱 OTP                 | [双因素和无密码安全](#双因素和无密码安全)                     |
+| 使用设备授权插件                            | [设备授权](#设备授权)                               |
+| 使用自定义数据库适配器、辅助存储或速率限制存储             | [自定义适配器和存储](#自定义适配器和存储)                     |
 
 ## 升级之前
 
-升级命令会处理包更新。数据库则需要更多小心。一些 1.7 功能会新增或修改表，并且有些还需要手动的数据处理步骤。
-
-<Callout type="warn">
-  如果任何变更的功能会影响到你的项目，请在部署 1.7 之前先运行模式迁移。
-</Callout>
-
-使用 CLI 迁移命令：
-
-```bash title="Terminal"
-npx auth@rc generate
-npx auth@rc migrate
-```
-
-如果你使用 Drizzle 或 Prisma 自己管理 schema，请运行 `generate`，然后通过你自己的迁移工具应用结果。
-
-`auth` CLI 现在运行需要 Node.js 22.12 或更高版本。
+升级命令会处理软件包更新。数据库需要更加谨慎，因为某些 1.7 功能会更改表或要求手动执行数据步骤。`auth` CLI 要求 Node.js 22.12 或更高版本。
 
 这些功能会更改 schema：
 
-| 功能                       | 它添加的内容                                                                       | 需要手动步骤？                    |
-| -------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------- |
-| 受保护资源                  | 新的资源表和键列                                                                   | 否                                  |
-| 资源绑定令牌                | token 表上的可空资源列                                                             | 否                                  |
-| DPoP                       | 一个令牌绑定列                                                                    | 否                                  |
-| 刷新令牌重用窗口            | refresh token 上的缓存重放响应列                                                  | 否                                  |
-| 授权码重放                  | 两个 token 表上都有一个带索引的 `authorizationCodeId` 列                           | 否                                  |
-| 后通道登出                  | 登出 URL 和已撤销列                                                               | 否                                  |
-| 请求的 user-info 声明        | token 和 consent 表上的请求声明列                                                 | 否                                  |
-| 组织团队计数器              | `team.memberCount` 和 `teamMember.membershipKey` 列                                | 否                                  |
-| SCIM 组织作用域             | 必需的 `organizationId`、移除 `userId`、新增 `providerKey`                        | **是，需回收并重映射行**            |
-| SCIM 组                     | 新的 `scimGroup`、`scimGroupMember`、`scimGroupRole` 和 `scimGroupRoleGrant` 表 | 否                                  |
-| 提供方客户端存储            | `oauthApplication` 变为 `oauthClient`，并新增 token 表                            | **是，来自 `oidcProvider` 或 MCP** |
-
-大多数行会自动处理。下面描述的两个情况需要手动步骤。在切换之前，请先阅读适用于你的那些部分。
-
-<Callout type="warn">
-  **SCIM：回收、重映射，然后迁移。** SCIM 连接现在需要 `organizationId` 和新的唯一 `providerKey`，旧的 `userId` 列已被移除，并且由 SCIM 管理的账户会迁移到带命名空间的 provider id。新列是 `NOT NULL`/`UNIQUE`，因此在 `auth migrate` 路径上，如果 `scimProvider` 表已有数据就会中止。在运行 `migrate` 之前：
-
-  1. 删除 1.7 之前的 `scimProvider` 行，以便连接可以干净地重新注册，或者手动为每一行分配一个 `organizationId` 和唯一的 `providerKey`。
-  2. 将 SCIM 管理的 `account` 行上的 `providerId` 重写为 `scim:{organizationId}:{providerId}`，对于应用级静态提供方则重写为 `scim:{providerId}`。只对已知的 SCIM 行执行此操作，这样共享同一个 provider id 的无关账户就不会受到影响。
-  3. 运行 `migrate`，然后重新生成这些连接的 token。
-
-  如果跳过第 2 步，1.7 之前的 SCIM 用户就会对 provisioning 工具不可见：更新和删除会找不到它们，重新 provisioning 会创建重复用户。
-</Callout>
+| 功能        | 增加内容                                                                           | 需要手动准备？                              |
+| --------- | ------------------------------------------------------------------------------ | ------------------------------------ |
+| 受保护资源     | 新的资源表和键列                                                                       | 否                                    |
+| 资源绑定令牌    | 令牌表中的资源列                                                                       | 否                                    |
+| DPoP      | 令牌绑定列                                                                          | 否                                    |
+| 刷新令牌重用窗口  | 刷新令牌上的缓存重放响应列                                                                  | 否                                    |
+| 授权码重放     | 两个令牌表上带索引的 `authorizationCodeId` 列                                             | 否                                    |
+| 后端注销      | 注销 URL 和撤销列                                                                    | 否                                    |
+| 请求的用户信息声明 | 令牌表和同意表中的请求声明列                                                                 | 否                                    |
+| 账号身份      | issuer 列，以及与现有 provider-account 列的复合索引                                         | **是，需要回填**                           |
+| SCIM      | 七个配置模型，以及三个可选的托管目录模型，其布局会替代旧版 SCIM 模型                                          | **是，需要重新配置**                         |
+| 组织团队计数器   | `team.memberCount` 和 `teamMember.membershipKey` 列                              | 否                                    |
+| 提供方客户端存储  | `oauthApplication` 变为 `oauthClient`，并增加新的令牌表                                   | **是，需要移动客户端数据**                      |
+| 设备授权      | `deviceCode` 和 `userCode` 上的唯一索引；可选 OAuth 授权还会增加 `oauthClientId` 和 `resources` | **是，需要去重；MySQL/SQL Server 还需要绑定字符串** |
 
 <Callout type="warn">
-  **从 `oidcProvider` 或核心内置 MCP 插件迁移会移动客户端数据。** `@better-auth/oauth-provider` 将已注册客户端存储在 `oauthClient` 中，而不是旧的 `oauthApplication`，并把 `oauthAccessToken.accessToken` 列重命名为 `token`。`auth migrate` 只会新增表和列；它从不重命名或复制数据。因此 `oauthClient` 会被创建为空，而所有已注册客户端仍会留在 `oauthApplication` 中无法迁移；与此同时，`NOT NULL UNIQUE` 的 `token` 列会在现有 `oauthAccessToken` 表上触发 `ALTER` 中止。旧客户端表和新客户端表的列并不兼容（`redirectUrls` 变成了 `redirectUris` 数组，`metadata` 变成 JSON，而且 `grantTypes` 和 `tokenEndpointAuthMethod` 等列都是新增的），所以在切换前需要用字段映射复制客户端，或者重新注册它们。动态注册的客户端会自行重新注册。旧版的 `oauthAccessToken` 行是临时访问令牌，因此请在 `migrate` 之前先将该表单独删除或重命名。
+  在应用生成的 1.7 schema 之前，准备好账号身份、OAuth 客户端和 SCIM 数据。CLI 会增加表、列和索引，但不会为你选择发行者、复制 OAuth 客户端或转换旧版 SCIM 数据。
 </Callout>
+
+请按以下顺序操作：
+
+1. 当相关章节适用于你的项目时，完成[账号身份按发行者进行限定](#账号身份按发行者进行限定)、[OAuth 客户端记录](#迁移-oauth-客户端记录)、[SCIM](#scim-需要完整重新配置) 和[设备授权](#设备授权)中的手动准备工作。
+2. 应用 1.7 schema。使用内置 Kysely 适配器时，运行 `npx auth migrate`。使用 Drizzle、Prisma 或自定义 schema 工作流时，运行 `npx auth generate`，检查输出，然后使用你的迁移工具应用它。
+3. 一起部署 1.7 软件包和配置变更。
+4. 完成所有部署后工作，包括重新配置 SCIM。
 
 ***
 
 ## 作为登录客户端
 
-这涵盖社交登录、通用 OAuth 插件、One Tap，以及 SSO 消费。
+本节涵盖邮箱和密码、社交登录、通用 OAuth 插件、One Tap 以及使用 SSO。
+
+### 账号身份按发行者进行限定
+
+Better Auth 现在通过 `issuer` 和 `accountId` 的唯一组合识别外部账号。`providerId` 仍然是本地提供方配置，而 `account.id` 标识 Better Auth 账号行，`account.accountId` 仍然是提供方分配的稳定标识符。账号 schema 增加了必需的 `issuer` 字段，并在两个身份字段上创建唯一复合索引，但不会重命名 `accountId`。
+
+<Callout type="warn">
+  在更改账号 schema 之前，请使用维护窗口并停止身份验证写入，包括直接向 `account` 插入数据的后台任务和管理 API。生成的迁移无法替你选择可信发行者或解决身份冲突。
+</Callout>
+
+<Callout type="warn">
+  如果你在完成回填之前已经针对 MySQL 运行了 `auth migrate`，请先检查是否发生数据损坏。在 SQLite、Postgres 和 SQL Server 上，为没有默认值的必填列增加数据会安全失败，但 MySQL 的默认 `sql_mode` 会静默接受该操作，并将所有现有行的 `issuer` 回填为空字符串，而不是抛出错误。
+
+  ```sql title="MySQL corruption check"
+  SELECT COUNT(*) FROM account WHERE issuer = '';
+  ```
+
+  非零计数意味着数据库需要修复，而不只是回填：重新回填之前先删除复合唯一索引，因为该索引建立在损坏的空字符串值之上，当行解析为相同的真实发行者时会抛出重复键错误。MySQL 对表不支持 `DROP INDEX IF EXISTS`，并且如果索引创建从未运行，该索引可能尚不存在，因此请先检查。
+
+  ```sql title="Drop the compound index if it exists (MySQL)"
+  SHOW INDEX FROM account WHERE Key_name = 'account_issuer_accountId_uidx';
+  -- Run the DROP INDEX below only if the query above returned a row.
+  DROP INDEX account_issuer_accountId_uidx ON account;
+  ```
+
+  所有行都有正确值后，作为下面第 5 步的一部分重新创建索引。
+
+  ```sql title="Recreate the compound index (MySQL)"
+  CREATE UNIQUE INDEX account_issuer_accountId_uidx ON account (issuer, accountId);
+  ```
+</Callout>
+
+**回填账号身份：**
+
+1. 备份 `account` 和 `user` 表，然后盘点每个不同的 `providerId`。将 `account.fields` 中的自定义物理字段名也纳入盘点。
+2. 在回填期间将 `issuer` 添加为可空字段。保留现有的物理 `accountId` 列。
+3. 根据账号类型填充两个字段：
+
+   | 账号类型                                   | `issuer`                           | `accountId`                 |
+   | -------------------------------------- | ---------------------------------- | --------------------------- |
+   | 凭据                                     | `local:credential`                 | 链接的 `user` 行中的稳定 `id`       |
+   | SIWE 钱包，`providerId` 为 `siwe`          | `local:siwe`                       | 现有的 `<address>:<chainId>` 值 |
+   | Google One Tap，`providerId` 为 `google` | `https://accounts.google.com`      | 现有的 Google `sub`            |
+   | 具有发行者的提供方                              | 提供方使用的确切可信发行者                      | 现有的提供方账号标识符                 |
+   | 没有发行者的 OAuth 提供方                       | `local:oauth:<encoded providerId>` | 现有的提供方账号标识符                 |
+
+   合成发行者会严格按照 `encodeURIComponent(providerId)` 对其提供方 ID 片段进行百分号编码；例如，`local:oauth:github` 和 `local:oauth:team%2Fgithub`。请为你的部署构建明确的 `providerId` 到发行者映射。代表同一 OpenID Connect 权威机构的多个提供方配置必须使用同一个发行者。不要根据邮箱、显示名称、未经验证的请求值或可变的授权端点推导发行者。SIWE 和 Google One Tap 不是 OAuth 提供方，因此合成的 `local:oauth:` 命名空间不适用于它们。
+4. 在创建唯一索引之前查找冲突。根据你的物理表和字段名调整此查询：
+
+   ```sql title="Identity collision check"
+   SELECT issuer, accountId, COUNT(*) AS accountCount,
+          COUNT(DISTINCT userId) AS userCount
+   FROM account
+   GROUP BY issuer, accountId
+   HAVING COUNT(*) > 1;
+   ```
+
+   如果重复行属于同一个用户，请选择要保留的账号记录，并在删除其他记录之前协调其提供方配置、令牌、作用域和时间戳。如果一个键属于多个用户，请停止迁移，并根据可信的提供方数据确定所有者。绝不要仅通过匹配邮箱来合并用户。
+5. 确认每一行都有两个身份字段，然后将 `issuer` 设为非空，并在 `issuer` 和 `accountId` 上添加唯一复合索引。`auth migrate` 永远不会生成将现有可空列设为非空的语句；请自行运行此 DDL。
+
+   ```sql title="Postgres"
+   ALTER TABLE account ALTER COLUMN issuer SET NOT NULL;
+   CREATE UNIQUE INDEX account_issuer_accountId_uidx ON account (issuer, accountId);
+   ```
+
+   ```sql title="MySQL"
+   ALTER TABLE account MODIFY COLUMN issuer VARCHAR(255) NOT NULL;
+   CREATE UNIQUE INDEX account_issuer_accountId_uidx ON account (issuer, accountId);
+   ```
+
+   ```sql title="SQL Server"
+   ALTER TABLE account ALTER COLUMN issuer VARCHAR(255) NOT NULL;
+   CREATE UNIQUE INDEX account_issuer_accountId_uidx ON account (issuer, accountId);
+   ```
+
+   SQLite 没有可以添加 `NOT NULL` 约束的 `ALTER COLUMN`，因此请改为重建表：创建带有该约束的替代表，将所有行复制过去，删除原表，重命名替代表，然后重新创建原表拥有的所有索引和外键。
+
+   ```sql title="SQLite table rebuild"
+   CREATE TABLE account_new (/* same columns as account, with issuer TEXT NOT NULL */);
+   INSERT INTO account_new SELECT * FROM account;
+   DROP TABLE account;
+   ALTER TABLE account_new RENAME TO account;
+   CREATE UNIQUE INDEX account_issuer_accountId_uidx ON account (issuer, accountId);
+   ```
+6. 更新自定义适配器、数据库钩子和生成的 schema，使其包含 `issuer`。凭据账号继续将所链接用户的稳定 `id` 作为 `accountId`；邮箱仍然是可变的登录标识符，不会改变账号键。
+
+账号专用 API 现在使用明确的强类型选择器。从 `listAccounts` 读取 `id`，然后将其作为 `accountId` 传递给 `unlinkAccount`。对于 `getAccessToken`、`refreshToken` 和 `accountInfo`，请从以下请求形状中选择一个：
+
+* `{ accountId: account.id, userId? }` 选择本地账号行。
+* `{ useAccountCookie: true, userId? }` 从签名 Cookie 中选择账号。
+
+从每个账号选择器中删除 `providerId`。选择器的 `accountId` 值是本地的 `account.id`，而不是提供方一侧的 `account.accountId`。以前省略选择器以使用账号 Cookie 的令牌或提供方配置文件请求，现在必须发送 `useAccountCookie: true`；同时省略两个受支持的选择器是无效的。
+
+只有在冲突查询不返回任何行且所需的唯一索引存在后才能部署。针对迁移后的数据验证邮箱和密码登录、返回式 OAuth 和 SSO 登录、显式账号链接、取消链接、提供方配置文件获取以及令牌刷新。
+
+检查每个自定义 OAuth 提供方的账号 subject。OpenID Connect 发现型提供方现在使用经过验证的 `sub`；普通 OAuth 提供方使用 `id`；之前在这两个字段之间进行运行时回退的行为已移除。当任一默认值不是提供方的不可变标识符时，请设置 `accountSubject`。现在 `getUserInfo().user` 只包含可变的本地用户字段；请将提供方标识符保留在 `getUserInfo().data` 中。`mapProfileToUser` 不再能返回 `id`。`accountInfo` 响应会将选定的身份公开为 `account.accountId`，而不是 `user.id`。
+
+#### 迁移 Microsoft 账号标识符
+
+Microsoft 账号现在使用稳定的目录 `oid` 声明，而不是成对且特定于应用的 `sub` 声明。请在账号身份回填的第 3 步中完成此操作，即检查冲突或添加复合账号索引之前：
+
+1. 盘点内置提供方中 `providerId: "microsoft"` 的行，以及 Generic OAuth 辅助工具中 `providerId: "microsoft-entra-id"` 的行。
+2. 在账号身份回填过程中为每一行分配其可信发行者，并将其旧的基于 `sub` 的 `accountId` 替换为该目录用户经过验证的 `oid`。
+3. 如果有已存储的 Microsoft ID 令牌，请验证每个令牌并复制其 `oid` 声明。`mapProfileToUser` 无法覆盖由提供方拥有的账号标识符。
+4. 如果没有已存储的 ID 令牌，请在切换期间暂停 Microsoft 登录和账号链接，并从可信的 Microsoft Entra 导出中获取映射。Better Auth 无法仅从旧账号行推导 `oid`；在迁移之前接受流量可能会创建重复账号。
+
+如果你使用带有自定义作用域或 `getToken` 的 Generic OAuth `microsoftEntraId` 辅助工具，请确保令牌交换仍然返回 Microsoft 的 `id_token`，并且发现机制提供验证它所需的发行者和 JWKS 元数据。该辅助工具还要求提供具体的租户 GUID。请将 `common`、`organizations` 或 `consumers` 配置替换为内置的 Microsoft 社交提供方，该提供方会验证租户声明并推导令牌的实际发行者。
 
 ### 通用 OAuth 已重建到社交提供方路径上
 
@@ -91,12 +179,11 @@ npx auth@rc migrate
 
 * 将 `signIn.oauth2({ providerId })` 替换为 `signIn.social({ provider })`。
 * 将 `oauth2.link()` 替换为 `linkSocial()`。
-* 将你的提供方回调 URL 从 `/api/auth/oauth2/callback/:id` 更新为 `/api/auth/callback/:id`。
-* 从客户端插件中移除 `genericOAuthClient()`，并使用标准的社交客户端 API。
-* PKCE 现在默认开启。仅对拒绝它的提供方设置 `pkce: false`。
-* 移除 `issuer` 和 `requireIssuerValidation`；issuer 验证现在会自动进行。
-* `authorizationUrlParams` 和 `tokenUrlParams` 现在只接受纯字符串映射。
-* `mapProfileToUser` 的 `profile` 参数现在的类型是 `GenericOAuthUserInfo`，而不是 `Record<string, any>`。在赋值给有类型的用户字段时，请对非标准提供方字段进行强制转换或类型转换（例如 `String(profile.someField)`）。
+* 将提供方回调 URL 从 `/api/auth/oauth2/callback/:id` 更新为 `/api/auth/callback/:id`。
+* 从客户端插件中删除 `genericOAuthClient()`，并使用标准社交客户端 API。
+* PKCE 现在默认启用。仅对于拒绝 PKCE 的提供方设置 `pkce: false`。
+* 删除 `issuer` 和 `requireIssuerValidation`；发行者验证现在会自动进行。
+* `authorizationUrlParams` 和 `tokenUrlParams` 现在只接受普通字符串映射。
 
 ### 身份令牌现在通过一个验证器处理
 
@@ -108,7 +195,7 @@ npx auth@rc migrate
 
 Electron 登录流程现在需要 S256 PKCE，不再信任自定义 origin 头，并且对自定义 URL scheme 的匹配更加安全。
 
-**你需要做的：** 将 `@better-auth/electron` 客户端和服务端一起升级。确保你的应用 URL scheme 已包含在 `trustedOrigins` 中。移除旧的 `disableOriginOverride` 选项。检查带有 host 的受信任条目，例如 `myapp://callback`，因为它们现在不再匹配外观相似的 host。这个自定义 scheme 的匹配变更属于共享核心行为，因此也适用于 Expo 和其他移动应用：带 host 的条目现在按精确的 authority 匹配，而不带 host 的条目，例如 `myapp://` 或 `exp://`，仍然会信任该 scheme 的所有 host。默认的 Expo `exp://` 配置不受影响。
+**操作方法：** 同时升级 `@better-auth/electron` 客户端和服务器。确保你的应用 URL scheme 位于 `trustedOrigins` 中。删除旧的 `disableOriginOverride` 选项。检查带有主机的可信条目，例如 `myapp://callback`，因为它们不再匹配外观相似的主机。
 
 ### `generateState()` 签名已更改
 
@@ -122,11 +209,9 @@ OAuth 回调重定向错误值 `email_doesn't_match` 已重命名为 `email_does
 
 **你需要做的：** 如果你从回调重定向中读取此错误码，请将字符串更新为 `email_does_not_match`。
 
-### Google One Tap 更严格地验证令牌
+### Google One Tap 需要客户端 ID
 
-One Tap 现在会拒绝格式错误的身份令牌，或者缺少 `email` 或 `sub`，或它们不是字符串的令牌，并返回 `400`，而不是软错误。对于启用了 `requireEmailVerification` 的 Google，未验证的邮箱会返回 `403 EMAIL_NOT_VERIFIED`。
-
-**你需要做的：** 对于来自 Google 的格式正确的令牌无需处理。如果你启用了 `requireEmailVerification`，请处理 `403`。
+在 `oneTap()` 上设置 `clientId`，或使用客户端 ID 配置 Google 社交提供方。One Tap 现在会根据经过验证的 Google subject 绑定账号，而不是通过邮箱匹配。
 
 ### 作用域会在登录之间保留
 
@@ -134,7 +219,9 @@ One Tap 现在会拒绝格式错误的身份令牌，或者缺少 `email` 或 `s
 
 Better Auth 现在会在重新登录和令牌刷新期间保留账号上已有的作用域，使用现有的 `account.scope` 字段。这是一个行为修复：没有架构变更、没有回填，大多数项目也无需操作。
 
-如果你跟踪了 1.7 预发布版本，请注意早期 beta 版曾将作用域移动到 `grantedScopes` 数组，后来又回退了。正式发布的 1.7 保持原始的 `account.scope` 字符串。如果你从早期 beta 中采用了 `grantedScopes` 列，请删除它，并在你修改过的每个 schema 中恢复 `scope`。参见 [跟踪预发布版本](#tracking-prereleases)。
+### SIWE 从已签名消息推导身份
+
+从 `authClient.siwe.nonce()` 和 `authClient.siwe.getNonce()` 调用中删除钱包地址和链字段。如果你配置了服务端 `getNonce`，请返回一个包含 8 至 250 个字母数字字符的 ERC-4361 nonce。Better Auth 会从已签名的 SIWE 消息中读取地址和链。
 
 ### 发现型提供方会验证它们的身份令牌
 
@@ -146,13 +233,7 @@ Better Auth 现在会在重新登录和令牌刷新期间保留账号上已有�
 
 签名断言登录设置，也称为 private-key JWT，现在会在创建时进行检查。不支持的算法、没有材料的密钥，或者声明的算法与密钥不匹配，都会立即失败，而不是悄悄产生错误结果。
 
-**你需要做的：** 修复任何其声明算法与密钥不一致的签名设置。
-
-### OAuth2 令牌请求构建器现在是异步的
-
-底层的 OAuth2 请求构建器已重命名并返回 promise。这会影响任何手动构建令牌请求的代码，包括自定义提供方和 SSO 集成，不仅仅是 private-key-JWT 设置。
-
-**你需要做的：** 将 `createAuthorizationCodeRequest`、`createRefreshAccessTokenRequest` 和 `createClientCredentialsTokenRequest` 替换为异步的 `authorizationCodeRequest`、`refreshAccessTokenRequest` 和 `clientCredentialsTokenRequest`，并对它们使用 `await`。
+**操作方法：** 修复任何声明算法与密钥不一致的签名设置。将 `createAuthorizationCodeRequest`、`createRefreshAccessTokenRequest` 和 `createClientCredentialsTokenRequest` 替换为异步的 `authorizationCodeRequest`、`refreshAccessTokenRequest` 和 `clientCredentialsTokenRequest`。
 
 ### 匿名账号链接可在移动端和应用内浏览器中使用
 
@@ -162,9 +243,37 @@ Better Auth 现在会在重新登录和令牌刷新期间保留账号上已有�
 
 ***
 
+## Expo 和 React Native
+
+### 安全存储访问是异步的
+
+Expo 客户端现在使用异步 SecureStore API 访问 Cookie 和会话缓存。`authClient.getCookie()` 返回 promise，因此请直接 await，并将读取 Cookie 的回调设为异步。
+
+```ts
+const cookie = await authClient.getCookie();
+```
+
+直接传递 `expo-secure-store` 仍然可以正常工作，无需包装器。自定义存储实现必须提供 `getItem`、`getItemAsync`、`setItem` 和 `setItemAsync`。导出的 `storageAdapter.setItem()` 方法是同步的；当调用方必须等待持久化完成时，请使用 `setItemAsync()`。
+
+***
+
 ## 作为身份提供方
 
-这涵盖了 `@better-auth/oauth-provider`。其中有几项更改需要进行 schema 迁移；在应用这些更改后，请运行一次 `generate` 和 `migrate`。
+本节涵盖 `@better-auth/oauth-provider`。
+
+### 迁移 OAuth 客户端记录
+
+如果你使用 1.6 内置的 `oidcProvider` 或 MCP 插件，请将每个 `oauthApplication` 复制或重新注册为 `oauthClient`。将 `redirectUrls` 映射为 `redirectUris`，将 `metadata` 转换为 JSON，并设置客户端的授权类型和令牌端点认证方法。让旧访问令牌过期，然后在创建 1.7 令牌表之前删除或重命名旧的 `oauthAccessToken` 表。CLI 不会复制这些记录，也不会将 `oauthAccessToken.accessToken` 重命名为 `token`。
+
+如果你已经使用 `@better-auth/oauth-provider`，请按以下方式迁移现有的 `oauthClient` 行：
+
+1. 增加可空的 `applicationType`、`clientDiscoveryId` 和 `clientCredentialsScopes` 列。除非你拥有客户端的可信发现来源，否则将 `clientDiscoveryId` 保留为 null。
+2. 将现有的 `web` 和 `native` 客户端类型映射到 `applicationType`。单独检查 `user-agent-based` 客户端。仅对公共客户端将 `tokenEndpointAuthMethod` 设置为 `none`；其他所有方法都是机密的。
+3. 将 `clientCredentialsScopes` 设置为空数组，然后为使用 `client_credentials` 授权的每个客户端分配获准的机器作用域。从提供方配置中删除 `clientCredentialGrantDefaultScopes`。
+4. 在添加复合唯一索引之前，删除相同 `clientId` 和 `resourceId` 的重复 `oauthClientResource` 行。
+5. 回填后删除已移除的 `type` 和 `public` 列。
+
+将客户端配置和注册负载中的裸 JWK 数组替换为 JWK Set 对象：`jwks: [key]` 变为 `jwks: { keys: [key] }`。删除 `oauthProvider.silenceWarnings` 选项。
 
 ### 受保护资源替代受众列表
 
@@ -172,38 +281,55 @@ Better Auth 现在会在重新登录和令牌刷新期间保留账号上已有�
 
 **需要做什么：**
 
-* 将 `validAudiences` 中的每一项移动到 `resources` 中。
-* 通过 `oauthClientResource` 或注册将客户端链接到特定资源。
-* 运行 `generate` 和 `migrate` 以添加新的表和列。
-* 检查你的刷新令牌生命周期：现在适用的最短生命周期会生效，因此，某个资源级别的值如果长于提供者默认值，会被限制为默认值。
+* 将 `validAudiences` 中的每个条目移动到 `resources`。
+* 通过 `oauthClientResource` 或注册流程将客户端链接到特定资源。
+* 检查刷新令牌生命周期：现在适用的最短生命周期优先，因此每资源设置的长于提供方默认值的生命周期会被限制为默认值。
 
 **如果你接受动态注册的客户端，** 默认情况下资源模型会强制按客户端进行资源访问控制。动态客户端的令牌请求可能会被拒绝，并返回 `invalid_target`。在这种情况下，将 `enforcePerClientResources: false`，并显式注册每个客户端的 `grant_types`，否则令牌端点会以 `unauthorized_client` 拒绝它们。
 
-### Token target is locked to the login
+### 注册资源和作用域使用提供方策略
+
+在启用动态客户端注册之前，配置 `clientRegistrationDefaultResources` 和 `clientRegistrationAllowedResources`。发送 `resources` 参数的现有客户端必须只请求这些选项允许的标识符。将 `clientRegistrationDefaultScopes` 和 `clientRegistrationAllowedScopes` 视为客户端可以请求的能力，而不是用户同意。
+
+### 令牌目标会锁定到登录
 
 该 API 令牌所针对的目标现在会在登录时被捕获，并锁定到该授权中。后续请求可以缩小目标 API 的范围，但不能扩大它。如果请求一个登录时未涵盖的 API，则会被拒绝。自定义声明回调现在接收的是资源列表，而不是单个值。
 
-**需要做什么：** 运行迁移以添加资源列。更新自定义声明回调以读取资源列表。确保客户端只请求其登录时已涵盖的资源。
+**操作方法：** 更新自定义声明回调以读取资源列表。确保客户端只请求其登录所涵盖的资源。
 
 ### DPoP 重命名令牌验证器
 
 普通的令牌检查辅助函数 `verifyAccessToken` 已重命名为 `verifyBearerToken`，现在会拒绝 DPoP 令牌。请在可能接收 DPoP 请求的端点上使用新的 `verifyAccessTokenRequest`。
 
-**要做什么：** 将 `verifyAccessToken` 重命名为 `verifyBearerToken`，并将支持 DPoP 的端点切换为 `verifyAccessTokenRequest`。运行 `generate` 和 `migrate` 以添加令牌绑定列。要支持 DPoP，请配置基于数据库的验证存储。
+**操作方法：** 将 `verifyAccessToken` 重命名为 `verifyBearerToken`，并将支持 DPoP 的端点切换为 `verifyAccessTokenRequest`。要支持 DPoP，请配置基于数据库的验证存储。
 
 **注意代理情况。** 原生 DPoP 会将证明中的 `htu` claim 与令牌端点为自身计算的 URL 进行比对。在 TLS 终止代理或自定义服务器后面，这个计算出的 URL 可能是内部绑定地址（`http://0.0.0.0:3000`）或代理的内部协议和端口。客户端是根据你的公共发现 URL 签名的 `htu`，因此有效的证明也可能被拒绝。在提供者读取之前，请在路由边界处将传入请求的协议和主机规范化为你配置的 `baseURL`。
 
+### 受保护资源作用域选项已重命名
+
+将受保护操作的 `scopes` 重命名为 `requiredScopes`，并使用 `challengeScopes` 作为 `WWW-Authenticate` 提示。如果应用程序代码直接创建作用域失败，请使用 `createInsufficientScopeError`，并将已识别的令牌或作用域失败传递给 `createResourceServerChallenge`。
+
 ### 注销会撤销会话令牌
 
-当会话结束时，与之绑定的访问令牌现在会被撤销。它们在 introspection 和 userinfo 中会显示为 inactive。以前，它们会一直有效直到过期。未授予 `offline_access` 的刷新令牌也会被撤销；`offline_access` 刷新令牌会被保留，因此长生命周期的 API 访问可以在浏览器注销后继续生效。你的服务器还会向每个注册了注销 URL 的应用发送注销消息。
+会话结束时，与其关联的访问令牌现在会被撤销。在内省和 UserInfo 中，这些令牌会显示为非活动状态。以前，它们会一直存在到过期。你的服务器还会向注册了注销 URL 的每个应用发送注销消息。
 
-**该怎么做：** 运行 `generate` 和 `migrate` 来添加新列。请预期绑定会话的令牌会在注销时停止工作。在无服务器平台上，设置 `advanced.backgroundTasks.handler`，这样发送注销消息就不会拖慢注销过程。
+**操作方法：** 预期会话绑定令牌在注销时停止工作。在无服务器平台上，设置 `advanced.backgroundTasks.handler`，这样发送注销消息就不会拖慢注销。
+
+如果你导入或保留带有 `backchannel_logout_uri` 的客户端，请在切换前审查这些注册。后端注销需要 JWT 插件，并且每个 URI 都必须是绝对的公共 HTTPS URL，不能包含凭据或片段。私有、保留、隧道和云元数据目标都会被拒绝。
+
+### RP 发起的注销可能需要浏览器确认
+
+在 1.6 中，`/oauth2/end-session` 只接受 `GET` 请求，并拒绝没有 `id_token_hint` 的请求。在 1.7 中，该端点还接受表单编码的 `POST` 请求。对于没有有效提示的浏览器导航，Better Auth 会要求用户确认，然后才结束当前会话。当提示指向与浏览器会话不同的会话时，也需要进行相同的浏览器确认。需要确认时，API 调用会收到协议错误。
+
+确认流程保留现有的重定向规则：`post_logout_redirect_uri` 必须与已注册 URI 完全匹配。Better Auth 只会将 `state` 添加到经过验证的重定向中。
+
+**操作方法：** 如果你的浏览器流程预期缺失或无效的提示会立即失败，请更新流程和测试，以处理确认页面。发送有效提示的标准客户端无需更改。仅对可信客户端启用 `enable_end_session`，并准确注册每个允许的注销后重定向 URI。
 
 ### 自定义 ID 令牌声明不能覆盖协议声明
 
 你的自定义 ID 令牌声明现在不能再设置标准为服务器保留的协议声明：发行者、主题、受众、过期时间、nonce、会话绑定、`auth_time`、`acr`、`amr` 和 `azp`。你自己的命名空间声明仍然会出现。ID 令牌也会报告 `acr: "0"`，而不是某个供应商特定的值。
 
-**该怎么做：** 如果 `customIdTokenClaims` 回调、扩展声明提供者，或者按次签发的 `idTokenClaims` 设置了这些保留声明之一，那么该值现在会被忽略。请将数据移到你自己的命名空间声明中，或者直接依赖服务器的值。相同规则也适用于自定义访问令牌声明：`customAccessTokenClaims`、按资源的 `customClaims`、按次签发的 `accessTokenClaims`，以及扩展提供者，现在都不能再设置诸如 `jti`、`client_id`、`auth_time`、`acr`、`amr` 和 `cnf` 之类的保留名称，无论是在签发 JWT 时，还是在对不透明令牌进行 introspection 时。
+**操作方法：** 如果 `customIdTokenClaims` 回调、扩展声明贡献器或每次签发的 `idTokenClaims` 设置了这些保留声明之一，该值现在会被忽略。请将数据移到你自己的命名空间声明中，或依赖服务器的值。
 
 ### ID 令牌不再包含 profile 和 email scope 声明
 
@@ -243,7 +369,13 @@ Better Auth 现在会在重新登录和令牌刷新期间保留账号上已有�
 
 **该怎么做：** 如果你依赖于未认证注册会降级为公共客户端，那么对于必须保持为公共客户端的客户端，请显式注册 `token_endpoint_auth_method: "none"`。
 
-### 注册要求 `response_types` 与 `grant_types` 互为对应
+### 令牌请求使用已注册的客户端认证方法
+
+OAuth Provider 现在会拒绝通过不同于客户端 `token_endpoint_auth_method` 的方法发送的机密客户端凭据。请求正文认证失败时返回 `400 invalid_client`；Basic 认证失败时返回带有 Basic challenge 的 `401 invalid_client`。
+
+**操作方法：** 使每个客户端的令牌请求与其注册的方法匹配。Better Auth 的通用 OAuth 请求辅助工具在提供客户端密钥时默认使用正文认证，因此对于使用 RFC 7591 默认方法注册的客户端，请在调用时传递 `authentication: "basic"` 或 `tokenEndpointAuth: { method: "client_secret_basic" }`。只有确实需要正文认证时，才显式注册 `client_secret_post`。
+
+### 注册要求响应类型和授权类型互相对应
 
 已注册客户端的 `response_types` 和 `grant_types` 现在必须互为对应：`code` 响应类型需要 `authorization_code` 授权类型，而 token 授权类型需要其匹配的响应类型。不匹配的注册将被拒绝。
 
@@ -281,9 +413,9 @@ Better Auth 现在会拒绝其发出的服务器端 OAuth 请求中的 HTTP 重�
 
 ### PKCE 对机密客户端和 OIDC 客户端的要求
 
-公有客户端始终需要 PKCE。`clientRegistrationRequirePKCE` 是一个服务器级的 `oauthProvider()` 选项，默认值为 `true`；将其设置为 `false` 后，所有通过动态客户端注册注册的机密客户端都可以在授权码流程中跳过 PKCE。该设置由服务器拥有，因此客户端无法自行选择退出。某个机密客户端一旦通过这种方式选择退出，请求携带 `offline_access` 范围时可以使用 OIDC `nonce` 代替 PKCE；而仍然要求 PKCE 的机密客户端不会因为 `offline_access` 而获得豁免。
+公共客户端始终需要 PKCE。通过动态客户端注册注册的机密客户端可以使用 `clientRegistrationRequirePKCE: false` 选择退出。携带 `offline_access` 作用域的请求仍然需要 PKCE，除非该请求是带有 `nonce` 的 OIDC 请求，机密客户端可以改用这种方式。
 
-**该怎么做：** 仅在你接受无法使用 PKCE 的机密客户端时，才在提供程序上设置 `clientRegistrationRequirePKCE: false`。这是一个全局策略决定，适用于你所有的机密客户端，而不是单个客户端。当已选择退出的机密 OIDC 客户端需要 `offline_access` 时，请发送一个 `nonce`。
+**操作方法：** 仅对无法使用 PKCE 的机密客户端设置 `clientRegistrationRequirePKCE: false`。如果机密 OIDC 客户端需要在没有 PKCE 的情况下使用 `offline_access`，请发送 `nonce`。
 
 ### 授权接受表单编码请求并拒绝请求对象
 
@@ -295,7 +427,7 @@ Better Auth 现在会拒绝其发出的服务器端 OAuth 请求中的 HTTP 重�
 
 在 `refreshTokenReuseInterval` 期间，OAuth 提供方可以对重复的刷新请求重放相同的刷新响应。严格的刷新令牌重放处理仍然是默认行为。
 
-**该怎么做：** 仅当公共客户端或原生客户端在另一个本地会话已经轮换了旧令牌之后，仍可能使用旧令牌重试刷新请求时，才设置 `refreshTokenReuseInterval`。MCP 对原生客户端和公共客户端默认将此窗口设为 30 秒。将 `refreshTokenReuseInterval: 0` 可保持严格的重放处理。
+**操作方法：** 仅当客户端可能在另一个本地会话已经轮换旧令牌后，使用旧令牌重试刷新请求时，才设置 `refreshTokenReuseInterval`。OAuth Provider 将严格重放处理保持在 `0`；`mcp()` 对每个客户端默认将该间隔设置为 30 秒。
 
 ### 如果你曾手动扩展过 OAuth provider
 
@@ -305,7 +437,7 @@ Better Auth 现在会拒绝其发出的服务器端 OAuth 请求中的 HTTP 重�
 
 ### 旧的 `oidcProvider` 插件已被移除
 
-**该怎么做：** 将 `better-auth/plugins` 中的 `oidcProvider` 替换为 `@better-auth/oauth-provider` 中的 `oauthProvider`，并迁移你的配置。此架构迁移不是直接替换：已注册的客户端会从 `oauthApplication` 迁移到重新结构化的 `oauthClient` 表中，并且不会自动复制。请在切换前遵循 [升级前准备](#before-you-upgrade) 中的客户端数据步骤。
+**操作方法：** 将 `better-auth/plugins` 中的 `oidcProvider` 替换为 `@better-auth/oauth-provider` 中的 `oauthProvider`，并迁移配置。
 
 ***
 
@@ -313,23 +445,34 @@ Better Auth 现在会拒绝其发出的服务器端 OAuth 请求中的 HTTP 重�
 
 ### MCP 迁移到独立包
 
-MCP 插件从 `better-auth` 迁移到 `@better-auth/mcp`，并基于 OAuth provider 构建。这是现有 MCP 用户面临的最大单项变更。
+MCP 插件从 `better-auth` 移至 `@better-auth/mcp`，并使用 `@better-auth/oauth-provider`。
 
 **你需要做什么：**
 
-1. 安装 `@better-auth/mcp` 并更新导入：服务端插件和辅助函数从 `@better-auth/mcp` 导入，客户端和适配器从 `@better-auth/mcp/client` 和 `@better-auth/mcp/client/adapters` 导入。
-2. 添加 `jwt()` 插件，现在这是必需的。
-3. 将原本嵌套在 `oidcConfig` 下的选项提升到 `mcp({ ... })` 的顶层，并添加一个资源标识符，例如 `resource: "https://api.example.com/mcp"`。
-4. 将 `withMcpAuth` 重命名为 `requireMcpAuth`，将 `createMcpAuthClient` 重命名为 `createMcpResourceClient`。这不只是简单重命名：`requireMcpAuth` 现在会将已验证的 JWT claims 传递给你的处理函数，而不是一个不透明的 session 行。请改为读取 `jwt.sub`、`jwt.client_id` 和 `jwt.scope`（以空格分隔的字符串），替代旧的 `session.userId`、`session.clientId` 和 `session.scopes` 数组。`auth.api.getMcpSession` 已被移除。
-5. 重新生成或迁移你的 schema。已注册的客户端会从 `oauthApplication` 迁移到重构后的 `oauthClient` 表，并且不会自动复制。请在切换前按照 [升级前](#before-you-upgrade) 中的 client-data 步骤操作。
+1. 安装 `@better-auth/mcp`、`@better-auth/cimd` 以及应用所需的官方版本 2 MCP 客户端或服务器软件包。从 `@better-auth/mcp` 导入 MCP 授权和受保护请求辅助工具。将已移除的内置客户端和适配器替换为 `@modelcontextprotocol/client` 或 `@modelcontextprotocol/server`。
+2. 添加必需的 `jwt()` 插件。使用 `cimd({ fetchClientMetadataResource, metadataProfile: "mcp-2026-07-28" })` 组合 `mcp()` 以进行客户端注册。
+3. 将选项从 `oidcConfig` 移动到 `mcp({ ... })` 的顶层。设置一个规范的 HTTPS `resource`，例如 `https://api.example.com/mcp`，并用该值替换 `resourceMetadataMappings`。
+4. 将 `withMcpAuth` 重命名为 `requireMcpAuth`，将 `mcpHandler` 重命名为 `createMcpProtectedRequestHandler`。应用[受保护资源作用域选项变更](#受保护资源作用域选项已重命名)。
+5. 使用带有 `legacy: "reject"` 的版本 2 `createMcpHandler`，用 `requireMcpAuth` 包装它，并且只公开 `POST`。删除 MCP 路由的 `GET` 和 `DELETE` 导出，以及 `redisUrl` 等会话存储选项。
+6. 通过[迁移 OAuth 客户端记录](#迁移-oauth-客户端记录)迁移已注册的客户端。
 
-OAuth 端点从 `/mcp/*` 迁移到 `/oauth2/*`。基于发现机制的 MCP 客户端会自行找到新位置。MCP 还会将 `refreshTokenReuseInterval` 的默认值设为 30 秒，适用于原生客户端和公共客户端；如果你希望严格处理 refresh token 重放，请将其设为 `0`。
+OAuth 端点从 `/mcp/*` 移至 `/oauth2/*`。基于发现机制的客户端会自动找到新端点。MCP 刷新令牌重用间隔现在对每个客户端默认为 30 秒；在 `mcp()` 上设置 `refreshTokenReuseInterval: 0` 以要求严格的重放处理。
+
+`mcp()` 不再启用未经身份验证的动态客户端注册。如果你确实支持它，请同时设置 `allowDynamicClientRegistration` 和 `allowUnauthenticatedClientRegistration`。否则，请使用上面的 CIMD 配置。
 
 ***
 
 ## 企业级 SSO
 
-### 默认关闭 IdP 发起的 SAML
+### SSO 账号 subject 由协议定义
+
+OIDC SSO 现在使用经过验证的 `sub` 声明作为账号 subject，SAML 使用已签名的 `NameID`。配置文件映射仍然可以选择邮箱、姓名、图片和其他字段，但 `oidcConfig.mapping.id` 和 `samlConfig.mapping.id` 已被移除。不提供 `idpMetadata.metadata` 的手动 SAML 配置必须设置 `idpMetadata.entityID`；`samlConfig.issuer` 标识服务提供方，不再作为 IdP 回退值。
+
+**操作方法：** 从每个 OIDC 和 SAML 映射中删除 `id`，然后确认每个 OIDC 提供方都返回稳定的 `sub`，每个 SAML 提供方都返回稳定且已签名的 `NameID`。在账号身份回填期间，使用确切的 OIDC 发行者和 subject，或确切的 SAML IdP entity ID 和 `NameID`。具有相同 OIDC 发行者和 subject 的提供方别名会去重为一个外部身份，但此变更不会为这些别名引入独立的授权或提供方生命周期记录。
+
+如果之前的映射使用了 `mapping.id`，请在维护窗口前准备替代值。构建从每个旧账号 subject 到协议定义身份的可信映射，然后在添加复合索引之前重写这些账号行：OIDC 需要确切的发行者和经过验证的 `sub`；SAML 需要实际的 IdP 元数据 entity ID 和已签名的 `NameID`。请从身份提供方获取此映射，而不是使用邮箱或可变的配置文件属性。不要为旧映射部署运行时回退。
+
+### IdP 发起的 SAML 默认关闭
 
 身份提供商发起的未请求登录现在默认被禁用。登录响应会针对 `InResponseTo` 进行校验，因此不能重放到它未发起请求的登录上，而单点注销请求会通过 `SessionIndex` 匹配到对应会话。
 
@@ -345,19 +488,13 @@ OAuth 端点从 `/mcp/*` 迁移到 `/oauth2/*`。基于发现机制的 MCP 客�
 
 回调 URL 会自动派生，服务提供商元数据会自动为你生成，并且移除了若干字段。一个端点路径发生了变化，重定向中的错误码也从简短别名改为全小写的内部完整代码（例如 `saml_multiple_assertions`）。
 
-**该怎么做：** 从配置中移除空的 `spMetadata` 和已移除的字段。将 ACS URL 在你的 IdP 中注册为你的 base URL 加上 `/sso/saml2/sp/acs/:providerId`；在默认 base path 下即为 `https://yourapp.com/api/auth/sso/saml2/sp/acs/:providerId`。对于 SP 发起的登录，请在 `signIn.sso()` 中使用 `callbackURL` 设置登录后的重定向。`callbackUrl` 配置字段不再是 ACS URL，并且现在是可选的，但它仍然会被用作 IdP 发起登录的登录后重定向，因此如果你启用了 `allowIdpInitiated` 并且希望指定一个落地页，就保留它。如果你从重定向 URL 中读取 SAML 错误码，请切换到小写代码。
+**操作方法：** 从配置中删除空的 `spMetadata` 和已移除的字段。将 ACS URL 作为基础 URL 加上 `/sso/saml2/sp/acs/:providerId` 注册到 IdP；使用默认基础路径时，该 URL 为 `https://yourapp.com/api/auth/sso/saml2/sp/acs/:providerId`。对于 SP 发起的登录，请在 `signIn.sso()` 中使用 `callbackURL` 设置登录后的重定向。`callbackUrl` 配置字段不再是 ACS URL，现在是可选的，但对于 IdP 发起的登录，它仍然是登录后的重定向。如果启用了 `allowIdpInitiated` 且需要指定落地页面，请保留它。如果你从重定向 URL 中读取 SAML 错误码，请切换为小写代码。
 
-### SCIM 写入更安全了
+### SAML 签名强制规则与其配置一致
 
-SCIM 用户写入现在会尊重 `active` 属性，非组织级 SCIM 删除只有在 SCIM 账号是该用户唯一身份时才会删除全局用户。`PUT` 和 `PATCH` 会拒绝将用户邮箱改为已被其他用户使用的邮箱。
+在 1.6 中，`wantAssertionsSigned` 强制要求 SAML 响应消息签名，而不是断言签名。1.7 会验证断言元素本身，并对其应用配置的要求，因此当服务提供方要求断言签名时，仅签署响应消息的 IdP 登录会失败。携带 RelayState 的回调现在会无条件验证它，并且提供方注册会拒绝弱化已签名断言策略、超过元数据大小限制或声明包含 URL 片段的 ACS 位置的服务提供方元数据。
 
-**该怎么做：** `active: false` 的效果取决于连接类型。对于组织作用域连接（运行时默认值），它会将用户从该组织中移除，并且只有在这是其最后一个组织成员身份时才撤销其会话；这不需要 admin 插件。对于应用级静态提供者，它会通过 admin 插件停用全局用户并撤销其会话，因此该路径需要 admin 插件。如果你的 SCIM 客户端会修改邮箱，请处理 `409` 冲突。
-
-### SCIM 连接现在按组织作用域划分
-
-SCIM 连接现在要求 `organizationId`，新增 `providerKey` 列，并移除旧的 `userId` 列。`defaultSCIM` 选项改为 `staticProviders`，`trustedDomains` 被移除，且 provider ID 按组织命名空间划分。旧的按用户所有权选项（`providerOwnership`）已被移除，因此每个连接都绑定到一个组织。
-
-**该怎么做：** 将 `defaultSCIM` 配置重命名为 `staticProviders`。`trustedDomains` 已被移除；基于域名的自动关联现在通过 `linkExistingUsers` 进行配置，可使用 `requireExistingOrgMembership`、`shouldLinkUser` 回调或 `true`。在迁移之前，请按照 [升级前](#before-you-upgrade) 中的说明回收并重映射你的数据：删除或为 pre-1.7 连接分配 `organizationId` 和 `providerKey`，将由 SCIM 管理的 `account.providerId` 值重写为命名空间形式 `scim:{organizationId}:{providerId}`，然后重新生成这些连接的令牌。
+**操作方法：** 确认每个 IdP 都会签署断言，或者对于无法签署断言的 IdP，明确设置 `wantAssertionsSigned: false`。修复或重新注册不再通过验证的已存储 SP 元数据。如果自定义集成在 SAML 回调中提供自己的 RelayState，请确保它能够往返传递 Better Auth 签发的值。
 
 ### `/sso/update-provider` 会拒绝部分映射
 
@@ -365,17 +502,65 @@ SCIM 连接现在要求 `organizationId`，新增 `providerKey` 列，并移除�
 
 **该怎么做：** 在调用 `/sso/update-provider` 时发送完整的映射对象。
 
-### SCIM 新增持久化的组资源
-
-SCIM 现在通过成员关系、角色和生命周期端点来管理组，并由新的 `scimGroup`、`scimGroupMember`、`scimGroupRole` 和 `scimGroupRoleGrant` 表支持。
-
-**该怎么做：** 在使用组配置之前，运行 `generate` 和 `migrate` 来添加 SCIM 组表。
-
 ### OIDC SSO 可在 Cloudflare Workers 上运行
 
 带发现机制的 OIDC SSO 现在可在 Cloudflare Workers 上运行。会重定向的 discovery 或 token 端点会被拒绝，并给出清晰的配置错误，而不是以运行时特定方式失败。
 
 **该怎么做：** 不需要做任何事。如果某个 provider 端点会重定向，请将配置指向最终 URL。
+
+***
+
+## SCIM
+
+### SCIM 支持三种连接模式
+
+每个 SCIM 请求都会解析不可变的连接 ID、凭据身份、作用域和配置域。该插件不再依赖 Organization 或 SSO 插件，应用程序可以选择三种连接模式之一：
+
+* **静态代码定义：** 在 `scim({ connections })` 中声明连接和 bearer 凭据。
+* **应用程序拥有的运行时模式：** 验证 bearer token，并从 `authentication.verifyBearerToken` 原子地返回其连接。
+* **插件管理的运行时模式：** 配置 `managedConnections`，然后从经过应用程序授权的管理员工作流中调用其可信服务器 API。
+
+旧版运行时连接管理端点、SCIM 客户端插件、CLI 脚手架、`defaultSCIM`、`staticProviders`、`trustedDomains`、`providerOwnership` 以及组织作用域的提供方配置均已移除。配置的身份不再创建身份验证账号。使用 `identity` 回调链接现有的 Better Auth Users 并应用生命周期状态，使用 `projection` 回调将 Groups 映射到应用程序的角色。
+
+**操作方法：** 选择一种受支持的连接模式，为接收生命周期和访问变更的应用程序边界分配稳定的 `provisioningDomainId`，并为配置的 Users 配置单独的登录方式。以下示例使用静态模式：
+
+```ts title="auth.ts"
+scim({
+  connections: [
+    {
+      id: "workforce-acme",
+      provisioningDomainId: "workspace-acme",
+      credentials: [
+        { type: "bearer", id: "workforce-primary", token: workforceToken },
+      ],
+    },
+  ],
+});
+```
+
+### SCIM 需要完整重新配置
+
+新的 SCIM 模型不会读取或转换 1.6 SCIM 表，因此此变更无法使用原地生成的迁移。
+
+<Callout type="warn">
+  请使用维护窗口。在更改 schema 之前，暂停配置，并停止每个运行旧版 SCIM 插件的应用程序实例。
+</Callout>
+
+**操作方法：**
+
+1. 备份每一张旧版 SCIM 表。建立一份经过审核的清单，准确记录 `scimProvider` 行、由 SCIM 创建的 `account` 行、其关联的 `user` 行，以及由配置过程创建的任何组织成员关系或团队状态。使用已配置的提供方和目录主体来识别它们。不要仅根据 `providerId` 前缀对行进行分类。
+2. 决定如何处理每个旧版 User 和 account 行。要保留某个 User，请将稳定的 connection-and-subject-to-`userId` 映射复制到应用自有存储中，仅删除已确认的旧版 SCIM account 行，并在重新配置之前配置 `identity.resolveUser`。要重新创建某个 User，请删除已确认的 SCIM account，并且只有在证明没有其他登录方式或应用数据依赖它之后，才能删除该 User。保留所有无关的 account 和应用行；Better Auth 不会自动识别或删除旧版 SCIM account 行。
+3. 选择静态、应用自有运行时或插件管理的 connection 模式，并准备新的不透明 connection 和 credential 标识符。绝不要导入旧版 token 哈希、重复使用旧版原始 token，或添加接受旧版 bearer 语法的兼容路径。静态模式和应用自有模式使用新的高熵 secret；管理模式会在第 5 步创建管理表之后，于第 6 步生成新的 secret。
+4. 在旧插件停止运行期间，通过旧版 SCIM 端点或由操作员控制的事务，按依赖顺序清理其 SCIM 自有资源。确认旧版插件表为空，并且清单中的每个 SCIM account 行都已有经过审核的处置结果。只有在完成审核备份和清理之后，才能删除或重命名不兼容的旧版物理表，包括 `scimProvider`。如果你自定义了模型名称，请使用架构中的物理表名。
+5. 在数据库适配器中启用原生交互式事务，然后通过[适配器特定的工作流](#before-you-upgrade)应用 1.7 架构，以创建 `scimConnectionBinding`、`scimIdentityTombstone`、`scimSubject`、`scimUser`、`scimGroup`、`scimGroupMember` 和 `scimProjectionGrant`。管理模式还会创建 `scimManagedConnection`、`scimManagedCredential` 和 `scimManagedConnectionEvent`。Cloudflare D1 无法提供所需的事务行为。
+6. 部署选定的模式。对于管理模式，请在新架构存在之后，通过受信任的服务器 API 创建 connection 并生成其第一个 credential。使用新 credential 配置目录，然后触发完整的 User 和 Group 配置周期。
+7. 在应用中验证 User 关联、Group 状态、生命周期和角色投影，然后恢复配置。
+
+<Callout type="warn">
+  新插件绝不会通过 email 进行关联。保留的旧版 User 在重新配置期间会导致 `409 Conflict`，除非 `identity.resolveUser` 为其返回明确的关联决策。
+</Callout>
+
+请参阅 [SCIM 插件文档](/docs/plugins/scim)，了解最终配置和受支持的协议行为。
 
 ***
 
@@ -397,11 +582,11 @@ SCIM 现在通过成员关系、角色和生命周期端点来管理组，并由
 
 ## 代理后面
 
-### 多主机 `allowedHosts` 不再默认信任转发头
+### Dynamic base URLs do not trust forwarded headers by default
 
-这只影响那些使用动态 `baseURL` 并结合 `allowedHosts` 来服务多个主机的部署。静态 `baseURL` 字符串，或者没有 `baseURL`，本来就会忽略转发头，因此没有变化。对于 `allowedHosts` 路径，默认行为已改变：认证源现在从 `Host` 头解析，而 `x-forwarded-host` / `x-forwarded-proto` 会被忽略，除非你显式启用。依赖 `x-forwarded-host` 的多主机部署在升级后会失效，报 `Host "..." is not in the allowed hosts list`，或者解析到错误的源，从而破坏回调和 cookie。
+当 `baseURL` 使用 `allowedHosts` 时，除非主动选择启用，否则 Better Auth 会忽略转发的标头。
 
-**怎么做：** 如果你的代理只通过 `x-forwarded-host` 暴露公网主机名，请重新启用：
+**What to do:** 如果你的代理仅通过 `x-forwarded-host` 暴露公共主机名，请选择启用：
 
 ```ts
 betterAuth({
@@ -412,7 +597,9 @@ betterAuth({
 });
 ```
 
-如果你的代理会替你重写 `Host` 头，例如 nginx、Vercel、Cloudflare 和 Netlify，则无需更改。
+代理会为你重写主机的配置（例如 nginx、Vercel、Cloudflare 和 Netlify）无需更改。
+
+如果没有配置 `baseURL.fallback`，当请求没有可用主机，或其主机与 `allowedHosts` 不匹配时，动态 base URL 会默认拒绝。因而，直接的服务器 API 调用必须包含能够解析到允许的公共源的请求 URL 或标头数据，或者配置受信任的回退值。Better Auth 会在每个请求中根据解析出的源重建 base URL、受信任源、提供方 URL 和 cookies；OAuth issuer、discovery、protected-resource 和 JWKS URL 也会遵循相同的请求源。
 
 ### IdP 重定向和 DPoP 需要你的规范源
 
@@ -478,24 +665,19 @@ Drizzle 模式生成器现在会为多对一关系输出单数键。这只会影
 
 **该怎么做：** 如果某个用户注册了但从未确认邮箱，然后首次通过魔法链接或电子邮件 OTP 登录，预期其之前的密码以及任何社交关联都会消失。请让他们通过密码重置设置新密码，并重新关联任何社交账户。
 
-## 值得注意的行为变更
+### 数据库连接已移出 `experimental`
 
-对于大多数配置，这些不需要采取行动，但它们会改变你看到的内容。
+将 `experimental: { joins: true }` 替换为 `advanced: { database: { joins: true } }`。如果启用连接，请重新生成 Drizzle 或 Prisma 关系。
 
-* **更安全的 OAuth 令牌处理：** 现在会使用正确的标准错误拒绝由不同客户端使用的刷新令牌、被重放的授权码，以及与登录时使用的不匹配的 `redirect_uri`。被重放的代码还会撤销它已经签发的不透明令牌；已经签发的 JWT 访问令牌不会被存储，因此它会一直有效直到过期，不过在会话结束后，在 introspection 和 userinfo 中会显示为 inactive。正常工作的客户端不受影响。
-* **不缓存凭据：** token、introspection、userinfo、registration 和 device-authorization 响应现在会发送 `Cache-Control: no-store`，因此代理和浏览器不会缓存它们。
-* **userinfo 拒绝错误令牌：** userinfo 端点上无效的访问令牌会返回带有 `WWW-Authenticate` 标头的 `401 invalid_token`。
-* **OAuth authorize 错误重定向：** 缺少 `response_type` 时，现在会将错误重定向到已验证的客户端 `redirect_uri`，而不是通用错误页。
-* **Drizzle 受影响行校验：** Drizzle 适配器在受影响行数无效时会抛出错误，而不是返回 `0`。
-* **`organization.updateTeam` 不可变字段：** 请求体中不再接受 `id`、`createdAt` 和 `updatedAt`。
-* **`updateMemberRole` 顺序：** 角色存在性校验现在在授权检查之后运行。
-* **CLI `generate --output` 指向目录时：** 会选择一个特定适配器的默认文件名。
-* **生成的 schema 和已禁用的迁移：** 会省略对禁用迁移模型的引用。
-* **Cookie-cache 会话绑定：** 缓存的会话现在与 `session_token` cookie 绑定。
-* **SSRF 主机检查：** 出站主机分类现在会阻止额外的保留地址范围（6to4 relay anycast、site-local IPv6 和 IPv4-compatible IPv6）。
-* **标准 token 兑换错误：** 授权码兑换失败现在返回 `400 invalid_grant`，而不是 `401 invalid_client` 或 `invalid_request`。
-* **带外部会话存储的注销 hooks：** 即使使用 `secondaryStorage` 和 `preserveSessionInDatabase`，`session.delete` hooks 现在也会在注销时运行。
-* **双因素失效错误码：** 失败的双因素挑战清理现在返回 `FAILED_TO_INVALIDATE_TWO_FACTOR_CHALLENGE`。
+### `usePlural` 下 Drizzle 关系键为单数
+
+当 `usePlural: true` 时，Drizzle 模式生成器现在会为多对一关系使用单数键。重新生成模式，并更新读取之前复数关系键的代码。默认的 `usePlural: false` 配置不变。
+
+### `getIp` 已重命名为 `getIP`
+
+公开导出的 `getIp` 已重命名为 `getIP`。
+
+**要做什么：** 将 IP 辅助函数的导入更新为 `getIP`。
 
 ***
 
@@ -503,23 +685,110 @@ Drizzle 模式生成器现在会为多对一关系输出单数键。这只会影
 
 某些手动步骤必须在 `migrate` 之前运行，而不是之后。请按以下顺序执行：
 
-1. **应用会影响你的数据步骤**，来自 [升级前](#before-you-upgrade)：SCIM 回收和 `account.providerId` 重映射，以及 `oidcProvider` 或 MCP 客户端数据迁移。这些会在 `migrate` 之前运行。
-2. **生成并运行迁移：**
+验证码规则现在会匹配完整的请求路径或显式通配符，这样就堵住了通过部分路径匹配来跳过验证码规则的一种方式。
 
-   ```bash title="Terminal"
-   npx auth@rc generate
-   npx auth@rc migrate
-   ```
+**要做什么：** 将像 `/sign-in` 这样的部分路径替换为 `/sign-in/*` 或 `/sign-in/**`。
 
-   一旦 1.7 稳定，改用 `@latest` 代替 `@rc`。
-3. **为你回收的任何连接重新生成 SCIM 令牌。**
+像 `/sign-in/*` 这样的通配符也会匹配 `/sign-in/email-otp`。如果该路由应继续免于验证，请列出确切的受保护端点，而不是使用通配符。
 
 ***
 
-## 跟踪预发布版本
+## 设备授权
 
-如果你是直接从 1.6 升级到最终版 1.7，请跳过此部分。它仅适用于你采用过 1.7 beta 并跟随其变更的情况。
+### 设备代码使用唯一索引和有界值
 
-某个 beta 中的破坏性变更，可能会在同一分支后续的 beta 中被回退，而这种回退本身就是一个反向迁移。最典型的例子是 OAuth 作用域：早期某个 beta 将 `account.scope` 移到了 `grantedScopes` 数组中，而后来的 beta 又把它改回去了，所以最终版 1.7 保留了原始的 `account.scope` 字符串。如果你采用了 `grantedScopes` 列，请删除它，并在你修改过的每个 schema 上恢复 `scope` 列。当你的迁移工具无法区分重命名和删除时，请使用直接 SQL 对该列进行修正，以保留现有行。
+稳定版 1.6 模式不会对这些查找值强制执行唯一性。1.7 模式会在 `deviceCode` 和 `userCode` 上创建唯一索引，因此请在应用迁移之前，在每个适配器中解决两列中的重复值。MySQL 和 SQL Server 安装还必须将两列转换为有界字符串，并清理长度超过 191 个字符的值。自定义的 `generateDeviceCode` 和 `generateUserCode` 函数必须保持在 191 个字符的限制以内。
 
-有两种习惯可以降低这类成本。阅读变更日志中的 `revert` 条目，而不只是 `feat` 和 `fix`；对你来说，revert 也是一种迁移，即使它不会以破坏性变更的形式主动声明。只升级包含该变更的那些包，并在重新构建之前确认你自己的插件没有导入被回退的接口。
+### OAuth 设备授权默认不启用
+
+在 1.6 中，`deviceAuthorization()` 会将设备登录到同一个 Better Auth 应用，并从 `/device/token` 返回 Better Auth 会话令牌。这个独立流程在 1.7 中仍然可用，并且不接受 RFC 8707 resource indicators，也不会向 `deviceCode` 表添加 OAuth 字段。
+
+要让已注册的 CLI、电视应用或其他输入受限的客户端获取 OAuth 令牌，请在 OAuth Provider 旁添加 OAuth Device Authorization 集成：
+
+```ts title="auth.ts"
+import {
+  oauthDeviceAuthorization,
+  oauthProvider,
+} from "@better-auth/oauth-provider";
+import { betterAuth } from "better-auth";
+import { jwt } from "better-auth/plugins";
+
+export const auth = betterAuth({
+  plugins: [
+    jwt(),
+    oauthProvider({
+      loginPage: "/sign-in",
+      consentPage: "/consent",
+      scopes: ["openid", "profile", "offline_access", "api:read"],
+      resources: ["https://api.example.com"],
+    }),
+    oauthDeviceAuthorization(),
+  ],
+});
+```
+
+此集成会向 `deviceCode` 添加可为空的 `oauthClientId` 和 `resources` 字段，在创建代码时验证 OAuth 客户端、范围和资源，在 discovery 中公布设备授权端点，并在 `/oauth2/token` 处交换已批准的代码。启用此集成时，请重新生成并应用模式。现有的 1.6 行无需回填，即使其 `clientId` 后来与已注册的 OAuth 客户端匹配，也会继续使用会话令牌路径。让待处理的 1.6 客户端完成对 `/device/token` 的轮询，或让其代码过期，然后再将这些客户端迁移到 OAuth 流程。
+
+只有当服务器使用 OAuth grant 时，客户端类型才会公开 RFC 8707 `resource` 请求字段：
+
+```ts title="auth-client.ts"
+import { oauthDeviceAuthorizationClient } from "@better-auth/oauth-provider/client";
+import { createAuthClient } from "better-auth/client";
+
+export const authClient = createAuthClient({
+  plugins: [oauthDeviceAuthorizationClient()],
+});
+```
+
+请参阅[授权 CLI 调用 API](/docs/plugins/device-authorization#authorize-a-cli-to-call-an-api)，了解客户端注册、批准和轮询示例。
+
+***
+
+## 双因素和无密码安全
+
+### 双因素 `enableTwoFactor` 返回区分响应
+
+`enableTwoFactor` 现在接受值为 `"otp"` 或 `"totp"`（默认值为 `"totp"`）的 `method`，并在响应中返回该方法。`totpURI` 和备用代码仅在 `"totp"` 时存在。`skipVerificationOnEnable` 选项仍然有效。
+
+**要做什么：** 更新读取 `totpURI` 或备用代码的调用方，根据返回的 `method` 分支处理。
+
+### 魔法链接和电子邮件 OTP 登录可以清除未经证明的凭证
+
+魔法链接和电子邮件 OTP 登录现在会将已证明的邮箱控制权视为某个邮箱从未确认过的账户的事实来源。如果该账户存在未经证明的密码或其他关联账户，Better Auth 会将其全部移除，并在用户登录之前撤销现有会话。
+
+**要做什么：** 如果用户使用电子邮件和密码注册，但在确认验证邮件之前改为通过魔法链接或电子邮件 OTP 首次登录，请要求他们通过密码重置设置新密码。
+
+***
+
+## 值得注意的行为变化
+
+对于大多数配置而言，这些变化不需要采取行动，但会改变你看到的结果。
+
+* **更安全的 OAuth 令牌处理：** 不同客户端使用的 refresh token、重放的授权码，以及与登录时使用的 URI 不匹配的 `redirect_uri`，现在都会使用正确的标准错误被拒绝。重放的代码还会撤销已经签发的令牌。行为规范的客户端不受影响。
+* **不缓存凭证：** token、introspection、userinfo、registration 和 device-authorization 响应现在都会发送 `Cache-Control: no-store`，因此代理和浏览器不会缓存它们。
+* **userinfo 拒绝无效令牌：** userinfo 端点收到无效访问令牌时，会返回带有 `WWW-Authenticate` 标头的 `401 invalid_token`。
+* **OAuth authorize 错误重定向：** 缺少 `response_type` 时，现在会将错误重定向到经过验证的客户端 `redirect_uri`，而不是通用错误页面。
+* **Drizzle 受影响行验证：** Drizzle 适配器在受影响行数无效时会抛出异常，而不是返回 `0`。
+* **`organization.updateTeam` 不可变字段：** 请求正文中不再接受 `id`、`createdAt` 和 `updatedAt`。
+* **`updateMemberRole` 排序：** 角色存在性验证现在会在授权检查之后运行。
+* **CLI `generate --output` 输出到目录：** 会选择适配器特定的默认文件名。
+* **生成的模式和已禁用的迁移：** 会省略对已禁用迁移模型的引用。
+* **Cookie-cache 会话绑定：** 缓存的会话现在会绑定到 `session_token` cookie。
+* **SSRF 主机检查：** 出站主机分类现在会阻止更多保留范围（6to4 中继任播地址、本地站点 IPv6 和 IPv4 兼容 IPv6）。
+* **标准令牌兑换错误：** 授权码兑换失败时会返回 `400 invalid_grant`，而不是 `401 invalid_client` 或 `invalid_request`。
+* **使用外部会话存储时的登出钩子：** 即使使用 `secondaryStorage` 和 `preserveSessionInDatabase`，`session.delete` 钩子现在也会在登出时运行。
+* **双因素失效错误代码：** 双因素挑战清理失败时，现在会返回 `FAILED_TO_INVALIDATE_TWO_FACTOR_CHALLENGE`。
+
+***
+
+## 验证升级
+
+部署 1.7 后，验证应用使用的路径：
+
+* 使用电子邮件和密码、每个 OAuth 或 SSO 提供方，以及配置后可用的 Google One Tap 登录。
+* 关联、列出、刷新和取消关联外部账户。
+* 如果你运行身份提供方，请测试 OAuth 授权、刷新、撤销、discovery 和受保护资源检查。
+* 连接 MCP 客户端并完成一次受保护的请求。
+* 确认 SAML SP 发起的登录，以及启用时的 IdP 发起的登录。
+* 在恢复配置之前，确认 SCIM User 关联、Group 成员关系、生命周期变化和应用投影。
+* 确认代理部署能够生成公共回调、issuer、discovery 和 JWKS URL。

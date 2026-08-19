@@ -58,18 +58,24 @@ npx auth@latest generate
   </Tab>
 </Tabs>
 
-数据库关联查询在 Better Auth 需要从多个表中一次性获取相关数据时非常有用。
-像 `/get-session`、`/get-full-organization` 等端点都能从此功能获得显著提升，
-根据数据库延迟，性能提升可达 2 倍到 3 倍。
+## 联接
 
-自 `1.4.0` 版本起，Drizzle 适配器开箱即用支持关联查询。
-要启用此功能，需要在你的 auth 配置中将 `experimental.joins` 选项设置为 `true`。
+当 Better-Auth 需要在单个查询中从多个表获取相关数据时，数据库联接非常有用。
+`/get-session`、`/get-full-organization` 等端点都能从此功能中获益良多，
+根据数据库延迟的不同，性能提升可达 2 到 3 倍。
+
+Drizzle 适配器从 `1.4.0` 版本开始原生支持联接。
+要启用此功能，请在 auth 配置中将 `advanced.database.joins` 设置为 `true`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-  experimental: { joins: true }
+  advanced: {
+    database: {
+      joins: true,
+    },
+  },
 });
 ```
 
@@ -198,6 +204,96 @@ export const auth = betterAuth({
 });
 ```
 
-## 额外信息
+## 自定义 Schema 命名空间
+
+如果你使用 PostgreSQL，并且想要使用自定义 Schema 命名空间生成模式，
+可以将 `schemaName` 选项传递给 Drizzle 适配器。
+
+```ts
+export const auth = betterAuth({
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schemaName: "auth", // [!code highlight]
+  }),
+});
+```
+
+然后使用 Better Auth CLI 时，它将生成类似如下的模式：
+
+```bash
+npx @better-auth/cli@latest generate
+```
+
+```ts
+export const authSchema = pgSchema("auth");
+
+export const user = authSchema.table("user", {...});
+export const session = authSchema.table("session", {...});
+```
+
+下面介绍的 `@better-auth/drizzle-adapter/relations-v2` 适配器同样支持 `schemaName` 选项。
+
+## Drizzle Relations v2
+
+当前的 Drizzle 适配器使用 Drizzle Relations v1。
+要使用 Drizzle Relations v2，你需要使用 `@better-auth/drizzle-adapter/relations-v2` 适配器。
+
+安装适配器：
+
+```package-install
+npm install @better-auth/drizzle-adapter
+```
+
+更新导入以使用 relations-v2 适配器：
+
+```ts title="auth.ts"
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from '@better-auth/drizzle-adapter/relations-v2'; // [!code highlight]
+import { db } from './database.ts';
+import * as schema from './schema.ts';
+
+export const auth = betterAuth({
+	database: drizzleAdapter(db, {
+		provider: 'sqlite', // or "pg" or "mysql"
+		schema,
+	}),
+	//... the rest of your config
+});
+```
+
+然后使用 Better Auth CLI 重新生成你的模式：
+
+```package-install
+npx auth@latest generate
+```
+
+<Callout type="info">
+  升级到 Relations v2 时，不需要运行数据库迁移。数据库结构保持不变——只有关联定义发生变化。
+  模式生成器会自动输出新的 v2 格式。
+</Callout>
+
+生成的 auth 模式会使用 `defineRelationsPart` 导出关联关系，该方法旨在与应用自己的 `defineRelations` 合并使用。将两者传递给 drizzle 实例——从 Drizzle v1 RC 开始，不再需要 `schema`：
+
+```ts title="db.ts"
+import { drizzle } from 'drizzle-orm/...';
+// generated relations from auth CLI (uses defineRelationsPart)
+import { authRelations } from './auth-schema.ts';
+// your app's own relations (uses defineRelations)
+import { relations } from './app-schema.ts';
+
+export const db = drizzle({
+	client,
+	// authRelations uses defineRelationsPart, // [!code highlight]
+	// so it must come after the main relations // [!code highlight]
+	relations: { ...relations, ...authRelations }, // [!code highlight]
+});
+```
+
+<Callout type="info">
+  `defineRelationsPart` 是一种部分关联定义，必须展开在完整的 `defineRelations` 条目之后。详情请参阅
+  [Drizzle 关于关联部分的文档](https://orm.drizzle.team/docs/relations-v2#relations-parts)。
+</Callout>
+
+## 其他信息
 
 * 如果你在寻找性能改进或优化建议，可以查阅我们的指南 <Link href="/docs/guides/optimizing-for-performance">性能优化</Link>。

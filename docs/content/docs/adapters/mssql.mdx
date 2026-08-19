@@ -82,8 +82,8 @@ export const auth = betterAuth({
 
   <tbody>
     <tr className="h-10">
-      <td>✅ Supported</td>
-      <td>✅ Supported</td>
+      <td>✅ 支持</td>
+      <td>✅ 支持</td>
     </tr>
   </tbody>
 </table>
@@ -102,28 +102,28 @@ export const auth = betterAuth({
   </Tab>
 </Tabs>
 
-## 联结（实验性）
+## Joins
 
-数据库联结在 Better Auth 需要从多个表中单查询获取相关数据时非常有用。
-像 `/get-session`、`/get-full-organization` 等端点借助此功能，
-根据数据库延迟不同，性能提升可达 2 倍到 3 倍。
+当 Better-Auth 需要在单个查询中从多个表获取相关数据时，数据库连接非常有用。
+`/get-session`、`/get-full-organization` 等端点都能从此功能中大幅受益，
+根据数据库延迟的不同，性能提升可达 2 倍至 3 倍。
 
-Kysely MS SQL 方言自 `1.4.0` 版本起支持联结。
-要启用此功能，需要在你的 auth 配置中将 `experimental.joins` 选项设置为 `true`。
+Kysely MS SQL dialect 从 `1.4.0` 版本开始开箱即用地支持连接。
+要启用此功能，请在你的 auth 配置中将 `advanced.database.joins` 设置为 `true`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-  experimental: { joins: true }
+  advanced: {
+    database: {
+      joins: true,
+    },
+  },
 });
 ```
 
-<Callout type="warn">
-  启用此功能后，您可能需要运行迁移。
-</Callout>
-
-## 其他信息
+## 附加信息
 
 MS SQL 是通过 [Kysely](https://kysely.dev/) 适配器在底层支持的，Kysely 支持的任何数据库也都将得到支持。 (<Link href="/docs/adapters/other-relational-databases">阅读更多</Link>)
 

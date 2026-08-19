@@ -601,15 +601,19 @@ isForeignKey: true,
 references: { model: "user", field: "id", onDelete: "cascade" },
 },
 {
+name: "issuer",
+type: "string",
+description: "签发提供程序账户标识符的受信任机构",
+},
+{
 name: "accountId",
 type: "string",
-description:
-"由 SSO 提供的账户 ID 或等于 userId 的凭证账户 ID",
+description: "签发机构命名空间内的稳定账户标识符",
 },
 {
 name: "providerId",
 type: "string",
-description: "提供程序的 ID",
+description: "用于对账户进行身份验证的提供程序配置",
 },
 {
 name: "accessToken",
@@ -754,19 +758,19 @@ description: "验证请求更新时间戳",
 
     表格: <strong className="underline italic">账户</strong>
 
-    * Better Auth 使用驼峰命名法（例如 `refreshToken` 而不是 `refresh_token`）
-    * Better Auth 包含 `accountId` 以区分账户 ID 和内部 ID
+    * Better Auth 使用 camelCase 命名（例如，`refreshToken` 与 `refresh_token`）
+    * Better Auth 使用 `id` 作为本地账户记录，并使用唯一的 `issuer` 与 `accountId` 组合作为外部身份标识
     * Better Auth 使用 `providerId` 而不是 `provider`
-    * Better Auth 包含 `accessTokenExpiresAt` 和 `refreshTokenExpiresAt` 用于令牌管理
-    * Better Auth 包含 `password` 字段以支持内置的凭证身份验证
-    * Better Auth 不包含 `type` 字段，因为它由 `providerId` 决定
+    * Better Auth 包含用于令牌管理的 `accessTokenExpiresAt` 和 `refreshTokenExpiresAt`
+    * Better Auth 包含 `password` 字段，以支持内置凭据身份验证
+    * Better Auth 没有 `type` 字段，因为它由 `providerId` 决定
     * Better Auth 移除了 `token_type` 和 `session_state` 字段
     * Better Auth 包含 `createdAt` 和 `updatedAt` 时间戳
 
     <Callout type="warn">
-      **关于凭证迁移的关键提示：**
+      **凭据迁移的关键注意事项：**
       在 Auth.js 中，密码通常直接存储在 `User` 模型中。在 Better Auth 中，密码必须存储在 `Account` 表中。
-      如果您要迁移带有密码的用户（包括用于电话号码插件），您**必须**为每个用户创建一个 `account` 表中的记录，并将 `providerId` 设置为 `"credential"`。没有此记录，基于密码的登录将失败。
+      如果您要迁移带有密码的用户（包括 Phone Number 插件的用户），则**必须**为每个用户在 `account` 表中创建一条记录，其中 `providerId: "credential"`、`issuer: "local:credential"`，并将 `accountId` 设置为 Better Auth 用户的 `id`。如果没有此记录，基于密码的登录将会失败。
     </Callout>
 
     表格: <strong className="underline italic">验证令牌 -> 验证</strong>
@@ -787,8 +791,8 @@ description: "验证请求更新时间戳",
   </Step>
 </Steps>
 
-## Summary
+## 总结
 
-You’re now ready to migrate from Auth.js to Better Auth. For a full implementation featuring multiple authentication methods, please refer to the [Next.js demo app](https://github.com/better-auth/better-auth/tree/main/demo/nextjs). Better Auth offers greater flexibility and more features, so be sure to explore the [documentation](/docs) to make the most of its full potential.
+您现在已经准备好从 Auth.js 迁移到 Better Auth。有关包含多种身份验证方式的完整实现，请参阅 [Next.js 示例应用](https://github.com/better-auth/better-auth/tree/main/demo/nextjs)。Better Auth 提供了更大的灵活性和更多功能，请务必浏览[文档](/docs)，充分发挥其潜力。
 
-If you need help during the migration, please join our [community](/community) or contact us at [contact@better-auth.com](mailto:contact@better-auth.com).
+如果您在迁移过程中需要帮助，请加入我们的[社区](/community)，或通过 [contact@better-auth.com](mailto:contact@better-auth.com) 联系我们。

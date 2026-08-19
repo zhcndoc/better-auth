@@ -38,19 +38,12 @@ Better Auth 支持任何实现了 OAuth2 协议或 OpenID Connect（OIDC）流�
   </Step>
 
   <Step>
-    ### 添加客户端插件
-
-    在你的认证客户端实例中包含 Generic OAuth 客户端插件。
+    ### 创建你的认证客户端
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
-    import { genericOAuthClient } from "better-auth/client/plugins"
 
-    const authClient = createAuthClient({
-        plugins: [
-            genericOAuthClient()
-        ]
-    })
+    const authClient = createAuthClient()
     ```
   </Step>
 </Steps>
@@ -107,8 +100,8 @@ export const auth = betterAuth({
 ```
 
 ```ts title="sign-in.ts"
-const response = await authClient.signIn.oauth2({
-  providerId: "slack",
+const response = await authClient.signIn.social({
+  provider: "slack",
   callbackURL: "/dashboard",
 })
 ```
@@ -145,9 +138,9 @@ export const auth = betterAuth({
 ```
 
 ```ts title="sign-in.ts"
-const response = await authClient.signIn.oauth2({
-  providerId: "instagram",
-  callbackURL: "/dashboard", // 用户认证成功后的重定向路径
+const response = await authClient.signIn.social({
+  provider: "instagram",
+  callbackURL: "/dashboard",
 });
 ```
 
@@ -177,8 +170,8 @@ export const auth = betterAuth({
 ```
 
 ```ts title="sign-in.ts"
-const response = await authClient.signIn.oauth2({
-  providerId: "coinbase",
-  callbackURL: "/dashboard", // 用户认证成功后的重定向路径
+const response = await authClient.signIn.social({
+  provider: "coinbase",
+  callbackURL: "/dashboard",
 });
 ```

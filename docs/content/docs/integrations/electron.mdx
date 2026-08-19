@@ -291,7 +291,6 @@ function SignIn({
     client_id?: string | undefined;
     state?: string | undefined;
     code_challenge?: string | undefined;
-    code_challenge_method?: string | undefined;
   }>;
 }) {
   const query = use(searchParams);
@@ -318,7 +317,7 @@ function SignIn({
 }
 ```
 
-要处理已登录用户，可以使用 `electron.transferUser` 方法在客户端和 `electronTransferUser` 在服务器端将用户转移到 Electron 应用中。[参见示例](https://github.com/better-auth/better-auth/blob/main/demo/nextjs/app/(auth)/sign-in/_components/electron.tsx)
+要处理已登录用户，可以使用 `electron.transferUser` 方法在客户端和 `electronTransferUser` 在服务器端将用户转移到 Electron 应用中。[参见示例](https://github.com/better-auth/better-auth/blob/main/demo/nextjs/app/\(auth\)/sign-in/_components/electron.tsx)
 
 ### Electron 中的身份认证处理
 
@@ -548,7 +547,7 @@ useEffect(() => {
 }, []);
 ```
 
-更多详细信息请参考 Electron 的[进程间通信 (IPCs)](https://www.electronjs.org/docs/latest/tutorial/ipc) 教程。
+更多详细信息请参考 Electron 的[进程间通信（IPCs）](https://www.electronjs.org/docs/latest/tutorial/ipc) 教程。
 
 ## 选项
 
@@ -597,18 +596,6 @@ electron({
 ```ts title="web/auth.ts"
 electron({
   clientID: "electron",
-});
-```
-
-#### `disableOriginOverride?`
-
-覆盖 Electron API 路由的 origin。默认 `false`
-
-如果遇到 Electron API 路由的跨域 origin 问题，可启用此项。
-
-```ts title="web/auth.ts"
-electron({
-  disableOriginOverride: true,
 });
 ```
 
@@ -747,7 +734,7 @@ electronClient({
 
 #### `cookiePrefix?`
 
-服务器 cookie 名称的前缀(数组)。默认 `better-auth`
+服务器 cookie 名称的前缀（数组）。默认 `better-auth`
 
 用于识别哪类 cookie 属于 better-auth，防止第三方 cookie 引起无限重新请求。
 

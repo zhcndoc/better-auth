@@ -24,14 +24,16 @@ export const auth = betterAuth({
 
 ### SentinelOptions
 
-| Option       | Type              | Description                                                           |
-| ------------ | ----------------- | --------------------------------------------------------------------- |
-| `apiUrl`     | `string`          | Better Auth 基础设施 API URL                                    |
-| `kvUrl`      | `string`          | 用于速率限制数据的 KV 存储 URL                                   |
-| `apiKey`     | `string`          | 用于认证的您的 API 密钥                                       |
-| `apiTimeout` | `number`          | Infra API HTTP 请求（`apiUrl`）的超时时间，单位毫秒。默认值：`3000` |
-| `kvTimeout`  | `number`          | KV HTTP 请求（`kvUrl`）的超时时间，单位毫秒。默认值：`1000`         |
-| `security`   | `SecurityOptions` | 安全功能配置                                        |
+| 选项           | 类型                | 描述                                                                             |
+| ------------ | ----------------- | ------------------------------------------------------------------------------ |
+| `apiUrl`     | `string`          | Better Auth infrastructure API URL。默认值：`https://dash.better-auth.com`          |
+| `kvUrl`      | `string`          | Better Auth identification infrastructure URL。默认值：`https://kv.better-auth.com` |
+| `apiKey`     | `string`          | 用于身份验证的 API 密钥                                                                 |
+| `apiOptions` | `object`          | Dash API HTTP 选项。接受以毫秒为单位的 `timeout?: number`                                  |
+| `kvOptions`  | `object`          | KV HTTP 选项。接受 `timeout?: number` 和 `retry?: { attempts?: number; ... }`        |
+| `apiTimeout` | `number`          | `apiOptions.timeout` 的弃用别名                                                     |
+| `kvTimeout`  | `number`          | `kvOptions.timeout` 的弃用别名                                                      |
+| `security`   | `SecurityOptions` | 安全功能配置                                                                         |
 
 ### SecurityOptions
 
@@ -297,7 +299,7 @@ sentinel({
 }),
 ```
 
-## Proof-of-Work Challenges
+## 工作量证明挑战
 
 当安全检查导致“challenge”动作时，Sentinel 会发起工作量证明（PoW）挑战，客户端必须完成挑战。
 
@@ -342,10 +344,12 @@ export const authClient = createAuthClient({
 
 ### 配置项
 
-| Option               | Type      | Default | Description                                             |
-| -------------------- | --------- | ------- | ------------------------------------------------------- |
-| `autoSolveChallenge` | `boolean` | `true`  | 自动解决 PoW 挑战                      |
-| `kvTimeout`          | `number`  | `1000`  | KV 识别及相关 HTTP 请求的超时时间 |
+| 选项                   | 类型        | 默认值                                                                        | 描述                              |
+| -------------------- | --------- | -------------------------------------------------------------------------- | ------------------------------- |
+| `identifyUrl`        | `string`  | `BETTER_AUTH_KV_URL` 或 `https://kv.better-auth.com`                        | identify endpoint 的基础 URL       |
+| `identifyOptions`    | `object`  | `{ timeout: 1000, retry: { attempts: 2, baseDelay: 400, maxDelay: 600 } }` | Identify HTTP 客户端设置             |
+| `autoSolveChallenge` | `boolean` | `true`                                                                     | 自动解决 PoW 挑战                     |
+| `kvTimeout`          | `number`  | `1000`                                                                     | `identifyOptions.timeout` 的弃用别名 |
 
 ### 浏览器指纹
 
@@ -424,33 +428,34 @@ export const authClient = createAuthClient({
 
 #### `sentinelNativeClient` 选项
 
-| Option                | Type                            | Default                                                 | Description                                                                 |
-| --------------------- | ------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `identifyUrl`         | `string`                        | `BETTER_AUTH_KV_URL`, then `https://kv.better-auth.com` | KV 识别端点基础 URL                                               |
-| `kvTimeout`           | `number`                        | `1000`                                                  | KV 识别及相关 HTTP 请求的超时时间                     |
-| `autoSolveChallenge`  | `boolean`                       | `true`                                                  | 当 `423` 返回 `X-PoW-Challenge` 时，自动解决并使用 `X-PoW-Solution` 重试一次 |
-| `onChallengeReceived` | `(reason: string) => void`      | —                                                       | 收到 PoW 挑战时调用                                     |
-| `onChallengeSolved`   | `(solveTimeMs: number) => void` | —                                                       | 成功解决后调用                                             |
-| `onChallengeFailed`   | `(error: Error) => void`        | —                                                       | 解决失败时调用                                                     |
-| `storage`             | `{ getItem, setItem }`          | 安装 Async Storage 时使用                            | 用于稳定的每次安装访客 ID 的持久化异步存储                |
+| 选项                    | 类型                              | 默认值                                                                        | 描述                                                             |
+| --------------------- | ------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `identifyUrl`         | `string`                        | `BETTER_AUTH_KV_URL`，然后是 `https://kv.better-auth.com`                      | Identify endpoint 基础 URL                                       |
+| `identifyOptions`     | `object`                        | `{ timeout: 1000, retry: { attempts: 2, baseDelay: 400, maxDelay: 600 } }` | Identify HTTP 超时和重试策略                                          |
+| `kvTimeout`           | `number`                        | `1000`                                                                     | `identifyOptions.timeout` 的弃用别名                                |
+| `autoSolveChallenge`  | `boolean`                       | `true`                                                                     | 遇到带有 `X-PoW-Challenge` 的 `423` 时，解决挑战并使用 `X-PoW-Solution` 重试一次 |
+| `onChallengeReceived` | `(reason: string) => void`      | —                                                                          | 收到 PoW 挑战时调用                                                   |
+| `onChallengeSolved`   | `(solveTimeMs: number) => void` | —                                                                          | 成功解决挑战后调用                                                      |
+| `onChallengeFailed`   | `(error: Error) => void`        | —                                                                          | 解决失败时调用                                                        |
+| `storage`             | `{ getItem, setItem }`          | 安装后使用 Async Storage                                                        | 用于生成稳定的每次安装一个访客 ID 的持久异步存储                                     |
 
 ## 安全事件
 
 Sentinel 跟踪以下安全事件类型：
 
-| 事件类型                      | 描述                         |
-| ----------------------------- | ---------------------------- |
-| `security_blocked`            | 请求被阻止                   |
-| `security_allowed`            | 挑战后请求被允许             |
-| `security_credential_stuffing`| 检测到凭证填充               |
-| `security_impossible_travel`  | 检测到不可能的旅行           |
-| `security_geo_blocked`        | 触发地理封禁                 |
-| `security_bot_blocked`        | 检测并阻止机器人             |
-| `security_suspicious_ip`      | 检测到可疑 IP                |
-| `security_velocity_exceeded`  | 超过速率限制                 |
-| `security_free_trial_abuse`   | 检测到免费试用滥用           |
-| `security_compromised_password`| 检测到泄露密码              |
-| `security_stale_account`      | 沉睡账户重新激活             |
+| 事件类型                            | 描述        |
+| ------------------------------- | --------- |
+| `security_blocked`              | 请求被阻止     |
+| `security_allowed`              | 挑战后请求被允许  |
+| `security_credential_stuffing`  | 检测到凭证填充   |
+| `security_impossible_travel`    | 检测到不可能的旅行 |
+| `security_geo_blocked`          | 触发地理封禁    |
+| `security_bot_blocked`          | 检测并阻止机器人  |
+| `security_suspicious_ip`        | 检测到可疑 IP  |
+| `security_velocity_exceeded`    | 超过速率限制    |
+| `security_free_trial_abuse`     | 检测到免费试用滥用 |
+| `security_compromised_password` | 检测到泄露密码   |
+| `security_stale_account`        | 沉睡账户重新激活  |
 
 这些事件可在安全控制台查看，并包含在审计日志中。
 
@@ -536,15 +541,16 @@ export const auth = betterAuth({
 
 ## 疑难解答
 
-### 缺少API密钥警告
+### 缺少 API 密钥警告
 
 ```
 [Sentinel] 缺少 BETTER_AUTH_API_KEY。安全检查可能回退到允许模式。
 ```
 
-请确保正确设置了API密钥环境变量。
+请确保正确设置了 API 密钥环境变量。
 
 ### 挑战无法执行
+
 如果 PoW 挑战无法解决：
 
 1. 验证正确的客户端插件：Web 使用 `sentinelClient()`（来自 `@better-auth/infra/client`），Expo / React Native 使用 `sentinelNativeClient()`（来自 `@better-auth/infra/native`）
@@ -552,6 +558,7 @@ export const auth = betterAuth({
 3. 确保客户端可以访问服务器
 
 ### 误报率过高
+
 如果合法用户被阻止：
 
 1. 增加阈值

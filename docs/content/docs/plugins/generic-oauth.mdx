@@ -3,127 +3,192 @@ title: 通用 OAuth
 description: 使用任何 OAuth 提供商进行用户身份验证
 ---
 
-通用 OAuth 插件提供了一种灵活的方式来集成任何 OAuth 提供商的身份验证。它支持 OAuth 2.0 和 OpenID Connect (OIDC) 流程，允许你轻松地为应用程序添加社交登录或自定义 OAuth 身份验证。
+Generic OAuth 插件允许你将任何 OAuth 2.1 或 OpenID Connect（OIDC）提供商添加到应用程序中。提供商会作为一等社交提供商进行注册，并使用标准的 `signIn.social` 流程，默认启用 PKCE 和发行者验证。
+
+## 何时使用此插件
+
+在以下情况下使用 Generic OAuth 插件：
+
+* 你的提供商不是[内置社交提供商](/docs/concepts/oauth)之一（Google、GitHub、Discord 等）
+* 你需要连接到企业身份提供商（Keycloak、Okta、Auth0、Microsoft Entra ID）
+* 你希望支持具有自定义或非标准 OAuth 端点的提供商
+
+如果你的提供商已经内置，请改用身份验证配置中的 `socialProviders`；内置提供商支持移动端 id-token 登录，并具有针对特定提供商的优化。
+
+### 自定义选项
+
+OAuth 流程的每个方面都可以被覆盖：
+
+| 需求                        | 配置字段                                             |
+| ------------------------- | ------------------------------------------------ |
+| 提供商使用非标准令牌交换方式（GET、自定义参数） | `getToken`                                       |
+| 提供商返回非标准用户资料              | `getUserInfo`                                    |
+| 你需要将资料字段映射到用户模型           | `mapProfileToUser`                               |
+| 提供商需要额外的授权参数              | `authorizationUrlParams`                         |
+| 提供商需要额外的令牌参数              | `tokenUrlParams`                                 |
+| 提供商需要自定义 HTTP 头           | `discoveryHeaders`、`authorizationHeaders`        |
+| 提供商不支持 OIDC 发现            | 显式设置 `authorizationUrl`、`tokenUrl`、`userInfoUrl` |
+| 提供商配置共享同一个身份命名空间          | 设置相同的 `accountIssuer`                            |
+| 提供商使用非标准的不可变用户标识符         | 设置 `accountSubject`                              |
+| 提供商拒绝 PKCE                | 设置 `pkce: false`                                 |
 
 ## 安装
 
-<Steps>
-  <Step>
-    ### 在你的身份验证配置中添加插件
+将插件添加到身份验证配置中。
 
-    要使用通用 OAuth 插件，请将其添加到你的身份验证配置中。
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+import { genericOAuth } from "better-auth/plugins" // [!code highlight]
 
-    ```ts title="auth.ts"
-    import { betterAuth } from "better-auth"
-    import { genericOAuth } from "better-auth/plugins" // [!code highlight]
-
-    export const auth = betterAuth({
-        // ... 其他配置选项
-        plugins: [
-            genericOAuth({ // [!code highlight]
-                config: [ // [!code highlight]
-                    { // [!code highlight]
-                        providerId: "provider-id", // [!code highlight]
-                        clientId: "test-client-id", // [!code highlight]
-                        clientSecret: "test-client-secret", // [!code highlight]
-                        discoveryUrl: "https://auth.example.com/.well-known/openid-configuration", // [!code highlight]
-                        // ... 其他配置选项 // [!code highlight]
-                    }, // [!code highlight]
-                    // 根据需要添加更多提供商 // [!code highlight]
-                ] // [!code highlight]
-            }) // [!code highlight]
-        ]
-    })
-    ```
-  </Step>
-
-  <Step>
-    ### 添加客户端插件
-
-    在你的身份验证客户端实例中包含通用 OAuth 客户端插件。
-
-    ```ts title="auth-client.ts"
-    import { createAuthClient } from "better-auth/client"
-    import { genericOAuthClient } from "better-auth/client/plugins" // [!code highlight]
-
-    export const authClient = createAuthClient({
-        plugins: [
-            genericOAuthClient() // [!code highlight]
-        ]
-    })
-    ```
-  </Step>
-</Steps>
+export const auth = betterAuth({
+    // ... other config options
+    plugins: [
+        genericOAuth({ // [!code highlight]
+            config: [ // [!code highlight]
+                { // [!code highlight]
+                    providerId: "provider-id", // [!code highlight]
+                    clientId: "test-client-id", // [!code highlight]
+                    clientSecret: "test-client-secret", // [!code highlight]
+                    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration", // [!code highlight]
+                    // ... other config options // [!code highlight]
+                }, // [!code highlight]
+                // Add more providers as needed // [!code highlight]
+            ] // [!code highlight]
+        }) // [!code highlight]
+    ]
+})
+```
 
 ## 使用方法
 
-通用 OAuth 插件提供了用于启动 OAuth 流程和处理回调的端点。用法如下：
+Generic OAuth 提供商通过标准的社交登录流程使用：
 
-### 启动 OAuth 登录
+### 登录
 
-启动 OAuth 登录流程：
+```ts
+await authClient.signIn.social({
+    provider: "provider-id",
+    callbackURL: "/dashboard",
+})
+```
 
-<APIMethod path="/sign-in/oauth2" method="POST">
-  ```ts
-  type signInWithOAuth2 = {
-      /**
-       * OAuth 提供商的提供商 ID。 
-       */
-      providerId: string = "provider-id"
-      /**
-       * 登录后重定向到的 URL。 
-       */
-      callbackURL?: string = "/dashboard"
-      /**
-       * 发生错误时重定向到的 URL。 
-       */
-      errorCallbackURL?: string = "/error-page"
-      /**
-       * 如果用户是新用户，登录后重定向到的 URL。 
-       */
-      newUserCallbackURL?: string = "/welcome"
-      /**
-       * 禁用重定向。 
-       */
-      disableRedirect?: boolean = false
-      /**
-       * 要传递给提供商授权请求的作用域。 
-       */
-      scopes?: string[] = ["my-scope"]
-      /**
-       * 明确请求注册。当此提供商的 disableImplicitSignUp 为 true 时很有用。 
-       */
-      requestSignUp?: boolean = false
-  }
-  ```
-</APIMethod>
+你也可以传入 `additionalData`（一个 `Record<string, any>`），在整个流程中往返传递客户端数据；在回调中通过 `getOAuthState()` 读取这些数据，并将其视为不受信任的数据。请参阅[在 OAuth 流程中传递额外数据](/docs/concepts/oauth#passing-additional-data-through-oauth-flow)。
 
-### 关联 OAuth 账号
+### 使用 ID Token 登录
 
-将 OAuth 账号关联到现有用户：
+配置了 `discoveryUrl` 且其发现文档发布了 `jwks_uri` 的提供商，也接受客户端直接获取的 `id_token`，无需执行重定向流程。该令牌会先根据提供商的 JWKS 进行验证，然后才会信任其中的任何声明：
 
-<APIMethod path="/oauth2/link" method="POST" requireSession>
-  ```ts
-  type oAuth2LinkAccount = {
-      /**
-       * OAuth 提供商 ID。 
-       */
-      providerId: string = "my-provider-id"
-      /**
-       * 账号关联完成后重定向到的 URL。 
-       */
-      callbackURL: string = "/successful-link"
-  }
-  ```
-</APIMethod>
+```ts
+await authClient.signIn.social({
+    provider: "provider-id",
+    idToken: {
+        token: idTokenFromProvider,
+    },
+})
+```
+
+使用显式端点而非 `discoveryUrl` 配置的提供商不支持此路径，并会返回 `ID_TOKEN_NOT_SUPPORTED`。
+
+### 关联账户
+
+```ts
+await authClient.linkSocial({
+    provider: "provider-id",
+    callbackURL: "/settings",
+})
+```
 
 ### 处理 OAuth 回调
 
-插件挂载了一个用于处理 OAuth 回调的路由 `/oauth2/callback/:providerId`。默认情况下，回调 URL 是 `${baseURL}/api/auth/oauth2/callback/:providerId`。请确保你的 OAuth 提供商配置了此回调 URL。
+该插件使用位于 `/callback/:providerId` 的核心 OAuth 回调路由。这意味着默认情况下会使用 `${baseURL}/api/auth/callback/:providerId` 作为回调 URL。请确保你的 OAuth 提供商配置为使用此 URL。
 
 与内置提供商不同，`:providerId` 参数是必需的，并且必须与您配置的提供商 ID 匹配。
 
-## 预配置的提供程序助手
+## 验证 OAuth 用户信息
+
+使用 [`user.validateUserInfo`](/docs/concepts/users-accounts#callbacks) 在 Better Auth 创建用户（`create-user`）、关联新账户（`link-account`）或让现有用户重新登录（`sign-in`）之前拒绝 Generic OAuth 用户。在 `sign-in` 操作中，该回调会接收提供商最新的电子邮件和资料，因此可以通过域名或组织检查，拒绝其提供商身份后来超出范围的用户。检查 `source.oauth?.providerId`，将验证范围限定到特定的 Generic OAuth 提供商，并使用 `source.oauth?.profile` 获取提供商特定的资料字段。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { genericOAuth } from "better-auth/plugins";
+
+export const auth = betterAuth({
+  user: {
+    validateUserInfo: ({ user, source }) => {
+      if (source.oauth?.providerId !== "company-oauth") {
+        return;
+      }
+
+      if (!user.email?.endsWith("@example.com")) {
+        return {
+          error: "email_not_allowed",
+          errorDescription: "Use your example.com email to sign in",
+        };
+      }
+    },
+  },
+  plugins: [
+    genericOAuth({
+      config: [
+        {
+          providerId: "company-oauth",
+          clientId: process.env.COMPANY_OAUTH_CLIENT_ID!,
+          clientSecret: process.env.COMPANY_OAUTH_CLIENT_SECRET!,
+          discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+        },
+      ],
+    }),
+  ],
+});
+```
+
+不返回任何内容即可允许 OAuth 流程继续。返回带有 `error` 的对象即可拒绝该流程。基于重定向的 OAuth 流程会将拒绝结果发送到配置的错误 URL，而程序化流程会返回 `403` API 错误。
+
+### RP 发起的注销
+
+对于公开了 `end_session_endpoint` 的 OIDC 提供商，`authClient.signOut()` 会清除 Better Auth 会话，然后将浏览器重定向到提供商的注销端点。使用 `discoveryUrl` 时，会从提供商的发现文档中读取该端点。你也可以通过 `endSessionEndpoint` 手动配置。
+
+```ts
+await authClient.signOut()
+```
+
+传入 `callbackURL`，可以要求提供商在注销后将用户返回到你的应用。该 URL 必须在提供商处注册为注销后重定向 URI。
+
+```ts
+await authClient.signOut({
+  callbackURL: "/login",
+})
+```
+
+如果多个已关联的提供商支持 RP 发起的注销，Better Auth 会将用户重定向到最近更新账户所对应的提供商。浏览器导航一次只能完成一个提供商的注销。
+
+如果要自行处理提供商导航，请设置 `disableRedirect` 并使用返回的 `url`。
+
+```ts
+const { data } = await authClient.signOut({
+  disableRedirect: true,
+})
+
+if (data?.url) {
+  window.location.assign(data.url)
+}
+```
+
+如果要使注销仅在 Better Auth 本地完成，请为该配置禁用提供商注销。
+
+```ts
+genericOAuth({
+  config: [{
+    providerId: "provider-id",
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    clientId: "test-client-id",
+    clientSecret: "test-client-secret",
+    disableProviderLogout: true,
+  }]
+})
+```
+
+## 预配置的提供商辅助函数
 
 Better Auth 提供了针对流行 OAuth 提供商的预配置辅助函数。这些助手处理特定提供商的配置，包括发现 URL 和用户信息端点。
 
@@ -133,7 +198,7 @@ Better Auth 提供了针对流行 OAuth 提供商的预配置辅助函数。这�
 * **HubSpot** - `hubspot(options)`
 * **Keycloak** - `keycloak(options)`
 * **LINE** - `line(options)`
-* **Microsoft Entra ID (Azure AD)** - `microsoftEntraId(options)`
+* **Microsoft Entra ID（Azure AD）** - `microsoftEntraId(options)`
 * **Okta** - `okta(options)`
 * **Slack** - `slack(options)`
 * **Patreon** - `patreon(options)`
@@ -223,24 +288,29 @@ export const auth = betterAuth({
 
 每个提供商助手接受通用 OAuth 选项（扩展自 `BaseOAuthProviderOptions`）以及提供商特定字段：
 
-* **Auth0**: 需要 `domain`（例如 `dev-xxx.eu.auth0.com`）
-* **HubSpot**: 无额外必填字段。可选 `scopes`（默认值为 `["oauth"]`）
-* **Keycloak**: 需要 `issuer`（例如 `https://my-domain/realms/MyRealm`）
-* **LINE**: 可选 `providerId`（默认值为 `"line"`）。LINE 需要为不同国家（日本、泰国、台湾等）分别创建渠道，因此你可以使用不同的 `providerId` 和凭据多次调用 `line()` 以支持多个国家
-* **Microsoft Entra ID**: 需要 `tenantId`（可以是 GUID、`"common"`、`"organizations"` 或 `"consumers"`）
-* **Okta**: 需要 `issuer`（例如 `https://dev-xxxxx.okta.com/oauth2/default`）
-* **Slack**: 无额外必填字段
-* **Patreon**: 无额外必填字段
-* **Yandex**: 无额外必填字段
+* **Auth0**：需要 `domain`（例如 `dev-xxx.eu.auth0.com`）
+* **HubSpot**：没有其他必填字段。可选的 `scopes`（默认为 `["oauth"]`）
+* **Keycloak**：需要 `issuer`（例如 `https://my-domain/realms/MyRealm`）
+* **LINE**：可选的 `providerId`（默认为 `"line"`）。LINE 要求不同国家（日本、泰国、台湾等）使用单独的渠道，因此你可以多次调用 `line()`，并使用不同的 `providerId` 和凭据来支持多个国家
+* **Microsoft Entra ID**：需要具体的租户 GUID。对于多租户的 `"common"`、`"organizations"` 或 `"consumers"` authority，请使用内置的 [Microsoft 社交提供商](/docs/authentication/microsoft)；这些 authority 需要通过 ID-token 声明验证来确定账户的实际发行者
+* **Okta**：需要 `issuer`（例如 `https://dev-xxxxx.okta.com/oauth2/default`）
+* **Slack**：没有其他必填字段
+* **Patreon**：没有其他必填字段
+* **Yandex**：没有其他必填字段
 
 所有提供程序都支持相同的可选字段：
 
+* `clientSecret?: string` - OAuth 客户端密钥
+* `tokenEndpointAuth?: TokenEndpointAuth` - 令牌端点请求的客户端身份验证配置
 * `scopes?: string[]` - 要请求的 OAuth 作用域数组
 * `redirectURI?: string` - 自定义重定向 URI
-* `pkce?: boolean` - 启用 PKCE（默认为 `false`）
-* `disableImplicitSignUp?: boolean` - 禁用新用户的隐式注册
-* `disableSignUp?: boolean` - 完全禁用新用户注册
-* `overrideUserInfo?: boolean` - 登录时用提供商信息更新数据库中的用户信息
+* `pkce?: boolean` - 启用 PKCE（默认为 `true`）
+* `disableImplicitSignUp?: boolean` - 禁用新用户的自动注册
+* `disableSignUp?: boolean` - 完全禁用注册
+* `overrideUserInfo?: boolean` - 登录时覆盖用户信息
+* `endSessionEndpoint?: string` - OIDC RP 发起的注销端点。可用时会从 `end_session_endpoint` 自动发现
+* `postLogoutRedirectURI?: string` - 提供商注销期间作为 `post_logout_redirect_uri` 传递的默认 URI
+* `disableProviderLogout?: boolean` - 禁用 `authClient.signOut()` 期间的自动提供商注销
 
 ## 配置
 
@@ -251,16 +321,32 @@ export const auth = betterAuth({
 每个提供商配置对象支持以下选项：
 
 ```ts
+import type {
+  OAuthAccountKeyContext,
+  OAuth2Tokens,
+  TokenEndpointAuth,
+} from "better-auth/oauth2";
+import type { GenericOAuthUserInfo } from "better-auth/plugins/generic-oauth";
+
 interface GenericOAuthConfig {
   providerId: string;
+  accountSubject?: (
+    context: OAuthAccountKeyContext<GenericOAuthUserInfo>,
+  ) => string | number | Promise<string | number>;
+  accountIssuer?:
+    | string
+    | ((context: OAuthAccountKeyContext<GenericOAuthUserInfo>) => string | Promise<string>);
   discoveryUrl?: string;
-  issuer?: string;
-  requireIssuerValidation?: boolean;
+  requireIdTokenVerification?: boolean;
   authorizationUrl?: string;
   tokenUrl?: string;
   userInfoUrl?: string;
+  endSessionEndpoint?: string;
+  postLogoutRedirectURI?: string;
+  disableProviderLogout?: boolean;
   clientId: string;
-  clientSecret: string;
+  clientSecret?: string;
+  tokenEndpointAuth?: TokenEndpointAuth;
   scopes?: string[];
   redirectURI?: string;
   responseType?: string;
@@ -268,7 +354,7 @@ interface GenericOAuthConfig {
   pkce?: boolean;
   accessType?: string;
   accessTokenExpiresIn?: number;
-  getUserInfo?: (tokens: OAuth2Tokens) => Promise<User | null>;
+  getUserInfo?: (tokens: OAuth2Tokens) => Promise<GenericOAuthUserInfo | null>;
 }
 ```
 
@@ -276,11 +362,21 @@ interface GenericOAuthConfig {
 
 **providerId**：用于唯一标识 OAuth 提供商配置的字符串。
 
-**discoveryUrl**：（可选）用于获取提供商 OAuth 2.0/OIDC 配置的 URL。如果提供，会自动发现 `authorizationUrl`、`tokenUrl` 和 `userInfoUrl` 等端点。
+**accountSubject**：（可选）解析由提供商分配的不可变用户标识符。OpenID Connect 发现提供商默认使用经过验证的 `sub` 字段。普通 OAuth 提供商使用 `id`。Better Auth 不会在运行时在这两个字段之间切换。当提供商使用其他字段（例如 `account_id`）时，请设置此解析器。该解析器接收 OAuth 令牌和提供商原始资料，并可以返回字符串或数字。
 
-**issuer**：（可选）用于验证的预期发行者标识符。如果未提供但设置了 `discoveryUrl`，则从发现文档中获取。设置后，回调将验证 `iss` 参数是否匹配此值。
+`mapProfileToUser` 无法设置账户主题。这使本地资料映射与账户识别保持分离。
 
-**requireIssuerValidation**：（可选）当为 true 时，如果配置了发行者，要求回调中必须有 `iss` 参数。这提供更严格的安全性，但可能与旧版 OAuth 服务器不兼容。默认值为 `false`。
+**accountIssuer**：（可选）与提供商账户主题配对的稳定权威命名空间。发现提供商默认使用其发现到的发行者。当显式端点提供商具有发行者、多个提供商配置代表同一权威，或经过验证的资料确定了特定租户的发行者时，请设置此字段。如果没有 discovery 或 `accountIssuer`，Better Auth 会使用 `local:oauth:<encoded providerId>`，其中提供商 ID 部分经过百分号编码。
+
+该解析器接收经过验证的提供商数据。只能从提供商验证流程确定的声明或资料值中派生动态发行者；绝不要使用请求参数、电子邮件域名或其他由调用者控制的值。
+
+具有相同 `accountIssuer` 和主题的提供商配置会对同一个外部身份进行去重。它们共享一条账户记录和一组令牌；别名不会创建独立的授权或提供商生命周期记录。
+
+**discoveryUrl**：（可选）用于获取提供商 OAuth 2.0/OIDC 配置的 URL。如果提供，则会在服务器启动时自动发现 `authorizationUrl`、`tokenUrl` 和 `userInfoUrl` 等端点。当发现文档发布 `jwks_uri` 时，提供商返回的 `id_token` 会根据该地址进行验证（包括签名、发行者、受众和发布的签名算法），之后才会使用其中的声明；验证失败的令牌会拒绝登录。发现提供商还会使用服务器生成的 OIDC `nonce` 将 `id_token` 与授权请求绑定，并拒绝未回显该值的回调。如果发现无法建立有效配置，提供商初始化会失败，从而避免账户在其发现到的发行者与本地回退值之间切换。
+
+**requireIdTokenVerification**：（可选）要求发现过程提供可用的发行者和 `jwks_uri`，然后才注册提供商。当 `accountSubject` 或 `getUserInfo` 从 ID-token 声明中派生身份时，请启用此选项。如果发现不可用或不完整，初始化会失败，而不是回退到未经验证的令牌解码。`microsoftEntraId` 助手会自动启用此选项。
+
+**disableIdTokenNonceBinding**：（可选）关闭发现提供商 `id_token` 的 OIDC `nonce` 绑定。默认启用绑定，并会拒绝未回显服务器生成的 `nonce` 的 `id_token`（OIDC Core 1.0 §3.1.3.7）。只有不在授权码流程中返回 `nonce` 声明的提供商才应将其设置为 `true`；这会移除该提供商的 `id_token` 重放保护。
 
 **authorizationUrl**：（可选）OAuth 提供商的授权端点。如果使用 `discoveryUrl`，则不必指定。
 
@@ -288,13 +384,21 @@ interface GenericOAuthConfig {
 
 **userInfoUrl**：（可选）获取用户资料信息的端点。如果使用 `discoveryUrl`，则不必指定。
 
+**endSessionEndpoint**：（可选）OIDC RP 发起的注销端点。如果使用 `discoveryUrl` 且提供商返回 `end_session_endpoint`，则不需要设置。
+
+**postLogoutRedirectURI**：（可选）当 `authClient.signOut()` 将用户重定向到提供商时，作为 `post_logout_redirect_uri` 发送的默认 URI。该 URI 必须在提供商处注册。
+
+**disableProviderLogout**：（可选）如果为 true，`authClient.signOut()` 只会清除 Better Auth 会话，不会重定向到提供商注销端点。
+
 **clientId**：由你的提供商颁发的 OAuth 客户端 ID。
 
 **clientSecret**：由你的提供商颁发的 OAuth 客户端密钥。
 
-**scopes**：（可选）请求的作用域数组（例如 `["openid", "email", "profile"]`）。
+**tokenEndpointAuth**：（可选）令牌端点请求的客户端身份验证配置。对于 RFC 7523 客户端断言，请使用 `{ method: "private_key_jwt", getClientAssertion }`；对于基于密钥的客户端，请使用 `{ method: "client_secret_basic" }` 或 `{ method: "client_secret_post" }`；对于公共客户端，请使用 `{ method: "none" }`。基于密钥的方法要求提供 `clientSecret`；不要将 `clientSecret` 与 `private_key_jwt` 或 `none` 组合使用。如果省略该配置，Better Auth 会在配置了 `clientSecret` 时发送基于密钥的令牌请求，未配置时发送公共客户端令牌请求。
 
-**redirectURI**: (可选) 用于 OAuth 流程的重定向 URI。如果未设置，则根据应用程序的基本 URL 构造默认值。必须包含 `:providerId` 占位符（例如 `https://example.com/api/auth/oauth2/callback/my-provider`）。
+**scopes**：（可选）要向提供商请求的作用域数组（例如 `["openid", "email", "profile"]`）。
+
+**redirectURI**：（可选）OAuth 流程使用的重定向 URI。如果未设置，则会根据应用的基础 URL 构造默认值。必须包含 `:providerId` 占位符（例如 `https://example.com/api/auth/callback/my-provider`）。
 
 **responseType**：（可选）OAuth 响应类型，授权码流程默认为 `"code"`。
 
@@ -302,99 +406,103 @@ interface GenericOAuthConfig {
 
 **prompt**：（可选）控制认证体验（例如强制登录、同意等）。
 
-**pkce**：（可选）是否启用 PKCE（Proof Key for Code Exchange）以增强安全性。默认为 `false`。
+**pkce**：（可选）启用 PKCE（Proof Key for Code Exchange），这是 OAuth 2.1 的要求。默认为 `true`。只有明确拒绝 PKCE 的提供商才应禁用此选项。
 
-**accessType**: (可选) 授权请求中的访问类型。使用 `"offline"` 以请求刷新令牌。
+**accessType**：（可选）授权请求中的访问类型。使用 `"offline"` 以请求刷新令牌。
 
-**accessTokenExpiresIn**: (可选) 备用访问令牌有效期（秒），仅在提供商的令牌响应省略 `expires_in` 时使用。如果没有已知的过期时间，`getAccessToken` 无法判断令牌已过期，也不会刷新它。请将其设置为令牌的有效期，以便跟踪过期并在需要时刷新令牌。如果提供商返回 `expires_in`，则留空。
+**accessTokenExpiresIn**：（可选）备用访问令牌有效期（秒），仅在提供商的令牌响应省略 `expires_in` 时使用。如果没有已知的过期时间，`getAccessToken` 无法判断令牌已过期，也不会刷新它。请将其设置为令牌的有效期，以便跟踪过期并在需要时刷新令牌。如果提供商返回 `expires_in`，则留空。
 
-**getToken**: (可选) 一个自定义函数，用于将授权码兑换为令牌。如果提供，将使用该函数替代默认的令牌交换逻辑。适用于使用 GET 请求或自定义参数的非标准令牌端点提供商。
+**getToken**：（可选）一个自定义函数，用于将授权码兑换为令牌。如果提供，将使用该函数替代默认的令牌交换逻辑。适用于使用 GET 请求或自定义参数的非标准令牌端点提供商。
 
 **mapProfileToUser**：（可选）函数，用于将提供商的用户资料映射到应用程序的用户对象。适用于自定义字段映射或转换。
 
-**authorizationUrlParams**：（可选）添加到授权 URL 的额外查询参数，可覆盖默认参数。也可以提供一个返回参数的函数。
+**mapProfileToUser**：（可选）一个将提供商资料映射到应用程序用户可变字段的函数。它无法设置提供商身份；对于非标准的不可变标识符，请使用 `accountSubject`。
 
-**tokenUrlParams**：（可选）添加到令牌 URL 的额外查询参数，可覆盖默认参数。也可以提供一个返回参数的函数。
+**authorizationUrlParams**：（可选）要添加到授权 URL 的其他查询参数。保留的 OAuth 密钥（`state`、`client_id`、`redirect_uri`、`response_type`、`code_challenge`、`code_challenge_method`、`nonce`、`scope`）会被忽略，因此无法替换 Better Auth 为流程管理的值；其他任何键都会覆盖默认值。
 
-**disableImplicitSignUp**：（可选）为 true 时，禁用新用户自动注册。必须显式请求带有注册意图的登录。
+**tokenUrlParams**：（可选）要添加到令牌 URL 的其他查询参数。Better Auth 已设置的参数会被保留。请使用 `clientId`、`clientSecret` 和 `tokenEndpointAuth` 配置令牌端点客户端身份验证。
+
+**refreshTokenParams**：（可选）刷新访问令牌时合并到令牌端点请求中的其他请求体参数。接受普通对象，或接受一个在刷新时运行的（同步或异步）函数，因此可以注入动态值，例如 `scope`、`audience`、`resource` 或租户标识符，而不必重新进行授权重定向。示例包括切换工作区时使用 Zitadel 的 `urn:zitadel:iam:org:id:{orgId}` 作用域，或轮换 Auth0 的 `audience`。函数形式会接收触发请求中的请求元数据（头和 Cookie），因此可以直接读取请求范围内的数据——调用者必须在将任何从头或 Cookie 派生的值用作作用域、受众或租户声明之前，根据经过身份验证的用户权限对其进行验证。无法覆盖 `grant_type` 和 `refresh_token`；合并后，`client_id` 由配置的令牌端点身份验证设置，因此这里同样无法覆盖。
+
+```ts
+genericOAuth({
+  config: [
+    {
+      providerId: "zitadel",
+      // ...
+      refreshTokenParams: (ctx) => {
+        const activeOrg = ctx?.headers?.get("x-active-org");
+        return activeOrg
+          ? { scope: `openid profile email urn:zitadel:iam:org:id:${activeOrg}` }
+          : undefined;
+      },
+    },
+  ],
+});
+```
 
 **disableSignUp**：（可选）为 true 时，完全禁用新用户注册。只能登录已有用户。
 
 **authentication**：（可选）令牌请求的认证方法。可以是 `'basic'` 或 `'post'`。默认 `'post'`。
 
-**discoveryHeaders**：（可选）发现请求中包含的自定义头。适用于需要特殊头的提供商。
+**authentication**：（可选）基于密钥的令牌请求身份验证。可以是 `'basic'` 或 `'post'`。默认为 `'post'`。`'basic'` 要求提供 `clientSecret`。对于超出客户端密钥范围的令牌端点方法，请配置 `tokenEndpointAuth`。
+
+对于 `private_key_jwt`，将 `tokenEndpointAuth.method` 设置为 `"private_key_jwt"`。你可以提供自己的 `getClientAssertion` 函数，也可以使用 `createPrivateKeyJwtClientAssertionGetter` 从私钥签署 RFC 7523 JWT 断言：
+
+```ts
+import { createPrivateKeyJwtClientAssertionGetter } from "better-auth/oauth2";
+
+genericOAuth({
+    config: [
+        {
+            providerId: "my-idp",
+            clientId: "your-client-id",
+            tokenUrl: "https://idp.example.com/oauth/token",
+            authorizationUrl: "https://idp.example.com/oauth/authorize",
+            tokenEndpointAuth: {
+                method: "private_key_jwt",
+                getClientAssertion: createPrivateKeyJwtClientAssertionGetter({
+                    privateKeyJwk: { /* your JWK */ },
+                    kid: "my-key-1",
+                    algorithm: "RS256",
+                }),
+            },
+            pkce: true,
+        },
+    ],
+}),
+```
+
+你也可以从另一个提供商返回断言：
+
+```ts
+genericOAuth({
+    config: [
+        {
+            providerId: "my-idp",
+            clientId: process.env.IDP_CLIENT_ID!,
+            discoveryUrl: "https://idp.example.com/.well-known/openid-configuration",
+            tokenEndpointAuth: {
+                method: "private_key_jwt",
+                getClientAssertion: async ({ clientId, tokenEndpoint, grantType }) => {
+                    return getWorkloadIdentityToken({
+                        clientId,
+                        audience: tokenEndpoint,
+                        grantType,
+                    });
+                },
+            },
+            pkce: true,
+        },
+    ],
+});
+```
 
 **authorizationHeaders**：（可选）授权请求中包含的自定义头。适用于需要特殊头的提供商。
 
 **overrideUserInfo**：（可选）为 true 时，每次登录时用提供商信息更新数据库中的用户信息。默认 `false`。
 
 ## 安全性：发行者验证
-
-Better Auth 验证 OAuth 提供商的发行者，以防止混淆攻击（[RFC 9207](https://datatracker.ietf.org/doc/html/rfc9207)）。混淆攻击发生在恶意授权服务器欺骗应用将授权码发往错误的令牌端点时。
-
-### 工作原理
-
-支持 RFC 9207 的 OAuth 提供商会在授权响应中包含 `iss`（发行者）参数。Better Auth 会验证该参数是否与预期发行者匹配，确保响应来自正确的提供商。
-
-### 配置示例
-
-### 配置示例
-
-**自动发现（推荐用于 OIDC 提供商）：**
-
-```ts
-genericOAuth({
-  config: [{
-    providerId: "my-provider",
-    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
-    clientId: "...",
-    clientSecret: "...",
-    // 发行者自动从发现文档获取
-  }]
-})
-```
-
-**手动指定发行者：**
-
-```ts
-genericOAuth({
-  config: [{
-    providerId: "custom-oauth",
-    authorizationUrl: "https://auth.example.com/authorize",
-    tokenUrl: "https://auth.example.com/token",
-    issuer: "https://auth.example.com",  // 手动指定预期发行者
-    clientId: "...",
-    clientSecret: "...",
-  }]
-})
-```
-
-**严格模式（推荐用于现代提供程序）：**
-
-```ts
-genericOAuth({
-  config: [{
-    providerId: "secure-provider",
-    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
-    clientId: "...",
-    clientSecret: "...",
-    requireIssuerValidation: true,  // 若缺失 iss 参数则拒绝
-  }]
-})
-```
-
-### 验证行为
-
-| 场景 | `requireIssuerValidation` | 结果 |
-|------|---------------------------|------|
-| `iss` 匹配预期 | - | 成功 |
-| `iss` 不匹配 | - | `issuer_mismatch` 错误 |
-| `iss` 缺失 | `false`（默认） | 成功（向后兼容） |
-| `iss` 缺失 | `true` | `issuer_missing` 错误 |
-
-<Callout>
-  对于 Google、Auth0、Okta 等现代 OAuth/OIDC 提供商，我们建议启用 `requireIssuerValidation: true` 以获得最大安全性。
-</Callout>
 
 ## 高级用法
 
@@ -522,6 +630,41 @@ getUserInfo: async (tokens) => {
   };
 }
 ```
+
+### IDP 发起的流程
+
+一些 OAuth 提供商（例如 [Clever](https://dev.clever.com/docs/oauth-implementation#initiating-logins)）允许身份提供商将用户重定向到你的回调 URL，而无需用户先点击应用中的“登录”按钮。这些回调包含 `code` 参数但没有 `state`，通常会被拒绝，因为缺少 `state` 会破坏标准的 CSRF 检查。
+
+在提供商上设置 `allowIdpInitiated: true`，即可安全地接受这些流程：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { genericOAuth } from "better-auth/plugins";
+
+export const auth = betterAuth({
+    plugins: [
+        genericOAuth({
+            config: [
+                {
+                    providerId: "clever",
+                    discoveryUrl: "https://clever.com/.well-known/openid-configuration",
+                    clientId: process.env.CLEVER_CLIENT_ID,
+                    clientSecret: process.env.CLEVER_CLIENT_SECRET,
+                    allowIdpInitiated: true,
+                },
+            ],
+        }),
+    ],
+});
+```
+
+当无状态回调访问 `/callback/:providerId` 时，Better Auth 会丢弃提供商签发的代码，并在服务器端重新启动流程：生成新的 `state` 和 PKCE 验证器，然后将用户重定向到提供商的授权端点。提供商会识别用户当前的会话并自动完成流程。整个过程中都会保留 CSRF 保护和 PKCE。
+
+对于始终从你这一侧发起流程的提供商，请保持 `allowIdpInitiated` 关闭（默认值）。针对这些提供商的无状态回调表示请求格式错误或具有恶意，应当被拒绝。
+
+<Callout type="warn">
+  启用 `allowIdpInitiated` 时，请设置全局 `baseURL` 选项。IDP 发起的回调不包含发起请求的请求体，因此跳转会使用 `baseURL` 作为登录后的目标地址。如果未设置 `baseURL`，跳转会失败并返回 `CALLBACK_URL_REQUIRED`。
+</Callout>
 
 ### 错误处理
 

@@ -5,10 +5,10 @@ description: 了解如何为 Better-Auth 创建自定义数据库适配器
 
 了解如何使用 `createAdapterFactory` 为 Better-Auth 创建自定义数据库适配器。
 
-我们的 `createAdapterFactory` 函数设计得非常灵活，我们尽力让它易于理解和使用。  
+我们的 `createAdapterFactory` 函数设计得非常灵活，我们尽力让它易于理解和使用。\
 我们希望您可以专注于编写数据库逻辑，而无需担心适配器如何与 Better-Auth 配合工作。
 
-从自定义模式配置、自定义 ID 生成、安全 JSON 解析、键映射、连接查询等，都由 `createAdapterFactory` 函数处理。  
+从自定义模式配置、自定义 ID 生成、安全 JSON 解析、键映射、连接查询等，都由 `createAdapterFactory` 函数处理。\
 您只需提供数据库逻辑，`createAdapterFactory` 函数将处理剩余工作。
 
 ## 快速开始
@@ -251,9 +251,9 @@ deleteMany: async ({ model, where }) => {
 };
 ```
 
-### `consumeOne` 方法（可选）
+### `consumeOne` 方法
 
-`consumeOne` 方法会以原子方式删除一条匹配的记录并返回它，从而确保两个并发请求不可能同时消费同一行。它用于一次性凭证，例如一次性验证挑战。实现它是可选的：如果省略，适配器工厂会回退为在 `transaction` 中包装 `findMany` + `deleteMany`，并使用已删除行数作为竞态门控。
+`consumeOne` 方法以原子方式删除一条匹配的记录并返回该记录，因此两个并发请求无法同时消费同一行。它用于一次性验证挑战等单次使用的凭据。
 
 参数：
 
@@ -270,8 +270,39 @@ consumeOne: async ({ model, where }) => {
 };
 ```
 
-<Callout type="info">
-  尽管工厂提供了回退方案，仍然建议原生实现 `consumeOne`：该回退方案只有在真实 `transaction` 且删除计数准确时才具备抗竞争条件的安全性。因此，没有多文档事务的存储需要原生的原子删除并返回能力（`DELETE ... RETURNING`、`findOneAndDelete`，或基于版本条件的删除）。
+<Callout type="warn">
+  `consumeOne` 是必需的。Better Auth 不提供 `findMany` 加 `deleteMany` 的回退方案，因为在没有原生原子删除并返回操作的情况下，这种形式无法保证各适配器之间的单次使用语义。
+</Callout>
+
+### `incrementOne` 方法
+
+`incrementOne` 方法通过应用数值增量和可选的设置值，以原子方式更新一条匹配的记录，然后返回更新后的行。它用于速率限制、配额和单一获胜者状态转换等受保护的计数器。
+
+参数：
+
+* `model`: 要更新的模型/表名。
+* `where`: 应仍然匹配，增量操作才会应用的 `where` 子句。
+* `increment`: 要应用的数值增量，例如 `{ count: 1 }` 或 `{ remaining: -1 }`。
+* `set`: 要在同一原子操作中设置的可选字段。
+
+**Returns** `Promise<T | null>`: 更新后的记录；如果没有匹配的行则为 `null`。实现时最多只能更新一条匹配行。
+
+```ts title="示例"
+incrementOne: async ({ model, where, increment, set }) => {
+  const [row] = await db
+    .update(model)
+    .set({
+      ...set,
+      count: sql`${model.count} + ${increment.count ?? 0}`,
+    })
+    .where(where)
+    .returning();
+  return row ?? null;
+};
+```
+
+<Callout type="warn">
+  `incrementOne` 是必需的。Better Auth 将其用作比较并交换原语：`where` 子句是保护条件的一部分，因此并发请求无法全部更新过时的快照。
 </Callout>
 
 ### `findOne` 方法
@@ -483,7 +514,8 @@ const adapter = myAdapter({
 
 ### `debugLogs`
 
-启用适配器的调试日志。你可以传入布尔值，或一个包含 `create`、`update`、`updateMany`、`findOne`、`findMany`、`delete`、`deleteMany`、`count` 等键的对象。任何键值为 `true` 的方法会启用调试日志。
+用于启用适配器的调试日志。你可以传入布尔值，也可以传入包含以下键的对象：`create`、`update`、`updateMany`、`findOne`、`findMany`、`delete`、`deleteMany`、`consumeOne`、`incrementOne`、`count`。
+如果任意键为 `true`，则会为相应方法启用调试日志。
 
 ```ts title="示例"
 // 为所有方法启用调试日志。
@@ -512,7 +544,7 @@ const adapter = myAdapter({
 
 ### `mapKeysTransformInput`
 
-如果数据库在某些情况下使用不同的键名，可以用此选项映射键名。适用于数据库期望某些键名不同的情况。  
+如果数据库在某些情况下使用不同的键名，可以用此选项映射键名。适用于数据库期望某些键名不同的情况。\
 例如，MongoDB 使用 `_id`，而 Better-Auth 使用 `id`。
 
 返回对象中的每个键表示待替换的旧键，值为新键。
@@ -527,7 +559,7 @@ mapKeysTransformInput: {
 
 ### `mapKeysTransformOutput`
 
-如果数据库在某些情况下使用不同的键名，可以用此选项映射键名。适用于数据库使用不同键名的场景。  
+如果数据库在某些情况下使用不同的键名，可以用此选项映射键名。适用于数据库使用不同键名的场景。\
 例如，MongoDB 使用 `_id`，而 Better-Auth 使用 `id`。
 
 返回对象中的每个键表示待替换的旧键，值为新键。
@@ -580,7 +612,7 @@ customTransformInput: ({ field, data }) => {
 
 ### `customTransformOutput`
 
-如果需要在数据返回给用户前转换输出数据，可以使用此选项。  
+如果需要在数据返回给用户前转换输出数据，可以使用此选项。\
 它和 `customTransformInput` 类似，但在数据从数据库取出后执行。
 
 ```ts title="示例"

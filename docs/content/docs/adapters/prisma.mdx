@@ -66,20 +66,24 @@ export const auth = betterAuth({
 npx auth@latest generate
 ```
 
-## 关联查询（实验性）
+## 连接
 
-当 Better Auth 需要在单个查询中从多个表获取相关数据时，数据库关联查询非常有用。
-诸如 `/get-session`、`/get-full-organization` 等端点极大地受益于此功能，
-根据数据库延迟情况，性能提升可达 2 到 3 倍。
+数据库连接在 Better Auth 需要在单个查询中从多个表获取相关数据时非常有用。
+`/get-session`、`/get-full-organization` 以及许多其他端点都能从此功能中大幅受益，
+根据数据库延迟的不同，性能提升可达到 2 到 3 倍以上。
 
-Prisma 适配器从 `1.4.0` 版本开始原生支持关联查询。
-要启用此功能，需要在您的 auth 配置中将 `experimental.joins` 选项设置为 `true`。
+Prisma 适配器自 `1.4.0` 版本起开箱即用地支持连接。
+要启用此功能，请在您的身份验证配置中将 `advanced.database.joins` 设置为 `true`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-  experimental: { joins: true }
+  advanced: {
+    database: {
+      joins: true,
+    },
+  },
 });
 ```
 
@@ -92,4 +96,4 @@ export const auth = betterAuth({
 ## 其他信息
 
 * 如果您正在寻找性能改进或优化建议，请查阅我们的指南，了解如何<Link href="/docs/guides/optimizing-for-performance">优化性能</Link>。
-* [如何在 Better Auth 和 Next.js 中使用 Prisma ORM](https://www.prisma.io/docs/guides/betterauth-nextjs)
+* [如何在 Better Auth 和 Next.js 中使用 Prisma ORM](https://www.prisma.io/docs/guides/betterauth-nextjs)。

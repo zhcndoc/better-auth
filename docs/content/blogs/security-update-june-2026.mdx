@@ -26,56 +26,56 @@ pnpm add better-auth@latest
 
 下表列出了本次安全周期中发布的公告，并按受影响组件分组。完整的历史列表仍可在 [Security Advisories tab](https://github.com/better-auth/better-auth/security/advisories) 中查看。
 
-### Core (`better-auth`)
+### 核心（`better-auth`）
 
-| Advisory                                                                                                  | Area                                | Severity | Fixed path                                       |
-| --------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------- | ------------------------------------------------ |
-| [GHSA-g38m-r43w-p2q7](https://github.com/better-auth/better-auth/security/advisories/GHSA-g38m-r43w-p2q7) | OAuth 账户链接所有权                  | High     | `better-auth@1.6.11`                             |
-| [GHSA-2vg6-77g8-24mp](https://github.com/better-auth/better-auth/security/advisories/GHSA-2vg6-77g8-24mp) | 用户删除后的会话清理                 | Low      | `better-auth@1.6.11`, `@better-auth/scim@1.6.11` |
+| 公告                                                                                                        | 区域            | 严重性  | 修复路径                                             |
+| --------------------------------------------------------------------------------------------------------- | ------------- | ---- | ------------------------------------------------ |
+| [GHSA-g38m-r43w-p2q7](https://github.com/better-auth/better-auth/security/advisories/GHSA-g38m-r43w-p2q7) | OAuth 账户链接所有权 | High | `better-auth@1.6.11`                             |
+| [GHSA-2vg6-77g8-24mp](https://github.com/better-auth/better-auth/security/advisories/GHSA-2vg6-77g8-24mp) | 用户删除后的会话清理    | Low  | `better-auth@1.6.11`, `@better-auth/scim@1.6.11` |
 
-### Organization
+### 组织
 
-| Advisory                                                                                                  | Area                              | Severity | Fixed path                                                                 |
-| --------------------------------------------------------------------------------------------------------- | --------------------------------- | -------- | -------------------------------------------------------------------------- |
-| [GHSA-fmh4-wcc4-5jm3](https://github.com/better-auth/better-auth/security/advisories/GHSA-fmh4-wcc4-5jm3) | Organization 邀请所有权           | High     | `better-auth@1.6.11`，并在 `better-auth@1.6.14` 中提供兼容性后续修复 |
+| 公告                                                                                                        | 区域                 | 严重性  | 修复路径                                                    |
+| --------------------------------------------------------------------------------------------------------- | ------------------ | ---- | ------------------------------------------------------- |
+| [GHSA-fmh4-wcc4-5jm3](https://github.com/better-auth/better-auth/security/advisories/GHSA-fmh4-wcc4-5jm3) | Organization 邀请所有权 | High | `better-auth@1.6.11`，并在 `better-auth@1.6.14` 中提供兼容性后续修复 |
 
-### Device Authorization
+### 设备授权
 
-| Advisory                                                                                                                                                                      | Area                      | Severity | Fixed path           |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | -------- | -------------------- |
-| [GHSA-cq3f-vc6p-68fh](https://github.com/better-auth/better-auth/security/advisories/GHSA-cq3f-vc6p-68fh) ([CVE-2026-45337](https://www.cve.org/CVERecord?id=CVE-2026-45337)) | 设备流程所有者绑定         | High     | `better-auth@1.6.11` |
+| 公告                                                                                                                                                                            | 区域        | 严重性  | 修复路径                 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ---- | -------------------- |
+| [GHSA-cq3f-vc6p-68fh](https://github.com/better-auth/better-auth/security/advisories/GHSA-cq3f-vc6p-68fh) ([CVE-2026-45337](https://www.cve.org/CVERecord?id=CVE-2026-45337)) | 设备流程所有者绑定 | High | `better-auth@1.6.11` |
 
-### OAuth Provider (`@better-auth/oauth-provider`)
+### OAuth Provider（`@better-auth/oauth-provider`）
 
-| Advisory                                                                                                                                                                      | Area                                | Severity | Fixed path                                                 |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------- | ---------------------------------------------------------- |
-| [GHSA-xr8f-h2gw-9xh6](https://github.com/better-auth/better-auth/security/advisories/GHSA-xr8f-h2gw-9xh6) ([CVE-2026-41427](https://www.cve.org/CVERecord?id=CVE-2026-41427)) | OAuth 客户端权限检查                | High     | `@better-auth/oauth-provider@1.6.5`                        |
-| [GHSA-7w99-5wm4-3g79](https://github.com/better-auth/better-auth/security/advisories/GHSA-7w99-5wm4-3g79)                                                                     | OAuth 授权码兑换                    | High     | `better-auth@1.6.11`, `@better-auth/oauth-provider@1.6.11` |
-| [GHSA-392p-2q2v-4372](https://github.com/better-auth/better-auth/security/advisories/GHSA-392p-2q2v-4372)                                                                     | OAuth 刷新令牌轮换                  | High     | `@better-auth/oauth-provider@1.6.11`                       |
-| [GHSA-p2fr-6hmx-4528](https://github.com/better-auth/better-auth/security/advisories/GHSA-p2fr-6hmx-4528)                                                                     | OAuth 资源指示器                    | Medium   | `@better-auth/oauth-provider@1.7.0-beta.4`                 |
+| 公告                                                                                                                                                                            | 区域            | 严重性    | 修复路径                                                       |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ------ | ---------------------------------------------------------- |
+| [GHSA-xr8f-h2gw-9xh6](https://github.com/better-auth/better-auth/security/advisories/GHSA-xr8f-h2gw-9xh6) ([CVE-2026-41427](https://www.cve.org/CVERecord?id=CVE-2026-41427)) | OAuth 客户端权限检查 | High   | `@better-auth/oauth-provider@1.6.5`                        |
+| [GHSA-7w99-5wm4-3g79](https://github.com/better-auth/better-auth/security/advisories/GHSA-7w99-5wm4-3g79)                                                                     | OAuth 授权码兑换   | High   | `better-auth@1.6.11`, `@better-auth/oauth-provider@1.6.11` |
+| [GHSA-392p-2q2v-4372](https://github.com/better-auth/better-auth/security/advisories/GHSA-392p-2q2v-4372)                                                                     | OAuth 刷新令牌轮换  | High   | `@better-auth/oauth-provider@1.6.11`                       |
+| [GHSA-p2fr-6hmx-4528](https://github.com/better-auth/better-auth/security/advisories/GHSA-p2fr-6hmx-4528)                                                                     | OAuth 资源指示器   | Medium | `@better-auth/oauth-provider@1.7.0-beta.4`                 |
 
-### SCIM (`@better-auth/scim`)
+### SCIM（`@better-auth/scim`）
 
-| Advisory                                                                                                  | Area                    | Severity | Fixed path                       |
-| --------------------------------------------------------------------------------------------------------- | ----------------------- | -------- | -------------------------------- |
-| [GHSA-j8v8-g9cx-5qf4](https://github.com/better-auth/better-auth/security/advisories/GHSA-j8v8-g9cx-5qf4) | SCIM 提供者所有权        | High     | `@better-auth/scim@1.7.0-beta.4` |
+| 公告                                                                                                        | 区域          | 严重性  | 修复路径                             |
+| --------------------------------------------------------------------------------------------------------- | ----------- | ---- | -------------------------------- |
+| [GHSA-j8v8-g9cx-5qf4](https://github.com/better-auth/better-auth/security/advisories/GHSA-j8v8-g9cx-5qf4) | SCIM 提供者所有权 | High | `@better-auth/scim@1.7.0-beta.4` |
 
-### SSO (`@better-auth/sso`)
+### SSO（`@better-auth/sso`）
 
-| Advisory                                                                                                  | Area                                     | Severity | Fixed path                |
-| --------------------------------------------------------------------------------------------------------- | ---------------------------------------- | -------- | ------------------------- |
-| [GHSA-5rr4-8452-hf4v](https://github.com/better-auth/better-auth/security/advisories/GHSA-5rr4-8452-hf4v) | SSO 提供者注册 URL 验证                  | Critical | `@better-auth/sso@1.6.11` |
-| [GHSA-gv74-j8m3-fg5f](https://github.com/better-auth/better-auth/security/advisories/GHSA-gv74-j8m3-fg5f) | SSO 提供者注册授权                      | High     | `@better-auth/sso@1.6.11` |
+| 公告                                                                                                        | 区域               | 严重性      | 修复路径                      |
+| --------------------------------------------------------------------------------------------------------- | ---------------- | -------- | ------------------------- |
+| [GHSA-5rr4-8452-hf4v](https://github.com/better-auth/better-auth/security/advisories/GHSA-5rr4-8452-hf4v) | SSO 提供者注册 URL 验证 | Critical | `@better-auth/sso@1.6.11` |
+| [GHSA-gv74-j8m3-fg5f](https://github.com/better-auth/better-auth/security/advisories/GHSA-gv74-j8m3-fg5f) | SSO 提供者注册授权      | High     | `@better-auth/sso@1.6.11` |
 
-### 已弃用插件（OIDC 和 MCP）
+### 用于 authorization-server 集成的 OAuth Provider
 
-`oidcProvider` 和 `mcp` 插件大约在半年前就已弃用，并将在 **1.7** 版本中从库中移除。对于下面的公告，我们强烈建议迁移到 `@better-auth/oauth-provider`，而不是依赖对这些插件的持续补丁。
+使用 `@better-auth/oauth-provider` 进行 OAuth 和 OpenID Connect 提供者集成。它是新集成当前使用的 authorization-server 包。
 
-| Advisory                                                                                                  | Area                                 | Severity | Fixed path                                       |
-| --------------------------------------------------------------------------------------------------------- | ------------------------------------ | -------- | ------------------------------------------------ |
-| [GHSA-pw9m-5jxm-xr6h](https://github.com/better-auth/better-auth/security/advisories/GHSA-pw9m-5jxm-xr6h) | OIDC 和 MCP 刷新令牌处理             | Critical | `better-auth@1.6.11`                             |
-| [GHSA-86j7-9j95-vpqj](https://github.com/better-auth/better-auth/security/advisories/GHSA-86j7-9j95-vpqj) | OIDC 和 MCP 重定向 URI 验证          | High     | `better-auth@1.6.13`, `better-auth@1.7.0-beta.4` |
-| [GHSA-9h47-pqcx-hjr4](https://github.com/better-auth/better-auth/security/advisories/GHSA-9h47-pqcx-hjr4) | OIDC 和 MCP 协议默认值               | High     | `better-auth@1.6.11`                             |
+| 公告                                                                                                        | 区域                    | 严重性      | 修复路径                                             |
+| --------------------------------------------------------------------------------------------------------- | --------------------- | -------- | ------------------------------------------------ |
+| [GHSA-pw9m-5jxm-xr6h](https://github.com/better-auth/better-auth/security/advisories/GHSA-pw9m-5jxm-xr6h) | OIDC 和 MCP 刷新令牌处理     | Critical | `better-auth@1.6.11`                             |
+| [GHSA-86j7-9j95-vpqj](https://github.com/better-auth/better-auth/security/advisories/GHSA-86j7-9j95-vpqj) | OIDC 和 MCP 重定向 URI 验证 | High     | `better-auth@1.6.13`, `better-auth@1.7.0-beta.4` |
+| [GHSA-9h47-pqcx-hjr4](https://github.com/better-auth/better-auth/security/advisories/GHSA-9h47-pqcx-hjr4) | OIDC 和 MCP 协议默认值      | High     | `better-auth@1.6.11`                             |
 
 每个公告都包含精确的受影响范围、修复版本和包名。上述表格只是一个快速索引，不能替代公告正文。如果你的项目使用了受影响的插件之一，在判断顶层 `better-auth` 更新是否足够之前，请先阅读链接的公告。
 

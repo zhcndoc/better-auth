@@ -41,6 +41,7 @@ description: Amazon Cognito 提供者的设置与使用。
           domain: process.env.COGNITO_DOMAIN as string, // 例如 "your-app.auth.us-east-1.amazoncognito.com" [!code highlight]
           region: process.env.COGNITO_REGION as string, // 例如 "us-east-1" [!code highlight]
           userPoolId: process.env.COGNITO_USERPOOL_ID as string, // [!code highlight]
+          identityProvider: "Google", // optional: skip the hosted UI picker [!code highlight]
         },
       },
     })
@@ -64,19 +65,33 @@ description: Amazon Cognito 提供者的设置与使用。
     }
     ```
 
-    ### 附加选项：
+    要针对每次调用覆盖预选的身份提供者（例如，渲染一个绕过 Cognito 选择器的“使用 Okta 登录”按钮），请通过 `additionalParams` 传递 `identity_provider` 键：
 
-    * `scope`: 额外请求的 OAuth2 范围（与默认权限合并）。
+    ```ts
+    await authClient.signIn.social({
+      provider: "cognito",
+      additionalParams: { identity_provider: "Okta" },
+    })
+    ```
+
+    ### 其他选项：
+
+    * `scope`：要请求的其他 OAuth2 范围（与默认权限合并）。
       * 默认值：`"openid" "profile" "email"`
       * 常见的 Cognito 范围：
         * `openid`：OpenID Connect 身份验证所必需
         * `profile`：访问基本个人资料信息
         * `email`：访问用户的电子邮件
         * `phone`：访问用户的电话号码
-        * `aws.cognito.signin.user.admin`：授予对 Cognito 特定 API 的访问权限
+        * `aws.cognito.signin.user.admin`：授予访问 Cognito 特定 API 的权限
+
     * 注意：你必须在 Cognito 应用客户端设置中配置这些范围。[可用范围](https://docs.aws.amazon.com/cognito/latest/developerguide/token-endpoint.html#token-endpoint-userinfo)
+
     * `getUserInfo`：用于从 Cognito UserInfo 端点获取用户信息的自定义函数。
-    * `refreshAccessToken`：用于刷新令牌的自定义函数。它接收已存储的刷新令牌。
+
+    * `identityProvider`：预选一个 Cognito 配置的身份提供者，以跳过托管 UI 选择器。有效值包括 `"COGNITO"`、用户池中的 SAML/OIDC 提供者名称，或 `"Google"`、`"Facebook"`、`"LoginWithAmazon"`、`"SignInWithApple"` 之一。通过 `additionalParams.identity_provider` 进行的每次调用覆盖具有更高优先级。
+
+    * `refreshAccessToken`：用于刷新令牌的自定义函数。它接收存储的刷新令牌。
 
     ### 刷新令牌
 

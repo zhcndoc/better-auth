@@ -70,38 +70,122 @@ await auth.api.linkSocialAccount({
 });
 ```
 
+### 验证 OAuth 用户信息
+
+使用 [`user.validateUserInfo`](/docs/concepts/users-accounts#callbacks) 在 Better Auth 创建用户、关联新账户或让现有用户重新登录之前拒绝 OAuth 身份。回调会接收映射后的 `user`，以及 `source.oauth` 中的提供商 id 和原始提供商资料。
+
+当 OAuth 身份首次创建时（来自常规回调、ID token 登录、One Tap 或 OAuth Proxy 的 `create-user`），关联新账户时（`link-account`），以及现有 OAuth 用户每次登录时（`sign-in`），都会运行该回调。在 `sign-in` 操作中，`user` 携带的是提供商的*最新*邮箱，因此，如果用户的提供商邮箱后来变更为不允许的域名，域名检查会拒绝该用户。它适用于无状态配置，因为无论是否使用数据库，都会在相同的时间点运行。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+  user: {
+    validateUserInfo: ({ user, source }) => {
+      if (source.oauth?.providerId !== "google") return;
+
+      if (!user.email?.endsWith("@example.com")) {
+        return {
+          error: "email_not_allowed",
+          errorDescription: "Use your example.com email to sign in",
+        };
+      }
+    },
+  },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
+  },
+});
+```
+
 ### 获取访问令牌
 
-要获取社交提供商的访问令牌，可以使用 `getAccessToken` 函数（客户端）或 `auth.api`（服务器端）调用。如果访问令牌过期，将自动刷新。
+使用 `getAccessToken` 获取已关联账户的访问令牌。每个令牌或提供商资料请求都必须明确选择账户：将 Better Auth 账户记录的 `id` 作为 `accountId` 传入，或传入 `useAccountCookie: true`，从其签名 Cookie 中选择账户。`providerId` 永远不能作为账户选择器，不包含任何一种受支持选择器的请求均无效。
+
+账户记录 ID 可从 `listAccounts` 获取。如果其访问令牌已过期，Better Auth 会在返回前刷新该令牌。
 
 ```ts
+const { data: accounts, error } = await authClient.listAccounts();
+
+if (error) {
+  throw new Error(error.message);
+}
+
+const account = accounts?.find((account) => account.providerId === "google");
+
+if (!account) {
+  throw new Error("Google account is not linked");
+}
+
 const { accessToken } = await authClient.getAccessToken({
-  providerId: "google", // 或其它提供商 id
-  accountId: "accountId", // 可选，指定某个账户的访问令牌
+  accountId: account.id,
 })
 ```
 
-服务器端用法：
+启用 [`account.storeAccountCookie`](/docs/reference/options#storeaccountcookie) 后，显式从签名 Cookie 中选择账户：
+
+```ts
+const { accessToken } = await authClient.getAccessToken({
+  useAccountCookie: true,
+});
+```
+
+在服务器端使用时，传入相同的账户记录 ID。如果不包含会话请求头，受信任的服务器调用也可以提供 `userId`。
 
 ```ts
 await auth.api.getAccessToken({
   body: {
-    providerId: "google", // 或其它提供商 id
-    accountId: "accountId", // 可选，指定某个账户的访问令牌
-    userId: "userId", // 可选，若未提供带身份认证的请求头
+    accountId: account.id,
   },
-  headers: await headers() // 包含用户会话令牌的请求头
+  headers: await headers(), // headers containing the user's session token
+});
+```
+
+### 刷新访问令牌
+
+当你需要立即刷新所选账户的访问令牌时，使用 `refreshToken`。它使用与 `getAccessToken` 相同的显式选择器约定。
+
+```ts
+const tokens = await authClient.refreshToken({
+  accountId: account.id,
+});
+```
+
+要改用签名账户 Cookie：
+
+```ts
+await auth.api.refreshToken({
+  body: {
+    useAccountCookie: true,
+  },
+  headers: await headers(),
 });
 ```
 
 ### 获取提供商提供的账户信息
 
-要获取提供商特定的账户信息，可以使用 `accountInfo` 函数（客户端）或 `auth.api`（服务器端）调用。
+使用 `accountInfo` 获取已关联账户在提供商处的当前资料数据。传入 Better Auth 账户记录的 `id`，而不是提供商的 subject 标识符。
+
+响应会将身份数据与资料数据分开。`account` 包含所选的 Better Auth 记录及其提供商密钥，`user` 包含可变的资料字段，`data` 包含原始提供商响应。
 
 ```ts
 const info = await authClient.accountInfo({
-  query: { accountId: "accountId" }, // 在此传入提供商提供的账户 id，提供商从账户 id 自动检测
-})
+  query: { accountId: account.id },
+});
+
+console.log(info.data?.account.accountId);
+console.log(info.data?.user.email);
+```
+
+当应通过签名账户 Cookie 选择账户时：
+
+```ts
+const info = await authClient.accountInfo({
+  query: { useAccountCookie: true },
+});
 ```
 
 服务器端用法：
@@ -109,10 +193,9 @@ const info = await authClient.accountInfo({
 ```ts
 await auth.api.accountInfo({
   query: {
-    accountId: "accountId",
-    userId: "userId", // 可选，若未提供带身份认证的请求头
+    accountId: account.id,
   },
-  headers: await headers() // 包含用户会话令牌的请求头
+  headers: await headers(), // headers containing the user's session token
 });
 ```
 
@@ -135,7 +218,31 @@ const requestAdditionalScopes = async () => {
   请确保你正在运行 Better Auth 1.2.7 或更高版本。较早版本（如 1.2.2）在尝试使用现有提供商关联以获取额外权限时，可能会显示 “Social account already linked” 错误。
 </Callout>
 
-### 通过 OAuth 流传递额外数据
+### 自定义授权 URL
+
+要向提供商的授权端点传递额外查询参数，请在调用 `signIn.social` 或 `linkSocial` 时传入 `additionalParams`。这些值会在框架写入 OAuth state、PKCE challenge 和 `redirect_uri` 后应用；保留键 `state`、`client_id`、`redirect_uri`、`response_type`、`code_challenge`、`code_challenge_method` 和 `scope` 会被拒绝并返回 400，因此调用方无法破坏回调关联。
+
+```ts
+await authClient.signIn.social({
+  provider: "cognito",
+  additionalParams: {
+    identity_provider: "Google", // skip the Cognito hosted-UI picker
+  },
+});
+
+await authClient.linkSocial({
+  provider: "google",
+  loginHint: "user@example.com",
+  additionalParams: {
+    access_type: "offline",
+    prompt: "consent",
+  },
+});
+```
+
+提供商自身内置的查询参数（例如 Google 的 `include_granted_scopes=true`、Facebook 的 `config_id`，以及通过 `identityProvider` 设置时 Cognito 的 `identity_provider`）会与调用时的 `additionalParams` 合并；发生键冲突时，以调用时的值为准。
+
+### 通过 OAuth 流程传递额外数据
 
 Better Auth 允许你在 OAuth 流程中传递额外数据，但不将其存储到数据库。这适用于跟踪推荐码、分析来源或其他应在认证时处理但无需持久保存的临时数据。
 
@@ -176,58 +283,53 @@ await auth.api.signInSocial({
 额外数据可以通过 `getOAuthState` 在 OAuth 回调时钩子中访问。
 
 <Callout>
-  这通常适用于 `/callback/:id` 路径以及通用 OAuth 插件回调路径（`/oauth2/callback/:providerId`）。
+  这通常适用于 `/callback/:id` 等 OAuth 回调路径。
 </Callout>
 
 使用 after 钩子的示例：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
-import { getOAuthState } from "better-auth/api";
+import { createAuthMiddleware, getOAuthState } from "better-auth/api";
 
 export const auth = betterAuth({
   // 其他配置...
   hooks: {
-    after: [
-      {
-        matcher: () => true,
-        handler: async (ctx) => {
-          // 额外数据仅在 OAuth 回调时可用
-          if (ctx.path === "/callback/:id") {
-            const additionalData = await getOAuthState<{
-              referralCode?: string;
-              source?: string;
-            }>();
+    after: createAuthMiddleware(async (ctx) => {
+      // Additional data is only available during OAuth callback
+      if (ctx.path === "/callback/:id") {
+        const additionalData = await getOAuthState<{
+          referralCode?: string;
+          source?: string;
+        }>();
 
-            if (additionalData) {
-              // 重要：使用前应验证并清理数据
-              // 此数据来自客户端，不可完全信任
+        if (additionalData) {
+          // IMPORTANT: Validate and sanitize the data before using it
+          // This data comes from the client and should not be trusted
 
-              // 示例：验证并处理推荐码
-              if (additionalData.referralCode) {
-                const isValidFormat = /^[A-Z0-9]{6}$/.test(additionalData.referralCode);
-                if (isValidFormat) {
-                  // 验证推荐码是否存在数据库中
-                  const referral = await db.referrals.findByCode(additionalData.referralCode);
-                  if (referral) {
-                    // 可安全使用已验证的推荐码
-                    await db.referrals.incrementUsage(referral.id);
-                  }
-                }
-              }
-
-              // 跟踪分析（低风险使用）
-              if (additionalData.source) {
-                await analytics.track("oauth_signin", {
-                  source: additionalData.source,
-                  userId: ctx.context.session?.user.id,
-                });
+          // Example: Validate and process referral code
+          if (additionalData.referralCode) {
+            const isValidFormat = /^[A-Z0-9]{6}$/.test(additionalData.referralCode);
+            if (isValidFormat) {
+              // Verify the referral code exists in your database
+              const referral = await db.referrals.findByCode(additionalData.referralCode);
+              if (referral) {
+                // Safe to use the verified referral
+                await db.referrals.incrementUsage(referral.id);
               }
             }
           }
-        },
-      },
-    ],
+
+          // Track analytics (low-risk usage)
+          if (additionalData.source) {
+            await analytics.track("oauth_signin", {
+              source: additionalData.source,
+              userId: ctx.context.session?.user.id,
+            });
+          }
+        }
+      }
+    }),
   },
 });
 ```
@@ -260,30 +362,62 @@ export const auth = betterAuth({
   默认情况下，OAuth state 包含以下数据：
 
   * `callbackURL` - OAuth 流程的回调 URL
-  * `codeVerifier` - OAuth 流程的 code verifier
+  * `codeVerifier` - OAuth 流程的代码验证器
   * `errorURL` - OAuth 流程的错误 URL
   * `newUserURL` - OAuth 流程的新用户 URL
-  * `link` - OAuth 流程的关联链接（邮箱和用户 id）
-  * `requestSignUp` - 是否为 OAuth 流程请求注册
+  * `link` - OAuth 流程的关联信息（邮箱和用户 id）
+  * `requestSignUp` - 是否请求注册 OAuth 流程
   * `expiresAt` - OAuth state 的过期时间
-  * `[key: string]`: 你在 OAuth 流程中传递的任何额外数据
+  * `serverContext` - 在服务器端设置且在重定向后仍保留的值（参见[传递服务器信任的数据](#passing-server-trusted-data)）
+  * `[key: string]` - 你传入的 `additionalData`。这些数据来源于客户端，因此应视为不受信任。
 </Callout>
 
-## 处理没有邮箱的提供商
+#### 传递服务器信任的数据
+
+`additionalData` 由客户端提供，因此必须在回调时验证后才能使用。当插件（或你自己的 `before` 钩子）需要在重定向过程中传递服务器派生的数据时，请使用 `addOAuthServerContext`。它会写入客户端无法填充的仅限服务器端的存储槽，这些值可在回调时通过 `serverContext` 读取。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import {
+  addOAuthServerContext,
+  createAuthMiddleware,
+  getOAuthState,
+} from "better-auth/api";
+
+export const auth = betterAuth({
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      // Social and generic OAuth providers both sign in here.
+      if (ctx.path === "/sign-in/social") {
+        // Derived on the server, so it is safe to trust on the callback.
+        await addOAuthServerContext({ tenantId: ctx.context.tenantId });
+      }
+    }),
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === "/callback/:id") {
+        const tenantId = (await getOAuthState())?.serverContext?.tenantId;
+        // Safe to use without re-validation: the client could not set this.
+      }
+    }),
+  },
+});
+```
+
+## 处理不提供邮箱的提供商
 
 Better Auth 目前要求每条用户记录都必须有电子邮件地址。大多数提供商会在使用 `email` scope 时返回邮箱，但有些提供商在合法情况下可能不会返回。当这种情况发生时，OAuth 流程会失败并报 `error=email_not_found`（而对于 Generic OAuth 插件则是 `error=email_is_missing`）。
 
 下表总结了每个受影响的提供商：何时可能缺少 `email`、在 `mapProfileToUser` 中可作为回退的稳定标识符，以及对提供商 `email_verified` 信号的可信度。
 
-| Provider           | When `email` may be absent                                                                                          | Stable fallback ID                             | `email_verified` trust                                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Apple              | 每次登录（除首次外）（Apple 只会在首次同意时发出 `email`）                                                                                | `profile.sub`（对每个 Apple Team 稳定）               | 可靠；中继地址也会被标记为已验证                                                                                                       |
-| Discord            | 仅有手机号的账号；未授予 `email` scope                                                                                          | `profile.id`（雪花 ID）                            | 可靠（有专门的 `verified` 字段）                                                                                                 |
-| Facebook           | 即使授予了 `email` 权限，文件中也没有有效邮箱                                                                                         | `profile.id`（应用作用域）                            | 未知：Graph API 不提供按邮箱的验证标志                                                                                               |
-| GitHub             | 用户将邮箱设为私密；GitHub App 缺少 “Email addresses” 权限                                                                        | `profile.id`（数字）                               | 可靠                                                                                                                     |
-| LinkedIn           | 成员没有已确认邮箱；未授予 `email` scope                                                                                         | `profile.sub`（每个应用成对唯一）                        | 存在时可靠                                                                                                                  |
-| Microsoft Entra ID | 未管理用户没有 `mail` 属性，除非将 `email` 配置为 [可选声明](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims) | `profile.oid` 加 `profile.tid`（或 `profile.sub`） | **不可信**：Microsoft [明确警告](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference) 不要将其用于授权 |
-| Roblox             | 默认的 Roblox 资料流程不会返回邮箱；Better Auth 目前回退到 `preferred_username`                                                        | `profile.sub`（Roblox 用户 ID）                    | 默认资料流程下未知                                                                                                              |
+| 提供商                | `email` 可能缺失的情况                                                                                                   | 稳定的回退 ID                           | 对 `email_verified` 的信任程度                                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Apple              | 首次登录后的每次登录（Apple 仅在首次同意时发送 `email`）                                                                               | `profile.sub`（每个 Apple Team 稳定）    | 可靠；中继地址也会被标记为已验证                                                                                                        |
+| Discord            | 仅使用手机号的账户；未授予 `email` scope                                                                                       | `profile.id`（snowflake）            | 可靠（专用的 `verified` 字段）                                                                                                   |
+| Facebook           | 没有有效的邮箱，即使已授予 `email` 权限                                                                                          | `profile.id`（应用范围）                 | 未知：Graph API 不提供逐邮箱验证标志                                                                                                 |
+| GitHub             | 用户已将邮箱设为私密；GitHub App 缺少“Email addresses”权限                                                                       | `profile.id`（数字）                   | 可靠                                                                                                                      |
+| LinkedIn           | 成员没有已确认的邮箱；未授予 `email` scope                                                                                      | `profile.sub`（每个应用成对）              | 存在时可靠                                                                                                                   |
+| Microsoft Entra ID | 托管用户没有 `mail` 属性，除非将 `email` 配置为[可选声明](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims) | `profile.oid`（在 `profile.tid` 内稳定） | **不可信**：Microsoft [明确警告](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference)永远不要将其用于授权 |
+| Roblox             | 默认 Roblox 资料流程不会返回邮箱；Better Auth 当前回退到 `preferred_username`                                                       | `profile.sub`（Roblox 用户 ID）        | 对默认资料流程而言未知                                                                                                             |
 
 ### 使用 `mapProfileToUser` 合成占位邮箱
 
@@ -327,10 +461,10 @@ export const auth = betterAuth({
 
 * **Apple**：第一次看到邮箱时请将其持久化保存。Apple 不提供用户信息端点，因此如果你在首次登录时不保存它，之后就无法再获取。`email_verified` 和 `is_private_email` 都会被序列化为 **字符串**（`"true"` / `"false"`），而不是布尔值。
 * **GitHub**：默认会请求 `user:email` scope。私密邮箱在 `/user` 上仍会返回 `null`；主要已验证地址可在 [`/user/emails`](https://docs.github.com/en/rest/users/emails) 获取。
-* **Microsoft Entra ID**：由于 `email` 可随租户变化且从不验证，请使用 `profile.oid`（不可变、在租户内稳定）作为身份锚点；仅将 `email` 视为资料属性。Microsoft 的 [声明验证指南](https://learn.microsoft.com/en-us/entra/identity-platform/claims-validation) 明确警告，切勿将 `email`、`preferred_username` 或 `unique_name` 用于授权决策。
+* **Microsoft Entra ID**：由于 `email` 可随租户变化且从不验证，请使用 `profile.oid`（不可变、在租户内稳定）作为身份锚点；仅将 `email` 视为资料属性。Microsoft 的[声明验证指南](https://learn.microsoft.com/en-us/entra/identity-platform/claims-validation)明确警告，切勿将 `email`、`preferred_username` 或 `unique_name` 用于授权决策。
 * **Facebook**：由于没有逐邮箱验证标志，除非你自行执行验证挑战，否则应将每个 Facebook 邮箱都视为未验证。
 
-针对无邮箱用户的一等支持——使用稳定的 `(providerId, accountId)` 对作为身份键（与 [OpenID Connect Core §5.7](https://openid.net/specs/openid-connect-core-1_0.html#ClaimStability) 一致）——已在 [#9124](https://github.com/better-auth/better-auth/issues/9124) 中跟踪。
+Better Auth 会通过稳定的 `(issuer, accountId)` 键识别现有 OAuth 账户，但关联的 Better Auth 用户仍然需要电子邮件地址。不支持无邮箱用户的功能正在 [#9124](https://github.com/better-auth/better-auth/issues/9124) 中跟踪。
 
 ## 提供商选项
 
@@ -456,11 +590,41 @@ export const auth = betterAuth({
 
 一个布尔值，决定登录时是否覆盖数据库中的用户信息。默认是 `false`，即登录时不覆盖用户信息。如果希望每次登录都更新用户信息，设置为 `true`。
 
+### requireEmailVerification
+
+要求在创建会话前验证此提供商的邮箱。默认为 `false`。
+
+当提供商报告邮箱未验证时，Better Auth 仍会创建或关联用户和账户，但不会签发会话。OAuth 回调会重定向并附带 `?error=email_not_verified`，ID token 登录则返回带有 `EMAIL_NOT_VERIFIED` 错误代码的 `403`。系统会根据你的 `emailVerification` 设置发送（或重新发送）验证邮件：`sendOnSignUp` 负责新用户，`sendOnSignIn` 负责回访用户。配置 `emailVerification.sendVerificationEmail` 并保持启用 `sendOnSignUp`，以确保被阻止的用户始终能收到验证链接。
+
+该限制会检查本地用户的验证状态，而不是每次请求中的提供商声明。已经通过其他方式（例如邮箱和密码）完成验证的用户，即使提供商之后报告邮箱未验证，也仍可继续访问。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      requireEmailVerification: true,
+    },
+  },
+});
+```
+
+此选项需按提供商单独启用，并且独立于 `emailAndPassword.requireEmailVerification`：启用邮箱和密码验证不会限制社交登录。
+
+<Callout type="warn">
+  仅为报告可信 `email_verified` 信号的提供商启用此选项。有些提供商始终将邮箱报告为未验证（或从不返回邮箱），在这些提供商上启用该选项会阻止所有登录。请参阅[处理不提供邮箱的提供商](/docs/concepts/oauth#handling-providers-without-email)。
+</Callout>
+
 ### mapProfileToUser
 
 使用 `mapProfileToUser` 更改默认的用户映射，或根据提供商个人资料填充其他用户字段。
 
 Better Auth 会将该函数的返回值视为提供商输入，尽管该函数是在你的服务器上运行的。它会在 OAuth 注册、登录时覆盖个人资料，以及账户关联时同步个人资料的过程中，应用 `user.additionalFields` 中的输入规则。允许输入的映射字段会被解析并存储，而对于标记为 `input: false` 的字段，其映射值会被忽略。
+
+资料映射无法重新定义提供商账户身份。内置提供商会根据其文档说明的不可变资料字段派生身份。当默认的 `sub` 或 `id` 字段不是正确的标识符时，Generic OAuth 提供商会使用 `accountSubject`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -563,7 +727,6 @@ export const auth = betterAuth({
         const profile = await response.json();
         return {
           user: {
-            id: profile.id,
             name: profile.name,
             email: profile.email,
             image: profile.picture,

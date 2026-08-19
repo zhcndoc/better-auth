@@ -1,0 +1,232 @@
+---
+title: 客户端 ID 元数据文档（CIMD）
+description: 从 HTTPS 元数据文档中发现 OAuth 客户端。
+---
+
+`OAuth2` `MCP`
+
+[客户端 ID 元数据文档 draft-02](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-02) 允许 OAuth 客户端在无需预先注册的情况下标识自身。客户端的 `client_id` 是其托管的元数据文档的精确 HTTPS URL。Better Auth 会验证该文档，并通过 OAuth Provider 的规范注册路径持久化客户端。
+
+MCP 2026-07-28 规范性地引用了 CIMD draft-00。将 `cimd()` 与 `mcp()` 组合时，请使用 `metadataProfile: "mcp-2026-07-28"`。此显式配置文件会添加 MCP 所要求的 `client_name` 和 `redirect_uris` 字段，同时不会将 draft-00 的限制强加给通用的 draft-02 客户端。
+
+## 安装
+
+<Steps>
+  <Step>
+    ### 安装插件
+
+    ```package-install
+    @better-auth/cimd
+    ```
+  </Step>
+
+  <Step>
+    ### 将插件添加到服务器
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
+    import { jwt } from "better-auth/plugins";
+    import { oauthProvider } from "@better-auth/oauth-provider";
+    import { cimd } from "@better-auth/cimd";
+    import { fetchClientMetadataResource } from "@better-auth/cimd/node";
+
+    export const auth = betterAuth({
+      plugins: [
+        jwt(),
+        oauthProvider({
+          loginPage: "/login",
+          consentPage: "/consent",
+          scopes: ["openid", "profile", "email", "offline_access"],
+        }),
+        cimd({
+          fetchClientMetadataResource,
+        }),
+      ],
+    });
+    ```
+  </Step>
+</Steps>
+
+`fetchClientMetadataResource` 是必需的。Node.js 部署可以使用上面所示的 `@better-auth/cimd/node` 实现。它会解析原始主机名一次，如果任何 DNS 结果不可公开路由，则拒绝请求；在隔离连接上固定一个获准的地址；保留原始 Host 和 TLS 证书身份；并且永不跟随重定向。此传输有意仅支持 `GET` 和 `HEAD`，这是 CIMD 用于检索元数据资源的方法。
+
+Bun、Deno、Workers 和其他运行时必须在其网络边界提供等效的安全传输。元数据文档以及发现机制所拥有的资源（例如 `jwks_uri`）都使用相同的传输。
+
+该传输必须：
+
+* 在解析目标之前，将其解析为 HTTPS URL。
+* 仅解析主机名一次，并拒绝每个 RFC 6890 特殊用途结果。
+* 连接到该获准地址，同时保留原始主机的 TLS 主机名和证书验证。
+* 拒绝重定向，并遵循所提供的方法、标头和中止信号。
+
+不要执行 DNS 检查后再调用 `globalThis.fetch`。标准 Fetch 既不会公开已连接的对等地址，也没有可移植的方式来固定该地址，因此这种模式会重新解析主机名，仍然容易受到 DNS 重绑定攻击。
+
+## MCP 配置
+
+```ts title="auth.ts"
+import { cimd } from "@better-auth/cimd";
+import { mcp } from "@better-auth/mcp";
+import { fetchClientMetadataResource } from "@better-auth/cimd/node";
+
+plugins: [
+  mcp({
+    resource: "https://mcp.example.com/mcp",
+    scopes: ["mcp:tools"],
+  }),
+  cimd({
+    fetchClientMetadataResource,
+    metadataProfile: "mcp-2026-07-28",
+  }),
+];
+```
+
+MCP 配置文件要求 `client_id`、`client_name` 和非空的 `redirect_uris` 数组。除非 OAuth Provider 明确启用 DCR，否则 DCR 仍处于禁用状态。
+
+## 配置
+
+```ts title="auth.ts"
+cimd({
+  fetchClientMetadataResource,
+  metadataRevalidationInterval: "10m",
+  maxCacheEntries: 1000,
+  metadataFetchPolicy: {
+    minimumFetchInterval: 1,
+    maximumConcurrentFetches: 16,
+    maximumConcurrentFetchesPerOrigin: 4,
+    maximumFetchesPerMinute: 120,
+    maximumFetchesPerOriginPerMinute: 30,
+  },
+  originBoundFields: ["post_logout_redirect_uris", "client_uri"],
+  isMetadataDocumentUrlAllowed(clientIdUrl) {
+    return new URL(clientIdUrl).hostname.endsWith(".trusted.example");
+  },
+  onClientCreated({ client, clientMetadataDocument, context }) {
+    // Assign local trust or audit state.
+  },
+  onClientRefreshed({
+    client,
+    previousClient,
+    clientMetadataDocument,
+    context,
+  }) {
+    // Compare the previous and current records and apply operator policy.
+  },
+});
+```
+
+export const cimdOptionsType = {
+	fetchClientMetadataResource: {
+		type: "(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>",
+		description:
+			"Required runtime-owned transport for metadata documents and discovery-owned resources. It must resolve once, reject RFC 6890 special-use addresses, pin the approved address, and refuse redirects.",
+	},
+	metadataProfile: {
+		type: '"mcp-2026-07-28"',
+		description:
+			"Adds the metadata requirements of MCP 2026-07-28, which normatively pins CIMD draft-00.",
+	},
+	metadataRevalidationInterval: {
+		type: "number | string",
+		default: '"60m"',
+		description:
+			"Maximum and fallback cache freshness lifetime. Expired entries are revalidated on the next client resolution; no periodic or background fetch runs. Number values are seconds; strings are duration expressions.",
+	},
+	maxCacheEntries: {
+		type: "number",
+		default: "1000",
+		description:
+			"Maximum validated metadata documents retained by this plugin instance.",
+	},
+	metadataFetchPolicy: {
+		type: "{ minimumFetchInterval?: number | string; maximumConcurrentFetches?: number; maximumConcurrentFetchesPerOrigin?: number; maximumFetchesPerMinute?: number; maximumFetchesPerOriginPerMinute?: number }",
+		default:
+			"{ minimumFetchInterval: 1, maximumConcurrentFetches: 16, maximumConcurrentFetchesPerOrigin: 4, maximumFetchesPerMinute: 120, maximumFetchesPerOriginPerMinute: 30 }",
+		description:
+			"Reject-immediately request-amplification limits. Numeric minimumFetchInterval values are seconds. Minute limits use a rolling 60-second window. Set minimumFetchInterval to 0 only to disable per-client pacing.",
+	},
+	originBoundFields: {
+		type: "string[]",
+		default: '["post_logout_redirect_uris", "client_uri"]',
+		description:
+			"Metadata URL fields that must share the client_id origin. Redirect URIs are excluded by default because authorization still requires exact matching.",
+	},
+	isMetadataDocumentUrlAllowed: {
+		type: "(clientIdUrl, context) => boolean | Promise<boolean>",
+		default: "always allow",
+		description:
+			"Optional application policy evaluated before the required transport runs.",
+	},
+	onClientCreated: {
+		type: "(event: CimdClientCreatedEvent) => void | Promise<void>",
+		description: "Best-effort notification after initial persistence.",
+	},
+	onClientRefreshed: {
+		type: "(event: CimdClientRefreshedEvent) => void | Promise<void>",
+		description:
+			"Best-effort refresh notification. previousClient lets operators detect security-relevant draft-02 metadata changes.",
+	},
+};
+
+<TypeTable type={cimdOptionsType} />
+
+## Draft-02 验证
+
+通用 CIMD 验证遵循 draft-02：
+
+* `client_id` 必须通过简单字符串比较，等于请求的元数据 URL。因此，显式默认端口具有重要意义
+* Client Identifier URL 必须使用 HTTPS，且不能包含凭据、片段、点段、特殊用途字面量／已知主机，或省略显式路径。显式根路径 `/` 可以接受，但会产生 NOT RECOMMENDED 警告；查询字符串会产生 SHOULD NOT 警告
+* 对于通用客户端，`client_name` 和 `redirect_uris` 是可选的。启用后，`client_credentials` 等非重定向授权类型在 OAuth Provider 中有效
+* OAuth Provider 仍然是受支持授权类型、响应类型、重定向策略和身份验证能力的权威来源
+* 声明 `client_credentials` 并不会授予机器作用域。新发现的客户端会持久化一个由服务器拥有、为空的 `clientCredentialsScopes` 上限，在管理员分配已批准的作用域之前无法使用该授权类型。元数据刷新会保留该上限，且无法创建、扩大或清除该上限
+* Better Auth 支持发现客户端使用 `none` 和 `private_key_jwt`。内联 `jwks` 必须使用 RFC 7517 `{ "keys": [...] }` 对象格式。EC 密钥必须使用 P-256、P-384 或 P-521；OKP 密钥必须使用 Ed25519。裸数组、对称密钥方法、密钥字段、私有 JWK 材料、其他曲线，以及声明的算法与密钥类型和曲线不匹配的情况都会被拒绝
+* `client_uri`、`logo_uri`、`tos_uri` 和 `policy_uri` 必须是不包含凭据的公共 HTTP(S) URL。Better Auth 不会获取或渲染远程徽标
+* `backchannel_logout_uri` 和 `backchannel_logout_session_required` 会被拒绝，因为它们会授权在注入的 GET 传输之外执行 OP 端 POST
+* 文档不能提供服务器拥有的字段，包括资源链接和管理控制项
+* 未知成员会被忽略且永远不会持久化。非标准的驼峰命名存储别名，以及 client-credentials 作用域权限的两种拼写都会被剥离；已识别的凭据、权限和服务器控制字段仍会导致致命错误
+
+```json title="https://client.example.com/client-metadata.json"
+{
+  "client_id": "https://client.example.com/client-metadata.json",
+  "grant_types": ["client_credentials"],
+  "token_endpoint_auth_method": "private_key_jwt",
+  "jwks_uri": "https://client.example.com/jwks.json"
+}
+```
+
+## 持久化和刷新
+
+发现的客户端会存储在 `oauthClient` 中，并带有 `clientDiscoveryId: "cimd"`。该可为空的来源字段可防止现有的托管客户端或 DCR 客户端仅仅因为其标识符以 `https://` 开头而被接管，包括在固定 ID 注册竞态期间。进程重启后，CIMD 所有的记录仅由匹配的发现机制获取和刷新。托管记录会直接返回，而不会调用 CIMD；如果发现所有者不可用或无法解析发现所有者，发现所有的记录会以故障关闭方式失败。服务器拥有的 `clientCredentialsScopes` 永远不会从文档中读取，并且会在刷新期间被准确保留
+
+有效文档遵循共享缓存语义。`s-maxage` 优先于 `max-age` 和 `Expires`；验证器支持条件重新验证。`Cache-Control: no-store`、`private` 和 `Vary: *` 会阻止缓存插入。只有当请求针对现有的已验证条目发送了 `If-None-Match` 或 `If-Modified-Since` 时，才会接受 `304`。修改后的响应必须严格为 `200`
+
+元数据获取限流器独立于 HTTP 新鲜度。新鲜缓存命中以及加入同一客户端获取操作的并发调用者不会消耗预算。每次新获取开始时都会消耗其并发预算和滚动窗口预算，超出的工作会被拒绝而不是排队。`no-store` 响应永远不会被保留或复用；因此，在 `minimumFetchInterval` 内的另一个请求会以故障关闭方式失败，而不会导致立即重新获取。元数据缓存、客户端节流记录和源站预算记录分别受 `maxCacheEntries` 限制。限流器只会驱逐不活跃的记录；如果每条记录仍在保护活动间隔、滚动窗口或获取操作，则新客户端或源站会以故障关闭方式失败
+
+刷新仍然采用故障关闭策略。网络、验证或持久化失败会保留之前的数据库／缓存状态，但会拒绝当前 OAuth 请求。`onClientRefreshed` 会接收 `previousClient`；操作员可以比较安全敏感的元数据，并选择是否撤销授权、令牌或同意
+
+## 安全边界
+
+该插件通过可移植的 `AbortController`／`setTimeout` 强制执行五秒超时、流式 5 KB 元数据文档限制、流式 64 KiB 发现所有 JWKS 限制、JSON 和 `application/*+json` 媒体类型以及重定向拒绝。这些应用层检查是对所需网络传输的 DNS 解析和连接固定保证的补充，而不是替代
+
+不支持环回 Client Identifier URL。测试可以通过注入的传输将 HTTPS `.test` 源站路由到进程内处理程序，而无需禁用 URL 或证书策略。原生客户端环回 `redirect_uris` 仍由 OAuth 重定向验证单独管理
+
+## 显式发现组合
+
+```ts title="auth.ts"
+oauthProvider({
+  extensions: [
+    {
+      clientDiscovery: createCimdClientDiscovery({
+        fetchClientMetadataResource,
+        metadataRevalidationInterval: "60m",
+      }),
+    },
+  ],
+});
+```
+
+`ClientDiscovery.id` 会作为客户端来源持久化。发现机制还可以提供用于元数据所有资源的专用 `fetchClientMetadataResource` 接口
+
+## 相关内容
+
+* [OAuth Provider 插件](./oauth-provider)
+* [IETF Client ID Metadata Document draft-02](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-02)
+* [MCP 授权规范：draft-00 CIMD 配置文件](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration#client-id-metadata-documents)

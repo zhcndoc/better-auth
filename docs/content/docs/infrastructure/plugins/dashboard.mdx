@@ -20,14 +20,17 @@ export const auth = betterAuth({
 
 ## 配置选项
 
-| 选项               | 类型     | 描述                                                                |
-| ------------------ | -------- | --------------------------------------------------------------------- |
-| `apiUrl`           | `string` | Better Auth 基础设施 API URL                                    |
-| `kvUrl`            | `string` | 用于缓存的 KV 存储 URL                                              |
-| `apiKey`           | `string` | 用于认证的 API 密钥                                       |
-| `apiTimeout`       | `number` | 基础设施 API HTTP 请求（`apiUrl`）超时时间，单位毫秒。默认值：`3000` |
-| `kvTimeout`        | `number` | KV HTTP 请求（`kvUrl`）超时时间，单位毫秒。默认值：`1000`         |
-| `activityTracking` | `object` | 活动跟踪配置                                       |
+| 选项                     | 类型       | 描述                                                                          |
+| ---------------------- | -------- | --------------------------------------------------------------------------- |
+| `apiUrl`               | `string` | Better Auth Infrastructure API URL。默认值：`https://dash.better-auth.com`       |
+| `kvUrl`                | `string` | KV 存储 URL。默认值：`https://kv.better-auth.com`                                  |
+| `apiKey`               | `string` | 用于身份验证的 API 密钥。如果环境变量中存在 `BETTER_AUTH_API_KEY`，则使用该变量的值。                    |
+| `apiOptions`           | `object` | Dash API HTTP 客户端选项。接受以毫秒为单位的 `timeout?: number`。                           |
+| `kvOptions`            | `object` | KV HTTP 客户端选项。接受 `timeout?: number` 和 `retry?: { attempts?: number; ... }`。 |
+| `apiTimeout`           | `number` | `apiOptions.timeout` 的已弃用别名。                                                |
+| `kvTimeout`            | `number` | `kvOptions.timeout` 的已弃用别名。                                                 |
+| `activityTracking`     | `object` | 活动跟踪配置。                                                                     |
+| `managedDirectorySync` | `object` | 托管目录同步控制平面选项。                                                               |
 
 ## 活动跟踪
 
@@ -58,6 +61,21 @@ user: {
 ```
 
 启用活动跟踪后，请务必运行数据库迁移。
+
+## Managed Directory Sync
+
+`managedDirectorySync` 选项是 SCIM 1.7 插件托管运行时流程在仪表盘侧的配套功能。当 `enabled` 为 `true` 时，仪表盘会安装托管目录同步状态所需的预留表和 API。`ssoPairing` 会启用目录关联用户身份与 SSO 提供商配对时所需的 SSO 钩子，而 `membershipProjection` 则允许系统将 SCIM 成员变更投影到组织成员记录中。
+
+```ts
+dash({
+  apiKey: process.env.BETTER_AUTH_API_KEY,
+  managedDirectorySync: {
+    enabled: true,
+  },
+})
+```
+
+此功能专用于 1.7 托管目录同步流程。有关完整的托管目录同步模式和选项，请参阅 [仪表盘插件（`dash()`）中的托管目录同步部分](/docs/infrastructure/plugins/dash#managed-directory-sync)。有关完整的 SCIM 模型和迁移详情，请参阅 [SCIM 插件参考](/docs/plugins/scim/reference) 和 [1.7 升级指南](/docs/guides/1-7-upgrade-guide)。
 
 ## 客户端设置
 

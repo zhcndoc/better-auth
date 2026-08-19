@@ -7,7 +7,7 @@ description: Better Auth 的分布式追踪
   OpenTelemetry 仪器化处于实验阶段，未来版本可能发生变化。API 和跨度结构可能会更改。
 </Callout>
 
-Better Auth 通过 [OpenTelemetry](https://opentelemetry.io/) 进行分布式追踪的仪器化。为端点、钩子、数据库操作和插件生命周期生成跨度。  
+Better Auth 通过 [OpenTelemetry](https://opentelemetry.io/) 进行分布式追踪的仪器化。为端点、钩子、数据库操作和插件生命周期生成跨度。\
 该仪器化的目标是提供关于您的 Better Auth 实例行为的更好洞察，帮助您调试问题并优化性能。
 
 ## 设置
@@ -16,7 +16,7 @@ Better Auth 使用 OpenTelemetry API 来创建跨度。为了收集和导出追�
 
 有关设置说明，请参阅官方 OpenTelemetry 文档：
 
-* **[Node.js getting started](https://opentelemetry.io/docs/languages/js/getting-started/nodejs/)** – Core setup for Node.js apps
+* **[Node.js getting started](https://opentelemetry.io/docs/languages/js/getting-started/nodejs/)** – Node.js 应用设置指南
 
 ## 支持的跨度
 
@@ -24,10 +24,10 @@ Better Auth 支持以下跨度：
 
 ### 端点跨度
 
-| 跨度名称          | 描述                                | 何时发出                                  |
-| ------------------ | ------------------------------------------ | --------------------------------------------- |
-| `{METHOD} {route}` | 认证端点的父跨度           | 每次认证 API 调用（例如 `GET /get-session`） |
-| `handler {route}`  | 围绕端点处理器执行的跨度 | 在每个端点内部，包装处理器    |
+| 跨度名称               | 描述           | 何时发出                               |
+| ------------------ | ------------ | ---------------------------------- |
+| `{METHOD} {route}` | 认证端点的父跨度     | 每次认证 API 调用（例如 `GET /get-session`） |
+| `handler {route}`  | 围绕端点处理器执行的跨度 | 在每个端点内部，包装处理器                      |
 
 **属性：**
 
@@ -36,10 +36,10 @@ Better Auth 支持以下跨度：
 
 支持以下全局钩子：
 
-| 跨度名称                      | 描述                      | 何时发出                            |
-| ------------------------------ | ---------------- | --------------------------------------- |
+| 跨度名称                           | 描述        | 何时发出                  |
+| ------------------------------ | --------- | --------------------- |
 | `hook before {route} {source}` | 认证端点的前置钩子 | 当某个路由的 `before` 钩子运行时 |
-| `hook after {route} {source}`  | 认证端点的后置钩子  | 当某个路由的 `after` 钩子运行时 |
+| `hook after {route} {source}`  | 认证端点的后置钩子 | 当某个路由的 `after` 钩子运行时  |
 
 * **属性：**
   * `better_auth.hook.type` - 钩子类型（例如 `before` 或 `after`）
@@ -49,11 +49,11 @@ Better Auth 支持以下跨度：
 
 也支持中间件：
 
-| 跨度名称                       | 描述                 | 何时发出                     |
-| ------------------------------- | --------------------------- | -------------------------------- |
-| `onRequest {pluginId}`          | 插件的 `onRequest` 钩子     | 请求处理之前          |
-| `onResponse {pluginId}`         | 插件的 `onResponse` 钩子    | 生成响应之后       |
-| `middleware {route} {pluginId}` | 插件中间件执行    | 路由中间件运行时 |
+| 跨度名称                            | 描述                  | 何时发出     |
+| ------------------------------- | ------------------- | -------- |
+| `onRequest {pluginId}`          | 插件的 `onRequest` 钩子  | 请求处理之前   |
+| `onResponse {pluginId}`         | 插件的 `onResponse` 钩子 | 生成响应之后   |
+| `middleware {route} {pluginId}` | 插件中间件执行             | 路由中间件运行时 |
 
 **属性：**
 
@@ -64,11 +64,11 @@ Better Auth 支持以下跨度：
 
 ### 数据库跨度
 
-| 跨度名称                | 描述                   | 何时发出                                   |
-| ------------------------ | ----------------------------- | ---------------------------------------------- |
+| 跨度名称                     | 描述       | 何时发出                   |
+| ------------------------ | -------- | ---------------------- |
 | `db {operation} {model}` | 数据库操作的跨度 | 所有适配器操作（创建、查找一个、查找多个等） |
 
-* **操作：** `create`、`findOne`、`findMany`、`update`、`updateMany`、`delete`、`deleteMany`、`count`
+* **操作：** `create`、`findOne`、`findMany`、`update`、`updateMany`、`delete`、`deleteMany`、`consumeOne`、`incrementOne`、`count`
 * **模型：** 核心模型包括 `user`、`account`、`session`、`verification`，以及插件定义的模型（例如 `organization`、`rateLimit`）。
 * **属性：**
   * `db.operation.name` - 数据库操作名称（例如 `create`）
@@ -76,10 +76,10 @@ Better Auth 支持以下跨度：
 
 此外，定义了数据库钩子时还会生成以下跨度：
 
-| 跨度名称                       | 描述                            | 何时发出                            |
-| ------------------------------- | -------------------------------------- | --------------------------------------- |
+| 跨度名称                            | 描述            | 何时发出                               |
+| ------------------------------- | ------------- | ---------------------------------- |
 | `db {operation}.before {model}` | 创建/更新/删除的前置钩子 | 当 `databaseHooks` 的 `before` 钩子运行时 |
-| `db {operation}.after {model}`  | 创建/更新/删除的后置钩子  | 当 `databaseHooks` 的 `after` 钩子运行时  |
+| `db {operation}.after {model}`  | 创建/更新/删除的后置钩子 | 当 `databaseHooks` 的 `after` 钩子运行时  |
 
 * **操作：** `create`、`update`、`updateMany`、`delete`（用于单个删除和 `deleteMany` 调用）
 * **属性：**

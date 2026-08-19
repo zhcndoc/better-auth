@@ -3,31 +3,31 @@ title: 从 Supabase Auth 迁移到 Better Auth
 description: 逐步指导如何从 Supabase Auth 迁移到 Better Auth。
 ---
 
-In this guide, we'll walk through the steps to migrate a project from Supabase Auth to Better Auth.
+在本指南中，我们将逐步介绍如何将项目从 Supabase Auth 迁移到 Better Auth。
 
 <Callout type="warn">
-  This migration will invalidate all active sessions. While this guide doesn't currently cover migrating two-factor (2FA) or Row Level Security (RLS) configurations, both should be possible with additional steps.
+  此迁移会使所有活动会话失效。虽然本指南目前未涵盖双因素身份验证（2FA）或行级安全性（RLS）配置的迁移，但通过额外步骤应该可以实现这两项迁移。
 </Callout>
 
 <Callout type="error">
-  **Back up your database before running any migration scripts.** This guide modifies production data. Create a full backup of both your Supabase database and target database before proceeding.
+  **运行任何迁移脚本前，请备份您的数据库。** 本指南会修改生产数据。在继续操作前，请完整备份 Supabase 数据库和目标数据库。
 </Callout>
 
-## Before You Begin
+## 开始之前
 
 开始迁移过程前，请在您的项目中设置 Better Auth。请参阅 [安装指南](/docs/installation) 来快速开始。
 
 <Steps>
   <Step>
-    ### Connect to your database
+    ### 连接到您的数据库
 
-    You'll need to connect to your database to migrate the users and accounts. Copy your `DATABASE_URL` from your Supabase project and use it to connect to your database. And for this example, we'll need to install `pg` to connect to the database.
+    您需要连接到数据库，以迁移用户和账户。从 Supabase 项目中复制您的 `DATABASE_URL`，并使用它连接到数据库。在本示例中，我们还需要安装 `pg` 来连接数据库。
 
     ```package-install
     npm install pg
     ```
 
-    And then you can use the following code to connect to your database.
+    然后，您可以使用以下代码连接到数据库。
 
     ```ts title="auth.ts"
     import { betterAuth } from 'better-auth';
@@ -42,9 +42,9 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
   </Step>
 
   <Step>
-    ### Enable Email and Password
+    ### 启用电子邮件和密码
 
-    Enable the email and password in your auth config.
+    在 auth 配置中启用电子邮件和密码。
 
     ```ts title="auth.ts"
     import { betterAuth } from 'better-auth';
@@ -61,14 +61,14 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
     ```
 
     <Callout type="info">
-      If you want to require email verification, add the `emailVerification` config separately. See the [Email Verification docs](/docs/authentication/email-password#email-verification) for details.
+      如果您希望要求进行电子邮件验证，请单独添加 `emailVerification` 配置。详情请参阅[电子邮件验证文档](/docs/authentication/email-password#email-verification)。
     </Callout>
   </Step>
 
   <Step>
-    ### Setup Social Providers (Optional)
+    ### 设置社交登录提供商（可选）
 
-    Add all the social providers used in Supabase to the auth config. Missing any may cause user data loss during migration.
+    将 Supabase 中使用的所有社交登录提供商添加到 auth 配置中。遗漏任何提供商都可能导致迁移期间用户数据丢失。
 
     ```ts title="auth.ts"
     import { betterAuth } from 'better-auth';
@@ -92,16 +92,16 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
   </Step>
 
   <Step>
-    ### Add plugins based on your Supabase features
+    ### 根据 Supabase 功能添加插件
 
-    Add plugins that match the features you used in Supabase. Include only what you need:
+    添加与您在 Supabase 中使用的功能相匹配的插件。仅包含您需要的插件：
 
-    * **[admin](/docs/plugins/admin)**: If you have users with `is_super_admin` or `banned_until` fields
-    * **[anonymous](/docs/plugins/anonymous)**: If you used anonymous authentication (`signInAnonymously`)
-    * **[phoneNumber](/docs/plugins/phone-number)**: If you have users who signed up with phone numbers
+    * **[admin](/docs/plugins/admin)**：如果您有包含 `is_super_admin` 或 `banned_until` 字段的用户
+    * **[anonymous](/docs/plugins/anonymous)**：如果您使用了匿名身份验证（`signInAnonymously`）
+    * **[phoneNumber](/docs/plugins/phone-number)**：如果您有使用电话号码注册的用户
 
     <Callout type="info">
-      Only include plugins for features you actually used in Supabase. The migration script will automatically detect which plugins are enabled and migrate data accordingly.
+      仅为您实际在 Supabase 中使用的功能添加插件。迁移脚本会自动检测启用了哪些插件，并据此迁移数据。
     </Callout>
 
     ```ts title="auth.ts"
@@ -128,9 +128,9 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
   </Step>
 
   <Step>
-    ### Add the additional fields
+    ### 添加额外字段
 
-    To minimize data loss from Supabase Auth, the following additional fields are required. You can adjust them as needed after the migration is complete.
+    为尽量减少 Supabase Auth 的数据丢失，需要添加以下额外字段。迁移完成后，您可以根据需要调整这些字段。
 
     ```ts title="auth.ts"
     import { betterAuth } from 'better-auth';
@@ -180,23 +180,23 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
   </Step>
 
   <Step>
-    ### Run the migration
+    ### 运行迁移
 
-    Run the migration to create the necessary tables in your database.
+    运行迁移，在数据库中创建必要的表。
 
     ```bash title="Terminal"
     npx auth migrate
     ```
 
-    This will create the necessary tables in the `public` schema of your Better Auth instance.
+    这将在 Better Auth 实例的 `public` schema 中创建必要的表。
 
-    Now that we have the necessary tables in our database, we can run the migration script to migrate the users and accounts from Supabase to Better Auth.
+    现在数据库中已经有了必要的表，我们可以运行迁移脚本，将用户和账户从 Supabase 迁移到 Better Auth。
   </Step>
 
   <Step>
-    ### Copy the migration script
+    ### 复制迁移脚本
 
-    First, set up the environment variables used by the script.
+    首先，设置脚本使用的环境变量。
 
     ```dotenv title=".env"
     FROM_DATABASE_URL= # Supabase database connection string (reads from auth.users)
@@ -204,10 +204,10 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
     ```
 
     <Callout type="info">
-      **Same database?** If you're migrating within the same Supabase Postgres database (from `auth` schema to `public` schema), both URLs can be the same `DATABASE_URL`. If you're migrating to a different database (e.g., PlanetScale, separate Postgres), use different URLs.
+      **使用同一个数据库？** 如果您要在同一个 Supabase Postgres 数据库中迁移（从 `auth` schema 到 `public` schema），两个 URL 可以使用相同的 `DATABASE_URL`。如果要迁移到其他数据库（例如 PlanetScale 或单独的 Postgres），请使用不同的 URL。
     </Callout>
 
-    And then copy and paste the following code into the file.
+    然后，将以下代码复制并粘贴到文件中。
 
     ```ts title="migration.ts"
     import { generateId } from 'better-auth';
@@ -238,7 +238,37 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
        * Format: {phone_number}@{tempEmailDomain}
        */
       tempEmailDomain: 'temp.better-auth.com',
+      /**
+       * Configure every social provider enabled in Better Auth with the exact
+       * trusted issuer it uses. For OAuth providers without one, use
+       * local:oauth:<encoded providerId>. The provider ID segment is
+       * percent-encoded. The script checks this map before it writes.
+       */
+      accountIssuers: {
+        github: 'local:oauth:github',
+        google: 'https://accounts.google.com',
+      } as Record<string, string>,
     };
+
+    function getAccountIssuer(providerId: string) {
+      const issuer = CONFIG.accountIssuers[providerId];
+      if (!issuer) {
+        throw new Error(`Missing trusted issuer for ${providerId}`);
+      }
+      return issuer;
+    }
+
+    function assertAccountIssuerCoverage(providerIds: readonly string[]) {
+      const missingProviderIds = providerIds
+        .filter((providerId) => !CONFIG.accountIssuers[providerId])
+        .sort();
+
+      if (missingProviderIds.length > 0) {
+        throw new Error(
+          `Missing trusted issuers for Better Auth social providers: ${missingProviderIds.join(', ')}. Update CONFIG.accountIssuers before running the migration.`,
+        );
+      }
+    }
 
     // ============================================================================
     // TYPE DEFINITIONS
@@ -276,6 +306,7 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
       id: string;
       userId: string;
       providerId: string;
+      issuer: string;
       accountId: string;
       password: string | null;
       createdAt: string | null;
@@ -716,6 +747,7 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
                 id: generateId(),
                 userId: user.id,
                 providerId: 'credential',
+                issuer: 'local:credential',
                 accountId: user.id,
                 password: user.encrypted_password || null,
                 createdAt: user.created_at,
@@ -728,6 +760,7 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
                 id: generateId(),
                 userId: user.id,
                 providerId: identity.provider,
+                issuer: getAccountIssuer(identity.provider),
                 accountId: identity.identity_data?.sub || identity.provider_id,
                 password: null,
                 createdAt: identity.created_at ?? user.created_at,
@@ -739,7 +772,7 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
 
         if (accountsData.length > 0) {
           const maxParamsPerQuery = 65000;
-          const fieldsPerAccount = 7;
+          const fieldsPerAccount = 8;
           const accountsPerChunk = Math.floor(maxParamsPerQuery / fieldsPerAccount);
 
           for (let i = 0; i < accountsData.length; i += accountsPerChunk) {
@@ -751,12 +784,13 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
 
             for (const acc of chunk) {
               accountPlaceholders.push(
-                `($${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++})`,
+                `($${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++})`,
               );
               accountValues.push(
                 acc.id,
                 acc.userId,
                 acc.providerId,
+                acc.issuer,
                 acc.accountId,
                 acc.password,
                 acc.createdAt,
@@ -766,7 +800,7 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
 
             await toDB.query(
               `
-              INSERT INTO "account" ("id", "userId", "providerId", "accountId", "password", "createdAt", "updatedAt")
+              INSERT INTO "account" ("id", "userId", "providerId", "issuer", "accountId", "password", "createdAt", "updatedAt")
               VALUES ${accountPlaceholders.join(', ')}
               ON CONFLICT ("id") DO NOTHING
             `,
@@ -796,6 +830,7 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
 
       // Validate Better Auth configuration
       const ctx = await validateAuthConfig();
+      assertAccountIssuerCoverage(Object.keys(ctx.options.socialProviders ?? {}));
 
       try {
         const countResult = await fromDB.query<{ count: string }>(
@@ -940,35 +975,35 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
     main();
     ```
 
-    You can configure the script using `CONFIG` inside the script.
+    您可以使用脚本中的 `CONFIG` 配置脚本。
 
-    * `batchSize`: Number of users to process in each batch. Default: 5000
-    * `resumeFromId`: Resume from a specific user ID (cursor-based pagination). Default: null
-    * `tempEmailDomain`: Temporary email domain for phone-only users. Default: "temp.better-auth.com"
+    * `batchSize`：每批处理的用户数量。默认值：5000
+    * `resumeFromId`：从指定用户 ID 继续（基于游标的分页）。默认值：null
+    * `tempEmailDomain`：仅使用电话号码的用户的临时电子邮件域名。默认值："temp.better-auth.com"
   </Step>
 
   <Step>
-    ### Run the migration script
+    ### 运行迁移脚本
 
     <Callout type="info">
-      The migration script uses **keyset pagination** (cursor-based) which efficiently handles large datasets without loading everything into memory. For very large migrations (500k+ users), you may need to increase Node's memory limit with `NODE_OPTIONS="--max-old-space-size=8192"`.
+      迁移脚本使用**键集分页**（基于游标），能够高效处理大型数据集，而无需将所有数据加载到内存中。对于非常大型的迁移（超过 50 万个用户），您可能需要使用 `NODE_OPTIONS="--max-old-space-size=8192"` 增加 Node 的内存限制。
     </Callout>
 
-    Run the migration script to migrate the users and accounts from Supabase to Better Auth.
+    运行迁移脚本，将用户和账户从 Supabase 迁移到 Better Auth。
 
     ```bash title="Terminal"
     npx tsx migration.ts
     ```
 
-    You can also use other TypeScript runners like `bun migration.ts`, `ts-node migration.ts`, or compile to JS first.
+    您也可以使用其他 TypeScript 运行器，例如 `bun migration.ts`、`ts-node migration.ts`，或者先编译为 JS。
   </Step>
 
   <Step>
-    ### Change password hashing algorithm
+    ### 更改密码哈希算法
 
-    By default, Better Auth uses the `scrypt` algorithm to hash passwords. Since Supabase uses `bcrypt`, you'll need to configure Better Auth to use bcrypt for password verification.
+    默认情况下，Better Auth 使用 `scrypt` 算法对密码进行哈希。由于 Supabase 使用 `bcrypt`，您需要配置 Better Auth，以便使用 bcrypt 进行密码验证。
 
-    First, install bcrypt:
+    首先，安装 bcrypt：
 
     ```package-install
     npm install bcrypt
@@ -978,7 +1013,7 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
     npm install -D @types/bcrypt
     ```
 
-    Then add the password configuration to your existing auth config:
+    然后，将密码配置添加到现有的 auth 配置中：
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";
@@ -1015,54 +1050,54 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
   </Step>
 
   <Step>
-    ### Update your code
+    ### 更新您的代码
 
-    Update your codebase from Supabase auth calls to Better Auth API.
+    将代码库中的 Supabase auth 调用更新为 Better Auth API。
 
-    Here's a list of the Supabase auth API calls and their Better Auth counterparts.
+    以下是 Supabase auth API 调用及其对应的 Better Auth 调用。
 
     * `supabase.auth.signUp` -> `authClient.signUp.email`
     * `supabase.auth.signInWithPassword` -> `authClient.signIn.email`
     * `supabase.auth.signInWithOAuth` -> `authClient.signIn.social`
     * `supabase.auth.signInAnonymously` -> `authClient.signIn.anonymous`
     * `supabase.auth.signOut` -> `authClient.signOut`
-    * `supabase.auth.getSession` -> `authClient.getSession` -  you can also use `authClient.useSession` for reactive state
+    * `supabase.auth.getSession` -> `authClient.getSession` - 您也可以使用 `authClient.useSession` 获取响应式状态
 
-    Learn more:
+    了解更多：
 
-    * [Basic Usage](/docs/basic-usage): Learn how to use the auth client to sign up, sign in, and sign out.
-    * [Email and Password](/docs/authentication/email-password): Learn how to add email and password authentication to your project.
-    * [Anonymous](/docs/plugins/anonymous): Learn how to add anonymous authentication to your project.
-    * [Admin](/docs/plugins/admin): Learn how to add admin authentication to your project.
-    * [Email OTP](/docs/plugins/email-otp): Learn how to add email OTP authentication to your project.
-    * [Hooks](/docs/concepts/hooks): Learn how to use the hooks to listen for events.
-    * [Next.js](/docs/integrations/next): Learn how to use the auth client in a Next.js project.
+    * [基本用法](/docs/basic-usage)：了解如何使用 auth 客户端进行注册、登录和退出登录。
+    * [电子邮件和密码](/docs/authentication/email-password)：了解如何向项目添加电子邮件和密码身份验证。
+    * [匿名身份验证](/docs/plugins/anonymous)：了解如何向项目添加匿名身份验证。
+    * [管理员](/docs/plugins/admin)：了解如何向项目添加管理员身份验证。
+    * [电子邮件 OTP](/docs/plugins/email-otp)：了解如何向项目添加电子邮件 OTP 身份验证。
+    * [Hooks](/docs/concepts/hooks)：了解如何使用 Hooks 监听事件。
+    * [Next.js](/docs/integrations/next)：了解如何在 Next.js 项目中使用 auth 客户端。
   </Step>
 </Steps>
 
 ## 迁移企业 SSO
 
 <Callout type="info">
-  **Skip this section** if you're not using Supabase's Enterprise SSO feature. This section is only for users who have SAML SSO providers configured in Supabase.
+  如果您没有使用 Supabase 的企业 SSO 功能，请**跳过本节**。本节仅适用于在 Supabase 中配置了 SAML SSO 提供商的用户。
 </Callout>
 
 如果您正在使用 Supabase 的企业 SSO（SAML），请按以下额外步骤迁移您的 SSO 提供商与用户。
 
 <Callout type="warn">
-  SSO migration requires updating your Identity Provider (IdP) configuration with new callback URLs. Plan for a brief cutover window as existing SSO sessions will be invalidated.
+  SSO 迁移需要使用新的回调 URL 更新您的身份提供商（IdP）配置。请规划一个短暂的切换窗口，因为现有 SSO 会话将失效。
 </Callout>
 
 <Steps>
   <Step>
-    ### Install the SSO plugin
+    ### 安装 SSO 插件
 
-    Install the Better Auth SSO package:
+    安装 Better Auth SSO 软件包：
 
     ```package-install
     npm install @better-auth/sso
     ```
 
-    Add the SSO plugin to your auth configuration:
+    将 SSO 插件添加到您的身份验证配置中：
 
     ```ts title="auth.ts"
     import { betterAuth } from 'better-auth';
@@ -1088,21 +1123,21 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
   </Step>
 
   <Step>
-    ### Run the SSO database migration
+    ### 运行 SSO 数据库迁移
 
-    Run the migration to create the `ssoProvider` table:
+    运行迁移以创建 `ssoProvider` 表：
 
-    ```bash title="Terminal"
+    ```bash title="终端"
     npx auth migrate
     ```
   </Step>
 
   <Step>
-    ### Export your Supabase SSO providers
+    ### 导出您的 Supabase SSO 提供商
 
-    List and export your existing SSO providers from Supabase using the CLI:
+    使用 CLI 列出并导出现有的 Supabase SSO 提供商：
 
-    ```bash title="Terminal"
+    ```bash title="终端"
     # List all SSO providers (note: this does NOT include metadata XML)
     supabase sso list --project-ref <your-project-ref>
 
@@ -1111,7 +1146,7 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
     supabase sso show <provider-id> --project-ref <your-project-ref> -o json > sso-provider.json
     ```
 
-    A typical Supabase SSO provider export looks like this:
+    典型的 Supabase SSO 提供商导出结果如下：
 
     ```json title="sso-provider.json"
     {
@@ -1135,14 +1170,14 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
     ```
 
     <Callout type="info">
-      If you have multiple SSO providers, export each one separately. You'll need all of them for the migration script.
+      如果您有多个 SSO 提供商，请分别导出每个提供商。迁移脚本需要使用所有这些提供商。
     </Callout>
   </Step>
 
   <Step>
-    ### Add SSO types to the migration script
+    ### 将 SSO 类型添加到迁移脚本
 
-    Add these type definitions to your migration script:
+    将以下类型定义添加到您的迁移脚本中：
 
     ```ts title="migration.ts"
     // ============================================================================
@@ -1183,9 +1218,9 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
   </Step>
 
   <Step>
-    ### Add the SSO provider migration function
+    ### 添加 SSO 提供商迁移函数
 
-    Add this function to migrate your SSO providers:
+    添加以下函数以迁移您的 SSO 提供商：
 
     ```ts title="migration.ts"
     // ============================================================================
@@ -1252,7 +1287,6 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
             'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
           // Map Supabase attribute names to Better Auth fields
           mapping: {
-            id: 'nameID',
             email: attrName('email') || 'email',
             name: attrName('name') || 'displayName',
             firstName: attrName('first_name') || 'givenName',
@@ -1311,9 +1345,34 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
   </Step>
 
   <Step>
-    ### Update user migration to link SSO accounts
+    ### 准备受信任的 SSO 账户身份
 
-    In the `processBatch` function, add handling for SSO identities. Find the section that processes identities and add:
+    Better Auth 会根据提供商元数据中的实际 IdP 实体 ID 以及经过签名的 `NameID` 来识别 SAML 账户。Supabase 导出数据不包含足够的已验证数据，无法安全地推导出这些值。在迁移账户之前，请创建一个经过操作员审核的映射，将每个旧版 SSO 身份映射到其 IdP 实体 ID 和经过签名的 `NameID`。不要使用服务提供商的 `entity_id`、电子邮件地址或配置文件的 `sub` 声明来替代这些值。
+
+    将经过审核的映射添加到您的迁移脚本中。外层映射以 Supabase SSO 提供商 ID 为键，内层映射以其旧版身份 ID 为键：
+
+    ```ts title="migration.ts"
+    const samlAccountIdentityByProviderId = new Map([
+      [
+        'supabase-provider-id',
+        new Map([
+          [
+            'legacy-identity-id',
+            {
+              issuer: 'https://idp.example.com/metadata',
+              accountId: 'signed-name-id',
+            },
+          ],
+        ]),
+      ],
+    ]);
+    ```
+  </Step>
+
+  <Step>
+    ### 更新用户迁移以关联 SSO 账户
+
+    在 `processBatch` 函数中，添加对 SSO 身份的处理。找到处理身份的部分并添加：
 
     ```ts title="migration.ts"
     // Inside the identity processing loop in processBatch()
@@ -1323,12 +1382,19 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
       // Handle SSO identities // [!code highlight]
       if (identity.provider.startsWith('sso:')) { // [!code highlight]
         const supabaseProviderId = identity.provider.replace('sso:', ''); // [!code highlight]
+        const accountIdentity = samlAccountIdentityByProviderId // [!code highlight]
+          .get(supabaseProviderId) // [!code highlight]
+          ?.get(identity.provider_id); // [!code highlight]
+        if (!accountIdentity) { // [!code highlight]
+          throw new Error(`Missing trusted SAML account identity for ${supabaseProviderId}`); // [!code highlight]
+        } // [!code highlight]
         
         accountsData.push({ // [!code highlight]
           id: generateId(), // [!code highlight]
           userId: user.id, // [!code highlight]
           providerId: `sso-${supabaseProviderId}`, // Matches the migrated provider ID // [!code highlight]
-          accountId: identity.identity_data?.sub || identity.provider_id, // [!code highlight]
+          issuer: accountIdentity.issuer, // IdP metadata entity ID // [!code highlight]
+          accountId: accountIdentity.accountId, // Signed NameID // [!code highlight]
           password: null, // [!code highlight]
           createdAt: identity.created_at ?? user.created_at, // [!code highlight]
           updatedAt: identity.updated_at ?? user.updated_at, // [!code highlight]
@@ -1337,13 +1403,13 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
     }
     ```
 
-    This ensures that users who previously signed in via SSO will have their accounts linked to the migrated SSO provider.
+    这会将每个迁移后的账户关联到 Better Auth 在登录时将验证的协议身份。如果缺少受信任的映射，请停止迁移，与身份提供商确认并解决问题，然后重新运行该批次。
   </Step>
 
   <Step>
-    ### Run the SSO migration
+    ### 运行 SSO 迁移
 
-    Create a separate script or add to your main migration to run the SSO provider migration:
+    创建单独的脚本，或将其添加到主迁移脚本中，以运行 SSO 提供商迁移：
 
     ```ts title="run-sso-migration.ts"
     import { readFileSync } from 'fs';
@@ -1368,41 +1434,41 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
     main();
     ```
 
-    Run the migration:
+    运行迁移：
 
-    ```bash title="Terminal"
+    ```bash title="终端"
     npx tsx run-sso-migration.ts
     ```
   </Step>
 
   <Step>
-    ### Update your Identity Provider
+    ### 更新您的身份提供商
 
-    After migrating, you need to update your IdP (Okta, Azure AD, Google Workspace, etc.) with the new Better Auth endpoints.
+    迁移后，您需要使用新的 Better Auth 端点更新您的 IdP（Okta、Azure AD、Google Workspace 等）。
 
-    **Update these settings in your IdP:**
+    **在您的 IdP 中更新以下设置：**
 
-    | Setting              | Old Value (Supabase)                                      | New Value (Better Auth)                                                      |
+    | 设置                   | 旧值（Supabase）                                              | 新值（Better Auth）                                                              |
     | -------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- |
     | ACS URL / Reply URL  | `https://<project>.supabase.co/auth/v1/sso/saml/acs`      | `https://yourapp.com/api/auth/sso/saml2/sp/acs/<providerId>`                 |
     | Entity ID / Audience | `https://<project>.supabase.co/auth/v1/sso/saml/metadata` | `https://yourapp.com/api/auth/sso/saml2/sp/metadata?providerId=<providerId>` |
 
-    Replace `<providerId>` with your migrated provider ID (e.g., `sso-550e8400-e29b-41d4-a716-446655440000`).
+    将 `<providerId>` 替换为您迁移后的提供商 ID（例如 `sso-550e8400-e29b-41d4-a716-446655440000`）。
 
     <Callout type="info">
-      You can retrieve the SP metadata for your provider at:
+      您可以通过以下地址获取提供商的 SP 元数据：
       `GET https://yourapp.com/api/auth/sso/saml2/sp/metadata?providerId=<providerId>`
 
-      Share this URL with your IdP administrator if they need the full metadata XML.
+      如果 IdP 管理员需要完整的元数据 XML，请将此 URL 分享给他们。
     </Callout>
   </Step>
 
   <Step>
-    ### Update your client code
+    ### 更新您的客户端代码
 
-    Replace Supabase SSO authentication calls with Better Auth:
+    将 Supabase SSO 身份验证调用替换为 Better Auth：
 
-    ```ts title="Before (Supabase)"
+    ```ts title="之前（Supabase）"
     import { createClient } from '@supabase/supabase-js';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1413,7 +1479,7 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
     });
     ```
 
-    ```ts title="After (Better Auth)"
+    ```ts title="之后（Better Auth）"
     import { createAuthClient } from 'better-auth/client';
     import { ssoClient } from '@better-auth/sso/client'; // [!code highlight]
 
@@ -1428,7 +1494,7 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
     }); // [!code highlight]
     ```
 
-    You can also initiate SSO by email (the domain is extracted automatically):
+    您也可以通过电子邮件发起 SSO（系统会自动提取域名）：
 
     ```ts title="auth-client.ts"
     // Sign in by email - domain is extracted from email
@@ -1446,14 +1512,14 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
   </Step>
 
   <Step>
-    ### Test the SSO flow
+    ### 测试 SSO 流程
 
-    Before going live, test the complete SSO flow:
+    上线前，请测试完整的 SSO 流程：
 
-    1. **Test SP-initiated SSO**: Start from your app's login page, enter an SSO-enabled email domain
-    2. **Verify user attributes**: Check that name, email, and other attributes are mapped correctly
-    3. **Test existing users**: Ensure users who previously logged in via SSO can still access their accounts
-    4. **Test new users**: Verify that new SSO users are created correctly
+    1. **测试 SP 发起的 SSO**：从应用的登录页面开始，输入已启用 SSO 的电子邮件域名
+    2. **验证用户属性**：检查姓名、电子邮件和其他属性是否正确映射
+    3. **测试现有用户**：确保之前通过 SSO 登录的用户仍然可以访问其账户
+    4. **测试新用户**：验证新 SSO 用户是否能够正确创建
 
     ```ts title="test-sso.ts"
     // Quick test - check if SSO provider is configured correctly
@@ -1486,15 +1552,15 @@ In this guide, we'll walk through the steps to migrate a project from Supabase A
 ### SSO 常见问题排查
 
 <Callout type="warn">
-  **SAML Signature Errors**: If you see signature validation errors, ensure your IdP's certificate is current. Some IdPs rotate certificates periodically—check the metadata URL for the latest certificate.
+  **SAML 签名错误**：如果您看到签名验证错误，请确保 IdP 的证书是最新的。某些 IdP 会定期轮换证书，请检查元数据 URL 以获取最新证书。
 </Callout>
 
 <Callout type="info">
-  **Attribute Mapping Issues**: If user attributes aren't populating correctly, inspect the SAML assertion from your IdP using browser developer tools. Update the `mapping` field in your `samlConfig` to match the exact attribute names your IdP sends.
+  **属性映射问题**：如果用户属性未正确填充，请使用浏览器开发者工具检查来自 IdP 的 SAML 断言。更新 `samlConfig` 中的 `mapping` 字段，使其与 IdP 发送的确切属性名称匹配。
 </Callout>
 
 <Callout type="info">
-  **Multiple Domains**: If you have multiple domains for a single SSO provider, separate them with commas in the `domain` field: `"company.com,company.org"`.
+  **多个域名**：如果单个 SSO 提供商有多个域名，请在 `domain` 字段中使用逗号分隔它们：`"company.com,company.org"`。
 </Callout>
 
 更多 SSO 配置细节，参见 [SSO 插件文档](/docs/plugins/sso)。

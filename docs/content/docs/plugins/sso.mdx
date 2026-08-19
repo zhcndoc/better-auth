@@ -91,6 +91,8 @@ description: 将单点登录（SSO）集成到您的应用程序中。
   注册 OIDC 提供程序时，Better Auth 会自动获取并验证提供者的 [OIDC 发现文档](#oidc-discovery)。大多数端点字段是可选的——有关自动发现字段和可能的注册错误的详细信息，请参阅[OIDC 发现](#oidc-discovery)。
 </Callout>
 
+Better Auth 根据配置的 `issuer` 和经过验证的 `sub` 声明识别 OIDC 账号。`mapping` 选项映射电子邮件、姓名和头像等资料字段，但无法替代账号主体。返回相同发行者和主体的提供者别名会解析为一个外部身份；这种身份去重不会为每个别名创建独立的授权或提供者生命周期记录。
+
 #### 示例
 
 <Tabs items={["客户端", "服务端"]}>
@@ -113,7 +115,6 @@ description: 将单点登录（SSO）集成到您的应用程序中。
             scopes: ["openid", "email", "profile"],
             pkce: true,
             mapping: {
-                id: "sub",
                 email: "email",
                 emailVerified: "email_verified",
                 name: "name",
@@ -146,7 +147,6 @@ description: 将单点登录（SSO）集成到您的应用程序中。
                 scopes: ["openid", "email", "profile"],
                 pkce: true,
                 mapping: {
-                    id: "sub",
                     email: "email",
                     emailVerified: "email_verified",
                     name: "name",
@@ -285,9 +285,15 @@ trustedOrigins: async (request) => {
 
 更多详细信息请参阅 [`trustedOrigins`](/docs/reference/security#trusted-origins) 文档。
 
-#### 为什么发生发现失败
+#### 重定向 OIDC 端点
 
-Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，以避免登录或令牌校验时出现细微故障。
+Better Auth 不会为服务端 OIDC 请求跟随重定向。请为发现、令牌、用户信息和 JWKS 端点配置最终的规范 URL。
+
+如果其中某个端点返回 `3xx` 响应，注册或登录将失败，并返回 `oidc_endpoint_redirect`。这样可以确保端点验证始终绑定到 Better Auth 实际获取的确切 URL。
+
+#### 发现失败的原因
+
+Better Auth 会在允许注册之前验证 IdP 元数据是否正确完整，以避免登录或令牌校验时出现细微故障。
 
 <Callout type="info">
   Better Auth **不**支持仅隐式的 OIDC 流。
@@ -300,13 +306,14 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
 
 | 错误代码                            | 含义                                                           |
 | ------------------------------- | ------------------------------------------------------------ |
-| `issuer_mismatch`               | IdP 的发现文档报告的 `issuer` 与您配置的 `issuer` 不同                      |
-| `discovery_incomplete`          | 必需字段（`authorization_endpoint`、`token_endpoint`、`jwks_uri`）缺失 |
-| `discovery_not_found`           | 发现文档端点返回 404                                                 |
-| `discovery_timeout`             | IdP 在超时窗口内（默认：10 秒）未响应                                       |
-| `discovery_invalid_url`         | 发现 URL 格式错误或使用了不支持的协议                                        |
-| `discovery_untrusted_origin`    | 发现 URL 或在此过程中解析到的任何 URL 未被应用的受信来源配置信任                        |
+| `issuer_mismatch`               | IdP 的发现文档报告的 `issuer` 与您配置的不同                                |
+| `discovery_incomplete`          | 缺少必需字段（`authorization_endpoint`、`token_endpoint`、`jwks_uri`） |
+| `discovery_not_found`           | 发现文档端点返回了 404                                                |
+| `discovery_timeout`             | IdP 未在超时窗口内响应（默认：10 秒）                                       |
+| `discovery_invalid_url`         | 发现 URL 格式错误或使用了不受支持的协议                                       |
+| `discovery_untrusted_origin`    | 发现 URL 或在此过程中发现的某个 URL 未被应用的受信来源配置信任                         |
 | `discovery_invalid_json`        | 发现响应为空或不是有效的 JSON                                            |
+| `oidc_endpoint_redirect`        | 发现、令牌、用户信息或 JWKS 端点返回了重定向；请改为配置最终端点 URL                      |
 | `unsupported_token_auth_method` | IdP 仅支持 Better Auth 不支持的令牌身份验证方法                             |
 
 **支持的令牌身份验证方法：**
@@ -337,23 +344,100 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
 * 发现错误是结构化且定义明确的
 * 公共客户端 IdP 或模拟服务器可能需要覆盖 `tokenEndpointAuthentication`。
 
+### 解析 SSO 用户
+
+当 OIDC 或 SAML 身份必须映射到现有的 Better Auth 用户，而不是依赖电子邮件匹配时，请使用 `resolveUser`。在协议身份验证完成后，解析器会在每次 SSO 登录时运行。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { sso } from "@better-auth/sso";
+import {
+    findProvisionedUserByAccountKey,
+    validateOIDCClaims,
+    validateSAMLAttributes,
+} from "@/lib/provisioning";
+
+const auth = betterAuth({
+    plugins: [
+        sso({
+            resolveUser: async (input, context) => {
+                if (input.providerId !== "workforce") {
+                    return { action: "continue" };
+                }
+
+                if (input.protocol === "oidc") {
+                    await validateOIDCClaims(input.verifiedIdTokenClaims);
+                } else {
+                    await validateSAMLAttributes(input.providerAttributes);
+                }
+
+                const provisionedUser = await findProvisionedUserByAccountKey({
+                    providerId: input.providerId,
+                    issuer: input.accountKey.issuer,
+                    subject: input.accountKey.accountId,
+                    database: context.database,
+                });
+
+                if (!provisionedUser) {
+                    return {
+                        action: "reject",
+                        code: "PROVISIONED_USER_NOT_FOUND",
+                    };
+                }
+
+                return {
+                    action: "link",
+                    userId: provisionedUser.userId,
+                    profile: "preserve",
+                };
+            },
+        }),
+    ],
+});
+```
+
+对于 OIDC，`accountKey.issuer` 和 `accountKey.accountId` 来自经过验证的 ID Token 中确切的 `iss` 和 `sub` 声明。`verifiedIdTokenClaims` 包含完整的、经过验证的 ID Token 负载，而 `providerClaims` 包含协议接受的、用于资料的原始声明。对于 SAML，账号密钥是经过验证的 IdP 实体 ID 和已签名的 `NameID`；`providerAttributes` 包含经过验证的断言属性，不会将多值属性强制转换为标量。主体和 `NameID` 匹配区分大小写。
+
+`providerUser` 包含适用于任一协议的规范化资料字段。资料字段、OIDC UserInfo 声明和 SAML 属性在用于授权之前，可能仍需要应用特定的验证。`providerReference` 是对本次身份验证流程所接受的提供者配置的不透明引用。它用于检测流程期间的提供者替换或身份验证配置更改；不要将其持久化为租户或用户绑定。
+
+此示例中的 `findProvisionedUserByAccountKey` 由应用程序负责实现。它应通过事务范围内的 `database` 适配器解析确切的提供者、发行者和主体元组。当确切的预置主体不存在时，不要退回到匹配电子邮件地址。
+
+解析器会返回三种决策之一：
+
+* `{ action: "continue" }` 继续正常的 SSO 登录行为
+* `{ action: "link", userId, profile }` 将确切的 SSO 账号关联到该用户。使用 `profile: "preserve"` 保留本地资料，或使用 `profile: "update"` 根据提供者资料更新资料
+* `{ action: "reject", code, message? }` 使用应用程序定义的错误拒绝登录
+
+回调会接收活动事务适配器作为 `context.database`。解析器操作应保持数据库本地化和幂等，因为新的 SSO 身份验证尝试可能会再次调用它；已经使用过的 OIDC 回调或 SAML 断言不会被重放。在调用解析器之前，Better Auth 要求使用原生数据库事务，并支持事务异步上下文。如果配置了辅助存储，请设置 `session.storeSessionInDatabase: true`，并将 `session.preserveSessionInDatabase` 保持未设置或设为 `false`，以便数据库继续作为会话回退存储。
+
+通过事务适配器在解析、账号关联、资料更新和数据库会话创建期间执行的数据库写入会一起提交或回滚。解析器或数据库钩子执行的网络调用和其他外部副作用无法回滚。账号和会话 Cookie 仅会在提交后发布。辅助存储中的会话镜像及其他延迟钩子会在提交后运行；即使这些操作失败，也只会记录错误，不会撤销已提交的数据库会话或抑制其 Cookie。
+
 ### 注册 SAML 提供者
 
 使用带有 SAML 配置的 `registerSSOProvider` 接口注册 SAML 提供者。该提供者作为服务提供者（SP）与您的身份提供者（IdP）集成。
 
-<Tabs items={["客户端", "服务端"]}>
+Better Auth 根据 IdP 实体 ID 和已签名的 `NameID` 识别 SAML 账号。`issuer` 字段标识您的服务提供者，而 IdP 实体 ID 来自 `idpMetadata.metadata`，或手动配置中的显式 `idpMetadata.entityID`。属性映射可以填充资料字段，但无法替代已签名的 `NameID` 账号主体。
+
+需要在存储 SAML 连接时固定 IdP 权威的应用程序，可以通过 SAML 身份验证所使用的同一元数据解析器派生该值：
+
+```ts title="saml-authority.ts"
+import { deriveSAMLIdentityProviderEntityID } from "@better-auth/sso";
+
+const identityProviderEntityID =
+    deriveSAMLIdentityProviderEntityID(samlConfig);
+```
+
+<Tabs items={["client", "server"]}>
   <Tab value="client">
     ```ts title="register-saml-provider.ts"
     import { authClient } from "@/lib/auth-client";
 
     await authClient.sso.register({
         providerId: "saml-provider",
-        issuer: "https://idp.example.com",
+        issuer: "https://yourapp.com/saml",
         domain: "example.com",
         samlConfig: {
             entryPoint: "https://idp.example.com/sso",
-            cert: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-            callbackUrl: "https://yourapp.com/api/auth/sso/saml2/sp/acs/saml-provider",
             audience: "https://yourapp.com",
             wantAssertionsSigned: true,
             signatureAlgorithm: "sha256",
@@ -374,10 +458,9 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
                 privateKeyPass: "your-sp-private-key-password",
                 isAssertionEncrypted: true,
                 encPrivateKey: "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----",
-                encPrivateKeyPass: "your-sp-encryption-key-password"
+                encPrivateKeyPass: "your-encryption-key-password"
             },
             mapping: {
-                id: "nameID",
                 email: "email",
                 name: "displayName",
                 firstName: "givenName",
@@ -399,12 +482,10 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
     await auth.api.registerSSOProvider({
         body: {
             providerId: "saml-provider",
-            issuer: "https://idp.example.com",
+            issuer: "https://yourapp.com/saml",
             domain: "example.com",
             samlConfig: {
                 entryPoint: "https://idp.example.com/sso",
-                cert: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-                callbackUrl: "https://yourapp.com/api/auth/sso/saml2/sp/acs/saml-provider",
                 audience: "https://yourapp.com",
                 wantAssertionsSigned: true,
                 signatureAlgorithm: "sha256",
@@ -428,7 +509,6 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
                     encPrivateKeyPass: "your-encryption-key-password"
                 },
                 mapping: {
-                    id: "nameID",
                     email: "email",
                     name: "displayName",
                     firstName: "givenName",
@@ -449,13 +529,19 @@ Better Auth 会在允许注册之前验证 IdP 的元数据是否正确完整，
 
 ### IdP 发起的 SSO
 
-对于 IdP 发起的流程（例如通过 Okta 仪表板），如果默认处理程序不支持在 SAML POST 之后处理 `GET` 请求，您的框架可能需要一个明确的路由处理程序来管理重定向。
+对于在发送 `state` 参数的情况下发起登录的 OIDC 提供者，请在提供者的 `oidcConfig` 上设置 `allowIdpInitiated: true`。当无状态回调到达 `/sso/callback/:providerId` 时，IdP 签发的 code 会被丢弃，服务端会使用全新的 `state` 和 PKCE 验证器启动新的 OAuth 流程。CSRF 防护仍然有效。此标志默认为 `false`。
+
+<Callout type="warn">
+  在 OIDC 提供者上启用 `allowIdpInitiated` 时，请设置全局 `baseURL` 选项。IdP 发起的回调不包含发起请求的请求体，因此跳转会使用 `baseURL` 作为登录后的目标地址。如果未设置 `baseURL`，跳转将失败并返回 `CALLBACK_URL_REQUIRED`。
+</Callout>
+
+对于 IdP 发起的流程（例如通过 Okta 控制面板），如果默认处理程序不支持 SAML POST 之后的 `GET` 请求，您的框架可能需要显式的路由处理程序来管理重定向。
 
 <Tabs items={["Next.js App Router"]}>
   <Tab value="next-js-app-router">
     创建此文件以防止出现 404 错误：
 
-    ```ts title="app/api/auth/sso/saml2/callback/[providerId]/route.ts"
+    ```ts title="app/api/auth/sso/saml2/sp/acs/[providerId]/route.ts"
     import { auth } from "@/lib/auth";
     import { NextResponse } from "next/server";
 
@@ -790,7 +876,7 @@ import { auth } from "@/lib/auth"
 await auth.api.registerSSOProvider({
     body: {
         providerId: "acme-corp-saml",
-        issuer: "https://acme-corp.okta.com",
+        issuer: "https://yourapp.com/saml/acme-corp",
         domain: "acmecorp.com",
         organizationId: "org_acme_corp_id", // 关联组织
         samlConfig: {
@@ -837,7 +923,7 @@ import { auth } from "@/lib/auth"
 await auth.api.registerSSOProvider({
     body: {
         providerId: "acme-corp",
-        issuer: "https://acme.okta.com",
+        issuer: "https://yourapp.com/saml/acme-corp",
         domain: "acmecorp.com",
         organizationId: "org_acme_id",
         samlConfig: { /* ... */ },
@@ -939,7 +1025,9 @@ const auth = betterAuth({
                         issuer: "https://your-app.com",
                         entryPoint: "https://idp.example.com/sso",
                         cert: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-                        callbackUrl: "http://localhost:3000/api/auth/sso/saml2/sp/acs/default-saml",
+                        idpMetadata: {
+                            entityID: "https://idp.example.com",
+                        },
                         spMetadata: {
                             entityID: "http://localhost:3000/api/auth/sso/saml2/sp/metadata",
                             metadata: "<!-- 你的 SP 元数据 XML -->",
@@ -997,17 +1085,42 @@ samlConfig: {
 * **encPrivateKey**: IdP 断言解密用私钥
 * **encPrivateKeyPass**: IdP 解密密钥密码
 
+### 签名证书与轮换
+
+当 IdP 轮换其签名证书时，请将旧 PEM 和新 PEM 都作为数组列在 `idpMetadata.cert` 下。Better Auth 会接受由任一证书签名的 SAML 响应，因此在轮换完成期间用户仍可继续登录。
+
+```ts
+samlConfig: {
+    entryPoint: "https://idp.example.com/sso",
+    idpMetadata: {
+        entityID: "https://idp.example.com",
+        singleSignOnService: [
+            { Binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST", Location: "https://idp.example.com/sso" },
+        ],
+        cert: [
+            "-----BEGIN CERTIFICATE-----\n<current>\n-----END CERTIFICATE-----",
+            "-----BEGIN CERTIFICATE-----\n<next>\n-----END CERTIFICATE-----",
+        ],
+    },
+}
+```
+
+`SAMLConfig.cert` 和 `samlConfig.idpMetadata.cert` 都接受单个 PEM 字符串或数组。当两者同时设置时，以 `idpMetadata.cert` 为准。
+
+如果您的 IdP 发布了元数据 XML 文档，请改为将其传入 `idpMetadata.metadata`，并不要设置 `cert`。证书会从该文档中获取，并在 IdP 重新发布文档时完成轮换。如果配置既未提供 `cert`，也未提供 `idpMetadata.metadata`，注册将失败并返回 `CERT_SOURCE_MISSING`，因为 samlify 没有可用于验证 SAML 响应的内容。
+
+应用程序可以使用 `guardProviderMutation`，将 SSO 更改与配对的目录同步控制平面协调起来。IdP 实体 ID、端点、签名证书、SP 实体 ID、NameID 格式、POST 断言使用者 URL 以及断言签名策略都属于身份验证边界更改。如果目录已配对时守卫阻止了身份验证边界更改，请取消配对目录，更新 IdP 信任配置，然后重新配对。OIDC 客户端密钥轮换和 SAML SP 私钥轮换不会改变身份验证边界。
+
 ### SAML 属性映射
 
 配置 SAML 属性与用户字段的映射：
 
 ```ts
 mapping: {
-    id: "nameID",           // 默认: "nameID"
-    email: "email",         // 默认: "email" 或 "nameID"
-    name: "displayName",    // 默认: "displayName"
-    firstName: "givenName", // 默认: "givenName"
-    lastName: "surname",    // 默认: "surname"
+    email: "email",         // Default: "email" or "nameID"
+    name: "displayName",    // Default: "displayName"
+    firstName: "givenName", // Default: "givenName"
+    lastName: "surname",    // Default: "surname"
     extraFields: {
         department: "department",
         role: "jobTitle",
@@ -1087,10 +1200,7 @@ const auth = betterAuth({
 3. 新断言时，存储 ID 直到其 `NotOnOrAfter` 到期
 4. 重复断言（重放攻击）则拒绝
 
-**两个 SAML 端点都受保护：**
-
-* `/sso/saml2/callback/:providerId`
-* `/sso/saml2/sp/acs/:providerId`
+SAML ACS 端点（`/sso/saml2/sp/acs/:providerId`）受到断言重放保护。
 
 <Callout type="info">
   重放保护使用数据库校验表，因此在多实例部署中无需额外配置即可正常工作。
@@ -1248,7 +1358,10 @@ sso({
 
 * `RSA 1.5`（密钥加密）
 
-* `3DES`（数据加密）
+| 选项                | 默认值   | 描述               |
+| ----------------- | ----- | ---------------- |
+| `maxResponseSize` | 256KB | SAML 响应最大大小（字节）  |
+| `maxMetadataSize` | 100KB | IdP 或 SP 元数据最大大小 |
 
 * `SHA256`、`SHA384`、`SHA512`
 
@@ -1462,17 +1575,17 @@ sso({ redirectURI: "https://login.example.com/callback" })
 
 插件会自动创建以下 SAML 端点：
 
-* **SP 元数据**: `/api/auth/sso/saml2/sp/metadata?providerId={providerId}`
-* **SAML 回调**: `/api/auth/sso/saml2/callback/{providerId}`（支持 GET 和 POST）
+* **SP Metadata**: `/api/auth/sso/saml2/sp/metadata?providerId={providerId}`
+* **SAML ACS（Assertion Consumer Service）**: `/api/auth/sso/saml2/sp/acs/{providerId}`（同时支持 GET 和 POST）
 
 ### SAML 回调 URL 配置
 
-SAML 回调端点 (`/api/auth/sso/saml2/callback/{providerId}`) 支持：
+SAML ACS 端点（`/api/auth/sso/saml2/sp/acs/{providerId}`）同时处理 **SP 发起**和 **IdP 发起**的 SSO 流程：
 
 * **SP 发起**: 用户在您的应用中点击“使用 SSO 登录” → 重定向到 IdP → IdP 将 SAMLResponse POST 到回调端点
 * **IdP 发起**: 用户在 IdP 仪表板中点击应用图标（Okta、Azure AD 等）→ IdP 将 SAMLResponse POST 到回调端点
 
-**重要**：您 SAML 配置中的 `callbackUrl` 用作断言消费者服务（ACS）URL。请将其设置为该提供者的 SAML 回调路由（例如 `https://yourapp.com/api/auth/sso/saml2/sp/acs/my-provider`）。如果省略，Better Auth 会根据您的 `baseURL` 和 `providerId` 自动推导。
+Better Auth 会根据您的 `baseURL` 和 `providerId` 自动推导 ACS URL，因此无需进行 SP 端配置。
 
 您的 IdP 必须为此 SP 包含一个 `AudienceRestriction`。可接受的受众是 SP 实体 ID；如果您需要匹配特定于 IdP 的 SP 标识符，则可以使用 `samlConfig` 中显式设置的 `audience` 值。Better Auth 还会根据该提供者的 ACS 端点检查承载方 `Recipient` 和响应 `Destination` 值。
 
@@ -1487,7 +1600,53 @@ await authClient.signIn.sso({
 
 对于未请求的 **IdP 发起**流程，如果未使用 `signIn.sso()`（因此未设置客户端 `callbackURL`），请在提供者的 `samlConfig` 或全局 `saml` 插件选项中配置 `idpInitiatedCallbackUrl`。提供者级别的设置优先于全局设置，同样的回退机制也适用于验证错误重定向。Better Auth 生成的 `RelayState` 成功和错误回调具有更高的优先级。如果未配置任何回退选项，则保留现有的重定向行为。
 
-回调路由会自动支持 GET 和 POST 方法，因此您无需在所使用的框架中创建其他路由处理程序。
+更新提供者时，将 `null` 传递给 `samlConfig.idpInitiatedCallbackUrl`，即可移除其覆盖设置并回退到全局设置。
+
+回调路由会自动支持 GET 和 POST 方法，因此无需在您的框架中创建任何额外的路由处理程序。
+
+### 其他提供者字段
+
+您可以使用 `schema.ssoProvider.additionalFields` 向 `ssoProvider` 表添加自定义列。这些字段可用于存储提供者元数据，例如组织拥有多个 SSO 提供者时显示的名称。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { sso } from "@better-auth/sso";
+
+export const auth = betterAuth({
+  plugins: [
+    sso({
+      schema: {
+        ssoProvider: {
+          additionalFields: {
+            displayName: {
+              type: "string",
+              required: true,
+            },
+          },
+        },
+      },
+    }),
+  ],
+});
+```
+
+然后在注册或更新提供者时包含该字段：
+
+```ts
+await auth.api.registerSSOProvider({
+  body: {
+    providerId: "okta-main",
+    displayName: "Okta",
+    issuer: "https://idp.example.com",
+    domain: "example.com",
+    oidcConfig: {
+      clientId: "client-id",
+      clientSecret: "client-secret",
+    },
+  },
+  headers,
+});
+```
 
 ## Schema
 
@@ -1566,10 +1725,10 @@ Better Auth 支持 **IdP 发起的 SSO 流程**，用户从身份提供者仪表
 
 **流程：**
 
-1. 用户在 IdP 仪表盘中点击你的应用图标
-2. IdP 将 SAMLResponse POST 到 `/api/auth/sso/saml2/callback/{providerId}`
-3. Better Auth 处理断言，创建会话，并重定向到你的应用
-4. 浏览器跟随重定向发起 GET 请求（自动处理）
+1. 用户点击 IdP 仪表盘中的应用图标
+2. IdP 将 SAMLResponse POST 到 `/api/auth/sso/saml2/sp/acs/{providerId}`
+3. Better Auth 处理断言、创建会话，并重定向到你的应用
+4. 浏览器通过 GET 请求跟随重定向（自动处理）
 
 无需额外的路由处理器。回调路由会自动处理 GET 和 POST 请求。
 
@@ -1750,7 +1909,7 @@ export const ssoOptionsType = {
 				default: 262144,
 			},
 			maxMetadataSize: {
-				description: "Maximum allowed size for IdP metadata XML in bytes.",
+				description: "Maximum allowed size for IdP or SP metadata XML in bytes.",
 				type: "number",
 				default: 102400,
 			},

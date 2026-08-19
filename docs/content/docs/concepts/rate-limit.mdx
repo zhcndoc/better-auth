@@ -226,7 +226,7 @@ npx auth@latest migrate
 ```
 
 <Callout type="info">
-`migrate` 命令仅在使用内置的 Kysely 适配器时有效。如果您使用 Prisma、Drizzle 或其他 ORM，请先执行 `npx auth@latest generate`，然后通过您使用的 ORM 迁移工具应用 schema。详情请参阅 [Better Auth CLI](/docs/concepts/cli)。
+  `migrate` 命令仅在使用内置的 Kysely 适配器时有效。如果您使用 Prisma、Drizzle 或其他 ORM，请先执行 `npx auth@latest generate`，然后通过您使用的 ORM 迁移工具应用 schema。详情请参阅 [Better Auth CLI](/docs/concepts/cli)。
 </Callout>
 
 **使用二级存储**
@@ -255,16 +255,20 @@ export const auth = betterAuth({
     //...其他选项
     rateLimit: {
         customStorage: {
-            get: async (key) => {
-                // 获取速率限制数据
-            },
-            set: async (key, value) => {
-                // 设置速率限制数据
+            consume: async (key, rule) => {
+                // atomically record one request for `key`
+                // rule.window is in seconds, rule.max is the request limit
+                return {
+                    allowed: true,
+                    retryAfter: null,
+                };
             },
         },
     },
 })
 ```
+
+`customStorage.consume` 必须在一个操作中完成检查和递增。Better Auth 不再接受用于速率限制的独立 `get` 和 `set` 方法，因为这种形式可能导致并发请求通过同一个过期计数器。
 
 ## 处理速率限制错误
 

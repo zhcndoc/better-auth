@@ -11,29 +11,29 @@ SAML（安全断言标记语言）是一种基于 XML 的标准，用于在身�
 
 在该配置中：
 
-* **IdP (Okta)**: Authenticates users and sends assertions about their identity.
-* **SP (Better Auth)**: Validates assertions and logs the user in.up.
+* **IdP (Okta)**：对用户进行身份验证并发送有关其身份的断言
+* **SP (Better Auth)**：验证断言并登录用户.up.
 
 ### 第一步：在 Okta 中创建 SAML 应用
 
-1. Log in to your Okta Admin Console
+1. 登录 Okta Admin Console
 
-2. Navigate to Applications > Applications
+2. 导航至 Applications > Applications
 
-3. Click "Create App Integration"
+3. 点击“Create App Integration”
 
-4. Select "SAML 2.0" as the Sign-in method
+4. 选择“SAML 2.0”作为登录方式
 
-5. Configure the following settings:
+5. 配置以下设置：
 
-   * **Single Sign-on URL**: Your Better Auth callback endpoint (e.g., `http://localhost:3000/api/auth/sso/saml2/callback/sso`). Note: `sso` is your `providerId`
-   * **Audience URI (SP Entity ID)**: Your Better Auth metadata URL (e.g., `http://localhost:3000/api/auth/sso/saml2/sp/metadata`)
-   * **Name ID format**: Email Address or any of your choice.
+   * **Single Sign-on URL**：你的 Better Auth 回调端点（例如，`http://localhost:3000/api/auth/sso/saml2/sp/acs/sso`）。注意：`sso` 是你的 `providerId`
+   * **Audience URI (SP Entity ID)**：你的 Better Auth 元数据 URL（例如，`http://localhost:3000/api/auth/sso/saml2/sp/metadata`）
+   * **Name ID format**：Email Address 或你选择的任意格式
 
 6. 下载 IdP 元数据 XML 文件和证书
 
 <Callout type="info">
-  **IdP-Initiated SSO**: If you want users to access your app from the Okta dashboard, make sure the **Single Sign-on URL** points to the callback endpoint (`/api/auth/sso/saml2/callback/{providerId}`). Better Auth automatically handles both SP-initiated and IdP-initiated flows.
+  **IdP-Initiated SSO**：如果你希望用户从 Okta 仪表板访问你的应用，请确保 **Single Sign-on URL** 指向回调端点（`/api/auth/sso/saml2/sp/acs/{providerId}`）。Better Auth 会自动处理 SP-Initiated 和 IdP-Initiated 流程。
 </Callout>
 
 ### 第二步：配置 Better Auth
@@ -49,7 +49,6 @@ const ssoConfig = {
       // 服务提供商配置
       issuer: "http://localhost:3000/api/auth/sso/saml2/sp/metadata",
       entryPoint: "https://trial-1076874.okta.com/app/trial-1076874_samltest_1/exktofb0a62hqLAUL697/sso/saml",
-      callbackUrl: "http://localhost:3000/api/auth/sso/saml2/sp/acs/sso",
       // IdP Configuration
       idpMetadata: {
         entityID: "https://trial-1076874.okta.com/app/exktofb0a62hqLAUL697/sso/saml/metadata",
@@ -112,11 +111,11 @@ const ssoConfig = {
 ```
 
 <Callout type="info">
-  **Explicit**: Pass providerId directly when signing in.
-  **Domain fallback:** Matches based on the user’s email domain. e.g. [user@company.com](mailto:user@company.com) → matches `company-okta` provider.
+  **显式指定**：登录时直接传入 providerId
+  **域名回退**：根据用户的邮箱域名进行匹配。例如 [user@company.com](mailto:user@company.com) → 匹配 `company-okta` 提供商。
 </Callout>
 
-### Step 4: Initiating Sign-In
+### 第四步：发起登录
 
 **1. 通过 `providerId` 显式指定（推荐）：**
 
@@ -148,13 +147,13 @@ await authClient.signIn.sso({
 });
 ```
 
-**Important Notes**:
+**重要注意事项**：
 
-* DummyIDP should ONLY be used for development and testing
-* Never use these certificates in production
-* The example uses `localhost:3000` - adjust URLs for your environment
-* For production, always use proper IdP providers like Okta, Azure AD, or OneLogin
-* `callbackUrl` is the SAML ACS endpoint URL. If omitted, it defaults to `{baseURL}/sso/saml2/sp/acs/{providerId}`. The post-login destination is controlled by `callbackURL` in `signIn.sso()`
+* DummyIDP 只能用于开发和测试
+* 切勿在生产环境中使用这些证书
+* 示例使用 `localhost:3000`，请根据你的环境调整 URL
+* 对于生产环境，始终使用 Okta、Azure AD 或 OneLogin 等适当的 IdP 提供商
+* ACS URL 会根据 `{baseURL}/sso/saml2/sp/acs/{providerId}` 自动派生。登录后的目标位置由 `signIn.sso()` 中的 `callbackURL` 控制
 
 ### 第五步：动态注册 SAML 提供商
 
@@ -175,6 +174,6 @@ await authClient.sso.register({
 
 ## 额外资源
 
-* [SSO Plugin Documentation](/docs/plugins/sso)
-* [Okta SAML Documentation](https://developer.okta.com/docs/concepts/saml/)
-* [SAML 2.0 Specification](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf)
+* [SSO 插件文档](/docs/plugins/sso)
+* [Okta SAML 文档](https://developer.okta.com/docs/concepts/saml/)
+* [SAML 2.0 规范](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf)。

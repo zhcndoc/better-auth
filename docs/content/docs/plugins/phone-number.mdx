@@ -110,6 +110,23 @@ description: 电话号码插件
   ```
 </APIMethod>
 
+### 在服务器上使用 OTP
+
+对于自定义注册或账户关联流程，可以使用 OTP，而无需创建或更新用户或会话。此仅限服务器端的 API 通过 `auth.api` 暴露；它不会注册 HTTP 路由，也不会生成 `authClient` 方法。
+
+```ts title="auth.ts"
+const result = await auth.api.consumePhoneNumberOTP({
+    body: {
+        phoneNumber: "+1234567890",
+        code: "123456"
+    }
+})
+```
+
+此方法使用与 `verifyPhoneNumber` 相同的验证和使用行为；它不会引入更强的并发保证。如果您的服务器流程可能会收到并行兑换尝试，并且需要严格保证单次使用，请使用以原子方式使用已接受代码的提供商配置 [`verifyOTP`](#verifyotp)。
+
+请在使用验证结果的服务器端流程中调用此方法；它不会返回会话或可重复使用的验证证明。请先验证不依赖于 OTP 验证成功的任何输入。如果您通过自己的公共端点暴露此功能，请在那里应用速率限制和适当的滥用防护。
+
 ### 允许使用电话号码注册
 
 要允许用户使用电话号码注册，可以将 `signUpOnVerification` 选项传递给插件配置。需要传递 `getTempEmail` 函数为用户生成临时邮箱。
@@ -203,7 +220,7 @@ const isVerified = await authClient.phoneNumber.verify({
 })
 ```
 
-### Remove Phone Number
+### 移除电话号码
 
 已登录用户可以通过向 `updateUser` 传递 `null` 来释放其电话号码。插件会原子性地清除电话号码并重置已验证标志，从而释放该号码，使其他账号可以通过标准验证流程来认领它。
 
@@ -217,7 +234,7 @@ await authClient.updateUser({
 
 出于安全原因，通过 `updateUser` 更新非空电话号码仍然被阻止。将电话号码更改为不同号码始终需要通过 `verify` 并设置 `updatePhoneNumber: true` 进行 OTP 验证。
 
-### Disable Session Creation
+### 禁用会话创建
 
 默认情况下，插件在验证电话号码后会为用户创建会话。您可以通过向 `verify` 方法传递 `disableSession: true` 来禁用此行为。
 
@@ -352,13 +369,13 @@ export const auth = betterAuth({
 
 ### `requireVerification`
 
-启用后，用户在电话号码验证之前无法登录。如果未验证的电话号码尝试登录，服务器将返回 401 错误（PHONE_NUMBER_NOT_VERIFIED）并自动触发 OTP 发送以开始验证过程。
+启用后，用户在电话号码验证之前无法登录。如果未验证的电话号码尝试登录，服务器将返回 401 错误（PHONE\_NUMBER\_NOT\_VERIFIED）并自动触发 OTP 发送以开始验证过程。
 
 ## 架构
 
 该插件需要在用户表中添加 2 个字段
 
-### 用户表
+### 用户表。
 
 export const phoneNumberUserTableFields = [
 	{

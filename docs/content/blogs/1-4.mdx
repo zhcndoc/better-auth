@@ -105,25 +105,30 @@ const auth = betterAuth({
 
 ***
 
-Better-Auth 现在支持数据库连接，使用数据库连接技术，提升 50 多个端点 2 到 3 倍的响应速度。
+### 数据库连接改进
 
 启用方法：在认证配置的 `experimental` 中设置 `joins` 为 `true`。
 然后重新运行迁移或架构生成以使用支持连接的更新架构。
 
-[👉 详情请阅读数据库连接](/docs/concepts/database#experimental-joins)
+启用方法：在认证配置中将 `advanced.database.joins` 设置为 `true`。
+然后重新运行迁移或架构生成，以获取支持连接的更新架构！
+
+[👉 详细了解数据库连接](/docs/concepts/database#joins)
 
 ```ts
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    experimental: {
-        joins: true,
+    advanced: {
+        database: {
+            joins: true,
+        },
     },
 });
 ```
 
 <Callout type="info">
-  虽然数据库连接仍为实验功能，但所有适配器均支持，且将在下一版本中默认启用。
+  所有适配器均支持连接。禁用时（默认设置），Better Auth 会回退到单独查询。
 </Callout>
 
 ***
@@ -272,8 +277,8 @@ export const auth = betterAuth({
 
 ### 包体积优化
 
-如果使用自定义适配器（如 Prisma、Drizzle 或 MongoDB），  
-可通过使用 `better-auth/minimal` 替代 better-auth 来减小包体积。  
+如果使用自定义适配器（如 Prisma、Drizzle 或 MongoDB），\
+可通过使用 `better-auth/minimal` 替代 better-auth 来减小包体积。\
 该版本不包含 Kysely，仅在直接数据库连接时需要。
 
 [👉 详情请阅读包体积优化](/docs/guides/optimizing-for-performance#bundle-size-optimization)
@@ -376,13 +381,13 @@ export const auth = betterAuth({
 
 小幅调整以提升流畅度、速度和可靠性。
 
-- **邮箱更改流程**：移除 `changeEmail` 流程中的 `sendChangeEmailVerification`，改用 `emailVerification.sendVerificationEmail`。
-- **忘记密码流程**：将 `authClient.forgotPassword` 改名为 `authClient.requestPasswordReset`。
-- **账户信息端点**：`accountInfo` 端点从 `POST /account-info` 改为 `GET /account-info`。
+* **邮箱更改流程**：移除 `changeEmail` 流程中的 `sendChangeEmailVerification`，改用 `emailVerification.sendVerificationEmail`。
+* **忘记密码流程**：将 `authClient.forgotPassword` 改名为 `authClient.requestPasswordReset`。
+* **账户信息端点**：`accountInfo` 端点从 `POST /account-info` 改为 `GET /account-info`。
 
-* **邮箱更改流程**：已从 `changeEmail` 流程中移除 `sendChangeEmailVerification`，改为使用 `emailVerification.sendVerificationEmail`。
-* **忘记密码流程**：`authClient.forgotPassword` 现在改为 `authClient.requestPasswordReset`。
-* **账户信息端点**：`accountInfo` 端点已从 `POST /account-info` 改为 `GET /account-info`。
+- **邮箱更改流程**：已从 `changeEmail` 流程中移除 `sendChangeEmailVerification`，改为使用 `emailVerification.sendVerificationEmail`。
+- **忘记密码流程**：`authClient.forgotPassword` 现在改为 `authClient.requestPasswordReset`。
+- **账户信息端点**：`accountInfo` 端点已从 `POST /account-info` 改为 `GET /account-info`。
 
   这意味着所有 `auth.api` 调用都需要从：
 
@@ -406,7 +411,7 @@ export const auth = betterAuth({
 
 ### 插件选项变更
 
-多个插件回调中的 `request` 参数改为 `ctx`。  
+多个插件回调中的 `request` 参数改为 `ctx`。\
 Passkey 插件独立成包，API Key 的模拟会话默认关闭。
 
 * **Passkey 插件**：Passkey 插件现已移至独立包。
@@ -460,7 +465,7 @@ npx expo install expo-network
 
 ### Cloudflare 运行时
 
-Better Auth 使用 AsyncLocalStorage 进行异步上下文跟踪。  
+Better Auth 使用 AsyncLocalStorage 进行异步上下文跟踪。\
 在 Cloudflare Workers 需于 `wrangler.toml` 中添加 `nodejs_compat` 标记以启用：
 
 ```toml title="wrangler.toml"
@@ -468,7 +473,7 @@ compatibility_flags = ["nodejs_compat"]
 compatibility_date = "2024-09-23"
 ```
 
-Alternatively, if you only need AsyncLocalStorage support:
+或者，如果你只需要 AsyncLocalStorage 支持：
 
 ```toml title="wrangler.toml"
 compatibility_flags = ["nodejs_als"]
@@ -514,7 +519,7 @@ compatibility_flags = ["nodejs_als"]
 
 ***
 
-大量细节优化让一切更顺畅、更快速、更可靠。  
+大量细节优化让一切更顺畅、更快速、更可靠。\
 👉 [查看完整更新日志](https://github.com/better-auth/better-auth/releases/tag/v1.4.0)
 
 ## ❤️ 贡献者

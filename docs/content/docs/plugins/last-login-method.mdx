@@ -76,9 +76,9 @@ export function SignInPage() {
     
     return (
         <div className="space-y-4">
-            <h1>登录</h1>
-            
-            {/* 邮箱登录 */}
+            <h1>Sign In</h1>
+
+            {/* Email sign in */}
             <div className="relative">
                 <Button 
                     onClick={() => authClient.signIn.email({...})}
@@ -255,15 +255,15 @@ export const auth = betterAuth({
                 return null
             },
             
-            // GDPR 合规钩子
-            beforeStoreCookie: async (ctx, lastUsedLoginMethod) => {
-                // 检查用户是否已同意非必要 Cookie
-                // 返回 false 可阻止 Cookie 存储
-                const hasConsent = await checkUserCookieConsent(ctx)
-                return hasConsent
-            },
-            
-            // Schema 自定义（当 storeInDatabase 为 true 时）
+            // GDPR compliance hook
+	            beforeStoreCookie: async (ctx, lastUsedLoginMethod) => {
+	                // Check if user has given consent for non-essential cookies
+	                // Return false to prevent cookie storage
+	                const hasConsent = await checkUserCookieConsent(ctx)
+	                return hasConsent
+	            },
+
+	            // Schema customization (when storeInDatabase is true)
             schema: {
                 user: {
                     lastLoginMethod: "custom_field_name"
@@ -368,17 +368,16 @@ export const authClient = createAuthClient({
 
 插件默认跟踪以下身份验证方式：
 
-* **邮箱认证**: `"email"`
-* **OAuth 提供程序**: 提供程序 ID（例如 `"google"`, `"github"`, `"discord"`）
-* **OAuth2 回调**: URL 路径中的提供程序 ID
-* **注册方式**: 与登录方式相同
+* **电子邮件身份验证**: `"email"`
+* **OAuth 提供程序**: 提供程序 ID（例如 `"google"`、`"github"`、`"discord"`）
+* **OAuth 回调**: 来自 URL 路径的提供程序 ID
+* **注册方式**: 与登录方式的跟踪方式相同
 
 插件自动从以下端点检测方式：
 
 * `/callback/:id` - 带有提供程序 ID 的 OAuth 回调
-* `/oauth2/callback/:id` - 带有提供程序 ID 的 OAuth2 回调
-* `/sign-in/email` - 邮箱登录
-* `/sign-up/email` - 邮箱注册
+* `/sign-in/email` - 电子邮件登录
+* `/sign-up/email` - 电子邮件注册
 
 ## 跨域支持
 
@@ -394,7 +393,7 @@ export const authClient = createAuthClient({
 </Callout>
 
 ```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/client"
+import { createAuthClient } from "better-auth"
 import { lastLoginMethodClient } from "better-auth/client/plugins"
 
 export const authClient = createAuthClient({

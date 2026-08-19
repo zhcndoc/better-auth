@@ -24,14 +24,17 @@ export const auth = betterAuth({
 
 ### DashOptions
 
-| Option             | Type     | Description                                                           |
-| ------------------ | -------- | --------------------------------------------------------------------- |
-| `apiUrl`           | `string` | Better Auth 基础设施 API URL                                          |
-| `kvUrl`            | `string` | 用于缓存的 KV 存储 URL                                                |
-| `apiKey`           | `string` | 用于身份验证的 API 密钥                                               |
-| `apiTimeout`       | `number` | 基础设施 API HTTP 请求超时时间（毫秒）（`apiUrl`）。默认值：`3000`    |
-| `kvTimeout`        | `number` | KV HTTP 请求超时时间（毫秒）（`kvUrl`）。默认值：`1000`               |
-| `activityTracking` | `object` | 活动跟踪配置                                                         |
+| 选项                     | 类型       | 描述                                                                                    |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------- |
+| `apiUrl`               | `string` | Better Auth 基础设施 URL。默认值：[https://dash.better-auth.com](https://dash.better-auth.com) |
+| `kvUrl`                | `string` | Better Auth 标识基础设施 URL。默认值：[https://kv.better-auth.com](https://kv.better-auth.com)   |
+| `apiKey`               | `string` | 用于身份验证的 API 密钥。                                                                       |
+| `apiOptions`           | `object` | Dash API HTTP 客户端选项。接受以毫秒为单位的 `timeout?: number`。                                     |
+| `kvOptions`            | `object` | KV HTTP 客户端选项。接受 `timeout?: number` 和 `retry?: { attempts?: number; ... }`。           |
+| `apiTimeout`           | `number` | `apiOptions.timeout` 的弃用别名。                                                           |
+| `kvTimeout`            | `number` | `kvOptions.timeout` 的弃用别名。                                                            |
+| `activityTracking`     | `object` | 活动跟踪配置。                                                                               |
+| `managedDirectorySync` | `object` | Managed SCIM／directory-sync 控制平面选项。                                                   |
 
 ### 活动跟踪
 
@@ -47,70 +50,167 @@ dash({
 
 启用后，会在用户 schema 中自动添加并更新 `lastActiveAt` 字段，记录用户最后活动时间。
 
+### Managed Directory Sync
+
+```ts
+dash({
+  apiKey: process.env.BETTER_AUTH_API_KEY,
+  managedDirectorySync: {
+    enabled: true,
+    ssoPairing: true,
+    membershipProjection: {
+      enabled: true,
+      role: "member",
+    },
+  },
+})
+```
+
+此可选控制平面用于 SCIM 1.7 插件管理的运行时流程。在 Better Auth 1.7 中，SCIM 支持三种连接模式：
+
+* 静态代码定义的连接
+* 应用拥有的运行时验证
+* 通过 `managedConnections` 由插件管理的运行时连接
+
+`managedDirectorySync` 选项启用 `dash` 中由插件管理的目录同步配置模式。它会创建管理目录连接和配对 SSO 状态所需的保留 schema 和 API。
+
+#### Managed directory sync 选项
+
+| 选项                             | 类型        | 描述                                                                       |
+| ------------------------------ | --------- | ------------------------------------------------------------------------ |
+| `enabled`                      | `boolean` | 启用由管理的 directory-sync 控制平面以及 SCIM 保留表／API。默认值：`false`。                   |
+| `ssoPairing`                   | `boolean` | 安装 SSO `resolveUser` 和提供商变更钩子，当配对目录需要通过 SSO 协调用户身份时，这些钩子是必需的。默认值：`true`。 |
+| `membershipProjection`         | `object`  | 当目录应创建群组或成员归属记录时，启用 SCIM 到组织成员归属的投影。                                     |
+| `membershipProjection.enabled` | `boolean` | 启用投影钩子。默认值：`true`。                                                       |
+| `membershipProjection.role`    | `string`  | 分配给投影组织成员归属的角色。默认值：`"member"`。                                           |
+
+当应用希望 Better Auth 管理 SCIM 的运行时租户连接生命周期，并将其与基于 SSO 的身份解析配对时，请使用此选项。它适用于新的 1.7 流程，并与 `scim({ managedConnections })` 互补。
+
+<Callout type="warning">
+  启用 `managedDirectorySync` 需要对应的 Managed directory-sync 表数据库迁移。在使用管理运行时流程之前，请先运行迁移步骤。
+</Callout>
+
+```package-install
+npx auth migrate
+```
+
+如果你的应用单独管理 schema 生成，请运行 `npx auth generate`，然后使用你偏好的工具应用生成的迁移。
+
+### 数据库架构
+
+当 `managedDirectorySync.enabled` 为 `true` 时，dash 插件会添加以下模型。Better Auth 会为每个模型提供主 `id` 字段。
+
+#### `directorySyncConnection`
+
+存储 Managed directory 的组织、SCIM 连接、SSO 配对、生命周期和停用状态。
+
+| 列                       | 类型        | 约束              | 描述                  |
+| ----------------------- | --------- | --------------- | ------------------- |
+| `organizationId`        | `string`  | 必填，已建立索引        | 拥有该目录的组织。           |
+| `providerId`            | `string`  | 必填              | SSO 提供商标识符。         |
+| `aliasKey`              | `string`  | 必填，唯一，隐藏        | 内部目录别名。             |
+| `provisioningDomainId`  | `string`  | 必填，唯一           | SCIM 配置域。           |
+| `activeOrganizationKey` | `string`  | 必填，唯一，隐藏        | 用于协调的活动组织密钥。        |
+| `connectionId`          | `string`  | 可选，唯一           | Managed SCIM 连接标识符。 |
+| `creationRequestId`     | `string`  | 必填，唯一，隐藏        | 不可变的所有权关联值。         |
+| `status`                | `string`  | 必填              | 当前目录生命周期状态。         |
+| `revision`              | `number`  | 必填，默认值为 `0`，隐藏  | 用于并发控制的变更版本。        |
+| `createdAt`             | `date`    | 必填              | 创建时间戳。              |
+| `createdByActorId`      | `string`  | 必填              | 创建目录的操作者。           |
+| `updatedAt`             | `date`    | 必填              | 上次更新时间戳。            |
+| `lastActorId`           | `string`  | 必填              | 负责最新变更的操作者。         |
+| `ssoProviderId`         | `string`  | 可选              | 配对的 SSO 提供商 ID。     |
+| `ssoProviderRecordId`   | `string`  | 可选，已建立索引        | 配对的 SSO 提供商记录。      |
+| `activeSsoProviderKey`  | `string`  | 必填，唯一，隐藏        | 活动 SSO 提供商密钥。       |
+| `serializedSsoPairing`  | `string`  | 可选，隐藏           | 序列化的 SSO 配对元数据。     |
+| `pairingEnforced`       | `boolean` | 必填，默认值为 `false` | 是否强制执行 SSO 配对要求。    |
+| `unpairedAt`            | `date`    | 可选              | 目录解除配对的时间。          |
+| `unpairedBy`            | `string`  | 可选              | 移除配对的操作者。           |
+| `decommissionStartedAt` | `date`    | 可选              | 开始停用的时间。            |
+| `decommissionedAt`      | `date`    | 可选              | 完成停用的时间。            |
+| `lastError`             | `string`  | 可选，隐藏           | 最近一次协调错误。           |
+
+#### `directorySyncMembershipProvenance`
+
+跟踪通过目录同步投影创建或管理的组织成员归属，以便插件只协调其拥有的成员归属。
+
+| 列                      | 类型       | 约束       | 描述                         |
+| ---------------------- | -------- | -------- | -------------------------- |
+| `membershipKey`        | `string` | 必填，唯一，隐藏 | 投影成员归属的稳定密钥。               |
+| `organizationId`       | `string` | 必填，已建立索引 | 包含该成员归属的组织。                |
+| `userId`               | `string` | 必填，已建立索引 | 接收该成员归属的 Better Auth User。 |
+| `memberId`             | `string` | 必填，唯一    | 组织 `member` 记录标识符。         |
+| `ownership`            | `string` | 必填，隐藏    | 投影所有权状态。                   |
+| `provisioningDomainId` | `string` | 必填，已建立索引 | 生成该记录的 SCIM 配置域。           |
+| `createdAt`            | `date`   | 必填       | 创建时间戳。                     |
+| `updatedAt`            | `date`   | 必填       | 上次更新时间戳。                   |
+
+有关完整的 SCIM 模型和迁移指南，请参阅 [SCIM 插件参考](/docs/plugins/scim/reference) 和 [1.7 升级指南](/docs/guides/1-7-upgrade-guide)。
+
 ## 事件跟踪
 
 dash 插件自动追踪以下事件：
 
 ### 用户事件
 
-| 事件 | 触发条件 |
-| ---------------------------- | ---------------------------- |
-| `user_signed_up` | 新用户注册 |
-| `user_profile_updated` | 用户更新个人资料 |
-| `user_profile_image_updated` | 用户更改头像 |
-| `user_email_verified` | 邮箱验证完成 |
-| `user_banned` | 用户被封禁 |
-| `user_unbanned` | 用户解封 |
-| `user_deleted` | 用户账户删除 |
+| 事件                           | 触发条件     |
+| ---------------------------- | -------- |
+| `user_signed_up`             | 新用户注册    |
+| `user_profile_updated`       | 用户更新个人资料 |
+| `user_profile_image_updated` | 用户更改头像   |
+| `user_email_verified`        | 邮箱验证完成   |
+| `user_banned`                | 用户被封禁    |
+| `user_unbanned`              | 用户解封     |
+| `user_deleted`               | 用户账户删除   |
 
 ### 会话事件
 
-| 事件 | 触发条件 |
-| ---------------------------- | ------------------------------- |
-| `user_signed_in` | 成功登录 |
-| `user_signed_out` | 用户登出 |
-| `session_created` | 创建新会话 |
-| `session_revoked` | 撤销单个会话 |
-| `sessions_revoked_all` | 撤销所有会话 |
-| `user_impersonated` | 管理员开始模拟用户 |
-| `user_impersonation_stopped` | 管理员停止模拟 |
+| 事件                           | 触发条件      |
+| ---------------------------- | --------- |
+| `user_signed_in`             | 成功登录      |
+| `user_signed_out`            | 用户登出      |
+| `session_created`            | 创建新会话     |
+| `session_revoked`            | 撤销单个会话    |
+| `sessions_revoked_all`       | 撤销所有会话    |
+| `user_impersonated`          | 管理员开始模拟用户 |
+| `user_impersonation_stopped` | 管理员停止模拟   |
 
 ### 账户事件
 
-| 事件 | 触发条件 |
-| ------------------ | ----------------------- |
-| `account_linked` | 社交账户关联 |
+| 事件                 | 触发条件   |
+| ------------------ | ------ |
+| `account_linked`   | 社交账户关联 |
 | `account_unlinked` | 社交账户解绑 |
-| `password_changed` | 密码已更新 |
+| `password_changed` | 密码已更新  |
 
 ### 验证事件
 
-| 事件 | 触发条件 |
-| -------------------------- | ------------------------ |
+| 事件                         | 触发条件   |
+| -------------------------- | ------ |
 | `password_reset_requested` | 发起密码重置 |
 | `password_reset_completed` | 完成密码重置 |
-| `email_verification_sent` | 发送验证邮件 |
+| `email_verification_sent`  | 发送验证邮件 |
 
 ### 组织事件
 
 如果你使用了组织插件，也会追踪以下事件：
 
-| 事件 | 触发条件 |
-| ---------------------- | -------------------------------- |
-| `organization_created` | 创建新组织 |
-| `organization_updated` | 组织设置更改 |
-| `member_added` | 成员被添加到组织 |
-| `member_removed` | 成员从组织移除 |
-| `member_role_updated` | 成员角色更改 |
-| `member_invited` | 发送邀请 |
-| `invite_accepted` | 邀请被接受 |
-| `invite_rejected` | 邀请被拒绝 |
-| `invite_cancelled` | 邀请被取消 |
-| `team_created` | 创建团队 |
-| `team_updated` | 团队更新 |
-| `team_deleted` | 团队删除 |
-| `team_member_added` | 成员被添加到团队 |
-| `team_member_removed` | 成员从团队移除 |
+| 事件                     | 触发条件     |
+| ---------------------- | -------- |
+| `organization_created` | 创建新组织    |
+| `organization_updated` | 组织设置更改   |
+| `member_added`         | 成员被添加到组织 |
+| `member_removed`       | 成员从组织移除  |
+| `member_role_updated`  | 成员角色更改   |
+| `member_invited`       | 发送邀请     |
+| `invite_accepted`      | 邀请被接受    |
+| `invite_rejected`      | 邀请被拒绝    |
+| `invite_cancelled`     | 邀请被取消    |
+| `team_created`         | 创建团队     |
+| `team_updated`         | 团队更新     |
+| `team_deleted`         | 团队删除     |
+| `team_member_added`    | 成员被添加到团队 |
+| `team_member_removed`  | 成员从团队移除  |
 
 ## 仪表盘端点
 
@@ -118,117 +218,117 @@ dash 插件注册了众多管理员端点供仪表盘使用：
 
 ### 用户管理
 
-| 端点 | 方法 | 描述 |
-| -------------------------- | ------ | -------------------------- |
-| `/dash/users` | GET | 分页列出用户 |
-| `/dash/users/online-count` | GET | 获取在线用户数 |
-| `/dash/user` | GET | 获取用户详情 |
-| `/dash/user` | POST | 创建新用户 |
-| `/dash/user` | PATCH | 更新用户 |
-| `/dash/user` | DELETE | 删除用户 |
-| `/dash/user/ban` | POST | 封禁用户 |
-| `/dash/user/unban` | POST | 解封用户 |
-| `/dash/user/password` | POST | 设置用户密码 |
-| `/dash/user/impersonate` | POST | 模拟用户 |
+| 端点                         | 方法     | 描述      |
+| -------------------------- | ------ | ------- |
+| `/dash/users`              | GET    | 分页列出用户  |
+| `/dash/users/online-count` | GET    | 获取在线用户数 |
+| `/dash/user`               | GET    | 获取用户详情  |
+| `/dash/user`               | POST   | 创建新用户   |
+| `/dash/user`               | PATCH  | 更新用户    |
+| `/dash/user`               | DELETE | 删除用户    |
+| `/dash/user/ban`           | POST   | 封禁用户    |
+| `/dash/user/unban`         | POST   | 解封用户    |
+| `/dash/user/password`      | POST   | 设置用户密码  |
+| `/dash/user/impersonate`   | POST   | 模拟用户    |
 
 ### 会话管理
 
-| 端点 | 方法 | 描述 |
-| --------------------------- | ------ | ------------------------ |
-| `/dash/sessions` | GET | 列出所有会话 |
-| `/dash/sessions` | DELETE | 删除会话 |
-| `/dash/session/revoke` | POST | 撤销单个会话 |
-| `/dash/sessions/revoke-all` | POST | 撤销用户所有会话 |
+| 端点                          | 方法     | 描述       |
+| --------------------------- | ------ | -------- |
+| `/dash/sessions`            | GET    | 列出所有会话   |
+| `/dash/sessions`            | DELETE | 删除会话     |
+| `/dash/session/revoke`      | POST   | 撤销单个会话   |
+| `/dash/sessions/revoke-all` | POST   | 撤销用户所有会话 |
 
 ### 组织管理
 
-| 端点 | 方法 | 描述 |
-| -------------------------------- | ------ | ------------------------ |
-| `/dash/organizations` | GET | 列出组织 |
-| `/dash/organization` | GET | 获取组织详情 |
-| `/dash/organization` | POST | 创建组织 |
-| `/dash/organization` | PATCH | 更新组织 |
-| `/dash/organization` | DELETE | 删除组织 |
-| `/dash/organization/members` | GET | 列出成员 |
-| `/dash/organization/member` | POST | 添加成员 |
-| `/dash/organization/member` | DELETE | 移除成员 |
-| `/dash/organization/member/role` | PATCH | 更新成员角色 |
+| 端点                               | 方法     | 描述     |
+| -------------------------------- | ------ | ------ |
+| `/dash/organizations`            | GET    | 列出组织   |
+| `/dash/organization`             | GET    | 获取组织详情 |
+| `/dash/organization`             | POST   | 创建组织   |
+| `/dash/organization`             | PATCH  | 更新组织   |
+| `/dash/organization`             | DELETE | 删除组织   |
+| `/dash/organization/members`     | GET    | 列出成员   |
+| `/dash/organization/member`      | POST   | 添加成员   |
+| `/dash/organization/member`      | DELETE | 移除成员   |
+| `/dash/organization/member/role` | PATCH  | 更新成员角色 |
 
 ### 团队管理
 
-| 端点 | 方法 | 描述 |
-| -------------------------------- | ------ | ------------------- |
-| `/dash/organization/teams` | GET | 列出团队 |
-| `/dash/organization/team` | POST | 创建团队 |
-| `/dash/organization/team` | PATCH | 更新团队 |
-| `/dash/organization/team` | DELETE | 删除团队 |
-| `/dash/organization/team/member` | POST | 添加团队成员 |
+| 端点                               | 方法     | 描述     |
+| -------------------------------- | ------ | ------ |
+| `/dash/organization/teams`       | GET    | 列出团队   |
+| `/dash/organization/team`        | POST   | 创建团队   |
+| `/dash/organization/team`        | PATCH  | 更新团队   |
+| `/dash/organization/team`        | DELETE | 删除团队   |
+| `/dash/organization/team/member` | POST   | 添加团队成员 |
 | `/dash/organization/team/member` | DELETE | 移除团队成员 |
 
 ### 邀请管理
 
-| 端点 | 方法 | 描述 |
-| ---------------------------------- | ------ | ----------------- |
-| `/dash/organization/invitations` | GET | 列出邀请 |
-| `/dash/organization/invite` | POST | 发送邀请 |
+| 端点                                 | 方法   | 描述   |
+| ---------------------------------- | ---- | ---- |
+| `/dash/organization/invitations`   | GET  | 列出邀请 |
+| `/dash/organization/invite`        | POST | 发送邀请 |
 | `/dash/organization/invite/cancel` | POST | 取消邀请 |
 | `/dash/organization/invite/resend` | POST | 重发邀请 |
 
 ### 单点登录管理（SSO）
 
-| 端点 | 方法 | 描述 |
-| ----------------------------------------------- | ------ | ------------------- |
-| `/dash/organization/sso-providers` | GET | 列出 SSO 提供商 |
-| `/dash/organization/sso-provider` | POST | 创建 SSO 提供商 |
-| `/dash/organization/sso-provider` | PATCH | 更新 SSO 提供商 |
-| `/dash/organization/sso-provider` | DELETE | 删除 SSO 提供商 |
-| `/dash/organization/sso-provider/verify-domain` | POST | 验证域名 |
+| 端点                                              | 方法     | 描述         |
+| ----------------------------------------------- | ------ | ---------- |
+| `/dash/organization/sso-providers`              | GET    | 列出 SSO 提供商 |
+| `/dash/organization/sso-provider`               | POST   | 创建 SSO 提供商 |
+| `/dash/organization/sso-provider`               | PATCH  | 更新 SSO 提供商 |
+| `/dash/organization/sso-provider`               | DELETE | 删除 SSO 提供商 |
+| `/dash/organization/sso-provider/verify-domain` | POST   | 验证域名       |
 
 ### 目录同步
 
-| 端点 | 方法 | 描述 |
-| ------------------------------------ | ------ | ---------------- |
-| `/dash/organization/directories` | GET | 列出目录 |
-| `/dash/organization/directory` | POST | 创建目录 |
-| `/dash/organization/directory` | DELETE | 删除目录 |
-| `/dash/organization/directory/token` | POST | 重新生成令牌 |
+| 端点                                   | 方法     | 描述     |
+| ------------------------------------ | ------ | ------ |
+| `/dash/organization/directories`     | GET    | 列出目录   |
+| `/dash/organization/directory`       | POST   | 创建目录   |
+| `/dash/organization/directory`       | DELETE | 删除目录   |
+| `/dash/organization/directory/token` | POST   | 重新生成令牌 |
 
 ### 日志转储管理
 
-| 端点 | 方法 | 描述 |
-| ----------------------------------- | ------ | ---------------- |
-| `/dash/organization/log-drains` | GET | 列出日志转储 |
-| `/dash/organization/log-drain` | POST | 创建日志转储 |
-| `/dash/organization/log-drain` | PATCH | 更新日志转储 |
-| `/dash/organization/log-drain` | DELETE | 删除日志转储 |
-| `/dash/organization/log-drain/test` | POST | 测试日志转储 |
+| 端点                                  | 方法     | 描述     |
+| ----------------------------------- | ------ | ------ |
+| `/dash/organization/log-drains`     | GET    | 列出日志转储 |
+| `/dash/organization/log-drain`      | POST   | 创建日志转储 |
+| `/dash/organization/log-drain`      | PATCH  | 更新日志转储 |
+| `/dash/organization/log-drain`      | DELETE | 删除日志转储 |
+| `/dash/organization/log-drain/test` | POST   | 测试日志转储 |
 
 ### 事件和审计日志
 
-| 端点 | 方法 | 描述 |
-| -------------------- | ------ | --------------- |
-| `/events/list` | GET | 获取用户事件 |
+| 端点                   | 方法  | 描述     |
+| -------------------- | --- | ------ |
+| `/events/list`       | GET | 获取用户事件 |
 | `/events/audit-logs` | GET | 获取审计日志 |
-| `/events/types` | GET | 获取事件类型 |
+| `/events/types`      | GET | 获取事件类型 |
 
 ### 分析统计
 
-| 端点 | 方法 | 描述 |
-| ----------------- | ------ | ------------------- |
-| `/dash/stats` | GET | 获取用户统计信息 |
-| `/dash/graph` | GET | 获取图表数据 |
-| `/dash/retention` | GET | 获取留存数据 |
-| `/dash/map` | GET | 获取地理数据 |
+| 端点                | 方法  | 描述       |
+| ----------------- | --- | -------- |
+| `/dash/stats`     | GET | 获取用户统计信息 |
+| `/dash/graph`     | GET | 获取图表数据   |
+| `/dash/retention` | GET | 获取留存数据   |
+| `/dash/map`       | GET | 获取地理数据   |
 
 ### 双因素管理
 
-| 端点 | 方法 | 描述 |
-| -------------------------------------- | ------ | -------------------- |
-| `/dash/user/2fa/enable` | POST | 为用户启用 2FA |
-| `/dash/user/2fa/disable` | POST | 为用户禁用 2FA |
-| `/dash/user/2fa/totp-uri` | GET | 获取 TOTP URI |
-| `/dash/user/2fa/backup-codes` | GET | 查看备份代码 |
-| `/dash/user/2fa/backup-codes/generate` | POST | 生成新代码 |
+| 端点                                     | 方法   | 描述          |
+| -------------------------------------- | ---- | ----------- |
+| `/dash/user/2fa/enable`                | POST | 为用户启用 2FA   |
+| `/dash/user/2fa/disable`               | POST | 为用户禁用 2FA   |
+| `/dash/user/2fa/totp-uri`              | GET  | 获取 TOTP URI |
+| `/dash/user/2fa/backup-codes`          | GET  | 查看备份代码      |
+| `/dash/user/2fa/backup-codes/generate` | POST | 生成新代码       |
 
 ## 客户端集成
 

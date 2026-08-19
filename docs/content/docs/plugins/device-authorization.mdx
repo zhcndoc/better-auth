@@ -5,7 +5,7 @@ description: 针对输入受限设备的 OAuth 2.0 设备授权授予
 
 `RFC 8628` `CLI` `智能电视` `物联网`
 
-设备授权插件实现了 OAuth 2.0 设备授权授予 ([RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628))，支持智能电视、CLI 应用、物联网设备和游戏主机等输入能力有限的设备进行身份验证。
+Device Authorization 插件为智能电视、CLI 应用、物联网设备和游戏主机等输入受限设备，实现了 OAuth 2.0 设备授权授予（[RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628)）中的代码签发和批准流程。您可以单独使用它来获取 Better Auth 会话令牌，也可以将其与 OAuth Provider 组合使用来签发 OAuth 访问令牌。
 
 ## 立即试用
 
@@ -93,12 +93,142 @@ npx auth login
 
 设备授权流程包含以下步骤：
 
-1. **设备请求代码**：设备从授权服务器请求设备码和用户码
+1. **设备请求代码**：设备向授权服务器请求设备码和用户码
 2. **用户授权**：用户访问验证 URL 并输入用户码
-3. **设备轮询获取令牌**：设备持续轮询服务器，等待用户完成授权
-4. **访问授权**：授权完成后，设备接收访问令牌
+3. **设备轮询令牌**：设备轮询服务器，直到用户完成授权
+4. **授予访问权限**：授权后，设备会收到由配置的集成提供的会话令牌或 OAuth 访问令牌
 
-## 基础用法
+### 生产环境安全要求
+
+RFC 8628 要求设备发出出站 HTTPS 请求，并要求用户在安全的 TLS 保护会话中通过验证 URI 进行身份验证。在生产环境中，应通过 HTTPS 提供验证和批准 UI、设备代码请求以及令牌轮询。仅在明确的本地开发场景中使用 HTTP。
+
+批准 UI 是安全边界的一部分。它必须：
+
+* 要求用户输入 `user_code`，或者在使用 `verification_uri_complete`（例如二维码）时，要求用户确认显示的代码与设备上的代码匹配；
+* 显示正在授权的内容：客户端、请求的作用域，以及在启用 OAuth Provider 集成时，请求的资源；
+* 要求用户明确批准或拒绝；并且
+* 告知用户，他们正在授权自己持有的设备，并警告他们不要批准意外的请求或通过钓鱼消息提供的代码。
+
+有关其他威胁模型和缓解措施的指导，请参阅 IETF 的 [跨设备流程：安全最佳当前实践](https://datatracker.ietf.org/doc/draft-ietf-oauth-cross-device-security/)。
+
+## 选择设备所需的令牌
+
+设备授权可以通过两种不同的令牌类型完成。请根据客户端需要调用的内容选择令牌：
+
+| 使用场景                                    | 令牌                 | 插件                                                       | 令牌端点            |
+| --------------------------------------- | ------------------ | -------------------------------------------------------- | --------------- |
+| 将您自己的设备登录到同一个 Better Auth 应用            | Better Auth 会话令牌   | `deviceAuthorization()`                                  | `/device/token` |
+| 让已注册的 CLI、电视应用或其他公共客户端调用受 OAuth 保护的 API | 有作用域限制的 OAuth 访问令牌 | `jwt()`、`oauthProvider()` 和 `oauthDeviceAuthorization()` | `/oauth2/token` |
+
+命令行应用通常需要第二种流程。CLI 无法安全地保存客户端密钥，也可能没有可靠的重定向监听器，但它仍然需要一个经过用户授权、用于调用您 API 的令牌。设备授予允许用户在浏览器中批准请求，同时 CLI 接收一个绑定到受众的 OAuth 访问令牌。
+
+### 授权 CLI 调用 API
+
+添加 [JWT](/docs/plugins/jwt)、[OAuth Provider](/docs/plugins/oauth-provider) 和 OAuth Device Authorization 集成：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { jwt } from "better-auth/plugins";
+import {
+  oauthDeviceAuthorization,
+  oauthProvider,
+} from "@better-auth/oauth-provider"; // [!code highlight]
+
+export const auth = betterAuth({
+  plugins: [
+    jwt(),
+    oauthProvider({
+      loginPage: "/sign-in",
+      consentPage: "/consent",
+      scopes: ["openid", "profile", "offline_access", "api:read"],
+      resources: ["https://api.example.com"],
+    }),
+    oauthDeviceAuthorization({ // [!code highlight]
+      verificationUri: "/device",
+    }),
+  ],
+});
+```
+
+将 CLI 注册为公共原生客户端，并将其链接到 API 资源。公共客户端使用 `token_endpoint_auth_method: "none"`，因为已安装的 CLI 无法对共享密钥保密：
+
+```ts title="register-cli.ts"
+import { DEVICE_CODE_GRANT_TYPE } from "@better-auth/oauth-provider";
+
+await auth.api.adminCreateOAuthClient({
+  headers,
+  body: {
+    token_endpoint_auth_method: "none",
+    type: "native",
+    grant_types: [DEVICE_CODE_GRANT_TYPE, "refresh_token"],
+    scope: "openid profile offline_access api:read",
+    resources: ["https://api.example.com"],
+  },
+});
+```
+
+公共客户端使用 `token_endpoint_auth_method: "none"`，并且必须发送 `client_id`。使用 `client_secret_basic` 的机密客户端可以通过 `Authorization: Basic ...` 标头在 `/device/code` 进行身份验证，并省略请求体中的 `client_id`；`client_secret_post` 则会在表单请求体中发送这两个值。
+
+随后，CLI 为其打算调用的 API 请求设备码：
+
+```ts title="cli.ts"
+import { createAuthClient } from "better-auth/client";
+import { oauthDeviceAuthorizationClient } from "@better-auth/oauth-provider/client";
+
+const authBaseURL = "https://auth.example.com/api/auth";
+const clientId = "YOUR_CLIENT_ID";
+const resource = "https://api.example.com";
+
+const authClient = createAuthClient({
+  baseURL: authBaseURL,
+  plugins: [oauthDeviceAuthorizationClient()],
+});
+
+const { data } = await authClient.device.code({
+  client_id: clientId,
+  scope: "openid profile offline_access api:read",
+  resource,
+});
+
+if (!data) throw new Error("Could not start device authorization");
+
+console.log(`Open ${data.verification_uri}`);
+console.log(`Enter code ${data.user_code}`);
+```
+
+用户登录并批准请求期间，请按照设备代码响应返回的间隔，重复发送以下请求：
+
+```ts title="cli.ts"
+const response = await fetch(`${authBaseURL}/oauth2/token`, {
+  method: "POST",
+  headers: {
+    "content-type": "application/x-www-form-urlencoded",
+  },
+  body: new URLSearchParams({
+    grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+    device_code: data.device_code,
+    client_id: clientId,
+  }),
+});
+
+const tokens = await response.json();
+```
+
+访问令牌是一个已签名的 JWT，其 `aud` 标识为 `https://api.example.com`。将其作为 `Authorization: Bearer <access_token>` 发送给该 API，然后在 API 中验证其签名、签发者、受众、过期时间和所需作用域。请参阅 [API 服务器验证](/docs/plugins/oauth-provider#api-server)。如果 CLI 请求了 `offline_access`，请将返回的刷新令牌存储在操作系统的安全凭据存储中，并使用它来续期有效期较短的访问令牌。
+
+<Callout type="warn">
+  不要为此 OAuth 流程调用 `authClient.device.token`。该客户端方法会轮询 `/device/token` 并返回 Better Auth 会话令牌。已注册的 OAuth 客户端必须轮询 `/oauth2/token`。
+</Callout>
+
+`oauthDeviceAuthorization()` 负责设备授权端点，并向 OAuth Provider 注册 `urn:ietf:params:oauth:grant-type:device_code` 授予类型。Provider 会在创建请求前验证已注册的客户端、作用域和 [RFC 8707](https://datatracker.ietf.org/doc/html/rfc8707) 资源。批准页面可以向已登录用户显示客户端、作用域和资源。
+
+<Callout type="info">
+  两种令牌路径可以共存。第一方设备登录继续使用 `/device/token`。已注册的 OAuth 客户端使用 `/oauth2/token`；`oauthDeviceAuthorization()` 会阻止它们将设备码兑换为 Better Auth 会话令牌。
+</Callout>
+
+## 第一方会话流程
+
+本页其余部分介绍第一方流程，其中 `/device/token` 返回 Better Auth 会话令牌。
 
 ### 请求设备授权
 
@@ -108,7 +238,7 @@ npx auth login
   ```ts
   type deviceCode = {
       /**
-       * OAuth 客户端标识符
+       * The device client identifier
        */
       client_id: string;
       /**
@@ -162,9 +292,9 @@ const data = await auth.api.deviceCode({
   请从受信任的服务器端代码中传入 `user_id`。该参数只会限制谁可以批准该代码，因此不受信任的设备无法利用它访问其他用户的账户。只有在您的服务器控制代码签发方式时，这种保护才有意义。
 </Callout>
 
-### 轮询令牌
+### 轮询 Better Auth 会话令牌
 
-显示用户代码后，轮询服务器获取访问令牌：
+显示用户代码后，轮询 Better Auth 会话令牌。响应的 `access_token` 字段包含 Better Auth 会话令牌，而不是 RFC 8628 OAuth 访问令牌：
 
 <APIMethod path="/device/token" method="POST">
   ```ts
@@ -178,7 +308,7 @@ const data = await auth.api.deviceCode({
        */
       device_code: string;
       /**
-       * OAuth 客户端标识符
+       * The device client identifier
        */
       client_id: string;
   }
@@ -239,7 +369,9 @@ pollForToken();
   用户在调用 `GET /device` 时必须已通过身份验证，因为验证步骤会将待处理的设备代码绑定到该会话。之后只有同一会话才能批准或拒绝。如果用户在输入代码时尚未登录，请将其重定向到登录页面并带上返回 URL，登录后重新调用 `GET /device`。
 </Callout>
 
-创建让用户输入代码的页面：
+启用 OAuth Provider 集成后，`GET /device` 还会向拥有该请求的已验证身份用户返回已批准的资源上下文。在批准 UI 中，将该上下文与客户端和作用域一起显示。独立使用 Device Authorization 时不会返回 RFC 8707 `resource` 字段。
+
+创建一个允许用户输入代码的页面：
 
 ```tsx title="app/device/page.tsx"
 export default function DeviceAuthorizationPage() {
@@ -330,6 +462,18 @@ export default function DeviceApprovalPage() {
   const searchParams = useSearchParams();
   const userCode = searchParams.get("user_code");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [request, setRequest] = useState<{
+    client_id?: string;
+    scope?: string;
+    resource?: string | string[];
+  } | null>(null);
+
+  useEffect(() => {
+    if (!user || !userCode) return;
+    authClient.device({ query: { user_code: userCode } }).then(({ data }) => {
+      setRequest(data);
+    });
+  }, [user, userCode]);
   
   const handleApprove = async () => {
     setIsProcessing(true);
@@ -370,8 +514,14 @@ export default function DeviceApprovalPage() {
   return (
     <div>
       <h2>设备授权请求</h2>
-      <p>有设备请求访问您的账户。</p>
-      <p>代码: {userCode}</p>
+      <p>客户端：{request?.client_id}</p>
+      <p>作用域：{request?.scope || "None"}</p>
+      <p>
+        资源：{Array.isArray(request?.resource)
+          ? request.resource.join(", ")
+          : request?.resource || "None"}
+      </p>
+      <p>代码：{userCode}</p>
       
       <button onClick={handleApprove} disabled={isProcessing}>
         批准
@@ -389,6 +539,8 @@ export default function DeviceApprovalPage() {
 ### 客户端验证
 
 您可以验证客户端 ID，确保只有授权的应用可以使用设备流：
+
+启用 OAuth Provider 集成后，只有在 `validateClient` 明确接受未知 OAuth 客户端 ID 时，该 ID 才会进入独立流程。否则，请求会返回 `invalid_client`。
 
 ```ts
 deviceAuthorization({
@@ -430,17 +582,21 @@ deviceAuthorization({
 })
 ```
 
+默认用户代码不区分大小写，在提交到验证、批准或拒绝端点时，可以接受为便于阅读而插入的空格或标点符号。当自定义用户代码包含默认 `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` 字母表之外的字符时，系统会进行精确匹配。
+
+设备代码签发最多尝试 3 次，以解决唯一键冲突。如果所有尝试都发生冲突，`/device/code` 会返回 `server_error`。
+
 ## 错误处理
 
 设备流程定义了具体的错误代码：
 
-| 错误代码                | 说明                                         |
-| ----------------------- | -------------------------------------------- |
-| `authorization_pending` | 用户尚未批准（继续轮询）                     |
-| `slow_down`             | 轮询过于频繁（增加间隔）                     |
-| `expired_token`         | 设备代码已过期                               |
-| `access_denied`         | 用户拒绝了授权                               |
-| `invalid_grant`         | 无效的设备代码或客户端 ID                    |
+| 错误代码                    | 说明             |
+| ----------------------- | -------------- |
+| `authorization_pending` | 用户尚未批准（继续轮询）   |
+| `slow_down`             | 轮询过于频繁（增加间隔）   |
+| `expired_token`         | 设备代码已过期        |
+| `access_denied`         | 用户拒绝了授权        |
+| `invalid_grant`         | 无效的设备代码或客户端 ID |
 
 ## 示例：CLI 应用
 
@@ -576,13 +732,13 @@ authenticateCLI().catch((err) => {
 
 ## 安全注意事项
 
-1. **限流**：插件会强制执行轮询间隔以防止滥用
-2. **代码过期**：设备码和用户码会在配置的时间后过期（默认：30 分钟）
-3. **客户端验证**：在生产环境中始终验证 client ID，以防止未授权访问
-4. **仅限 HTTPS**：在生产环境中进行设备授权时始终使用 HTTPS
-5. **用户码格式**：用户码使用有限的字符集（不包含容易混淆的字符，如 0/O、1/I）以减少输入错误
-6. **需要身份验证**：调用 `GET /device` 时用户必须已通过身份验证。验证步骤会为调用会话认领待处理的设备码，之后只有该会话可以批准或拒绝它
-7. **预绑定**：使用 `user_id` 签发的设备码会跳过认领步骤，并且只能由该用户批准或拒绝。仅从受信任的服务端代码传递 `user_id`
+1. **验证和轮询限制**：`/device` 在一个等于配置的设备代码生命周期的时间窗口内最多允许 5 次请求。`/device/token` 有独立的轮询间隔和 `slow_down` 行为
+2. **代码过期**：设备代码和用户代码会在配置的时间后过期（默认：30 分钟）
+3. **客户端验证**：在生产环境中始终验证客户端 ID，以防止未经授权的访问
+4. **HTTPS 和批准 UI**：在生产环境中遵循 [RFC 8628 TLS 和用户交互要求](https://datatracker.ietf.org/doc/html/rfc8628#section-3.3)，包括明确的批准或拒绝，以及[设备持有和远程钓鱼指南](https://datatracker.ietf.org/doc/html/rfc8628#section-5.4)
+5. **用户代码格式**：用户代码使用有限的字符集，并排除类似的字符（如 0/O、1/I），以减少输入错误
+6. **需要身份验证**：用户调用 `GET /device` 时必须通过身份验证。验证步骤会为调用会话声明待处理的设备代码，之后只有该会话才能批准或拒绝它
+7. **预绑定**：使用 `user_id` 签发的设备代码会跳过认领步骤，并且只能由该用户批准或拒绝。只能从受信任的服务器端代码传入 `user_id`
 
 ## 选项
 
@@ -594,13 +750,13 @@ authenticateCLI().catch((err) => {
 
 **interval**：最小轮询间隔。默认值：`"5s"`（5 秒）。
 
-**userCodeLength**：用户码长度。默认值：``8``。
+**userCodeLength**：用户代码的长度。最大值：`191`。默认值：`8`。
 
-**deviceCodeLength**：设备码长度。默认值：`40`。
+**deviceCodeLength**：设备代码的长度。最大值：`191`。默认值：`40`。
 
-**generateDeviceCode**：自定义设备码生成函数。返回字符串或 `Promise<string>`。
+**generateDeviceCode**：用于生成设备代码的自定义函数。返回最多包含 191 个字符的字符串或 `Promise<string>`。
 
-**generateUserCode**：自定义用户码生成函数。返回字符串或 `Promise<string>`。
+**generateUserCode**：用于生成用户代码的自定义函数。返回最多包含 191 个字符的字符串或 `Promise<string>`。
 
 **validateClient**：客户端 ID 验证函数，接收 clientId，返回布尔值或 `Promise<boolean>`。
 
@@ -610,17 +766,23 @@ authenticateCLI().catch((err) => {
 
 无客户端特定配置选项。插件添加以下方法：
 
-* **device()**: 验证用户码有效性
-* **device.code()**: 请求设备码和用户码
-* **device.token()**: 轮询访问令牌
-* **device.approve()**: 批准设备（需要身份验证）
-* **device.deny()**: 拒绝设备（需要身份验证）
+* **device()**：验证用户码有效性
+* **device.code()**：请求设备码和用户码
+* **device.token()**：轮询访问令牌
+* **device.approve()**：批准设备（需要身份验证）
+* **device.deny()**：拒绝设备（需要身份验证）
 
 ## 模式
 
 插件需要新增一个表用以存储设备授权数据。
 
 表名：`deviceCode`
+
+`deviceCode` 和 `userCode` 具有唯一索引，因为设备令牌、验证、批准和拒绝流程会使用它们作为查找字段。两个值的长度都限制为 191 个字符。
+
+<Callout type="warn">
+  在应用迁移之前，请在每个适配器上解决重复的 `deviceCode` 和 `userCode` 值。MySQL 和 SQL Server 安装还必须将两列转换为有长度限制的字符串，并清理长度超过 191 个字符的值。
+</Callout>
 
 export const deviceCodeTableFields = [
 	{
@@ -633,11 +795,13 @@ export const deviceCodeTableFields = [
 		name: "deviceCode",
 		type: "string",
 		description: "The device verification code",
+		isUnique: true,
 	},
 	{
 		name: "userCode",
 		type: "string",
 		description: "The user-friendly code for verification",
+		isUnique: true,
 	},
 	{
 		name: "userId",
@@ -648,13 +812,13 @@ export const deviceCodeTableFields = [
 	{
 		name: "clientId",
 		type: "string",
-		description: "The OAuth client identifier",
+		description: "The device client identifier",
 		isOptional: true,
 	},
 	{
 		name: "scope",
 		type: "string",
-		description: "Requested OAuth scopes",
+		description: "Requested scopes",
 		isOptional: true,
 	},
 	{
@@ -682,3 +846,5 @@ export const deviceCodeTableFields = [
 ];
 
 <DatabaseTable name="deviceCode" fields={deviceCodeTableFields} />
+
+`oauthDeviceAuthorization()` 将此表扩展为包含可选的 `oauthClientId` 和 `resources` 字段。独立的 Device Authorization 安装不会添加这些字段，也不会公开 RFC 8707 的 `resource` 请求参数。

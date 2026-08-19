@@ -3,7 +3,15 @@ title: Cookies
 description: 了解 Better Auth 如何使用 cookies，包括 cookie 前缀、自定义 cookie 属性、跨子域共享、安全 cookies，以及使用代理处理 Safari ITP。
 ---
 
-Cookies 用于存储诸如会话令牌、会话数据、OAuth 状态等信息。所有 Cookies 都使用认证选项中提供的 `secret` 密钥或环境变量 `BETTER_AUTH_SECRET` 进行签名。如果您使用 [版本化密钥](/docs/reference/options#secrets) 来进行密钥轮换，加密的 Cookie 数据（例如 JWE 会话缓存）将自动使用当前密钥，并且仍然可以用之前的密钥解密。
+Cookies 用于存储会话令牌、会话数据、OAuth 状态等数据。
+
+* 主要的 `session_token` Cookie 仍然是不透明的、使用密钥签名的会话标识符
+* 仅当启用 `session.cookieCache` 时才会存在 `session_data` Cookie，其编码取决于配置的策略：
+  * `compact`：base64url + 使用您的 Better Auth 密钥进行 HMAC
+  * `jwt`：默认为 HS256，或者在 JWT 插件上启用 `sessionCookieCache` 时使用非对称签名
+  * `jwe`：使用您的 Better Auth 密钥加密
+
+如果您使用[版本化密钥](/docs/reference/options#secrets)进行轮换，依赖密钥的 Cookie 数据（包括签名 Cookie 和加密的 JWE 会话缓存）将自动使用当前密钥，并在受支持的情况下继续兼容之前的密钥。
 
 ### Cookie 前缀
 
@@ -23,7 +31,7 @@ export const auth = betterAuth({
 
 在服务器运行于生产模式时，所有 Cookies 都是 `httpOnly` 和 `secure` 的。
 
-如果您想设置自定义 cookie 名称和属性，可以通过在认证选项的 `advanced` 对象中设置 `cookies` 来实现。
+如果您想设置自定义 Cookie 名称和属性，可以通过在认证选项的 `advanced` 对象中设置 `cookies` 来实现。
 
 默认情况下，Better Auth 使用以下 Cookies：
 
@@ -122,8 +130,8 @@ Safari 会将 `domainA.com` 视为第三方，并阻止其 Cookies。这可能�
 
 要解决此问题，有两种方案：
 
-1. 使用反向代理将请求代理到 API。
-2. 使用共享父域名。
+1. 使用反向代理将请求代理到 API
+2. 使用共享父域名
 
 ### 使用反向代理
 
@@ -192,6 +200,6 @@ export const auth = betterAuth({
 })
 ```
 
-有关跨子域 Cookies 的更多信息，请参见 [上述文档](#cross-subdomain-cookies)。
+有关跨子域 Cookies 的更多信息，请参见[上述文档](#cross-subdomain-cookies)。
 
 这将避免 Safari 将 API 视为第三方。

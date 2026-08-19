@@ -41,8 +41,8 @@ export default app;
 `app.all()` 使用来自 `c.req.raw` 的原始 Web Standard `Request` 将每个 HTTP 方法转发给 Better Auth。Better Auth 会验证方法，并返回一个由 Hono 直接发送的 `Response`。请在任何可能先处理请求的全捕获路由之前注册 Auth 路由。
 
 <Callout type="info">
-  最终的 Hono 路由必须匹配你的 Better Auth `basePath`，其默认值为 `/api/auth`。如果你的应用已经使用了 `new
-      Hono().basePath("/api")`，请将 Better Auth 挂载到 `/auth/*`：
+  生成的 Hono 路由必须匹配你的 Better Auth `basePath`，该路径默认为 `/api/auth`。如果你的应用已经使用 `new
+          Hono().basePath("/api")`，请将 Better Auth 挂载到 `/auth/*`：
 
   ```ts
   const app = new Hono().basePath("/api");

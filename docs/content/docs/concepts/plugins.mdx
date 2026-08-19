@@ -183,7 +183,39 @@ const myPlugin = () => {
 
 `unique`: 字段是否必须唯一。（默认：`false`）
 
-`references`: 字段是否为关联另一张表的引用。（可选）它接受一个包含以下属性的对象：
+对于跨多个字段的索引，请向表中添加 `indexes` 数组。即使字段具有自定义数据库列名，索引字段也使用 `fields` 中的逻辑字段键。
+
+```ts title="plugin.ts"
+import type { BetterAuthPlugin } from "better-auth";
+
+const directoryPlugin = {
+  id: "directory",
+  schema: {
+    directoryUser: {
+      fields: {
+        connectionId: {
+          type: "string",
+          fieldName: "connection_id",
+        },
+        externalId: {
+          type: "string",
+          fieldName: "external_id",
+        },
+      },
+      indexes: [
+        {
+          fields: ["connectionId", "externalId"],
+          unique: true,
+        },
+      ],
+    },
+  },
+} satisfies BetterAuthPlugin;
+```
+
+每个索引最多可以包含 16 个字段。当每个字段元组最多只能标识一行时，将 `unique: true` 设置为唯一索引。唯一的表级索引中的每个字段都必须是必填字段，以确保跨数据库的 null 处理保持一致。您还可以提供一个模式范围的 `name`，长度最多为 63 个 UTF-8 字节，以控制数据库索引名称。名称必须以字母或下划线开头，且只能包含字母、数字和下划线。名称比较不区分大小写，不能与表或其他索引冲突。CLI 会将表级索引包含在 SQL 迁移以及生成的 Drizzle 或 Prisma 模式中。MongoDB 适配器会在对集合执行首次索引写入前创建这些索引。
+
+`references`：如果字段是对另一张表的引用。（可选）它接受一个包含以下属性的对象：
 
 * `model`：要引用的表名。
 * `field`：要引用的字段名。

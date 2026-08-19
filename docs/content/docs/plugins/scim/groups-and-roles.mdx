@@ -1,0 +1,176 @@
+---
+title: 群组和自定义角色
+description: 配置 SCIM 群组，并将其映射到应用程序角色
+---
+
+SCIM 群组存储由目录管理的成员关系。在配置投影之前，它们不会授予应用程序权限。
+
+## 配置群组和成员关系
+
+Group 需要 `displayName`，也可以包含 `externalId`。成员引用来自同一连接的 SCIM User ID，而不是 Better Auth User ID。
+
+```json title="Create Group"
+{
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+  "externalId": "directory-group-finance",
+  "displayName": "Finance administrators",
+  "members": [
+    {
+      "value": "<scim-user-id>",
+      "type": "User"
+    }
+  ]
+}
+```
+
+群组仅支持直接的 User 成员。嵌套 Group 以及来自其他连接的成员会被拒绝。一个 Group 最多可以包含 1,000 个唯一成员，成员关系变更具有原子性。
+
+请参阅 [Group endpoint reference](/docs/plugins/scim/reference#groups)，了解支持的操作和 PATCH 路径。
+
+## 将群组映射到自定义角色
+
+配置 `projection.roles`，将 Group 转换为应用程序角色。然后实现 `projection.reconcileUser`，以应用完整的 SCIM 管理访问状态。
+
+```ts title="auth.ts"
+const rolesByExternalGroupId = new Map([
+  ["directory-group-finance", "billing-manager"],
+]);
+
+const allowedRolesByWorkspace = new Map([
+  ["workspace-acme", new Set(["billing-manager"])],
+]);
+
+scim({
+  connections: [
+    {
+      id: "workforce-acme",
+      provisioningDomainId: "workspace-acme",
+      credentials: [
+        { type: "bearer", id: "workforce-primary", token: workforceToken },
+      ],
+    },
+  ],
+  projection: {
+    roles: {
+      map: ({ source }) => {
+        const role = source.externalId
+          ? rolesByExternalGroupId.get(source.externalId)
+          : undefined;
+        return role ? [role] : [];
+      },
+      exists: ({ provisioningDomainId, role }) => {
+        const allowedRoles = allowedRolesByWorkspace.get(provisioningDomainId);
+        return allowedRoles?.has(role) ?? false;
+      },
+    },
+    async reconcileUser(state, { database }) {
+      await replaceSCIMManagedRoles(database, state);
+    },
+  },
+});
+```
+
+这些回调各自承担不同的职责：
+
+| 回调              | 职责                                            |
+| --------------- | --------------------------------------------- |
+| `roles.map`     | 返回一个 Group 源的候选角色标识符。                         |
+| `roles.exists`  | 确认每个候选角色存在于配置域中。                              |
+| `reconcileUser` | 在一个配置域中，为一个 Better Auth User 应用完整的所需 SCIM 状态。 |
+
+这三个回调都会接收绑定到事务的数据库上下文。使用它读取角色目录，并写入必须与 SCIM 变更一起提交的应用程序访问权限。
+
+在 `roles.map` 中优先使用不可变的 SCIM `id`。仅当目录保证 `externalId` 保持稳定时才使用它。该回调可以返回多个角色标识符。空值以及被 `roles.exists` 拒绝的角色不会授予任何权限。
+
+<Callout type="warn">
+  不要直接将 `displayName` 转换为应用程序角色。目录管理员可以重命名 Group。如果映射读取显示名称，请使用显式允许列表。
+</Callout>
+
+`projection.reconcileUser` 会接收以下状态：
+
+| 字段                     | 含义                               |
+| ---------------------- | -------------------------------- |
+| `provisioningDomainId` | 接收访问状态的应用程序边界。                   |
+| `userId`               | 已关联的 Better Auth User ID。        |
+| `active`               | 当此域中至少有一个 SCIM 源处于活动状态时为 `true`。 |
+| `sources`              | 此域中所有已关联的源，以及其连接和活动状态。           |
+| `grants`               | 已验证的角色授权，以及产生每个授权的 Group 源。      |
+
+确保协调器具有幂等性，并通过提供的 `database` 事务执行写入。仅替换由 SCIM 管理的访问权限，以便手动分配的权限和来自其他系统的角色保持不变。从回调中抛出错误会回滚 SCIM 请求。
+
+没有 `projection` 时，群组和成员关系仍可通过 SCIM 使用，但不会授予任何应用程序访问权限。
+
+## 协调映射变更
+
+SCIM 请求会立即协调受影响的用户。如果在没有目录请求的情况下更改角色映射或角色目录，请从受信任的服务器代码中重放配置域：
+
+```ts title="reconcile-scim.ts"
+await auth.api.reconcileSCIMProjection({
+  body: { provisioningDomainId: "workspace-acme" },
+});
+```
+
+`reconcileSCIMProjection` 没有 HTTP 路由。它会为该域中的每个已关联用户调用 `projection.reconcileUser`，并传入完整的所需状态。
+
+在重放完成前，请保持配置 `projection.reconcileUser`。要移除所有映射的角色，请移除 `projection.roles` 或让 `map` 不返回任何角色，运行重放，然后移除剩余的 projection 配置。
+
+## 轮换凭据
+
+将新凭据添加到旧凭据旁边，以便目录可以切换令牌而不中断配置。为即将停用的凭据设置过期时间，部署配置，更新目录，并在重叠期结束后移除旧值。
+
+```ts title="auth.ts"
+scim({
+  connections: [
+    {
+      id: "workforce-acme",
+      credentials: [
+        { type: "bearer", id: "current", token: currentToken },
+        {
+          type: "bearer",
+          id: "retiring",
+          token: retiringToken,
+          expiresAt: rotationEndsAt,
+        },
+      ],
+    },
+  ],
+});
+```
+
+过期凭据会收到 `401 Unauthorized`。所有已配置连接中的令牌必须唯一。
+
+## 停用连接
+
+在从 `connections` 中移除连接之前，请先停用已至少完成一次身份验证的连接。未使用过的连接没有持久化绑定，可以直接从配置中移除。
+
+停用操作不可逆。它会永久拒绝该连接的凭据，并移除其对生命周期和访问状态的贡献。
+
+```ts title="decommission-scim.ts"
+const result = await auth.api.decommissionSCIMConnection({
+  body: { connectionId: "workforce-acme" },
+});
+
+if (result.status === "reconciling") {
+  console.info("SCIM decommissioning is still running", {
+    reconciledUsers: result.reconciledUsers,
+    batches: result.batches,
+    retryAfter: result.retryAfter,
+  });
+}
+```
+
+该方法仅可通过受信任的服务器 API 使用。它会在停用连接后协调受影响的用户。如果结果为 `reconciling`，请在 `retryAfter` 中的 `Date` 所指定的时间或之后再次调用该方法。持续调用，直到它返回 `complete`，然后从配置中移除该连接。
+
+保持身份和 projection 回调具有幂等性，因为失败的操作可能会重试。停用会保留该连接的 SCIM Users、Groups 和成员关系。
+
+## 相关内容
+
+<Cards>
+  <Card href="/docs/plugins/scim" title="SCIM setup">
+    安装插件，配置目录，并配置用户。
+  </Card>
+
+  <Card href="/docs/plugins/scim/reference" title="SCIM reference">
+    查看完整的协议和配置范围。
+  </Card>
+</Cards>

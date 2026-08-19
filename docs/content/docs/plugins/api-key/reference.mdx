@@ -11,10 +11,10 @@ description: API 密钥插件选项、权限及模式参考。
 
 `references` <span className="opacity-70">`"user" | "organization"`</span>
 
-What the API key references. This determines ownership over the API key. Default is `"user"`.
+API 密钥所引用的对象。这决定了 API 密钥的所有权。默认值为 `"user"`。
 
-* `"user"`: API keys are owned by users (requires `userId` on creation)
-* `"organization"`: API keys are owned by organizations (requires `organizationId` on creation)
+* `"user"`：API 密钥归用户所有（创建时需要提供 `userId`）
+* `"organization"`：API 密钥归组织所有（创建时需要提供 `organizationId`）
 
 `apiKeyHeaders` <span className="opacity-70">`string | string[];`</span>
 
@@ -46,9 +46,9 @@ What the API key references. This determines ownership over the API key. Default
 
     `charactersLength` <span className="opacity-70">`number`</span>
 
-    The length of the starting characters to store in the database.
-    This includes the prefix length.
-    Default is `6`.
+    要存储在数据库中的起始字符长度。
+    该长度包括前缀长度。
+    默认值为 `6`。
   </Accordion>
 </Accordions>
 
@@ -111,8 +111,8 @@ API 密钥的前缀。
 
     `maxExpiresIn` <span className="opacity-70">`number`</span>
 
-    The maximum expiresIn value allowed to be set from the client. in days.
-    Default is `365`.
+    允许客户端设置的最大 expiresIn 值（天数）。
+    默认值为 `365`。
   </Accordion>
 </Accordions>
 
@@ -133,8 +133,8 @@ API 密钥的前缀。
 
     `maxRequests` <span className="opacity-70">`number`</span>
 
-    Maximum amount of requests allowed within a window.
-    Once the `maxRequests` is reached, the request will be rejected until the `timeWindow` has passed, at which point the `timeWindow` will be reset.
+    时间窗口内允许的最大请求数。
+    达到 `maxRequests` 后，请求将被拒绝，直到 `timeWindow` 结束，此时将重置 `timeWindow`。
   </Accordion>
 </Accordions>
 
@@ -150,8 +150,8 @@ API 密钥可以代表一个有效会话，因此如果在请求头中找到有�
 
 API 密钥的存储后端。默认值为 `"database"`。
 
-* `"database"`: Store API keys in the database adapter (default)
-* `"secondary-storage"`: Store API keys in the configured secondary storage (e.g., Redis)
+* `"database"`：将 API 密钥存储在数据库适配器中（默认）
+* `"secondary-storage"`：将 API 密钥存储在配置的二级存储中（例如 Redis）
 
 `fallbackToDatabase` <span className="opacity-70">`boolean`</span>
 
@@ -159,13 +159,13 @@ API 密钥的存储后端。默认值为 `"database"`。
 默认值为 `false`。
 
 <Callout>
-  When `storage` is set to `"secondary-storage"`, you must configure `secondaryStorage` in your Better Auth options. API keys will be stored using key-value patterns:
+  当 `storage` 设置为 `"secondary-storage"` 时，必须在 Better Auth 选项中配置 `secondaryStorage`。API 密钥将使用以下键值模式存储：
 
-  * `api-key:${hashedKey}` - Primary lookup by hashed key
-  * `api-key:by-id:${id}` - Lookup by ID
-  * `api-key:by-ref:${referenceId}` - Reference's API key list (user or organization)
+  * `api-key:${hashedKey}` - 通过哈希密钥进行主要查找
+  * `api-key:by-id:${id}` - 通过 ID 查找
+  * `api-key:by-ref:${referenceId}` - 引用对象的 API 密钥列表（用户或组织）
 
-  If an API key has an expiration date (`expiresAt`), a TTL will be automatically set in secondary storage to ensure automatic cleanup.
+  如果 API 密钥具有过期日期（`expiresAt`），则会在二级存储中自动设置 TTL，以确保自动清理。
 </Callout>
 
 ```ts title="auth.ts"
@@ -193,11 +193,11 @@ export const auth = betterAuth({
 });
 ```
 
-`customStorage` <span className="opacity-70">`{ get: (key: string) => Promise<unknown> | unknown; set: (key: string, value: string, ttl?: number) => Promise<void | null | unknown> | void; delete: (key: string) => Promise<void | null | string> | void; }`</span>
+`customStorage` <span className="opacity-70">`SecondaryStorage`</span>
 
-API 密钥的自定义存储方法。如果提供，该方法会优先于 `ctx.context.secondaryStorage` 使用。
+用于 API 密钥的自定义二级存储。如果提供，则会取代 `ctx.context.secondaryStorage`。自定义存储的优先级高于全局二级存储。
 
-适用于想为 API 密钥使用不同于全局二级存储的存储后端，或者需要自定义存储逻辑的场景。
+当你希望专门为 API 密钥使用不同的存储后端，或需要为存储操作添加自定义逻辑时，此选项非常有用。它必须实现完整的二级存储契约，包括 `getAndDelete` 和 `increment`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -209,6 +209,8 @@ export const auth = betterAuth({
       storage: "secondary-storage",
       customStorage: {
         get: async (key) => await customStorage.get(key),
+        getAndDelete: async (key) => await customStorage.getAndDelete(key),
+        increment: async (key, ttl) => await customStorage.increment(key, ttl),
         set: async (key, value, ttl) => await customStorage.set(key, value, ttl),
         delete: async (key) => await customStorage.delete(key), 
       },
@@ -281,7 +283,7 @@ API 密钥的权限设置。
   <Accordion title="permissions 选项">
     `defaultPermissions` <span className="opacity-70">`Statements | ((referenceId: string, ctx: GenericEndpointContext) => Statements | Promise<Statements>)`</span>
 
-    The default permissions for the API key. The `referenceId` is either the user ID or organization ID depending on the `references` setting.
+    API 密钥的默认权限。根据 `references` 设置，`referenceId` 可以是用户 ID 或组织 ID。
   </Accordion>
 </Accordions>
 
@@ -290,8 +292,8 @@ API 密钥的权限设置。
 是否禁用 API 密钥的哈希存储。
 
 <Callout type="warn">
-  Security Warning: It's strongly recommended to not disable hashing.
-  Storing API keys in plaintext makes them vulnerable to database breaches, potentially exposing all your users' API keys.
+  安全警告：强烈建议不要禁用哈希。
+  以明文存储 API 密钥会使其容易受到数据库泄露的影响，从而可能暴露所有用户的 API 密钥。
 </Callout>
 
 ***

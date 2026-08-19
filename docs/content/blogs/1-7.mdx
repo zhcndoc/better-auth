@@ -1,0 +1,336 @@
+---
+title: "Better Auth 1.7"
+description: "OAuth 和 OpenID Connect 的重大扩展、更新后的 MCP 授权、SCIM Groups 和角色投影、统一身份、设备授权等"
+date: 2026-08-17
+author:
+  name: "Gustavo Valverde"
+  avatar: ""
+tags: ["1.7", "OAuth", "OpenID Connect", "MCP", "SSO", "SCIM", "security"]
+---
+
+# Better Auth 1.7
+
+我们很高兴地宣布 Better Auth 1.7 🎉
+
+Better Auth 1.7 是我们规模最大的版本之一。它对 OAuth 和 OpenID Connect、企业身份、MCP 授权以及设备访问进行了重大改进。
+
+如果其他应用通过你的应用登录，OAuth provider 现在支持更强的令牌、针对受保护 API 的明确规则、更多客户端身份验证方法，以及更广泛的 OpenID 一致性。如果你的客户通过 SCIM 配置员工，1.7 新增了 Groups、角色投影、更丰富的员工资料，以及可选的 SSO 桥接。MCP 客户端和输入受限设备也可以请求基于标准的 OAuth 访问权限。
+
+我们在 [1.7 release candidate](/blog/1-7-rc) 中首次介绍了这项工作的第一部分。一些改进需要进行迁移工作，尤其是 OAuth Provider、MCP、SSO、SAML、SCIM、account identities 和 custom storage。下面的重点内容解释了各个领域获得的改进。请按照 [1.7 upgrade guide](/docs/guides/1-7-upgrade-guide) 中的迁移步骤操作。
+
+***
+
+## 重点内容
+
+<HeaderLabel variant="info">扩展</HeaderLabel>
+
+### 面向更多应用和 API 的 OAuth 与 OpenID Connect
+
+OAuth provider 是 Better Auth 1.7 的核心。它原本就可以让其他应用为用户登录并请求访问权限。此版本新增了更强的客户端身份验证、针对每个受保护 API 的明确规则、DPoP、跨已连接应用的退出登录，以及更广泛的 OpenID 一致性。
+
+我们还使用官方 OpenID Conformance Suite 对 1.7 进行了测试。现在它可以处理更多已测试的登录、令牌刷新、客户端注册、密钥轮换和退出登录规则。这些结果不代表获得认证，部分可选的 OpenID 功能仍不受支持。
+
+主要新增内容包括：
+
+* **针对每个 API 的明确规则：** 受保护 API 现在可以拥有自己的权限、令牌有效期、声明和签名策略。Better Auth 会强制检查令牌是为哪个 API 签发的（RFC 8707）
+* **更难被窃取的令牌：** DPoP 将令牌绑定到请求它的客户端。仅复制令牌不足以使用它（RFC 9449）
+* **后端通道退出登录：** 注册了退出登录 URL 的客户端可以在用户的 provider 会话结束时收到通知
+* **强制要求近期登录：** OpenID 的 `max_age` 现在可以按预期工作，因此应用可以在敏感操作前要求用户近期登录
+* **更多客户端证明自身身份的方式：** 客户端可以使用共享密钥或签名密钥。密钥还可以轮换，而无需替换整个客户端
+* **更强的客户端注册：** 动态注册新增了更好的准入规则，并支持初始访问令牌。MCP 客户端则可以使用托管在其自有网站上的文档来标识自身
+* **请求特定的用户详细信息：** 客户端可以仅请求所需的用户信息，用户会在同意过程中看到该请求
+* **更一致的令牌检查：** API 可以根据更明确的资源和受众规则检查令牌
+* **更安全的重试：** 当 2 个刷新请求几乎同时发生时，原生客户端可以恢复，而不会削弱默认的重放保护
+
+Provider 还可以在不改变核心的情况下进行扩展。新的 MCP、Client ID Metadata Documents（CIMD）和设备授权功能就是以这种方式接入同一 OAuth 系统的。
+
+如果你仍在使用已弃用的 `oidcProvider` plugin，请迁移到 [`@better-auth/oauth-provider`](/docs/plugins/oauth-provider)。替代 provider 在 1.7 之前就已存在，而 1.7 会移除旧 plugin。
+
+***
+
+<HeaderLabel variant="info">新增</HeaderLabel>
+
+### MCP 迁移到独立 package
+
+MCP authentication 现在位于其独立的 package [`@better-auth/mcp`](/docs/plugins/mcp) 中。它使用此版本的 OAuth provider，支持 MCP 2026-07-28 authorization profile，并兼容官方 MCP TypeScript SDK 的第 2 版。
+
+职责划分很明确：Better Auth 负责登录、同意和访问令牌。官方 MCP SDK 负责 MCP 客户端与服务器之间发送的消息。
+
+新 package 保留了现有的无状态 bearer-token 模型，并使其更适合在多个服务器实例之间运行。Better Auth 仍会存储常规登录记录，例如客户端、同意和刷新令牌。
+
+该 package 扩展了 MCP authorization：
+
+* **更新后的 discovery：** 标准的 protected-resource 信息会告诉 MCP 客户端在哪里登录、令牌适用于哪个服务器，以及有哪些可用权限
+* **Client ID Metadata Documents：** [`@better-auth/cimd`](/docs/plugins/cimd) 允许 MCP 客户端使用其自有网站上的文档来标识自身。启用 Dynamic Client Registration 后，旧客户端仍然可以使用它
+* **面向正确服务器的令牌：** 令牌会针对一个 MCP 服务器签发，并会被其他服务器拒绝
+* **更强的本地检查：** MCP 保留本地令牌验证，现在还会检查令牌是否专门为该服务器创建
+* **需要时请求更多访问权限：** 如果工具需要其他权限，兼容的客户端可以请求用户授权并重试
+* **更强的令牌保护：** MCP 服务器可以使用 DPoP，使复制的令牌单独无法使用
+
+独立的 MCP 服务现在更容易配置，因为它们可以检查明确为该服务创建的令牌。现有 MCP 设置需要迁移，因为 package、设置方式和 OAuth 路径都发生了变化。
+
+***
+
+<HeaderLabel variant="info">新增</HeaderLabel>
+
+### 设备授权扩展到 OAuth 客户端
+
+Better Auth 原本就支持在输入受限的设备上登录同一个应用。新的 RFC 8628 grant 将该流程扩展到了已注册的 OAuth 客户端。CLI、智能电视、游戏主机或 IoT 设备会显示一个代码，用户则在浏览器中批准 API 访问。
+
+批准页面会显示发起请求的应用以及它想要访问的内容。批准后，设备会收到该 API 的常规 OAuth 令牌。在用户批准请求后，它无法再请求额外的访问权限。
+
+这与 Better Auth 现有的设备登录流程相互独立，因此两者可以在同一个应用中同时运行。它也适用于附带自有 MCP command-line tool 的产品。有关这两种选项，请参阅[设备授权文档](/docs/plugins/device-authorization)。
+
+***
+
+<HeaderLabel variant="info">重建</HeaderLabel>
+
+### SCIM 扩展到 User provisioning 之外
+
+Better Auth 1.6 已经允许企业目录创建、更新、停用、重新激活和移除 Users。Better Auth 1.7 围绕相互隔离的 connections 重建了该服务，并新增了一等 Groups、直接 memberships、角色投影以及更丰富的员工资料。
+
+Connections 现在拥有各自的 Users、Groups、memberships 和 credentials。独立的 provisioning domain 定义这些变更在产品中的生效位置，例如 workspace、tenant、project 或 organization。
+
+重建后的服务包括：
+
+* **一等 Groups：** 目录现在可以创建、替换、更新和删除 Groups，并管理直接 User memberships
+* **来自 Group membership 的 Roles：** 将目录 Group 映射到应用中的 role，例如 `admin` 或 `billing`
+* **更广泛的 SCIM 2.0 行为：** 现有的 discovery 和 User filtering 扩展到了 Groups、分页、字段选择以及更安全的多步骤更新
+* **更多员工详细信息：** 重建后的 User resource 新增了 department、manager、employee number、locale、phone numbers 和 addresses 等字段
+* **更好的 provider 支持：** 针对 provider 的处理和测试得到了改进，从而提升与 Microsoft Entra ID、Okta 和 Google 的兼容性
+* **更强的员工身份：** 稳定的 directory IDs 可以在删除后保留，并驱动精确的 SSO linking，而不会退回使用 email 或 username
+* **安全退役：** connections 可以被停用，同时保留其 provisioning history，并移除它们所提供的访问权限
+
+#### 运行时的 Self-service connections
+
+Better Auth 1.7 使用 2 个由应用控制的选项替换了旧版 runtime management endpoints：从你自己的 catalog 解析 connections，或使用 SCIM plugin 内置的 managed catalog。
+
+Managed catalog 支持每个 connection 使用多个 credentials，并为每个 credential 设置独立的权限和过期日期。它可以轮换和撤销 credentials，记录执行每项变更的人员，并安全地退役 connection。新 secrets 只会在创建或轮换时返回，而 Better Auth 存储的是受保护的 digests，而不是明文值。
+
+如果你的应用已经管理客户 connections，则可以验证 credential 并在一次安全操作中返回匹配的 connection，而无需采用 managed catalog。
+
+#### Provisioning 和 SSO 现在通过精确身份衔接
+
+SCIM 创建和管理员工记录，但不会让员工登录。Better Auth 1.7 新增了从 SCIM identity 到已验证 SSO identity 的明确且事务安全的桥接。
+
+应用可以配置此桥接，使 OpenID 或 SAML 登录由 SCIM 创建或链接的确切 User。匹配使用两个系统共同确认的稳定 identity，而不是 email 或 username。配置此集成后，处于非活动状态、已删除或已退役的 directory identity 会在下一次 SSO 尝试时被拒绝。
+
+Next.js demo 展示了已配置的集成。管理员可以创建 connection、添加 Users 和 Groups、变更访问权限、停用员工，之后再恢复他们。独立的员工视图展示了 session revocation、被拒绝的登录、重新激活和重新 provisioning。
+
+SCIM 1.7 替换了之前的设置和 database model。现有安装需要计划一次切换，并要求目录再次发送所有 users 和 groups。由于 Cloudflare D1 无法提供此流程所需的 database transactions，因此不受支持。请在重新启用 provisioning 前，按照 [SCIM migration steps](/docs/guides/1-7-upgrade-guide#scim-requires-full-reprovisioning) 操作。
+
+***
+
+<HeaderLabel variant="warning">破坏性变更</HeaderLabel>
+
+### 跨 OAuth、OpenID 和 SAML 的标准化 identity model
+
+External accounts 现在使用受信任的 provider identity，以及该 provider 确认的稳定 subject。OpenID 使用 `sub`，SAML 使用已签名的 `NameID`，普通 OAuth providers 使用其声明的 account ID。
+
+返回相同受信任 provider 和 subject 的配置现在会共享一个 identity。来自不同 providers 的相同 subject 值仍然彼此独立。现有应用需要检查并迁移其保存的 account identities。
+
+SSO plugin 构建在该模型之上：
+
+* **链接确切的 User：** 新的 SSO resolver 可以将已验证的 OpenID 或 SAML identity 连接到现有 Better Auth User，也可以拒绝登录
+* **全有或全无的登录：** resolver 变更、account linking、profile updates 和 session creation 现在会一起成功或一起失败
+* **更好地控制 provider 变更：** 现有的安全措施现在包含一个 application hook，当另一个系统仍依赖某个 provider 时，可以阻止对其进行更新或删除
+* **更强的 SAML checks：** 1.7 新增了可用的 request-response matching，并直接验证已签名的 identity，同时延续了 1.6 已有的 audience 和 destination checks
+* **Certificate rotation：** SAML providers 可以同时发布旧证书和新证书，因此轮换无需停机
+* **更安全的 provider-started login：** 从 identity provider 发起的 SAML login 默认关闭。应用可以在需要时启用它
+* **更可靠的 logout：** SAML logout 现在使用实际的 session identifier，修复了目标 session 未结束的情况
+* **更多运行时：** 带有自动 provider discovery 的 OpenID SSO 现在可以在 Cloudflare Workers 上运行
+
+配置精确 mapping 后，SCIM 和配对的 login provider 可以指向同一个 Better Auth User。最终设置请参阅 [SSO documentation](/docs/plugins/sso)。
+
+***
+
+<HeaderLabel variant="info">扩展</HeaderLabel>
+
+### 更多 providers 和更好的登录流程
+
+Better Auth 作为 OAuth client 也获得了大幅更新。Generic OAuth providers 现在使用通用的 social sign-in client path，而不是独立的 client plugin。PKCE 默认启用，通过 discovery 配置的 providers 还会进行更强的 identity-token 和 nonce checks。
+
+你还可以针对单次登录更改 provider options。这支持选择 Amazon Cognito provider、为 Microsoft Entra ID 提供 domain hint，或请求 Google 的 offline access。Entra ID 和 custom providers 可以使用签名密钥替代共享密钥。Auth0 和 Zitadel 等 providers 可以在令牌刷新时接收所需的额外信息，而无需再次让用户经过登录流程。
+
+已授予某个 account 的 scopes 现在会在后续登录和令牌刷新后继续保留。
+
+启用后，provider-started OpenID login 可以通过新的受保护登录流程重新开始。Anonymous account linking 也可以在 Expo 和其他 in-app browsers 中工作。
+
+***
+
+<HeaderLabel variant="info">还包括</HeaderLabel>
+
+### Better Auth 的各项改进
+
+* **更多内置翻译：** `@better-auth/i18n` 将其 catalog 扩展到 22 种语言
+* **Drizzle Relations v2：** 生成的 Better Auth relations 可以与应用中已有的 relations 结合使用
+* **稳定的 database joins：** 现有的 database joins 已结束 experimental 状态
+* **Signed session cache：** services 可以使用 public key 验证 cached sessions，而无需共享 signing secret
+* **更快的 server-rendered pages：** `hydrateSession` 将服务器已经加载的 session 提供给浏览器，避免再次发起请求
+* **Passkey onboarding：** passkey registration 可以在注册过程中创建 session
+* **Two-factor enrollment：** 应用现在可以在启用 two-factor authentication 时明确选择 OTP 或 TOTP
+* **更安全的 passwordless recovery：** magic link 或 email code 证明 mailbox ownership 后，Better Auth 可以移除未经证明的 credentials 并撤销旧 sessions
+* **Username controls：** 应用可以使 usernames 不可变，或移除独立的 display-username 字段
+* **CLI administration：** `npx auth create-admin` 可以从命令行创建 administrator
+* **扩展的 organization APIs：** 无需加载每个 member 即可加载基本的 organization details，并可从受信任的 server code 列出用户的 teams
+* **可扩展的 SSO providers：** 将 application-specific details 与 SSO provider 一起存储
+* **Database tooling：** Drizzle 支持 PostgreSQL schema namespaces，生成的 indexes 在不同 databases 之间更加一致
+* **Direct Fetch integration：** Better Auth instances 现在可以更直接地集成，并在需要标准 `fetch`-compatible handler 的场景中提供更强的 types
+* **Mobile 和 desktop 变更：** Expo storage integrations 改用异步 SecureStore methods，而 Electron 加强了 callback-origin 和 custom URL-scheme validation
+* **SIWE identity：** Sign-In with Ethereum 现在从已验证的 message 推导 wallet address 和 chain，移除了重复的 request fields
+* **Captcha path rules：** 保护确切的 endpoints 或明确的 wildcards，避免使用可能跳过规则的 partial-path matches
+* **Session cleanup：** 使用 external session storage 退出登录时，现在会运行 deletion hooks、结束保留的 sessions，并撤销相关的 OAuth tokens
+* **更安全的并发操作：** one-time codes、refresh tokens、invitations、counters 和 rate limits 现在使用 adapter 的 atomic operations
+* **Identity admission：** `user.validateUserInfo` 可以在 OAuth、SSO、credentials、passwordless methods 和 SCIM 中，在创建 User 或 linking account 前拒绝该用户
+
+***
+
+## 重要变更
+
+下表展示了应从哪里开始。[1.7 upgrade guide](/docs/guides/1-7-upgrade-guide) 包含确切的 schema、data、configuration 和 API 变更。
+
+| 如果你使用                                       | 从这里开始                                                                          |
+| ------------------------------------------- | ------------------------------------------------------------------------------ |
+| Basic Better Auth setup                     | 一起升级所有 Better Auth packages，然后生成并检查 schema changes                             |
+| Social login、custom OAuth、One Tap 或 SSO     | 检查现有 accounts 如何映射到各 provider 确认的 identities                                   |
+| `@better-auth/oauth-provider`               | 检查保存的 clients，并应用 protected APIs、stronger tokens 和 logout 所需的 database changes |
+| MCP                                         | 安装 `@better-auth/mcp`，更新 integration，并应用 OAuth client database changes         |
+| Device authorization                        | 应用 device-code database changes，并在 app sign-in 与 OAuth access 之间进行选择           |
+| SAML 或 SSO                                  | 检查保存的 account identities、provider settings、certificates 和 callback URLs        |
+| SCIM                                        | 停止 provisioning，替换旧设置，创建新的 credentials，然后再次发送所有 Users 和 Groups                 |
+| Expo 或 React Native                         | Await cookie reads，并更新 custom secure-storage implementations                   |
+| Two-factor authentication                   | 检查 OTP 和 TOTP enrollment，并处理新的 `enableTwoFactor` response shape                |
+| Magic links 或 email OTP                     | 检查 mailbox 尚未确认的 accounts 的新 cleanup behavior                                  |
+| Custom adapters、storage 或 rate-limit stores | 在部署前添加安全执行 one-time actions 和 counters 所需的新 methods                            |
+| Custom proxy 或 TLS termination              | 确认 Better Auth 知道应用的 public URL                                                |
+
+***
+
+## 迁移到 v1.7
+
+一起升级 `better-auth` 和每个 `@better-auth/*` package：
+
+```package-install
+npx auth upgrade
+```
+
+然后运行 `npx auth generate` 或 `npx auth migrate` 处理 schema changes。不要将生成的 migration 视为完整升级：account identity、OAuth clients、MCP 和 SCIM 还需要检查手动 data steps。[Upgrade guide](/docs/guides/1-7-upgrade-guide) 会逐项介绍这些步骤。
+
+***
+
+## Contributors
+
+感谢所有 contributors，让此版本成为可能！
+
+export const releaseContributorUsernames = [
+	// cspell:disable
+	"0-Sandy",
+	"0xHouss",
+	"9hsein5",
+	"aarmful",
+	"adityachaudhary99",
+	"adrianmxb",
+	"ahmedivy",
+	"allandelmare",
+	"Andrew1326",
+	"arnnvv",
+	"baptisteArno",
+	"Bekacru",
+	"Bekione",
+	"bennettdams",
+	"benpsnyder",
+	"birkskyum",
+	"bjorntechTobbe",
+	"brentmitchell25",
+	"brone1323",
+	"bytaesu",
+	"Byte-Biscuit",
+	"CatLover01",
+	"cb-alish",
+	"chdanielmueller",
+	"ChrisMGeo",
+	"Craga89",
+	"cyphercodes",
+	"demhadais",
+	"dipan-ck",
+	"DougInAMug",
+	"dvanmali",
+	"ejirocodes",
+	"ElGauchooooo",
+	"elliotBraem",
+	"eluce2",
+	"Emmaccen",
+	"erquhart",
+	"fabian-hiller",
+	"FaryalRizwaan",
+	"florianamette",
+	"formatlos",
+	"frankeld",
+	"GautamBytes",
+	"GoPro16",
+	"gustavovalverde",
+	"himself65",
+	"IcanDivideBy0",
+	"IdrisGit",
+	"ItalyPaleAle",
+	"Jadenstanton",
+	"jashkarangiya",
+	"jaydeep-pipaliya",
+	"jeroenvandermerwe",
+	"jjluzgin",
+	"jlucaso1",
+	"jonathansamines",
+	"jsj",
+	"kgarg2468",
+	"KingIronMan2011",
+	"Kinfe123",
+	"krish-vachhani",
+	"Ktryberceo",
+	"Kvizas",
+	"lubiah",
+	"mausic",
+	"momomuchu",
+	"moonevm",
+	"mrosberghaus",
+	"MuzzaiyyanHussain",
+	"nphlp",
+	"Oluwatobi-Mustapha",
+	"OliverCordingl1",
+	"onmax",
+	"OscarCornish",
+	"ouwargui",
+	"Paola3stefania",
+	"pbacza",
+	"peyremorgan",
+	"pi0",
+	"ping-maxwell",
+	"programming-with-ia",
+	"rachit367",
+	"ramonclaudio",
+	"reslear",
+	"ruban-s",
+	"Saiyaswanthpasupuleti",
+	"seanfilimon",
+	"seebykilian",
+	"SferaDev",
+	"skalkii",
+	"sleepe229",
+	"sovetski",
+	"stewartjarod",
+	"TanishValesha",
+	"terijaki",
+	"tonytkachenko",
+	"tsokolovs",
+	"tsushanth",
+	"Tushar-Khandelwal-2004",
+	"Vishesh-Verma-07",
+	"WilsonnnTan",
+	"wobedi",
+	"XXMOHAMED012",
+	"yordis",
+	"zeroknowledge0x",
+	"zllovesuki",
+	// cspell:enable
+];
+
+<Contributors usernames={releaseContributorUsernames} />

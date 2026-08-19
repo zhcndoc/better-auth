@@ -3,38 +3,28 @@ title: OAuth 2.1 提供者
 description: 一个更好的认证插件，使您的认证服务器能够作为 OAuth 2.1 提供者运行。
 ---
 
-一个**OAuth 2.1 提供者插件**，允许您将认证服务器转变为兼容 OIDC 的 OAuth 提供者，支持用户和其他服务通过您的 API 进行认证。
+**OAuth 2.1 Provider** 插件会将您的 Better Auth 服务器转换为 OAuth 授权服务器。应用程序可以通过授权码流程请求用户访问权限，而服务可以使用客户端凭证。当客户端还需要 OpenID Connect（OIDC）身份声明时，请添加 `openid` scope。
 
-该插件默认具有安全配置，使不熟悉 OAuth 细节的用户也能轻松使用。
+默认配置会选择更安全的协议行为，包括为公有客户端启用 PKCE，以及精确匹配重定向 URI。从[安装](#安装)开始，然后仅启用客户端所使用的授权方式和注册路径。
 
-**主要特性**：
+**主要功能**
 
-* **OAuth 2.1**: 限制安全实践遵循 [OAuth 2.1](https://oauth.net/2.1/)
-* **Issuer Validation**: 授权响应包含 `iss` 参数，以防止 [混淆攻击](https://datatracker.ietf.org/doc/html/rfc9207)
-* **MCP Enabled**: 支持 [MCP 认证](#mcp)
-* **OIDC compatibility**: 与 [OIDC](https://openid.net/specs/openid-connect-core-1_0.html) 兼容，支持 `openid` scope
-  * **UserInfo**: 提供当前用户详情的端点
-  * **id\_token**: JWT 签名的用户信息
-  * **OIDC Logout**: 符合 [RP-initiated](https://openid.net/specs/openid-connect-rpinitiated-1_0.html) 的注销
-* **Dynamic Client Registration**: 允许客户端动态注册客户端。
-  * **Public Clients**: 支持原生移动客户端和用户代理客户端（如 AI）使用公有客户端
-  * **Confidential Clients**: 支持 Web 客户端使用机密客户端
-  * **Trusted Clients**: 配置硬编码的受信任客户端，并可选绕过同意。
-* **JWT Plugin compatibility**: 默认需要，可选择禁用
-  * **JWT Signing**: 在请求 `resource` 时签名 JWT 令牌
-  * **JWKS Verifiable**: 在 [`/jwks`](/docs/plugins/jwt#verifying-the-token) 端点远程验证令牌
-* **Authorization Prompts**: 触发特定登录流程的提示
-  * **Consent**: 确保每个 scope 都获得同意。可通过 `prompt=consent` 强制。
-  * **Select Account**: 在授予特定 scope 之前确保已选择账户。可通过 `prompt=select_account` 强制。
-* **Resource Endpoints**: 读取和管理令牌。
-  * **Introspection**: 符合 [RFC7662](https://datatracker.ietf.org/doc/html/rfc7662) 的令牌核查。
-  * **Revocation**: 符合 [RFC7009](https://datatracker.ietf.org/doc/html/rfc7009) 的撤销。
+* \*\*OAuth 安全配置：\*\*遵循 [OAuth 2.1](https://oauth.net/2.1/) 实践，并包含 RFC 9207 `iss` 参数，以防止[授权服务器混淆攻击](https://datatracker.ietf.org/doc/html/rfc9207)
+* \*\*OpenID Connect：\*\*签发 ID 令牌、提供 UserInfo，并在客户端请求 `openid` 时支持 [RP 发起的注销](https://openid.net/specs/openid-connect-rpinitiated-1_0.html)
+* \*\*客户端注册：\*\*支持管理员管理的客户端、第一方受信任客户端，以及可选的[动态客户端注册](#动态注册端点)
+* \*\*公有客户端和机密客户端：\*\*根据 `token_endpoint_auth_method` 推导身份验证方式；对于无法安全保存密钥的客户端，请使用 `"none"`
+* \*\*资源绑定的访问权限：\*\*为受保护资源签发令牌，支持核查和撤销，并通过 JWT 插件的 [`/jwks`](/docs/plugins/jwt#verifying-the-token) 端点公开签名密钥
+* \*\*授权提示：\*\*支持同意和账户选择提示
+* \*\*MCP 组合：\*\*当受保护资源是 MCP 服务器时，请使用 [MCP 插件](#mcp)
 
 **支持的授权方式**
 
-* **authorization\_code**: 使用 PKCE 和 S256 要求进行用户令牌交换的授权码。
-* **refresh\_token**: 通过 `offline_access` scope 发放刷新令牌并处理访问令牌续期。
-* **client\_credentials**: 用于 API 通信的机器对机器令牌。
+* \*\*`authorization_code`：\*\*使用 S256 PKCE 交换用户授权码
+* \*\*`refresh_token`：\*\*通过 `offline_access` scope 更新访问权限
+* \*\*`client_credentials`：\*\*签发机器到机器的访问令牌
+* \*\*`device_code`：\*\*为 CLI 和输入受限的客户端添加可选的[设备授权](/docs/plugins/device-authorization#authorize-a-cli-to-call-an-api)流程
+
+`client_credentials` 默认拒绝访问。客户端用户委托的 `scope` 元数据永远不会授权机器访问。管理员必须通过管理创建或更新端点分配非空的 `client_credentials_scopes` 值，并且 `clientPrivileges` 必须明确批准 `configure-client-credentials-scopes` 操作。分配的值既是可请求 scope 的最大集合，也是令牌请求省略 `scope` 时使用的默认值。DCR、CIMD 和用户管理的注册可以声明该授权方式，但无法分配此服务器拥有的 scope 上限。
 
 ## 安装
 
@@ -42,7 +32,7 @@ description: 一个更好的认证插件，使您的认证服务器能够作为 
   <Step>
     ### 挂载插件
 
-    将 OIDC 插件添加到您的认证配置中。详情参见 [配置章节](#configuration)，了解如何配置插件。
+    将 OAuth Provider 插件添加到您的 auth 配置中。有关如何配置插件，请参见[配置章节](#配置)。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";
@@ -100,7 +90,7 @@ description: 一个更好的认证插件，使您的认证服务器能够作为 
   <Step>
     ### 创建您的第一个 OAuth 客户端
 
-    创建一个机密 OAuth 客户端。
+    创建一个机密客户端：
 
     ```ts
     const client = await auth.api.createOAuthClient({
@@ -113,18 +103,18 @@ description: 一个更好的认证插件，使您的认证服务器能够作为 
     ```
 
     <Callout type="info">
-      若要创建公有客户端（即没有 client secret），请设置 `token_endpoint_auth_method: "none"`。
+      要创建没有客户端密钥的公有客户端，请设置 `token_endpoint_auth_method: "none"`。
     </Callout>
   </Step>
 </Steps>
 
 ## 客户端插件
 
-存在两种客户端，您可根据需求添加一种或两种。
+两个客户端插件分别覆盖不同的角色。当您的应用启动授权流程时，添加 OAuth client；当您的 API 验证访问令牌时，添加 resource client。
 
 ### OAuth 客户端
 
-OAuth 客户端是连接的 `oauthClient`，如移动或 Web 应用。
+OAuth client 将 Web 或原生应用连接到授权服务器。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client";
@@ -139,7 +129,7 @@ export const authClient = createAuthClient({
 
 ### 资源客户端
 
-资源服务器是运行在您的 API 服务器上的客户端，用于执行令牌验证和提供元数据等操作。
+resource client 运行在接收访问令牌的 API 中。它会验证这些令牌并提供受保护资源元数据。
 
 ```ts title="server-client.ts"
 import { auth } from "@/lib/auth";
@@ -159,10 +149,11 @@ export const serverClient = createAuthClient({
 
 ### OAuth 客户端
 
-OAuth 中有两类客户端：
+OAuth 客户端身份验证能力与应用拓扑是相互独立的：
 
-* **Public Clients**：无法存储 client secret，例如原生移动客户端和用户代理客户端（如 AI）
-* **Confidential Clients**：可以存储 client secret，例如 Web 客户端
+* \*\*公有客户端：\*\*无法安全保存客户端密钥，并使用 `token_endpoint_auth_method: "none"`
+* \*\*机密客户端：\*\*在令牌端点使用已注册的方法进行身份验证，例如 `client_secret_basic`、`client_secret_post` 或 `private_key_jwt`
+* **应用类型：**`application_type` 可以是 `web` 或 `native`，仅控制重定向 URI 验证。它不决定客户端是公有客户端还是机密客户端
 
 #### 获取客户端信息
 
@@ -239,9 +230,9 @@ oauthProvider({
 数据库中的以下字段被视为受限字段，仅应由管理员用户编辑。
 
 * `client_secret_expires_at`：机密客户端密钥的过期时间
-* `skip_consent`：允许跳过用户同意流程。适用于受信任客户端。
-* `enable_end_session`：允许用户通过客户端在 `/oauth2/end-session` 端点使用其 `id_token` 退出会话。用于 OIDC 配置和指定的受信任客户端。
-* `metadata`：附加到客户端的额外私有元数据。
+* `skip_consent`：允许跳过用户同意流程。适用于受信任客户端
+* `enable_end_session`：允许用户通过客户端在 `/oauth2/end-session` 端点使用其 `id_token` 退出会话。用于 OIDC 配置和指定的受信任客户端
+* `metadata`：附加到客户端的额外私有元数据
 
 部分场景下，您可能希望通过自定义 API、公司管理员门户或服务器初始化逻辑创建带有受限字段的客户端，可使用以下仅限服务器端的端点：
 
@@ -280,8 +271,8 @@ await auth.api.adminCreateOAuthClient({
 
 此端点限制如下：
 
-* 您无法在机密客户端和公有客户端之间切换。客户端类型必须在创建时确定。
-* 您不能更新客户端密钥。要轮换 `client_secret`，请使用轮换客户端密钥端点。
+* 创建后无法更改 `token_endpoint_auth_method`。创建时选择的方法决定客户端是否具有凭证能力
+* 无法更新客户端密钥。要轮换 `client_secret`，请使用轮换客户端密钥端点
 
 部分场景下，您可能希望通过自定义 API、公司管理员门户或服务器初始化逻辑更新带有受限字段的客户端，可使用以下仅限服务器端端点。字段同创建部分描述。
 
@@ -333,7 +324,7 @@ await auth.api.adminUpdateOAuthClient({
   ```
 </APIMethod>
 
-### OAuth Consent
+### OAuth 同意
 
 对于所有非受信任客户端（尤其是无 `skip_consent` 的），都需要用户同意。以下端点允许用户或 `reference_id` 管理其已授权的同意。
 
@@ -405,7 +396,7 @@ await auth.api.adminUpdateOAuthClient({
 
 安装后，您可以使用 OAuth 提供者管理应用内的认证流程。
 
-创建客户端后，将获得 `client_id` 和 `client_secret`，可显示给用户。`client_secret` 只提供一次，务必提示用户保存。
+创建机密客户端后，您将收到一个 `client_id` 和 `client_secret`，可以将它们显示给用户。`client_secret` 只能提供一次，请确保用户保存它。公有客户端只会收到一个 `client_id`。
 
 #### 配置
 
@@ -418,10 +409,10 @@ oauthProvider({
 })
 ```
 
-若要启用无需认证的客户端注册（允许动态注册公有客户端），额外设置 `allowUnauthenticatedClientRegistration: true`。
+要在没有 Better Auth 会话的情况下启用开放客户端注册，还需在 auth 配置中设置 `allowUnauthenticatedClientRegistration: true`。公有客户端使用 `token_endpoint_auth_method: "none"` 注册。机密客户端会在注册响应中收到一次性的 `client_secret`。
 
-<Callout type="warn">
-  当 MCP 协议标准化无需认证的动态客户端注册时，`allowUnauthenticatedClientRegistration` 的支持**将被弃用**。截至撰写时，[Client ID Metadata Documents](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/991) 和 [`software_statement` and `jwks_uri`](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1032) 均仍在讨论中。
+<Callout type="info">
+  对于 MCP 公有客户端身份，请使用[客户端 ID 元数据文档](/docs/plugins/cimd)。[MCP 2026-07-28 规范](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration)弃用动态客户端注册，改为使用 CIMD；DCR 仍会为向后兼容而受到支持。
 </Callout>
 
 ```ts title="auth.ts"
@@ -447,46 +438,156 @@ const client = await authClient.oauth2.register({
 
 所有参数详情请参见 [RFC 7591 注册部分](https://datatracker.ietf.org/doc/html/rfc7591#section-2)。
 
-注意以下参数目前尚不支持：
+`application_type`（[OIDC Registration §2](https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata)）省略时默认为 `web`。`web` 客户端在非回环主机上要求使用 `https` 重定向 URI。`native` 客户端可以使用已声明的 `https` URI、仅位于 `localhost`、`127.0.0.1` 或 `[::1]` 且端口任意的 `http` 回环 URI，或者使用带有反向域名 scheme 的无 authority 私有用途 URI，例如 `com.example.app:/callback`（[RFC 8252 §7](https://datatracker.ietf.org/doc/html/rfc8252#section-7)）。回环主机匹配使用原始 URI authority，因此 `127.1` 等替代的数字 IPv4 拼写会在 URL 规范化之前被拒绝。Better Auth 还会拒绝凭证、片段、格式错误的 scheme，以及 `file:` 和 `mailto:` 等保留 scheme；同时拒绝回环 `https` 和可路由主机的 `http` 重定向。
 
-* `jwks`
-* `jwks_uri`
+应用类型与客户端身份验证相互独立。例如，native 客户端可以使用 `client_secret_post`，而 web 客户端可以使用 `token_endpoint_auth_method: "none"`。身份验证能力仅根据 `token_endpoint_auth_method` 推导；已移除的 `type` 和 `public` 元数据字段不会被接受或返回。
+
+[MCP 2026-07-28 规范](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration#application-type-and-redirect-uri-constraints)要求 MCP 客户端发送适当的 `application_type`。[客户端 ID 元数据文档](/docs/plugins/cimd)可以省略该字段；Better Auth 会将该省略存储为 `null`，并根据 web 和 native 形式的安全并集验证重定向。
+
+请注意，以下参数尚不支持：
+
+* `sector_identifier_uri`
 
 ### 授权端点
 
 一个符合 [OAuth 2.1 授权端点规范](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-13#name-authorization-endpoint) 的端点。由于某些细节尚未完全规范，部分内容参照旧版 [OAuth 2.0 授权端点](https://datatracker.ietf.org/doc/html/rfc6749#section-3.1) 但始终实现了 [OAuth 2.1 与 OAuth 2.0 的差异](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-13#name-differences-from-oauth-2.0)。
 
-授权端点为启动 OAuth 2.1 授权流程的入口。
+授权端点是启动 OAuth 2.1 授权流程的入口。
 
 重要说明：
 
-* 在 OAuth 2.1 中，仅支持 `response_type: "code"`。
-* 不支持 `code_challenge_method: "plain"`，因为这是一项安全漏洞。
-* 所有授权响应（成功和错误）都包含 `iss` 参数用于发行者验证（[RFC 9207](https://datatracker.ietf.org/doc/html/rfc9207)）。
+* 在 OAuth 2.1 中，仅支持 `response_type: "code"`
+* 不支持 `code_challenge_method: "plain"`，因为这存在安全漏洞
+* 所有授权响应（成功和错误）都包含用于 issuer 验证的 `iss` 参数（[RFC 9207](https://datatracker.ietf.org/doc/html/rfc9207)）
+* 使用 `resource` 指示符将令牌限制到某个资源（[RFC 8707](https://www.rfc-editor.org/rfc/rfc8707.html)）
 
 **状态（State）**
 
-Clients should send a state value to mitigate cross-site request forgery (CSRF) attacks. This works by ensuring your client only responds to requests that your client initially requested.
+客户端应发送 state 值，以缓解跨站请求伪造（CSRF）攻击。其原理是确保客户端只响应由客户端最初发起的请求。
 
 客户端生成状态值，并存储在安全、HTTP-only Cookie 或数据库等处。
 
-The authorization server accepts requests without `state` for compatibility with OAuth and OpenID Connect, and echoes `state` back when it is provided. Better Auth's client helpers generate and validate `state` for you.
+授权服务器接受不带 `state` 的请求，以兼容 OAuth 和 OpenID Connect；当请求提供 `state` 时，服务器会将其原样返回。Better Auth 的客户端辅助方法会为您生成并验证 `state`。
 
-**Code Challenge**
+**代码挑战**
 
 代码挑战用于保护授权端点返回的授权码。
 
-其通过从代码验证器派生代码挑战并通过 [PKCE（Proof Key for Code Exchange）](https://datatracker.ietf.org/doc/html/rfc7636) 发送至授权服务器。
+其通过从代码验证器派生代码挑战，并通过 [PKCE（Proof Key for Code Exchange）](https://datatracker.ietf.org/doc/html/rfc7636) 发送至授权服务器。
 
-在 `redirect_uri` 回调时，客户端比对返回状态与初始状态是否匹配，然后使用 `authorization_code` 授权方式和原始代码验证器在[令牌端点](#token-endpoint)交换令牌。
+在 `redirect_uri` 回调时，客户端比对返回状态与初始状态是否匹配，然后使用 `authorization_code` 授权方式和原始代码验证器在[令牌端点](#令牌端点)交换令牌。
 
-### Token Endpoint
+### 令牌端点
 
 默认情况下，令牌端点支持为以下授权方式提供令牌：
 
 * "authorization\_code"
 * "client\_credentials"
 * "refresh\_token"
+
+#### 客户端身份验证方法
+
+令牌端点支持以下客户端身份验证方法：
+
+* **`client_secret_basic`**——通过 HTTP Basic Auth 标头发送客户端凭证（默认）
+* **`client_secret_post`**——在请求正文中发送客户端凭证
+* **`private_key_jwt`**——客户端使用签名 JWT 断言进行身份验证（[RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523)）
+* **`none`**——公有客户端（要求 PKCE）
+
+重要说明：
+
+* 启用 JWT 插件时（默认），发送 `resource` 会生成一个 JWT 访问令牌，并将所选资源放入 `aud` 声明
+* 设置 `disableJwtPlugin: true` 时，访问令牌仍为不透明令牌。请求的资源仍会绑定到令牌，并通过 `/oauth2/introspect` 和 `customAccessTokenClaims`（通过 `resources`）公开
+
+令牌端点错误遵循 OAuth 错误分类：缺少必需请求字段时返回 `invalid_request`，客户端身份验证失败时返回 `invalid_client`，授权方式无效或不匹配时返回 `invalid_grant`。机密客户端必须使用其注册的 `token_endpoint_auth_method`。`client_secret_post` 身份验证失败时返回 `400`；`client_secret_basic` 身份验证失败时返回带有 Basic `WWW-Authenticate` challenge 的 `401`。
+
+#### DPoP 发送方约束令牌
+
+Better Auth 支持 [RFC 9449](https://datatracker.ietf.org/doc/html/rfc9449) 定义的持有证明（DPoP）。客户端可以通过注册时设置 `dpop_bound_access_tokens: true`、在授权请求中发送 `dpop_jkt`，或请求配置了 `dpopBoundAccessTokensRequired: true` 的资源，来请求绑定 DPoP 的令牌。
+
+当令牌绑定到 DPoP 时：
+
+* 令牌端点要求有效的 `DPoP` 证明 JWT
+* 令牌响应返回 `token_type: "DPoP"`
+* JWT 访问令牌包含 `cnf.jkt`；不透明访问令牌和刷新令牌会持久化相同的 JWK thumbprint
+* 刷新令牌轮换要求使用相同密钥的 DPoP 证明
+* 资源请求必须使用 `Authorization: DPoP <access_token>`，并发送包含访问令牌哈希（`ath`）的 `DPoP` 证明
+
+```ts title="auth.ts"
+oauthProvider({
+  dpop: {
+    proofMaxAgeSeconds: 300,
+    signingAlgorithms: ["ES256", "EdDSA"],
+  },
+  resources: [
+    {
+      identifier: "https://api.example.com",
+      dpopBoundAccessTokensRequired: true,
+    },
+  ],
+})
+```
+
+授权服务器元数据会公开 `dpop_signing_alg_values_supported`。资源元数据会公开相同的证明算法；当必须使用 DPoP 时，还会公开 `dpop_bound_access_tokens_required`。
+
+#### 私钥 JWT 身份验证
+
+使用 `private_key_jwt` 时，客户端通过使用私钥签名 JWT，而不是使用共享密钥进行身份验证。服务器使用客户端注册的公钥（JWKS）验证签名。
+
+要注册 `private_key_jwt` 客户端，请通过 `jwks` 或 `jwks_uri` 提供客户端的公钥：
+
+```ts
+const response = await auth.api.adminCreateOAuthClient({
+  headers,
+  body: {
+    redirect_uris: ["https://app.example.com/callback"],
+    token_endpoint_auth_method: "private_key_jwt",
+    jwks: {
+      keys: [
+        {
+          kty: "RSA",
+          kid: "my-key-1",
+          alg: "RS256",
+          use: "sig",
+          n: "...",
+          e: "...",
+        },
+      ],
+    },
+  },
+});
+```
+
+<Callout type="info">
+  `jwks` 和 `jwks_uri` 是通用的 OIDC 客户端密钥元数据，两者互斥。内联 `jwks` 必须是 RFC 7517 JWK Set 对象，包含非空的 `keys` 数组，且其中只能包含公有非对称签名密钥；裸密钥数组会被拒绝。EC 密钥必须使用 P-256、P-384 或 P-521；OKP 密钥必须使用 Ed25519。密钥可以省略 `alg`。如果提供了 `alg`，则必须是受支持的 `private_key_jwt` 算法，并且与密钥类型和曲线匹配。使用 `jwks_uri` 时，它必须是指向公有（非私有）主机的 HTTPS URL，并且必须返回相同形状的 JWK Set 对象。
+</Callout>
+
+交换令牌时，客户端发送 `client_assertion` JWT，而不是 `client_secret`：
+
+```
+POST /api/auth/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&code=AUTH_CODE
+&redirect_uri=https://app.example.com/callback
+&client_id=CLIENT_ID
+&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+&client_assertion=eyJhbGciOiJSUzI1NiIs...
+```
+
+断言 JWT 必须包含：
+
+| Claim | Requirement                                                                                                                                                        |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `iss` | Must be the `client_id`                                                                                                                                            |
+| `sub` | Must be the `client_id`                                                                                                                                            |
+| `aud` | Must contain either the URL of the endpoint receiving the assertion or the OpenID Provider issuer. Use a string or an array containing at least one accepted value |
+| `exp` | Required, must not exceed `assertionMaxLifetime` from now                                                                                                          |
+| `jti` | Required, must be unique (single-use)                                                                                                                              |
+| `iat` | Optional, but if present must not be older than `assertionMaxLifetime`                                                                                             |
+
+支持的签名算法：`RS256`、`RS384`、`RS512`、`PS256`、`PS384`、`PS512`、`ES256`、`ES384`、`ES512`、`EdDSA`。
 
 #### 授权码授权方式
 
@@ -502,7 +603,27 @@ The authorization server accepts requests without `state` for compatibility with
 
 当前实现为每次刷新请求发放新的刷新令牌。
 
-### Consent Endpoint
+设置 `refreshTokenReuseInterval` 可允许轮换后的刷新令牌在短时间内重复使用，并接收相同的令牌响应。这样，客户端可以从重复刷新请求、响应丢失或重试中恢复，而不会生成另一对令牌。
+
+```ts title="auth.ts"
+oauthProvider({
+  refreshTokenReuseInterval: 30, // seconds
+})
+```
+
+默认值为 `0`，保持严格的重放检测。在该时间间隔内，仅当重复使用的刷新令牌来自同一客户端，且请求解析出的有效 scope、请求资源和发送方约束相同（例如使用相同的 DPoP 密钥）时，Better Auth 才会重放缓存的响应。时间间隔内发生不匹配时会返回 `invalid_grant`，但不会使整个令牌族失效；时间间隔过后，使用旧刷新令牌会被视为重放，并使刷新令牌族失效。
+
+缓存的响应会加密存储在已消费的刷新令牌行中，并包含替换后的刷新令牌。每次重放响应时，都会根据缓存的 `expires_at` 重新计算 `expires_in`。
+
+#### 设备码授权方式
+
+设备授权方式（[RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628)）允许输入受限的客户端（CLI、智能电视、IoT）获取 OAuth 访问令牌。在 `oauthProvider()` 旁添加 `oauthDeviceAuthorization()`，以注册 `urn:ietf:params:oauth:grant-type:device_code` 令牌授权方式并公开 `device_authorization_endpoint`。该集成会添加 OAuth 客户端绑定和 RFC 8707 资源字段；独立的设备授权安装保持不变。设备会在 `/device/code` 请求代码，用户批准代码，然后客户端轮询 `/oauth2/token` 获取完整的 OAuth 令牌。请参见[授权 CLI 调用 API](/docs/plugins/device-authorization#authorize-a-cli-to-call-an-api)。
+
+在 `/device/code` 中，机密客户端使用其注册的方法进行身份验证。使用 `client_secret_basic` 的客户端可以发送 `Authorization: Basic ...` 标头，并省略正文中的 `client_id`；使用 `client_secret_post` 的客户端发送 `client_id` 和 `client_secret`；使用 `none` 的公有客户端发送 `client_id`。无论顺序如何，空的 `client_id`、`scope`、`user_id` 和身份验证参数都会被视为省略。重复的非空客户端标识、基础请求或身份验证参数，以及多个身份验证方法都会返回 `invalid_request`；而重复的 `resource` 参数仍受支持。
+
+未知的 OAuth 客户端 ID 不会被静默地作为独立请求处理。只有当 `oauthDeviceAuthorization({ validateClient })` 明确接受该 ID 时，才可使用独立回退。格式错误的 `resource` 输入仅在 `resource` 是失败的扩展字段时返回 `invalid_target`；如果基础请求字段也无效，响应则返回 `invalid_request`。
+
+### 同意端点
 
 接受或拒绝用户对某组权限的同意。注意拒绝某些权限时，会取消本次授权的同意，之前已有的其他同意依然有效。要移除同意，请删除该用户对应客户端的 "oauthConsent"。
 
@@ -517,6 +638,10 @@ The authorization server accepts requests without `state` for compatibility with
      * 以空格分隔的已接受 scope 列表。若未提供，则接受最初请求的 scope。
      */
     scope?: string,
+    /**
+     * 接受的 OIDC claims 请求对象。如果未提供，则接受最初请求的 claims。
+     */
+    claims?: string | Record<string, unknown>,
   }
   ```
 </APIMethod>
@@ -546,33 +671,56 @@ The authorization server accepts requests without `state` for compatibility with
   ```
 </APIMethod>
 
-### Introspect Endpoint
+### 核查端点
 
 符合 [RFC7662](https://datatracker.ietf.org/doc/html/rfc7662) 规范的令牌核查端点。
 
 此端点提供所给令牌的详细信息。如令牌绑定于会话，确保该会话为 `active`。
 
-通过 `customAccessTokenClaims` 可向机密客户端的 `resources` 字段存储允许其访问的资源，以提供资源特定声明。
+使用 `customAccessTokenClaims` 中的 `resources` 字段，根据受保护资源添加声明。
 
-### Revoke Endpoint
+#### 谁可以核查令牌
+
+调用方必须以已注册客户端的身份进行身份验证（[RFC 7662 §2.1](https://datatracker.ietf.org/doc/html/rfc7662#section-2.1)）。之后，它可以在以下两种情况下核查令牌：
+
+* 该客户端签发了令牌，或
+* 该客户端是与令牌资源之一关联的资源服务器
+
+第二种情况很常见：前端客户端获取令牌，而您的 API 对其进行验证。要完成此配置，请将 API 注册为资源，并将客户端与其关联。带有 `resources` 字段的动态客户端注册会自动创建关联；否则，请向 `oauthClientResource` 表添加一行。
+
+任何其他已身份验证的客户端都会获得 `{ active: false }`，这与未知或已过期令牌的响应相同，因此核查不能用来探测有效令牌。刷新令牌的限制更严格：只有请求该刷新令牌的客户端才能核查它。
+
+#### 返回哪些声明
+
+对于同一授权方式，不透明访问令牌和 JWT 访问令牌返回相同的声明：您的 `customAccessTokenClaims` 和任何按资源定义的 `customClaims`。服务器拥有保留声明名称（`iss`、`sub`、`aud`、`scope`、`auth_time` 等）。如果回调返回其中任何名称，该声明会被丢弃，而不会覆盖服务器的值。
+
+两种格式有一个区别。不透明令牌会在每次调用时重新计算，因此核查会显示其当前状态：更改资源的声明后，下一次核查会反映该更改。JWT 携带签发时签名的内容，之后不会改变。当您希望声明在签发时固定时，请通过传递 `resource` 请求 JWT；当您希望获取当前状态时，请使用不透明令牌。
+
+### 撤销端点
 
 符合 [RFC7009](https://datatracker.ietf.org/doc/html/rfc7009) 规范的撤销端点。
 
-此端点撤销所给令牌。
+端点的行为取决于令牌类型：
 
-* opaque `access_token`：立即将该 `access_token` 从数据库中移除。`refresh_token` 仍然有效。
-* JWT `access_token`：验证该令牌是否可安全从客户端存储中移除。
-* `refresh_token`：移除使用该 `refresh_token` 签发的所有 `access_tokens`，并移除该 `refresh_token` 以防止进一步发放令牌。
+* 不透明 `access_token`：立即从数据库中删除。同一授权方式产生的 `refresh_token` 仍然有效
+* `refresh_token`：删除其签发的所有 `access_token`，并移除该 `refresh_token`，因此它无法再签发令牌
+* JWT `access_token`：无法在服务器端撤销。JWT 是自包含的，且从未被存储，因此没有可删除的内容。仍能通过此服务器验证的令牌会返回 `400 unsupported_token_type`（[RFC7009 §2.2.1](https://datatracker.ietf.org/doc/html/rfc7009#section-2.2.1)），明确表示没有发生服务器端撤销。已经过期或携带被 OAuth 资源模型拒绝的 audience 的 JWT，会被视为无效令牌并返回 `200` no-op
 
-对于 `access_token` 类型：
+由于 JWT `access_token` 无法单独撤销，请做好规划：
+
+* 缩短其生命周期。使用 `accessTokenExpiresIn`，并为 `client_credentials` 令牌使用 `m2mAccessTokenExpiresIn`
+* 要在会话中途切断用户访问，请结束会话（退出登录、管理员撤销或后端通道注销）。携带会话 ID（`sid`）的 JWT `access_token` 会在 `/oauth2/introspect` 中报告为 `active: false`，并且会在会话结束后被 `/oauth2/userinfo` 拒绝，即使令牌尚未过期
+* `client_credentials` JWT `access_token` 没有可结束的会话，因此短过期时间是唯一可用的控制手段
 
 ### 会话结束端点
 
-符合 [RP-发起](https://openid.net/specs/openid-connect-rpinitiated-1_0.html)注销规范。
+[OpenID Connect RP-Initiated Logout 1.0](https://openid.net/specs/openid-connect-rpinitiated-1_0.html) 允许依赖方请求提供者结束用户会话。
 
-此端点允许指定受信任客户端远程执行注销操作。
+该端点适用于注册时设置 `enable_end_session: true` 的客户端。它接受 `GET` 查询或 `application/x-www-form-urlencoded` `POST` 正文中的注销参数。Better Auth 生成的客户端会以 JSON 发送相同的参数。经过验证的 `id_token_hint` 可以立即结束其引用的会话。没有有效提示时，Better Auth 会要求用户确认后再结束当前会话。当提示引用的会话与浏览器会话不同时，同样需要确认。
 
-允许 RP 发起注销，需专门创建开启注销功能的受信任客户端：
+Better Auth 仅在 `post_logout_redirect_uri` 与已注册 URI 精确匹配时才会在注销后重定向。它只会向该经过验证的重定向添加 `state`。未注册或被修改查询参数的 URI 不会触发重定向。浏览器导航会收到 HTML 格式的确认、成功和错误页面。API 调用方会收到协议响应。
+
+仅为信任的客户端启用此端点：
 
 ```ts title="admin-create-oauth.ts"
 import { auth } from "@/lib/auth"
@@ -586,13 +734,52 @@ await auth.api.adminCreateOAuthClient({
 });
 ```
 
+Better Auth 通过 origin 和 CSRF 检查以及短期签名 Cookie 保护确认流程。当存在当前会话时，Cookie 会与该会话绑定。成功的浏览器注销会返回已注销页面。会话删除会继续通过正常 hooks，包括向已注册依赖方发送后端通道注销通知。
+
+### 后端通道注销
+
+[后端通道注销](https://openid.net/specs/openid-connect-backchannel-1_0.html)是 RP 发起注销对应的服务器到服务器机制：当用户会话在 OP 处结束（退出登录、`/oauth2/end-session`、管理员撤销等）时，OP 会向每个已注册的依赖方 POST 一个签名的 Logout Token，使其能够终止自身的会话状态并撤销绑定的 API 访问权限。
+
+要为客户端启用该功能，请注册 `backchannel_logout_uri`：
+
+```ts title="admin-create-oauth.ts"
+await auth.api.adminCreateOAuthClient({
+  headers,
+  body: {
+    redirect_uris: [redirectUri],
+    enable_end_session: true,
+    backchannel_logout_uri: "https://rp.example.com/logout/backchannel", // [!code highlight]
+    backchannel_logout_session_required: true, // [!code highlight]
+  }
+});
+```
+
+当 `backchannel_logout_session_required` 为 `true` 时，RP 要求每个 Logout Token 都包含 `sid` 声明。OP 发送的每个 Logout Token 本身都已包含 `sid`，因此这类客户端始终可以正常使用。
+
+`backchannel_logout_uri` 会在注册时验证。每个客户端都必须使用绝对、无凭证、公有的 `https` URL，且不能包含片段；即使在本地开发环境中，也会拒绝回环和私有目标。保留主机、隧道主机（NAT64、6to4、IPv4 映射 IPv6）或云元数据名称也会被拒绝。此主机检查是语法检查：它不会解析 DNS，因此如果需要防止 DNS 重绑定，请固定或重新检查解析后的地址。相同的主机检查也会保护客户端的 `jwks_uri`；后者还无条件要求使用 `https` 和受信任的 origin。验证失败的 URI 会以 `invalid_client_metadata` 拒绝。CIMD 文档无法注册后端通道注销，因为其发现传输是仅支持 GET 的信任边界。
+
+OP 会枚举具有绑定到即将结束会话的活动令牌的客户端，并行向每个客户端 POST 一个 `logout_token`（每个 RP 超时 5 秒，依据规范 §2.5 不重试）。之后，它会撤销该会话的令牌：
+
+* \*\*刷新令牌：\*\*不带 `offline_access` 的刷新令牌会被撤销；带有 `offline_access` 的刷新令牌会被保留，使长期 API 访问能够在浏览器会话结束后继续存在（规范 §2.7）
+* \*\*访问令牌：\*\*绑定到会话的访问令牌会作为额外强化措施被撤销；§2.7 本身只涉及刷新令牌。核查和 `/oauth2/userinfo` 也会将会话已结束的任何令牌视为非活动状态，因此不再仅依赖存储的标志
+
+Logout Token 携带 §2.4 中的声明（`iss`、`aud`、`iat`、`exp`、`jti`、`events`，以及 `sub` 和 `sid`），受保护标头中的 `typ: logout+jwt`，且不包含 `nonce`。其生命周期上限为 120 秒，遵循 §4 中缩短重放窗口的安全指导。它使用与 ID Token 相同的密钥签名，因此任何通过您的 JWKS 验证 ID Token 的 RP 都可以在无需额外配置的情况下验证 Logout Token。
+
+<Callout type="warn">
+  后端通道注销要求使用 `jwt` 插件。在 `disableJwtPlugin: true` 时注册 `backchannel_logout_uri` 会以 `invalid_client_metadata` 拒绝。
+</Callout>
+
 <Callout type="info">
-  如果 `disableJwtPlugin: true`，公有客户端将永远无法使用此端点注销，因为不会发送 `id_token`。
+  如果配置了 `advanced.backgroundTasks.handler`，传输会通过该处理器运行（Vercel `waitUntil`、Cloudflare `ctx.waitUntil`），因此响应缓慢的 RP 不会延迟退出登录。没有处理器时，该流程会在退出登录响应返回前以内联方式完成：在持久服务器上可靠，但 RP 响应缓慢时可能增加延迟。在无服务器运行时请配置处理器。
+</Callout>
+
+<Callout type="info">
+  OP 会在 `.well-known/openid-configuration` 和 `.well-known/oauth-authorization-server` 上公开 `backchannel_logout_supported: true` 和 `backchannel_logout_session_supported: true`。RP 会在动态客户端注册期间使用这些字段来决定是否注册 `backchannel_logout_uri`。
 </Callout>
 
 ### UserInfo 端点
 
-UserInfo 端点提供符合 [OIDC](https://openid.net/specs/openid-connect-core-1_0.html) 标准的用户信息。端点为 `/oauth2/userinfo`，需带有效访问令牌且至少带有 `openid` 权限。
+UserInfo 端点提供符合 [OIDC](https://openid.net/specs/openid-connect-core-1_0.html) 的用户信息。该端点位于 `/oauth2/userinfo`，要求有效的访问令牌，且至少具有 `openid` scope。过期、已撤销或绑定到已结束会话的访问令牌会根据 [RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750#section-3.1) 以 `invalid_token`（401）拒绝。
 
 ```ts
 // 客户端调用 UserInfo 端点示例
@@ -608,15 +795,19 @@ const userInfo = await response.json();
 
 UserInfo 端点根据授权时授予的范围返回不同的声明：
 
-* `openid`: 返回用户 ID（`sub` 声明）
-* `profile`: 返回 `name`、`picture`、`given_name`、`family_name`
-* `email`: 返回 `email` 和 `email_verified`
+* `openid`：返回用户 ID（`sub` 声明）
+* `profile`：返回 `name`、`picture`、`given_name`、`family_name`
+* `email`：返回 `email` 和 `email_verified`
 
-`customUserInfoClaims` 函数接收用户对象、请求的 scopes 数组以及传入的访问令牌，允许添加额外响应信息。
+该端点还支持 OIDC `claims` 请求参数。`claims.userinfo` 下列出的声明会在 Better Auth 或您的自定义声明逻辑能够提供时，添加到基于 scope 请求的声明中，并限制为 `claims_supported` 中公开的名称。缺失的值会从 JSON 响应中省略，而不是返回 `null` 或空字符串。
+
+通过 `claims.userinfo` 进行的逐声明选择适用于不透明访问令牌。JWT 访问令牌会根据其已授予的 scope 解析 UserInfo 声明，因此，如果单独请求的声明没有对应的基础 scope，该声明会被省略（OIDC Core §5.5.1）。当客户端需要某个没有任何已授予 scope 覆盖的声明时，请请求对应的基础 scope，或签发不透明访问令牌。
+
+`customUserInfoClaims` 函数会接收用户对象、请求的 scope 数组、请求的 UserInfo 声明名称以及传入的访问令牌，从而允许您向响应添加额外信息。
 
 ### Well-Known
 
-#### OpenID Configuration
+#### OpenID 配置
 
 在 `{issuer}/.well-known/openid-configuration` 提供 [OpenID Connect 发现元数据](https://openid.net/specs/openid-connect-discovery-1_0.html)。
 
@@ -669,30 +860,29 @@ export const GET = oauthProviderAuthServerMetadata(auth);
 
 ### 验证
 
-可通过 `oauthProviderResourceClient` 插件或 `better-auth/oauth2` 包里的 `verifyAccessToken` 进行验证。
+可以使用 `oauthProviderResourceClient` 插件或 `better-auth/oauth2` 包提供的 `verifyAccessTokenRequest` 执行验证。这是推荐的资源服务器 API，因为它会验证访问令牌；当令牌绑定了 DPoP 时，还会验证请求方法、URL、`Authorization: DPoP` 方案、证明密钥、重放 `jti` 和 `ath` 声明。
 
 使用 `better-auth` 包：
 
 ```ts title="api/[endpoint].ts"
-import { verifyAccessToken } from "better-auth/oauth2";
+import {
+  requestToResourceInput,
+  verifyAccessTokenRequest,
+} from "better-auth/oauth2";
 
 export const GET = async (req: Request) => {
-  const authorization = req.headers?.get("authorization") ?? undefined;
-  const accessToken = authorization?.startsWith("Bearer ")
-    ? authorization.replace("Bearer ", "")
-    : authorization;
-  const payload = await verifyAccessToken(
-    accessToken, {
-      verifyOptions: {
-        issuer: "https://auth.example.com",
-        audience: "https://api.example.com",
-      },
-      scopes: ["read:post"], // 可选
-    }
-  );
-  // ...后续操作
+  const payload = await verifyAccessTokenRequest(requestToResourceInput(req), {
+    verifyOptions: {
+      issuer: "https://auth.example.com",
+      audience: "https://api.example.com",
+    },
+    requiredScopes: ["read:post"], // optional
+  });
+  // ...continue
 }
 ```
+
+`requestToResourceInput` 会从标准 `Request` 中读取 `Authorization` 和 `DPoP` 请求头，以及方法和 URL。如果您的框架不提供 `Request`，请传入包含这些字段的普通对象。
 
 使用 `oauthProviderResourceClient` 插件：
 
@@ -700,22 +890,28 @@ export const GET = async (req: Request) => {
 import { serverClient } from "@/lib/server-client";
 
 export const POST = async (req: Request) => {
-  const authorization = req.headers?.get("authorization") ?? undefined;
-  const accessToken = authorization?.startsWith("Bearer ")
-    ? authorization.replace("Bearer ", "")
-    : authorization;
-  const payload = await serverClient.verifyAccessToken(
-    accessToken, {
+  const payload = await serverClient.verifyAccessTokenRequest(
+    req,
+    {
       verifyOptions: {
         issuer: "https://auth.example.com",
         audience: "https://api.example.com",
       },
-      scopes: ["write:post"], // 可选
+      requiredScopes: ["write:post"], // optional
     }
   );
   // ...后续操作
 }
 ```
+
+当您已经提取原始 bearer 令牌，并且明确不接受该路径上的 DPoP 绑定令牌时，仍可使用 `verifyBearerToken`。它会拒绝 DPoP 绑定令牌，因此对于任何可能接收这类令牌的端点，优先使用 `verifyAccessTokenRequest`。
+
+<Callout type="warn">
+  DPoP 验证会将证明中的 `htu` 与请求 URL 进行比较，并通过 `jti` 存储来拒绝重放的证明。两个部署细节非常重要：
+
+  * \*\*位于代理之后：\*\*证明会根据 `request.url` 进行检查，因此终止 TLS 或重写路径的代理必须转发外部可见的方案、主机和路径，否则合法证明会被拒绝。
+  * **重放保护：**`verifyAccessTokenRequest` 默认使用内存中的 `jti` 存储，该存储仅适用于单实例。对于多实例或无服务器资源服务器，请传入共享的 `dpop.replayStore`，例如 `createDpopReplayStore(ctx.context.internalAdapter)`。该存储会将证明记录到数据库支持的验证存储中（提供者自身的端点和 `requireMcpAuth` 默认使用该存储）。它要求使用数据库支持的验证存储；仅使用辅助存储的部署会拒绝 DPoP 请求，而不是跳过重放保护。
+</Callout>
 
 #### JWT 验证
 
@@ -823,7 +1019,7 @@ oauthProvider({
 
 用户跳转到 OIDC 提供者认证时，可能需授权应用访问数据。
 
-**注意**：受信任客户端设置了 `skipConsent: true`，将跳过同意页面，提供无缝体验。
+**注意**：具有 `skip_consent: true` 的受信任客户端将完全跳过同意屏幕，为第一方应用提供无缝体验。
 
 ```ts title="auth.ts"
 oauthProvider({
@@ -831,15 +1027,20 @@ oauthProvider({
 })
 ```
 
-插件会携带 `client_id` 和 `scope` 参数重定向至指定路径，您可根据该信息展示自定义同意页。用户同意后调用 `oauth2.consent` 完成授权。
+插件会将用户重定向至指定路径，并附带 `client_id`、`scope` 以及（在请求时）`claims` 查询参数。使用 `scope` 和 `claims.userinfo` 在同意页面中显示完整的访问请求。用户同意后，可以调用 `oauth2.consent` 完成授权。
 
 ```ts title="consent-page.ts"
 import { authClient } from "@/lib/auth-client"
 
+const claims = new URLSearchParams(window.location.search).get("claims");
+const requestedClaims = claims ? JSON.parse(claims) : undefined;
+
 const res = await authClient.oauth2.consent({
 	accept: true,
-  // 可选接受的范围，未指定时接受所有原始请求范围
-  scope: "openid profile email"
+  // optional scopes accepted (if not sent, accepted scopes matches the original request)
+  scope: "openid profile email",
+  // optional claims accepted (if not sent, accepted claims match the original request)
+  claims: requestedClaims
 });
 ```
 
@@ -972,26 +1173,51 @@ oauthProvider({
 })
 ```
 
-### 有效受众（Audiences）
+### 资源
 
-本 OAuth 服务器允许的一组有效受众（资源）。若未指定，则默认发送基础 URL。推荐指定除基础 URL 之外的受众，如您的 API。
+该 OAuth 服务器为其签发访问令牌的受保护资源列表。每个标识符都是 RFC 8707 `resource` 参数值，并在签发 JWT 访问令牌时成为 JWT 的 `aud` 声明。
 
 ```ts title="auth.ts"
 oauthProvider({
-  validAudiences: [
+  resources: [
     "https://api.example.com",
-    "https://api.example.com/mcp",
+    {
+      identifier: "https://api.example.com/mcp",
+      allowedScopes: ["mcp:read", "mcp:write"],
+      accessTokenTtl: 300,
+    },
   ]
 })
 ```
 
-### Scopes
+当资源策略需要在运行时更改时，请使用管理资源端点。
+
+动态注册可以在与客户端记录相同的事务中，将受保护资源附加到新客户端。`clientRegistrationDefaultResources` 会将服务器拥有的默认资源添加到每次注册中。`clientRegistrationAllowedResources` 列出客户端可以请求的其他资源；有效允许列表是默认列表和允许列表的并集。默认资源排在前面，重复项会被移除，并且每个配置值都必须存在于 `resources` 中。
+
+```ts title="auth.ts"
+oauthProvider({
+  resources: [
+    "https://api.example.com/default",
+    "https://api.example.com/optional",
+  ],
+  clientRegistrationDefaultResources: [
+    "https://api.example.com/default",
+  ],
+  clientRegistrationAllowedResources: [
+    "https://api.example.com/optional",
+  ],
+})
+```
+
+显式资源请求默认采用封闭策略：当两个注册资源选项都省略时，不允许请求任何资源。有效允许列表之外的请求资源会因 `invalid_target` 被拒绝；缺失和禁用的资源也会被拒绝。具有已解析资源的注册会返回最终的 `resources` 列表，并以原子方式创建对应的 `oauthClientResource` 关联。
+
+### 范围
 
 Scopes 授权客户端访问指定资源。目前默认支持：
 
 * `openid`: 返回用户的 ID（`sub` 声明）。
-* `profile`: 返回名称、图片、given\_name、family\_name
-* `email`: 返回邮箱和邮箱已验证
+* `profile`: 从 UserInfo 返回 name、picture、given\_name、family\_name
+* `email`: 从 UserInfo 返回 email 和 email\_verified
 * `offline_access`: 返回刷新令牌
 
 您可以自由定义所支持的 scopes！注意：需包含 `openid` 以满足 OIDC 服务器，否则为标准 OAuth 2.1 服务器。所有支持的 scopes 必须包含于此数组。
@@ -1004,9 +1230,11 @@ oauthProvider({
 
 ### 声明（Claims）
 
-内部支持以下声明：\["sub", "iss", "aud", "exp", "iat", "sid", "scope", "azp"\]。
+内部支持的声明包括 \["sub", "iss", "aud", "exp", "iat", "sid", "scope", "azp"]。
 
-建议对 id token 和 userinfo 中附加的声明使用命名空间，防止未来冲突。
+ID token 和 UserInfo 声明应尽可能使用命名空间，以避免潜在的未来冲突。在授权码流程中，`profile`、`email` 和 `claims.userinfo` 请求 UserInfo 声明；除非通过 `customIdTokenClaims` 添加，否则它们不会添加到 ID token 中。
+
+对于协议拥有的 ID token 声明，`customIdTokenClaims` 采用追加方式。`iss`、`sub`、`aud`、令牌生命周期声明、`nonce`、`sid`、哈希声明、`auth_time`、`acr`、`amr` 和 `azp` 等保留名称会在签发时被移除，并记录警告日志。应用特定数据请使用诸如 `https://example.com/org` 的命名空间声明名称。
 
 `customIdTokenClaims` 和 `customUserInfoClaims` 中添加的声明应被添加到 `advertisedMetadata.claims_supported`，以便客户端验证收到的声明。以下示例包含基础声明以及 `locale` 和 `https://example.com/org`。
 
@@ -1020,17 +1248,21 @@ oauthProvider({
       locale: "en-GB",
     };
   },
-  // 附加声明到访问令牌
-  customAccessTokenClaims: ({ user, scopes, referenceId, resource, metadata }) => {
+  // Attach claims to access tokens
+  customAccessTokenClaims: ({ user, scopes, referenceId, resources, metadata }) => {
     return {
       "https://example.com/org": referenceId,
+      "https://example.com/resources": resources,
       "https://example.com/roles": ["editor"],
     };
   },
-  // 附加额外 userinfo 声明
-  customUserInfoClaims: ({ user, scopes, jwt) => {
+  // Additional user info claims
+  customUserInfoClaims: ({ user, scopes, requestedClaims, jwt }) => {
     return {
       locale: "en-GB",
+      ...(requestedClaims.includes("website")
+        ? { website: "https://example.com" }
+        : {}),
     };
   },
 })
@@ -1058,11 +1290,13 @@ oauthProvider({
 
 每种令牌类型和授权类型均可独立设置默认过期时间。
 
-* `accessTokenExpiresIn` 默认 1 小时
-* `m2mAccessTokenExpiresIn` 默认 1 小时
-* `idTokenExpiresIn` 默认 10 小时
-* `refreshTokenExpiresIn` 默认 30 天
-* `codeExpiresIn` 默认 10 分钟
+* `accessTokenExpiresIn` 默认为 1 小时
+* `m2mAccessTokenExpiresIn` 默认为 1 小时
+* `idTokenExpiresIn` 默认为 10 小时
+* `refreshTokenExpiresIn` 默认为 30 天
+* `refreshTokenReuseInterval` 默认为 0 秒
+* `codeExpiresIn` 默认为 10 分钟
+* `assertionMaxLifetime` 默认为 5 分钟——`private_key_jwt` 客户端断言允许的最长生命周期
 
 访问令牌还支持基于 scopes 单独设置更短过期（以最早过期时间为准，未设置的使用默认）。注意：该时间应低于默认 `accessTokenExpiresIn` 和 `m2mAccessTokenExpiresIn`。
 
@@ -1087,7 +1321,7 @@ oauthProvider({
 })
 ```
 
-无认证客户端注册允许公有客户端（非机密）无授权头动态注册，适合 MCP 自动注册公有客户端。
+未经身份验证的客户端注册还允许客户端在没有授权标头的情况下进行注册。公共客户端注册时使用 `token_endpoint_auth_method: "none"`。机密客户端会在注册响应中收到一次性 `client_secret`。对于 MCP 认证支持，推荐通过 [CIMD 插件](/docs/plugins/cimd) 实现，该插件可以维护公共客户端的身份。
 
 ```ts title="auth.ts"
 oauthProvider({
@@ -1096,8 +1330,39 @@ oauthProvider({
 })
 ```
 
-<Callout type="warn">
-  `allowUnauthenticatedClientRegistration` **将在 MCP 协议标准化无认证动态客户端注册时弃用**。截至撰写时，[客户端 ID 元数据文档](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/991) 和 [`software_statement` 与 `jwks_uri`](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1032) 仍在讨论中。
+<Callout type="info">
+  对于 MCP 公共客户端身份，请使用 [CIMD 插件](/docs/plugins/cimd)。
+</Callout>
+
+受保护的动态客户端注册允许机器调用方在没有 Better Auth 用户会话的情况下注册公共或机密客户端。通过带外方式签发 RFC 7591 初始访问令牌，然后从 `Authorization: Bearer <token>` 请求头中验证该令牌。定义 `validateInitialAccessToken` 即可启用此路径；未定义该函数时，发送到注册端点的 Bearer 令牌会被拒绝。
+
+```ts title="auth.ts"
+import { createHash, timingSafeEqual } from "node:crypto"
+
+const digest = (value: string) => createHash("sha256").update(value).digest()
+
+oauthProvider({
+  allowDynamicClientRegistration: true,
+  validateInitialAccessToken: async ({ initialAccessToken, clientMetadata }) => {
+    // Compare in constant time; hashing both sides keeps the lengths equal.
+    const expected = digest(process.env.CLIENT_REGISTRATION_TOKEN ?? "")
+    if (!timingSafeEqual(digest(initialAccessToken), expected)) {
+      return false
+    }
+
+    return {
+      referenceId: "infra-provisioner",
+    }
+  },
+})
+```
+
+返回包含 `referenceId` 的对象，以便将应用所有权元数据附加到创建的客户端；或者返回 `false` 以拒绝该令牌。省略 `referenceId` 会创建无所有者客户端。传递给回调的 `clientMetadata` 是提交的请求数据，属于客户端自行声明且尚未完全验证，因此应将其视为不受信任的输入。
+
+令牌签发、过期和撤销由您的应用负责，因为 RFC 7591 将初始访问令牌的生命周期策略留给授权服务器。这与 RFC 7592 注册管理令牌是分开的。
+
+<Callout type="info">
+  启用 [Bearer](/docs/plugins/bearer) 插件后，如果 `Authorization: Bearer` 值解析为有效的用户会话，则会将其作为该会话处理，而不是作为初始访问令牌。
 </Callout>
 
 #### 动态客户端注册过期时间
@@ -1113,7 +1378,9 @@ oauthProvider({
 
 #### 动态客户端注册默认范围
 
-若客户端注册时未提交 scopes，可设置默认 scopes。所有默认 scopes 必须在 `scopes` 中定义。
+注册范围元数据描述客户端能够请求的范围；它不是用户授权授予。Better Auth 会将请求的 `scope` 验证为操作员策略的子集，然后持久化完整的、经操作员批准的能力集合，以便后续授权可以升级权限，而无需重新注册客户端。
+
+使用 `clientRegistrationDefaultScopes` 设置基准能力列表。所有值都必须在 `scopes` 中定义。
 
 ```ts title="auth.ts"
 oauthProvider({
@@ -1122,7 +1389,7 @@ oauthProvider({
 })
 ```
 
-若还需设置允许的额外 scopes，设置 `clientRegistrationAllowedScopes`。该集合**包含**默认 scopes。
+使用 `clientRegistrationAllowedScopes` 添加能力。有效集合是两个列表的确定性去重并集。当两个选项都省略时，`scopes` 即为有效集合。DCR 或 CIMD 文档可以请求其中的子集，但该子集不会永久阻止后续特定操作的权限升级。
 
 ```ts title="auth.ts"
 oauthProvider({
@@ -1142,16 +1409,16 @@ PKCE 是防止授权码被截获的一种安全机制。插件遵循 OAuth 2.1 �
 
 **PKCE 始终需要：**
 
-* 公共客户端（基于原生/用户代理的应用程序）
-* 任何带有 `offline_access` 范围的授权码（刷新令牌）
+* 使用 `token_endpoint_auth_method: "none"` 的客户端
+* 带有 `offline_access` 范围的授权请求，除非机密客户端已选择停用 PKCE，且 OIDC 请求同时包含 `openid` 和 `nonce`
 
 #### 每客户端 PKCE 配置
 
-客户端可在注册时选择关闭 PKCE（适配兼容性）：
+Admin-created confidential clients can opt out of the PKCE requirement if needed for compatibility:
 
-```ts title="register-client.ts"
-// 注册不支持 PKCE 的机密客户端
-const response = await auth.api.createOAuthClient({
+```ts title="admin-create-oauth.ts"
+// Register a confidential client that doesn't support PKCE
+const response = await auth.api.adminCreateOAuthClient({
   headers,
   body: {
     client_name: 'Legacy Backend Service',
@@ -1165,10 +1432,23 @@ const response = await auth.api.createOAuthClient({
 
 `require_pkce` 字段：
 
-* 默认值为 `true`（需要 PKCE）
+* 默认为 `true`（需要 PKCE）
 * 仅适用于机密客户端
-* 公共客户端（PKCE 始终需要）忽略此设置
-* 带有 `offline_access` 范围的授权码忽略此设置（PKCE 始终需要）
+* 对公共客户端无效（始终需要 PKCE）
+* 在请求 `offline_access` 且不使用 PKCE 时，需要 OIDC 请求同时包含 `openid` 和 `nonce`
+
+#### 动态客户端注册 PKCE 配置
+
+动态客户端注册不接受客户端请求中的 `require_pkce`。要更改动态注册机密客户端的服务器拥有默认值，请设置 `clientRegistrationRequirePKCE`。
+
+```ts title="auth.ts"
+oauthProvider({
+  allowDynamicClientRegistration: true,
+  clientRegistrationRequirePKCE: false,
+})
+```
+
+这仅适用于通过动态客户端注册创建的机密客户端。公共客户端仍然需要 PKCE。请求 `offline_access` 且不使用 PKCE 的机密 OIDC 客户端必须同时发送 `openid` 和 `nonce`。
 
 **何时使用 `require_pkce: false`：**
 
@@ -1176,26 +1456,9 @@ const response = await auth.api.createOAuthClient({
 * 无法更新的后端到后端集成
 * 分阶段迁移期间的临时兼容性
 
-**建议：** 尽可能保持启用 PKCE（默认），即使对机密客户端也增加安全防护。
+\*\*建议：\*\*尽可能保持启用 PKCE（默认），即使对机密客户端也增加安全防护。
 
-#### 从 oidc-provider 迁移
-
-若从已废弃的 `oidc-provider` 插件迁移，且存在不支持 PKCE 的机密客户端：
-
-1. 旧客户端可针对单个客户端设置 `require_pkce: false`。
-2. 新客户端注册应始终开启 PKCE（默认）。
-3. 逐步淘汰不支持 PKCE 的客户端。
-4. 监控使用了 `require_pkce: false` 的客户端以便规划迁移。
-
-#### 安全考虑
-
-PKCE 防止授权码截获。即使机密客户端使用 `client_secret` 认证，PKCE 依旧提供额外安全保障：
-
-- **防御深度**：多层防护
-- **防止误配置**：密钥泄露风险降低
-- **符合未来标准**
-
-#### 安全性考虑
+#### 安全注意事项
 
 PKCE 防止授权码截获攻击。即使对使用 `client_secret` 的机密客户端，PKCE 也提供额外安全：
 
@@ -1204,6 +1467,96 @@ PKCE 防止授权码截获攻击。即使对使用 `client_secret` 的机密客�
 * **面向未来**：符合 OAuth 2.1 最佳实践
 
 仅当绝对必要时（例如旧机密客户端的兼容性），才禁用 PKCE。
+
+### 未经身份验证的客户端发现
+
+某些客户端（尤其是 MCP 客户端）需要连接到您的授权服务器，而无需提前注册。OAuth Provider 插件通过两种机制支持此功能：
+
+* **`allowUnauthenticatedClientRegistration`**：允许匿名调用方访问 `/oauth2/register`，在请求时创建客户端。机密客户端注册会收到一次性 `client_secret`；公共客户端注册使用 `token_endpoint_auth_method: "none"`。
+* **[`@better-auth/cimd`](/docs/plugins/cimd)**：一个可选插件，允许客户端通过在 HTTPS URL 上托管元数据文档来标识自己。该 URL 本身会成为 `client_id`；服务器会获取并验证该文档。通用发现遵循 [Client ID Metadata Document draft-02](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-02)，而 MCP 2026-07-28 配置明确固定使用 draft-00 的要求。
+
+### 提供者扩展
+
+OAuth companion 插件可以扩展提供者，而无需更改 OAuth Provider 核心。使用插件 `init()` 钩子中的 `extendOAuthProvider()` 添加令牌授权类型、基于断言的客户端认证方法、追加的发现元数据、令牌或 UserInfo 声明，以及客户端 ID 发现源。[`@better-auth/cimd`](/docs/plugins/cimd) 插件也使用相同的接口来提供基于 URL 的客户端发现。发现源提供一个稳定且全局唯一的 `id`，该 ID 会作为客户端来源持久化；还可以为该发现源拥有的资源提供 `fetchClientMetadataResource`，例如 CIMD 客户端的 `jwks_uri`。更改 ID 需要迁移所拥有的客户端记录；移除匹配的发现源会使这些客户端默认拒绝。
+
+```ts title="custom-oauth-extension.ts"
+import type { BetterAuthPlugin } from "better-auth";
+import { extendOAuthProvider } from "@better-auth/oauth-provider";
+
+export const customOAuthExtension = () =>
+  ({
+    id: "custom-oauth-extension",
+    init(ctx) {
+      extendOAuthProvider(ctx, {
+        grants: {
+          "urn:example:params:oauth:grant-type:custom": async ({
+            provider,
+          }) => {
+            const { client } = await provider.authenticateClient();
+            return provider.issueTokens({
+              client,
+              scopes: ["openid"],
+              tokenResponse: {
+                issued_token_type:
+                  "urn:ietf:params:oauth:token-type:access_token",
+              },
+            });
+          },
+        },
+        metadata: () => ({
+          custom_grant_supported: true,
+        }),
+      });
+    },
+  }) satisfies BetterAuthPlugin;
+```
+
+扩展贡献遵循两项规则：
+
+* **已分派类型**（`grants`、`clientAuthentication`）在不同扩展之间必须互不相交。如果另一个扩展已经注册了某个授权类型、`token_endpoint_auth_method` 或 `client_assertion_type`，再次注册会在设置时被拒绝，因此贡献永远不会被静默覆盖。扩展授权类型和认证方法会自动在发现信息中公布。
+* **追加类型**（`metadata`、`claims`）永远不会覆盖授权服务器核心。对于提供者已经拥有的元数据字段（`issuer`、`token_endpoint`、`grant_types_supported`、认证方法列表等），会保留原值；如果两个扩展都贡献同一个键，则使用第一个注册的扩展提供的值。
+
+声明贡献者可以添加新的声明名称，但永远不会替换身份、认证上下文、RFC 9068 保留声明或其他由提供者拥有的声明。要公布扩展生成的声明名称，请设置 `advertisedMetadata.claims_supported`：`claims_supported` 由提供者拥有，不会根据贡献者自动推断。
+
+#### 授权类型之外的提供者能力
+
+授权处理程序会接收一个提供者能力接口（`getClient`、`authenticateClient`、`issueTokens`、`hashToken`、`validateAccessToken`、`requireActiveAccessToken`）。如果插件需要在自己的端点中使用这些能力（例如后端信道授权端点、轮询端点），可通过 `getOAuthProviderApi(ctx, opts, grantType?)` 获取相同对象，从而解析客户端或验证令牌，而无需访问提供者内部实现。对于能够处理非活动载荷的内省式流程，请使用 `validateAccessToken`；对于应使用 OAuth bearer challenge 拒绝非活动或未知令牌的受保护资源端点，请使用 `requireActiveAccessToken`。在令牌端点之外签发令牌时传入授权类型；只读使用时省略该参数，此时调用 `issueTokens` 会抛出错误，而不会签发未标记授权类型的令牌。
+
+要对签发的令牌添加发送方约束（RFC 7800 `cnf`），请将 `confirmation` 传递给 `issueTokens`，或从 `clientAuthentication` 策略中返回它。提供者会将其写入访问令牌的 `cnf`，并相应设置响应的 `token_type`。`cnf` 由授权服务器拥有，无法通过声明贡献者设置。
+
+#### 客户端认证义务
+
+`clientAuthentication` 策略会根据自身密钥来源验证断言，并返回其证明的客户端 ID；提供者会自行解析并授权客户端记录，因此策略只证明身份，永远不会提供该记录。验证签名后，它必须执行内置 `private_key_jwt` 方法所执行的相同断言安全检查，否则提供者可能接受伪造或重放的断言。使用导出的 `consumeClientAssertion` 辅助函数，将断言绑定到端点受众、要求有限生命周期并拒绝 `jti` 重放：
+
+```ts
+import { consumeClientAssertion } from "@better-auth/oauth-provider";
+
+authenticate: async ({ ctx, opts, assertion, expectedAudience }) => {
+  const payload = await verifyAssertionSignature(assertion); // your key source
+  await consumeClientAssertion(ctx, opts, {
+    // Scopes the replay tombstone; the same jti may recur across distinct
+    // methods or clients but never within one.
+    namespace: `urn:example:attestation:${payload.sub}`,
+    payload,
+    expectedAudience: expectedAudience!,
+  });
+  // Return only the proven client id (and an optional `confirmation`). The
+  // provider resolves and authorizes the client record itself.
+  return { clientId: payload.sub as string };
+};
+```
+
+#### 声明优先级
+
+三个声明接口按照固定顺序解析贡献。在这三个接口中，第三方扩展声明严格采用追加方式，而操作员自己的第一方回调可以覆盖配置文件风格的身份声明；协议拥有的身份、生命周期、绑定和认证上下文声明始终由提供者固定或保留。
+
+| 令牌       | 顺序（从最低到最高权限）                                                                                                                   | 由提供者固定或保留                                                                                                                                                    |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 访问令牌     | extension `claims.accessToken` \< per-issuance `accessTokenClaims` \< `customAccessTokenClaims` \< per-resource `customClaims` | 保留 RFC 9068 名称（`iss`、`sub`、`aud`、`exp`、`iat`、`jti`、`client_id`、`scope`、`auth_time`、`acr`、`amr`），签名前移除                                                        |
+| ID token | subject/authentication claims \< `customIdTokenClaims`；extension 和 per-issuance `idTokenClaims` 会进行保留名称过滤并采用追加方式               | 保留 OIDC/JWT 名称（`iss`、`sub`、`aud`、`exp`、`nbf`、`iat`、`jti`、`nonce`、`sid`、`at_hash`、`c_hash`、`s_hash`、`auth_time`、`acr`、`amr`、`azp`）以及由 scope 派生的 UserInfo 声明名称 |
+| UserInfo | scope 和 `claims.userinfo` 身份声明 \< extension `claims.userInfo`（仅追加） \< `customUserInfoClaims`                                   | `sub`（最后重新固定）                                                                                                                                                |
+
+每次签发的 `accessTokenClaims` 仅适用于 JWT：不透明访问令牌不会持久化每次签发的声明，因此这些声明不会在内省时重新出现。必须在不透明令牌内省中可见的声明，应放在授权类型稳定的 `claims.accessToken` 贡献者中，内省路径会重新派生该声明。
 
 ### 组织
 
@@ -1243,8 +1596,8 @@ oauthProvider({
 
 默认所有密钥在数据库中以 `hashed` 形式存储，防止泄露时暴露 `client_secret`。
 
-* **storeClientSecret**: 应用程序 `client_secrets` 的存储方式。仅当 `disableJwtPlugin: true` 时，客户端密钥应为 `encrypted`。
-* **storeTokens**: 令牌值的存储方式，特别是会话刷新令牌和不透明访问令牌。
+* **storeClientSecret**：应用程序 `client_secrets` 的存储方式。仅当 `disableJwtPlugin: true` 时，客户端密钥应为 `encrypted`。
+* **storeTokens**：令牌值的存储方式，特别是会话刷新令牌和不透明访问令牌。
 
 ### 限流
 
@@ -1260,14 +1613,14 @@ OAuth 提供者内置所有 OAuth 端点限流，防止滥用和拒绝服务攻�
 
 **默认限制：**
 
-| 端点 | 窗口 | 最大请求数 |
-|------|------|------------|
-| `/oauth2/token` | 60s | 20 |
-| `/oauth2/authorize` | 60s | 30 |
-| `/oauth2/introspect` | 60s | 100 |
-| `/oauth2/revoke` | 60s | 30 |
-| `/oauth2/register` | 60s | 5 |
-| `/oauth2/userinfo` | 60s | 60 |
+| 端点                   | 窗口  | 最大请求数 |
+| -------------------- | --- | ----- |
+| `/oauth2/token`      | 60s | 20    |
+| `/oauth2/authorize`  | 60s | 30    |
+| `/oauth2/introspect` | 60s | 100   |
+| `/oauth2/revoke`     | 60s | 30    |
+| `/oauth2/register`   | 60s | 5     |
+| `/oauth2/userinfo`   | 60s | 60    |
 
 可自定义各端点的限流参数：
 
@@ -1369,6 +1722,8 @@ const auth = betterAuth({
 
 所有出现在 `advertisedMetadata` 中的 scopes **必须**在 `scopes` 中声明，否则初始化失败。
 
+Better Auth 公布 `acr_values_supported: ["0"]`。在 OIDC Core 中，`"0"` 表示认证未达到 ISO/IEC 29115 level 1。当前不支持自定义 ACR 策略。由于 `acr_values` 是可选的，对其他类别的请求会继续处理，并且 ID token 会报告 `acr: "0"`。在 OpenID Connect 请求中，如果必要的 `claims.id_token.acr` 请求中的 `value` 或 `values` 不包含 `"0"`，则请求失败。
+
 #### Scopes
 
 ```ts title="auth.ts"
@@ -1452,177 +1807,25 @@ const response = await auth.api.createOAuthClient({
 * `/oauth2/userinfo` 响应
 * 令牌内省（`/oauth2/introspect`）
 
-JWT 访问令牌仍使用真实用户 ID 作为 `sub`，因资源服务器可能需要直接查询用户信息。
+当资源服务器内省签发给另一个客户端的令牌时，它会获得签发客户端所看到的 `sub`，而不是为资源服务器自身计算的 `sub`。因此，无论哪个资源服务器发起请求，同一用户对于该签发客户端始终显示为相同的 `sub`。
+
+JWT 访问令牌始终使用真实用户 ID 作为 `sub`，因为资源服务器可能需要直接查找用户。
 
 <Callout type="warn">
-**限制**：
+  **限制**：
 
-* `sector_identifier_uri` 尚未支持。一个客户端的所有重定向 URI 必须共享同一主机。跨主机的重定向 URI 将导致注册被拒绝。
-* `pairwiseSecret` 必须至少 32 个字符长。
-* 轮换 `pairwiseSecret` 将更改所有成对 `sub` 值，破坏现有 RP 会话。请将密钥视为永久设置。
+  * `sector_identifier_uri` 尚未支持。一个客户端的所有重定向 URI 必须共享同一主机。跨主机的重定向 URI 将导致注册被拒绝。
+  * `pairwiseSecret` 必须至少 32 个字符长。
+  * 轮换 `pairwiseSecret` 将更改所有成对 `sub` 值，破坏现有 RP 会话。请将密钥视为永久设置。
 </Callout>
 
 ### MCP
 
-仅需添加资源服务器指向此 OAuth 2.1 授权服务器，即可轻松让 API 兼容 [MCP 协议](https://modelcontextprotocol.io/specification/draft/basic/authorization)。
+当 MCP 服务器是您的受保护资源之一时，请使用 [`@better-auth/mcp` 插件](/docs/plugins/mcp)。它基于此 OAuth Provider 构建，并添加 MCP 默认配置、RFC 9728 受保护资源元数据，以及返回 MCP 客户端所需授权质询的路由辅助函数。
 
-<Callout type="info">
-如果您使用 "openid" 且为机密 MCP 客户端，则无法禁用 JWT 插件，因为 `id_token` 验证可能无法通过 `client_secret` 支持。
-</Callout>
+`mcp()` 就是该 Better Auth 实例的 OAuth Provider，因此不要同时注册 `mcp()` 和 `oauthProvider()`。它直接接受 OAuth Provider 选项。当 MCP 路由与认证实例共享时，请使用 `requireMcpAuth`；当资源服务器独立运行时，请使用 `createMcpProtectedRequestHandler`。
 
-#### 安装
-
-<Steps>
-  <Step>
-    ### 确保 Well Known 路径正确
-
-    参考 [Well Known 端点](#well-known)。
-  </Step>
-
-  <Step>
-    ### 添加资源服务器客户端
-
-    （可选）如果本地有 auth 配置，可作为参数提供给客户端，便于配置校验。亦可直接在调用时覆盖。若无，则由 TypeScript 指导最低配置要求。
-
-    ```ts title="server-client.ts"
-    import { auth } from "@/lib/auth";
-    import { createAuthClient } from "better-auth/client";
-    import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client"
-
-    export const serverClient = createAuthClient({
-      plugins: [oauthProviderResourceClient(auth)], // auth 可选
-    });
-    ```
-  </Step>
-
-  <Step>
-    ### 向 API 添加 OAuth 受保护资源元数据
-
-    ```ts title="/.well-known/oauth-protected-resource/[resource-path]/route.ts"
-    import { serverClient } from "@/lib/server-client";
-
-    export const GET = async () => {
-      const metadata = await serverClient.getProtectedResourceMetadata({
-        resource: "https://api.example.com", // `aud` 声明
-        authorization_servers: ["https://auth.example.com"],
-      })
-
-      return new Response(JSON.stringify(metadata), {
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control":
-            "public, max-age=15, stale-while-revalidate=15, stale-if-error=86400",
-        },
-      });
-    };
-    ```
-  </Step>
-
-  <Step>
-    如果您使用 `allowUnauthenticatedClientRegistration`，则必须确保您的 API Server 本身也是机密客户端：
-
-    ```ts
-    await auth.api.createOAuthClient({
-      headers,
-      body: {
-        redirect_uris: [redirectUri],
-      }
-    });
-    ```
-
-    这些值应当用于 `remoteVerify.clientId` 和 `remoteVerify.clientSecret` 验证选项。此外，`remoteVerify.introspectUrl` 可以设置为 `${BASE_URL}/${AUTH_PATH}/oauth2/introspect` 这样的地址。
-
-    <Callout type="info">
-      如果你选择不支持 `allowUnauthenticatedClientRegistration`（仅支持 `allowDynamicClientRegistration`），则 MCP 客户端（如 ChatGPT、Anthropic、Gemini）需要允许你在其 UI 中或与 AI 对话的运行时传入公开的 client_id。
-    </Callout>
-  </Step>
-
-  <Step>
-    ### 处理 MCP 错误
-
-    必须指定特定 `audience` 进行验证，默认为所有 `validAudiences` 或 `baseUrl`。
-
-    * 使用客户端 `verifyAccessToken` 函数
-
-    参考 [验证](#verification) 示例。
-
-    * With auth available, use the client `verifyAccessToken` function to automatically determine endpoints
-
-    ```ts title="api/[endpoint].ts"
-    import { auth } from "@/lib/auth";
-    import { serverClient } from "@/lib/server-client";
-
-    export const GET = async (req: Request) => {
-      const authorization = req.headers?.get("authorization") ?? undefined;
-      const accessToken = authorization?.startsWith("Bearer ")
-        ? authorization.replace("Bearer ", "")
-        : authorization;
-      const payload = await serverClient.verifyAccessToken(
-        accessToken, {
-          verifyOptions: {
-            audience: "https://api.example.com",
-          }
-        }
-      );
-      // ...后续操作
-    }
-    ```
-
-    * Using `mcpHandler` helper
-
-    ```ts title="api/[transport]/route.ts"
-    import { createMcpHandler } from "mcp-handler";
-    import { mcpHandler } from "@better-auth/oauth-provider";
-    import { z } from "zod";
-
-    const handler = mcpHandler({
-      jwksUrl: "https://auth.example.com/api/auth/jwks",
-      verifyOptions: {
-        issuer: "https://auth.example.com",
-        audience: "https://api.example.com",
-      },
-    }, (req, jwt) => {
-      return createMcpHandler(
-        (server) => {
-          server.registerTool(
-            "echo", {
-              description: "Echo a message",
-              inputSchema: {
-                message: z.string(),
-              },
-            },
-            async ({ message }) => {
-              return {
-                content: [
-                  {
-                    type: "text",
-                    text: `Echo: ${message}${
-                      jwt?.sub
-                        ? ` for user ${jwt.sub}`
-                        : ""
-                    }`,
-                  },
-                ],
-              };
-            }
-          );
-        }, {
-          serverInfo: {
-            name: "demo-better-auth",
-            version: "1.0.0",
-          }
-        }, {
-          basePath: "/api",
-          maxDuration: 60,
-          verboseLogs: true,
-        }
-      )(req);
-    });
-
-    export { handler as GET, handler as POST, handler as DELETE };
-    ```
-  </Step>
-</Steps>
+MCP 插件还可以通过设备授权类型支持单独注册的 CLI。MCP 客户端继续使用由发现驱动的授权码流程，而 CLI 则通过设备授权向同一提供者请求绑定资源的令牌。请参阅[为您自己的 CLI 添加设备授权](/docs/plugins/mcp#add-device-authorization-for-your-own-cli)。
 
 ## 表结构
 
@@ -1781,10 +1984,24 @@ export const oauthClientTableFields = [
     isOptional: true,
   },
   {
+    name: "backchannelLogoutUri",
+    type: "string",
+    description:
+      "RP URL that receives signed Logout Tokens when the user's OP session ends (OIDC Back-Channel Logout 1.0)",
+    isOptional: true,
+  },
+  {
+    name: "backchannelLogoutSessionRequired",
+    type: "boolean",
+    description:
+      "When true, the RP requires a `sid` claim in every Logout Token and user-scoped logouts are skipped",
+    isOptional: true,
+  },
+  {
     name: "tokenEndpointAuthMethod",
     type: "string",
     description:
-      "Indicator of requested authentication method for the token endpoint. Supports: ['none', 'client_secret_basic', 'client_secret_post']",
+      "Indicator of requested authentication method for the token endpoint. Supports: ['none', 'client_secret_basic', 'client_secret_post', 'private_key_jwt']",
     isOptional: true,
   },
   {
@@ -1801,22 +2018,30 @@ export const oauthClientTableFields = [
     isOptional: true,
   },
   {
-    name: "public",
-    type: "boolean",
-    description: "Indication if the client is confidential or public",
+    name: "applicationType",
+    type: "string",
+    description:
+      "OIDC application type used to classify redirect URI policy. Supports: ['web', 'native']",
     isOptional: true,
   },
   {
-    name: "type",
+    name: "clientDiscoveryId",
     type: "string",
     description:
-      "Type of OAuth client. Supports: ['web', 'native', 'user-agent-based']",
+      "Stable identifier of the client-discovery extension that owns refresh and metadata-resource transport for this client",
     isOptional: true,
   },
   {
     name: "requirePKCE",
     type: "boolean",
     description: "Whether PKCE is required for this client",
+    isOptional: true,
+  },
+  {
+    name: "dpopBoundAccessTokens",
+    type: "boolean",
+    description:
+      "Whether this client must receive and use DPoP-bound access tokens",
     isOptional: true,
   },
   {
@@ -1882,7 +2107,26 @@ export const oauthRefreshTokenTableFields = [
   {
     name: "revoked",
     type: "Date",
-    description: "Timestamp when the token was revoked",
+    description: "Timestamp when the token stopped being active",
+    isOptional: true,
+  },
+  {
+    name: "rotatedAt",
+    type: "Date",
+    description: "Timestamp when the token was consumed by rotation",
+    isOptional: true,
+  },
+  {
+    name: "rotationReplayResponse",
+    type: "string",
+    description:
+      "Encrypted token response and request fingerprint replayed during the configured refresh-token reuse interval",
+    isOptional: true,
+  },
+  {
+    name: "rotationReplayExpiresAt",
+    type: "Date",
+    description: "Timestamp when the cached rotation response stops being replayable",
     isOptional: true,
   },
   {
@@ -1901,6 +2145,13 @@ export const oauthRefreshTokenTableFields = [
     name: "expiresAt",
     type: "Date",
     description: "Timestamp when the token will expire",
+  },
+  {
+    name: "confirmation",
+    type: "json",
+    description:
+      "RFC 7800 cnf confirmation that sender-constrains this refresh-token family (e.g. DPoP { jkt }), carried forward on rotation",
+    isOptional: true,
   },
 ];
 
@@ -1976,6 +2227,20 @@ export const oauthAccessTokenTableFields = [
     type: "Date",
     description: "Timestamp when the token will expire",
   },
+  {
+    name: "confirmation",
+    type: "json",
+    description:
+      "RFC 7800 cnf confirmation that sender-constrains this access token (e.g. DPoP { jkt }), surfaced as cnf at introspection",
+    isOptional: true,
+  },
+  {
+    name: "revoked",
+    type: "Date",
+    description:
+      "When the token was revoked. Populated on session end and by back-channel logout; introspection and token use reject revoked tokens.",
+    isOptional: true,
+  },
 ];
 
 <DatabaseTable name="oauthAccessToken" fields={oauthAccessTokenTableFields} />
@@ -2017,6 +2282,12 @@ export const oauthConsentTableFields = [
     description: "Array of scopes consented to",
   },
   {
+    name: "requestedUserInfoClaims",
+    type: "string[]",
+    description: "Array of OIDC UserInfo claim names consented to",
+    isOptional: true,
+  },
+  {
     name: "createdAt",
     type: "Date",
     description: "Timestamp of when the consent was given",
@@ -2030,6 +2301,30 @@ export const oauthConsentTableFields = [
 
 <DatabaseTable name="oauthConsent" fields={oauthConsentTableFields} />
 
+### OAuth 客户端断言
+
+表名：`oauthClientAssertion`
+
+记录每个 `private_key_jwt` 客户端断言的 `jti`，使其只能使用一次。行 ID 是每个客户端断言标识符的摘要，因此重放或并发的断言会在主键上发生冲突，数据库会以原子方式拒绝它，即使跨越多个服务器进程也是如此。行会持续阻止其 ID，直到被删除；`expiresAt` 标记了可以安全移除的时间，因为它保护的断言已经过期。没有计划任务清理这些行，因此如果表不断增长，请使用你自己的清理机制移除过期行。
+
+export const oauthClientAssertionTableFields = [
+  {
+    name: "id",
+    type: "string",
+    description:
+      "Digest of the per-client assertion identifier (`private_key_jwt:<clientId>:<jti>`)",
+    isPrimaryKey: true,
+  },
+  {
+    name: "expiresAt",
+    type: "Date",
+    description:
+      "When the guarded assertion expires and the row becomes safe to delete",
+  },
+];
+
+<DatabaseTable name="oauthClientAssertion" fields={oauthClientAssertionTableFields} />
+
 ## 选项
 
 ### 前缀
@@ -2040,119 +2335,10 @@ export const oauthConsentTableFields = [
 
 `prefix` 配置设置下提供以下选项：
 
-* **opaqueAccessToken**: `string | undefined` - 为不透明访问令牌添加前缀。如果已部署，请改用 `generateOpaqueAccessToken` 来执行此功能。
-* **refreshToken**: `string | undefined` - 为刷新令牌添加前缀。如果已部署，请改用 `generateRefreshToken` 来执行此功能。
-* **clientSecret**: `string | undefined` - 为客户端密钥添加前缀。如果已部署，请改用 `generateClientSecret` 来执行此功能。
+* **opaqueAccessToken**：`string | undefined` - 为不透明访问令牌添加前缀。如果已部署，请改用 `generateOpaqueAccessToken` 来执行此功能。
+* **refreshToken**：`string | undefined` - 为刷新令牌添加前缀。如果已部署，请改用 `generateRefreshToken` 来执行此功能。
+* **clientSecret**：`string | undefined` - 为客户端密钥添加前缀。如果已部署，请改用 `generateClientSecret` 来执行此功能。
 
 ## 优化提示
 
-为提升查询性能，数据库适配器可将 `oauthClient` 表中的 `client_id` 字段映射为 `id`。注意 `id` 应支持 UUID 和 URL 格式的字符串。
-
-## 迁移
-
-### 来自 OIDC Provider 插件
-
-请参见 [OIDC Provider 插件](/docs/plugins/oidc-provider) 了解之前的实现。
-
-#### 配置变更
-
-* **`idTokenExpiresIn`** 现在默认为 `10 hours`（之前通过 `accessTokenExpiresIn` 为 `1 hour`）
-* **`refreshTokenExpiresIn`** 现在默认为 `30 days`（之前为 `7 days`）
-* **`advertisedMetadata`**（之前为 `metadata`）不再支持更改元数据字段，以防止意外的配置错误。
-* **`clientRegistrationDefaultScopes`**（之前为 `defaultScope`）现在采用数组格式，而非空格分隔的字符串。
-* **`consentPage`** 现在为必填项。
-* **`getConsentHTML`** 已被移除，改用 `consentPage`，因为 OAuth 授权端点不支持原始 HTML 作为响应类型。
-* **`requirePKCE`**（全局选项）已被移除。PKCE 现在默认要求，遵循 OAuth 2.1。单个客户端可通过注册时的 `require_pkce: false` 选项选择退出，以保持向后兼容。
-* **`allowPlainCodeChallengeMethod`** 被移除，因为 `plain` 代码挑战方法被认为不如默认的 `S256` 方法安全。
-* **`customUserInfoClaims`**（之前为 `getAdditionalUserInfoClaim`）传递 JWT 负载，而不是请求中使用的客户端访问令牌。
-* **`storeClientSecret`** 现在默认为 `hashed`，如果 `disableJwtPlugin: true` 则为 `encrypted`（之前为 `plain`）。
-* 默认启用 JWT 插件。如需禁用，请设置 `disableJwtPlugin: true`。
-* 授权查询中的 `code_challenge_method` "S256" 必须按 OAuth 2.1 规范使用大写形式。
-
-#### 数据库变更
-
-##### 表：`oauthClient`
-
-旧名为 `oauthApplication`
-
-- 如果 `storeClientSecret` 未设置或为 `plain`，需将所有存储的 `clientSecret` 转换为 SHA-256 哈希并编码为 base64Url，或按新设置方式存储。示例函数：
-
-* 如果 `storeClientSecret` 未设置或为 `plain`，必须将存储的 `clientSecret` 值哈希为 "SHA-256" 表示形式，然后转换为 base64Url 格式，或使用 `storeClientSecret` 指定的其他存储方式。
-  以下函数将 `plain` 表示转换为默认哈希：
-
-```ts
-import { createHash } from "@better-auth/utils/hash";
-import { base64Url } from "@better-auth/utils/base64";
-
-const defaultHasher = async (value: string) => {
-	const hash = await createHash("SHA-256").digest(
-		new TextEncoder().encode(value),
-	);
-	const hashed = base64Url.encode(new Uint8Array(hash), {
-		padding: false,
-	});
-	return hashed;
-};
-```
-
-* `type` 字段不再是必需字段。相反，架构要求使用 `public`（布尔类型）。迁移规则如下：
-  * `type: "public"` 的客户端：设置 `type: undefined`，`public: true`，`clientSecret: undefined`
-  * `type: "native"` 的客户端：设置 `public: true`，`clientSecret: undefined`
-  * `type: "user-agent-based"` 的客户端：设置 `public: true`，`clientSecret: undefined`
-  * `clientSecret: undefined` 的客户端：设置 `public: true`
-* `redirectURLs` 重命名为 `redirectUris`
-* 新增 `requirePkce` 字段（可选，默认为 `true`）。对于现有不支持 PKCE 的机密客户端，请设置 `requirePkce: false`。
-* `metadata` 现在以独立字段形式存储在数据库中，而不是 JSON 对象。请将元数据解析为其对应字段。OIDC 插件未使用此字段，但此 OAuth 插件将来可能会使用。
-
-##### 表：`oauthAccessToken`
-
-方案一（简单）：
-
-可以选择不迁移此表，影响较小。用户需要重新登录。可以直接删除现有的 `oauthAccessToken` 表。
-
-方案二（复杂）：
-
-全表迁移（可能需要先将 `oauthAccessToken` 克隆到 `oauthRefreshToken`）。
-
-- 将带有 `refreshToken` 字段的条目转换为新建的 `oauthRefreshToken` 条目：
-
-* 将 `oauthAccessToken` 中带有 `refreshToken` 字段的条目转换为新的 `oauthRefreshToken` 条目：
-
-```ts
-{
-  token: defaultHasher(refreshToken),
-  expiresAt: refreshTokenExpiresAt,
-  clientId: clientId,
-  scopes: scopes,
-  userId: userId,
-  createdAt: createdAt,
-  updatedAt: updatedAt,
-}
-```
-
-* 保留 `oauthAccessToken`，但引用新的 `oauthRefreshToken`：
-
-```ts
-{
-  token: defaultHasher(accessToken),
-  expiresAt: accessTokenExpiresAt,
-  clientId: clientId,
-  scopes: scopes,
-  refreshId: oauthRefreshToken.id, // 无刷新令牌时为 `undefined`
-  createdAt: createdAt,
-  updatedAt: updatedAt,
-}
-```
-
-### 来自 MCP 插件
-
-请参见 [MCP 插件](/docs/plugins/mcp) 了解之前的 MCP 专用端点。
-
-MCP 端点已从 `/mcp` 迁移至 `/oauth2`：
-
-* `/oauth2/authorize`（之前为 `/mcp/authorize`）
-* `/oauth2/token`（之前为 `/mcp/token`）
-* `/oauth2/register`（之前为 `/mcp/register`）
-* `/mcp/get-session` 已被移除，因为它不符合 OAuth 2 规范，请改用 `/oauth2/introspect`
-* `/.well-known/oauth-protected-resource` 已被移除，可使用辅助函数 `mcpHandler`（或手动使用服务器 `api.oAuth2introspectVerify` 或资源客户端 `verifyAccessToken`）
-* 数据库变更与 [从 OIDC Provider 插件迁移](#从-oidc-provider-plugin-迁移) 部分相同。
+为提高查找性能，数据库适配器可以将 `oauthClient` 表中的字段 `client_id` 映射到 `id`。请注意，`id` 应支持类似 UUID 和 URL 的字符串格式。

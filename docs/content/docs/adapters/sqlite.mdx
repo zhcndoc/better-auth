@@ -3,7 +3,7 @@ title: SQLite
 description: 将 Better Auth 与 SQLite 集成。
 ---
 
-SQLite 是一个轻量级、无服务器、自包含的 SQL 数据库引擎，广泛用于应用中的本地数据存储。  
+SQLite 是一个轻量级、无服务器、自包含的 SQL 数据库引擎，广泛用于应用中的本地数据存储。\
 查看更多信息请访问 [这里。](https://www.sqlite.org/)
 
 ## 示例用法
@@ -107,23 +107,25 @@ export const auth = betterAuth({
   </Tab>
 </Tabs>
 
-## 联结（实验性）
+## 联接
 
-数据库联结在 Better-Auth 需要从多个表中一次性获取相关数据时非常有用。  
-如 `/get-session`、`/get-full-organization` 等端点极大地受益于此功能，性能可提升 2 到 3 倍，具体取决于数据库延迟。
+当 Better Auth 需要在单个查询中从多个表获取相关数据时，数据库联接非常有用\
+像 `/get-session`、`/get-full-organization` 等许多端点都能从此功能中受益匪浅，根据数据库延迟的不同，性能提升可达 2 到 3 倍
 
-Kysely SQLite 方言自版本 `1.4.0` 起内置支持联结。  
-若要启用此功能，需要在您的 auth 配置中将 `experimental.joins` 选项设置为 `true`。
+自 `1.4.0` 版本起，Kysely SQLite 方言开箱即支持联接\
+要启用此功能，请在您的 auth 配置中将 `advanced.database.joins` 设置为 `true`
 
 ```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+
 export const auth = betterAuth({
-  experimental: { joins: true }
+  advanced: {
+    database: {
+      joins: true,
+    },
+  },
 });
 ```
-
-<Callout type="warn">
-  启用此功能后，可能需要执行迁移操作。
-</Callout>
 
 ## 其他信息
 

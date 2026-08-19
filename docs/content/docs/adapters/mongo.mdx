@@ -39,16 +39,21 @@ export const auth = betterAuth({
 
 对于 MongoDB，我们不需要生成或迁移模式。
 
-## Joins（实验性）
+## Joins
 
-MongoDB 适配器从版本 `1.4.0` 起开箱即用支持连接查询。
-要启用此功能，需要在您的 auth 配置中将 `experimental.joins` 选项设置为 `true`。
+数据库 joins 在 Better-Auth 需要通过单个查询从多个表中获取相关数据时非常有用。像 `/get-session`、`/get-full-organization` 以及许多其他端点都能从此功能中大幅受益，根据数据库延迟的不同，性能提升可达 2 倍至 3 倍。
+
+MongoDB 适配器从版本 `1.4.0` 开始开箱即用地支持 joins。要启用此功能，请在您的 auth 配置中将 `advanced.database.joins` 设置为 `true`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-  experimental: { joins: true }
+  advanced: {
+    database: {
+      joins: true,
+    },
+  },
 });
 ```
 

@@ -1,9 +1,9 @@
 ---
 title: CLI
-description: 了解 Better Auth CLI 命令，用于生成和迁移数据库架构、初始化项目、生成密钥以及收集诊断信息。
+description: 了解用于生成和迁移数据库架构、创建初始管理员、初始化项目、生成密钥以及收集诊断信息的 Better Auth CLI 命令
 ---
 
-Better Auth 内置了一个 CLI，帮助你管理数据库架构、初始化项目、为应用生成密钥，并收集设置的诊断信息。
+Better Auth 内置了 CLI，可帮助你管理数据库架构、创建初始管理员用户、初始化项目、为应用程序生成密钥，以及收集有关设置的诊断信息。
 
 ## 生成 (Generate)
 
@@ -36,6 +36,28 @@ npx auth@latest migrate
   migrate 命令会自动检测你配置的 `search_path`，并在正确的架构中创建表。配置详情请参见 [PostgreSQL 适配器文档](/docs/adapters/postgresql#use-a-non-default-schema)。
 </Callout>
 
+## 创建管理员 (Create Admin)
+
+`create-admin` 命令通过你配置的 Better Auth 实例创建初始管理员用户。它要求使用 Admin 插件和持久化数据库，并且使用与 Admin 插件相同的服务器端 `auth.api.createUser` 路径，因此密码会被哈希处理，数据库钩子也仍然会运行。
+
+```package-install title="Terminal"
+npx auth@latest create-admin --email admin@example.com --name "Admin" --role admin
+```
+
+如果已经存在用户，该命令会请求确认。使用 `--force` 或 `--yes` 可以跳过该提示。
+
+### 选项
+
+* `--email` - 管理员用户的电子邮件地址。
+* `--password` - 管理员用户的密码。如果省略，CLI 会提示你输入。
+* `--name` - 管理员用户的名称。默认为 `Admin`。
+* `--role` - 要分配的角色。默认为 `admin`。
+* `--data` - 以 JSON 对象形式提供的其他用户字段。
+* `--no-email-verified` - 创建电子邮件未经验证的管理员用户。默认情况下，CLI 会将管理员电子邮件标记为已验证。
+* `--config` - Better Auth 配置文件的路径。
+* `--force` - 即使已经存在用户，也创建管理员用户。
+* `--yes` - 跳过现有用户确认提示。
+
 ## 初始化 (Init)
 
 `init` 命令允许你在项目中初始化 Better Auth。
@@ -54,7 +76,7 @@ npx auth@latest init
 
 ## 升级
 
-`upgrade` 命令会将较旧版本的 `better-auth` 和官方 `@better-auth/*` 依赖更新到当前运行的 CLI 版本。版本相同或更高的依赖保持不变。
+`upgrade` 命令会将较旧的 `better-auth` 依赖项和参与同步发布流程的官方 `@better-auth/*` 软件包更新到当前运行的 CLI 版本。它会比较每个 `package.json` 版本说明符所允许的最低版本；最低版本相同或更高的说明符将保持不变。独立进行版本管理的软件包（例如 `@better-auth/utils`）不会被修改。
 
 ```package-install title="Terminal"
 npx auth@latest upgrade

@@ -7,75 +7,74 @@ Better Auth 提供了 50 多个插件，扩展框架，增加额外的身份验�
 
 ## 身份验证
 
-| Plugin                                               | Description                                                |
-| ---------------------------------------------------- | ---------------------------------------------------------- |
-| [双重认证](/docs/plugins/2fa)       | 通过双重认证增强应用安全性 |
-| [通行密钥](/docs/plugins/passkey)                     | WebAuthn/通行密钥认证                            |
-| [魔法链接](/docs/plugins/magic-link)               | 无密码邮件魔法链接认证               |
-| [邮箱一次性密码](/docs/plugins/email-otp)                 | 基于邮箱的一次性密码认证               |
-| [手机号码](/docs/plugins/phone-number)           | 手机号码认证                                |
-| [匿名用户](/docs/plugins/anonymous)                 | 匿名/访客会话支持                            |
-| [用户名认证](/docs/plugins/username)                   | 基于用户名的认证                              |
-| [一键登录](/docs/plugins/one-tap)                     | Google 一键登录登录                                     |
-| [以太坊登录](/docs/plugins/siwe)          | 以太坊钱包认证                             |
-| [通用 OAuth](/docs/plugins/generic-oauth)         | 使用任意 OAuth 提供程序进行认证                 |
-| [多会话](/docs/plugins/multi-session)         | 每个用户多个并发会话                      |
-| [最后登录方式](/docs/plugins/last-login-method) | 追踪最后使用的认证方式                  |
+| 插件                                        | 描述                  |
+| ----------------------------------------- | ------------------- |
+| [双重认证](/docs/plugins/2fa)                 | 通过双重认证增强应用安全性       |
+| [通行密钥](/docs/plugins/passkey)             | WebAuthn/通行密钥认证     |
+| [魔法链接](/docs/plugins/magic-link)          | 无密码邮件魔法链接认证         |
+| [邮箱一次性密码](/docs/plugins/email-otp)        | 基于邮箱的一次性密码认证        |
+| [手机号码](/docs/plugins/phone-number)        | 手机号码认证              |
+| [匿名用户](/docs/plugins/anonymous)           | 匿名/访客会话支持           |
+| [用户名认证](/docs/plugins/username)           | 基于用户名的认证            |
+| [一键登录](/docs/plugins/one-tap)             | Google 一键登录登录       |
+| [以太坊登录](/docs/plugins/siwe)               | 以太坊钱包认证             |
+| [通用 OAuth](/docs/plugins/generic-oauth)   | 使用任意 OAuth 提供程序进行认证 |
+| [多会话](/docs/plugins/multi-session)        | 每个用户多个并发会话          |
+| [最后登录方式](/docs/plugins/last-login-method) | 追踪最后使用的认证方式         |
 
 ## 授权与管理
 
-| Plugin                                     | Description                                         |
-| ------------------------------------------ | --------------------------------------------------- |
-| [管理面板](/docs/plugins/admin)               | 用户管理的管理功能        |
-| [组织管理](/docs/plugins/organization) | 组织、团队和成员管理           |
-| [单点登录](/docs/plugins/sso)                   | 使用 SAML 2.0 的单点登录                        |
-| [SCIM](/docs/plugins/scim)                 | 跨域身份管理和目录同步 |
+| 插件                                 | 描述                |
+| ---------------------------------- | ----------------- |
+| [管理面板](/docs/plugins/admin)        | 用户管理的管理功能         |
+| [组织管理](/docs/plugins/organization) | 组织、团队和成员管理        |
+| [单点登录](/docs/plugins/sso)          | 使用 SAML 2.0 的单点登录 |
+| [SCIM](/docs/plugins/scim)         | 跨域身份管理和目录同步       |
 
 ## API 与令牌
 
-| Plugin                                                    | Description                                                               |
-| --------------------------------------------------------- | ------------------------------------------------------------------------- |
-| [Agent Auth](/docs/plugins/agent-auth) <small>New</small> | AI 代理的发现、注册和基于能力的授权 |
-| [API 密钥](/docs/plugins/api-key)                          | API 密钥的生成和管理                                         |
-| [JWT](/docs/plugins/jwt)                                  | 服务的 JSON Web Token 认证                                |
-| [Bearer 令牌](/docs/plugins/bearer)                            | API 请求的承载令牌认证                              |
-| [一次性令牌](/docs/plugins/one-time-token)            | 生成和验证一次性令牌                                     |
-| [OAuth 代理](/docs/plugins/oauth-proxy)                  | 跨域流程的 OAuth 代理                                        |
+| 插件                                                        | 描述                    |
+| --------------------------------------------------------- | --------------------- |
+| [Agent Auth](/docs/plugins/agent-auth) <small>New</small> | AI 代理的发现、注册和基于能力的授权   |
+| [API 密钥](/docs/plugins/api-key)                           | API 密钥的生成和管理          |
+| [JWT](/docs/plugins/jwt)                                  | 服务的 JSON Web Token 认证 |
+| [Bearer 令牌](/docs/plugins/bearer)                         | API 请求的承载令牌认证         |
+| [一次性令牌](/docs/plugins/one-time-token)                     | 生成和验证一次性令牌            |
+| [OAuth 代理](/docs/plugins/oauth-proxy)                     | 跨域流程的 OAuth 代理        |
 
 ## OAuth 与 OIDC 提供者
 
-| Plugin                                                     | Description                                                    |
-| ---------------------------------------------------------- | -------------------------------------------------------------- |
-| [OAuth 2.1 提供者](/docs/plugins/oauth-provider)         | 将您的认证服务器转变为 OAuth 2.1 提供者               |
-| [OIDC 提供者](/docs/plugins/oidc-provider)               | OpenID Connect 提供支持                                |
-| [MCP](/docs/plugins/mcp)                                   | MCP 认证提供                                    |
-| [设备授权](/docs/plugins/device-authorization) | 有限输入设备的 OAuth 2.0 设备授权码流程 |
+| 插件                                                         | 描述                          |
+| ---------------------------------------------------------- | --------------------------- |
+| [OAuth 2.1 Provider](/docs/plugins/oauth-provider)         | 将你的身份验证服务器转换为 OAuth 2.1 提供者 |
+| [MCP](/docs/plugins/mcp)                                   | MCP 提供者认证                   |
+| [Device Authorization](/docs/plugins/device-authorization) | 面向有限输入设备的 OAuth 2.0 设备授权授予  |
 
 ## 支付与账单
 
-| Plugin                                      | Description                                     |
-| ------------------------------------------- | ----------------------------------------------- |
-| [Stripe](/docs/plugins/stripe)              | Subscription and payment management with Stripe |
-| [Polar](/docs/plugins/polar)                | Payments and checkouts with Polar               |
-| [Autumn Billing](/docs/plugins/autumn)      | Billing integration with Autumn                 |
-| [Creem](/docs/plugins/creem)                | Payments and subscriptions with Creem           |
-| [Dodo Payments](/docs/plugins/dodopayments) | Payments with Dodo                              |
-| [Commet](/docs/plugins/commet)              | Billing, subscriptions and usage-based pricing  |
+| 插件                                          | 描述                  |
+| ------------------------------------------- | ------------------- |
+| [Stripe](/docs/plugins/stripe)              | 使用 Stripe 进行订阅和支付管理 |
+| [Polar](/docs/plugins/polar)                | 使用 Polar 进行支付和结账    |
+| [Autumn Billing](/docs/plugins/autumn)      | 与 Autumn 集成账单       |
+| [Creem](/docs/plugins/creem)                | 使用 Creem 进行支付和订阅    |
+| [Dodo Payments](/docs/plugins/dodopayments) | 使用 Dodo 进行支付        |
+| [Commet](/docs/plugins/commet)              | 账单、订阅和基于使用量的定价      |
 
 ## 安全与实用工具
 
-| Plugin                                               | Description                                       |
-| ---------------------------------------------------- | ------------------------------------------------- |
-| [验证码](/docs/plugins/captcha)                     | 认证流程中的验证码验证               |
-| [Have I Been Pwned](/docs/plugins/have-i-been-pwned) | 检查密码是否已知泄露            |
-| [国际化](/docs/plugins/i18n)                           | 错误消息的国际化             |
-| [Open API](/docs/plugins/open-api)                   | OpenAPI 参考生成                         |
-| [测试工具](/docs/plugins/test-utils)               | 集成和端到端测试的工具 |
+| 插件                                                   | 描述           |
+| ---------------------------------------------------- | ------------ |
+| [验证码](/docs/plugins/captcha)                         | 认证流程中的验证码验证  |
+| [Have I Been Pwned](/docs/plugins/have-i-been-pwned) | 检查密码是否已知泄露   |
+| [国际化](/docs/plugins/i18n)                            | 错误消息的国际化     |
+| [Open API](/docs/plugins/open-api)                   | OpenAPI 参考生成 |
+| [测试工具](/docs/plugins/test-utils)                     | 集成和端到端测试的工具  |
 
 ## 分析与追踪
 
-| Plugin                   | Description                                     |
-| ------------------------ | ----------------------------------------------- |
+| 插件                       | 描述                          |
+| ------------------------ | --------------------------- |
 | [Dub](/docs/plugins/dub) | 使用 Dub 链接和 OAuth 关联进行潜在客户追踪 |
 
 ## 社区插件

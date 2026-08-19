@@ -9,7 +9,7 @@ description: Microsoft 提供商的设置与使用。
   <Step>
     ### 获取 Microsoft 凭据
 
-    要将 Microsoft 用作社交提供商，您需要获取 Microsoft 凭据。这涉及使用您的 Microsoft Entra ID 仪表板账户生成自己的客户端 ID 和客户端密钥。
+    要使用 Microsoft 作为社交提供商，您需要获取 Microsoft 凭据。这包括在 Microsoft Entra ID 仪表板中生成客户端 ID，以及对于机密客户端，配置客户端密钥或客户端断言凭据。
 
     请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/microsoft` 用于本地开发。对于生产环境，请将其更改为您的应用程序 URL。如果更改了认证路由的基础路径，请相应更新重定向 URL。
 
@@ -19,7 +19,7 @@ description: Microsoft 提供商的设置与使用。
   <Step>
     ### 配置提供商
 
-    要配置提供商，您需要在认证配置中将 `clientId` 和 `clientSecret` 传递给 `socialProviders.microsoft`。
+    要配置提供商，请将 `clientId` 以及对于机密客户端的 `clientSecret` 或 `clientAssertion` 传递给认证配置中的 `socialProviders.microsoft`。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
@@ -40,13 +40,59 @@ description: Microsoft 提供商的设置与使用。
 
     **Authority URL**：标准 Entra ID 场景使用默认的 `https://login.microsoftonline.com`，CIAM（客户标识与访问管理）场景使用 `https://<tenant-id>.ciamlogin.com`。
 
+    **客户端断言**：当您的 Microsoft Entra ID 应用配置为使用 `private_key_jwt` 或工作负载标识联合时，请使用 `clientAssertion` 代替 `clientSecret`。回调函数会接收令牌请求上下文，并且必须返回 JWT 断言。不要将 `clientAssertion` 与 `clientSecret` 结合使用。
+
+    ```ts title="auth.ts"
+    import { getVercelOidcToken } from "@vercel/oidc"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            microsoft: {
+                clientId: process.env.MICROSOFT_CLIENT_ID as string,
+                tenantId: process.env.MICROSOFT_TENANT_ID as string,
+                clientAssertion: async () => getVercelOidcToken(),
+            },
+        },
+    })
+    ```
+
+    您也可以使用内置辅助函数，通过私钥对 RFC 7523 断言进行签名：
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+    import { createPrivateKeyJwtClientAssertionGetter } from "better-auth/oauth2"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            microsoft: {
+                clientId: process.env.MICROSOFT_CLIENT_ID as string,
+                tenantId: process.env.MICROSOFT_TENANT_ID as string,
+                clientAssertion: createPrivateKeyJwtClientAssertionGetter({
+                    privateKeyPem: process.env.MICROSOFT_PRIVATE_KEY_PEM as string,
+                    kid: process.env.MICROSOFT_PRIVATE_KEY_ID,
+                    algorithm: "RS256",
+                }),
+            },
+        },
+    })
+    ```
+
     <Callout type="warn">
       默认情况下，Entra 不会为受管用户发出 `email` 声明，并且该值[可由租户变更且从不由 Microsoft 验证](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference)；它绝不能用于授权决策。对于受管用户，请将 `email` 作为[可选声明](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims)请求，并使用 `profile.oid`（如果需要跨租户关联，则再加上 `profile.tid`）作为稳定的身份锚点。有关 `mapProfileToUser` 的回退方式，请参阅[处理不提供电子邮件的提供商](/docs/concepts/oauth#handling-providers-without-email)。
     </Callout>
   </Step>
 </Steps>
 
-## 大尺寸头像 ⚠️
+## 账户标识符
+
+Better Auth 使用经过验证的 Microsoft Entra `oid` 声明作为提供商所属的账户标识符。`mapProfileToUser` 可以映射本地用户字段，但无法替换此标识符。
+
+<Callout type="warn">
+  从 Better Auth 1.6 升级需要执行一次性迁移，将现有 Microsoft 账户行中的标识符从 `sub` 迁移为 `oid`。在 1.7 上接受生产流量之前，请按照[迁移 Microsoft 账户标识符](/docs/guides/1-7-upgrade-guide#migrate-microsoft-account-identifiers)操作。
+</Callout>
+
+## 大型个人资料图片 ⚠️
 
 Microsoft 返回的个人资料图片是 base64 编码字符串，这些字符串可能超过 HTTP 头大小限制，并导致请求失败。
 
@@ -87,4 +133,15 @@ const signIn = async () => {
     callbackURL: "/dashboard", // 登录后跳转的 URL
   });
 };
+```
+
+### 预先选择组织域
+
+对于您知道属于指定租户或域的用户，可以在调用时转发 Microsoft 的 `domain_hint` 参数，以跳过账户选择器：
+
+```ts
+await authClient.signIn.social({
+  provider: "microsoft",
+  additionalParams: { domain_hint: "contoso.com" },
+});
 ```

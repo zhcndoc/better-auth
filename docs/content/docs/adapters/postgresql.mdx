@@ -66,32 +66,32 @@ export const auth = betterAuth({
   </Tab>
 </Tabs>
 
-## 连接查询（实验性）
+## 连接
 
-当 Better-Auth 需要在单个查询中从多个表获取相关数据时，数据库连接查询非常有用。
-类似 `/get-session`、`/get-full-organization` 等端点极大地受益于此功能，
-根据数据库延迟，性能可提升 2 到 3 倍。
+当 Better-Auth 需要在一条查询中从多个表获取相关数据时，数据库连接非常有用。
+`/get-session`、`/get-full-organization` 等端点都能从这一功能中获益，
+根据数据库延迟的不同，性能提升最高可达 2 倍至 3 倍。
 
-Kysely PostgreSQL 方言自 `1.4.0` 版本起原生支持连接查询。
-要启用此功能，需要在 auth 配置中将 `experimental.joins` 选项设为 `true`。
+Kysely PostgreSQL 方言自 `1.4.0` 版本起即可开箱支持连接。
+要启用此功能，请在认证配置中将 `advanced.database.joins` 设置为 `true`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-  experimental: { joins: true }
+  advanced: {
+    database: {
+      joins: true,
+    },
+  },
 });
 ```
-
-<Callout type="warn">
-  启用此功能后，可能需要执行数据库迁移。
-</Callout>
 
 ## 使用非默认模式
 
 在大多数情况下，默认模式是 `public`。若希望 Better Auth 使用非默认模式（例如 `auth`）存放其表，有几种方式：
 
-### Option 1: Set search\_path in connection string (Recommended)
+### 选项 1：在连接字符串中设置 search\_path（推荐）
 
 在连接 URI 后追加 `options` 参数：
 
@@ -108,7 +108,7 @@ export const auth = betterAuth({
 
 需要时请进行 URL 编码：`?options=-c%20search_path%3Dauth`。
 
-### Option 2: Set search\_path using Pool options
+### 选项 2：使用 Pool 选项设置 search\_path
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -163,7 +163,7 @@ Better Auth CLI 迁移系统会自动检测你配置的 `search_path`：
 ### 故障排查
 
 <Callout type="warning">
-  **问题：** 迁移期间出现 "relation does not exist" 错误
+  **问题：** 迁移期间出现“relation does not exist”错误
 
   **解决方案：** 这通常意味着该模式不存在，或者用户没有权限。请按上文所示创建模式并授予权限。
 </Callout>

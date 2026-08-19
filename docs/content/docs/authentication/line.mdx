@@ -117,11 +117,8 @@ export const auth = betterAuth({
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client";
-import { genericOAuthClient } from "better-auth/client/plugins";
 
-const authClient = createAuthClient({
-  plugins: [genericOAuthClient()],
-});
+const authClient = createAuthClient();
 
 // 使用日本频道登录
 await authClient.signIn.social({ provider: "line-jp" });

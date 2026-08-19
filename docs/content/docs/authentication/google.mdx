@@ -206,6 +206,24 @@ return (
   确保你使用的是 Better Auth 版本 1.2.7 或更高版本，以避免在请求同一提供者额外权限时出现“社交账户已绑定”错误。
 </Callout>
 
+### 禁用增量授权
+
+默认情况下，Better Auth 会向 Google 的授权端点发送 `include_granted_scopes=true`，因此新签发的访问令牌除了涵盖当前流程请求的作用域外，还会涵盖之前授权中的作用域。如果每个 OAuth 流程都应该只请求其自身的作用域，请设置 `includeGrantedScopes: false`。
+
+```ts
+socialProviders: {
+    google: {
+        clientId: process.env.GOOGLE_CLIENT_ID as string,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+        includeGrantedScopes: false, // [!code highlight]
+    },
+}
+```
+
+调用时的 `additionalParams.include_granted_scopes` 仍然遵循通用的 OAuth 参数优先级规则，并且可以针对单个流程覆盖此提供者默认值。
+
+有关底层参数行为，请参阅 Google 的[增量授权](https://developers.google.com/identity/protocols/oauth2/web-server#incrementalAuth)文档。
+
 ### 始终获取刷新令牌
 
 Google 仅在用户首次同意授权你的应用时发放刷新令牌。
@@ -227,3 +245,17 @@ socialProviders: {
 <Callout>
   **撤销访问权限：** 如果你想为已经授权你的应用的用户获取新的刷新令牌，用户必须先在其 Google 账户设置中撤销你的应用访问权限，然后重新授权。
 </Callout>
+
+### 限制为 Google Workspace 域名
+
+要将登录限制为特定 Google Workspace 域名中的账户，请在调用时传递
+`hd` 参数。这与 Google 的 `hd` 授权 URL 参数相对应，并且会针对每个请求解析：
+
+```ts
+await authClient.signIn.social({
+  provider: "google",
+  additionalParams: { hd: "example.com" },
+});
+```
+
+如果该限制对你的应用是静态的，也可以在提供者配置级别设置 `hd`。

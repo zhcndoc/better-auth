@@ -304,7 +304,46 @@ await authClient.deleteUser({
 
 ### 回调函数
 
-**beforeDelete**：此回调在删除用户前调用。可用于执行清理或额外检查。
+**validateUserInfo**：用于决定 Better Auth 接受哪些身份的关卡。它会在创建用户（`create-user`）或关联新提供者账户（`link-account`）之前立即触发，适用于每种认证方式（OAuth、OIDC SSO、SAML SSO、电子邮件/密码、magic link、email OTP、匿名、SIWE、电话号码、管理员创建的用户和 SCIM），也适用于没有持久化数据库的无状态设置，因此策略可以集中在一个地方，而不必按提供者分别配置。
+
+当已有的 **OAuth 或 SSO** 用户再次登录（`sign-in`）时，它也会触发；此时接收的是提供者最新的电子邮件和资料，而不是存储的记录。这使得你可以拒绝其提供者身份已超出范围的用户，例如电子邮件地址不再属于允许的域名。对于非提供者的回访登录不会重新验证，因为其存储记录自创建用户时通过检查后并未改变；如需阻止这些登录，请使用 admin 插件的封禁控制，或使用 `databaseHooks.session.create.before` 钩子。
+
+`source.action` 的值为 `"create-user"`、`"link-account"` 或 `"sign-in"`，而 `source.method` 是认证方式。对于 OAuth，`source.oauth` 包含提供者 id 和原始提供者资料。对于 OIDC 和 SAML SSO，`source.sso` 包含 SSO 提供者 id 以及原始提供者声明或断言属性。
+
+不返回任何内容即可允许创建。返回包含 `error` 的对象即可拒绝：浏览器／重定向流程会将拒绝信息发送到配置的错误 URL，而编程式流程会返回 `403` API 错误。避免在 `errorDescription` 中放入敏感详情，因为它会返回给客户端。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+    user: {
+        validateUserInfo: ({ user, source }) => {
+            if (!user.email?.endsWith("@example.com")) {
+                return {
+                    error: "email_not_allowed",
+                    errorDescription: "Use your example.com email to sign in",
+                };
+            }
+
+            if (
+                source.oauth?.providerId === "company-oauth" &&
+                source.oauth?.profile?.hd !== "example.com"
+            ) {
+                return {
+                    error: "invalid_organization",
+                    errorDescription: "Use your company OAuth account",
+                };
+            }
+        },
+    },
+});
+```
+
+<Callout type="info">
+  `validateUserInfo` 是高级策略关卡。较底层的 `databaseHooks.user.create.before` 仍会在之后运行，用于调整数据，也可以中止写入；当你需要修改记录，而不是接受或拒绝身份时，应使用它。
+</Callout>
+
+**beforeDelete**：此回调会在删除用户之前调用。你可以使用此回调在删除用户前执行清理或额外检查。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -362,20 +401,28 @@ export const auth = betterAuth({
 
 ## 账户
 
-Better Auth 支持多种认证方式。每种认证方式称为一个提供者。例如，邮箱密码认证是一个提供者，Google 认证也是一个提供者。
+Better Auth 通过电子邮件和密码、Google 或企业身份提供者等提供者支持多种认证方式。与用户关联的每种方式都会作为一个账户存储。
 
-当用户使用提供者登录时，会为该用户创建一个账户，账户存储提供者返回的认证数据，包括访问令牌、刷新令牌等。
+账户包含本地记录 ID 和提供者身份。`id` 用于标识 Better Auth 账户记录，也是向账户管理 API 传递的 `accountId` 值。`issuer` 和 `accountId` 的组合用于标识外部账户：`issuer` 表示受信任的机构，而 `accountId` 是该机构分配的稳定标识符。`providerId` 用于标识 Better Auth 在协议操作中使用的提供者配置。
 
-账户表存储用户的认证数据 [点击此处查看模式](/docs/concepts/database#account)
+没有受信任发行者的 OAuth 提供者使用 `local:oauth:<encoded providerId>` 作为其账户命名空间，其中提供者 ID 部分经过百分号编码。凭证账户使用 `local:credential`；不要将此凭证命名空间用于 OAuth 提供者。
+
+这种分离使同一发行者的多个提供者配置能够对同一外部身份进行去重，同时不会将来自另一发行者的标识符视为同一个人。提供者别名共享同一个账户记录和令牌集；它们没有独立的授权或提供者生命周期记录。完整字段列表请参阅[账户模式](/docs/concepts/database#account)。
 
 ### 列出用户账户
 
-要列出用户账户，可以使用 `client.user.listAccounts` 方法。这将返回与该用户关联的所有账户。
+使用 `listAccounts` 获取与当前用户关联的所有认证方式。当需要解除账户关联或调用其他特定于账户的 API 时，请保留返回结果中的 `id`。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
 
-const accounts = await authClient.listAccounts();
+const { data: accounts, error } = await authClient.listAccounts();
+
+if (error) {
+    throw new Error(error.message);
+}
+
+const googleAccount = accounts?.find((account) => account.providerId === "google");
 ```
 
 ### 令牌加密
@@ -495,7 +542,11 @@ export const auth = betterAuth({
   });
   ```
 
-  还可以直接使用 ID 令牌关联账户，无需跳转到提供者的 OAuth 流程：
+  <Callout type="info">
+    新授予的权限范围会合并到 `account.scope` 中，因此之前授予的权限仍会保留。重新进行登录认证和刷新令牌响应不会修改 `account.scope`。
+  </Callout>
+
+  你也可以直接使用 ID 令牌关联账户，而无需重定向到提供者的 OAuth 流程：
 
   ```ts
   import { authClient } from "@/lib/auth-client"
@@ -568,23 +619,27 @@ export const auth = betterAuth({
 
 ### 账户解除关联
 
-你可以通过提供 `providerId` 来解除用户账户的关联。
+通过传递 Better Auth 账户记录的 `id` 来解除账户关联，该值可以从 `listAccounts` 获取。
 
 ```ts
 import { authClient } from "@/lib/auth-client"
 
-await authClient.unlinkAccount({
-    providerId: "google"
-});
+const { data: accounts, error } = await authClient.listAccounts();
 
-// 解除特定账户关联
-await authClient.unlinkAccount({
-    providerId: "google",
-    accountId: "123"
-});
+if (error) {
+    throw new Error(error.message);
+}
+
+const account = accounts?.find((account) => account.providerId === "google");
+
+if (account) {
+    await authClient.unlinkAccount({
+        accountId: account.id,
+    });
+}
 ```
 
-如果账户不存在，则会抛出错误。另外，如果用户只有一个账户，解除关联将被阻止以防止账户锁定（除非设置 `allowUnlinkingAll` 为 `true`）。
+如果账户不存在或不属于当前用户，Better Auth 会返回错误。除非 `allowUnlinkingAll` 为 `true`，否则 Better Auth 还会阻止用户解除其唯一账户的关联。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";

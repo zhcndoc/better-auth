@@ -1,0 +1,310 @@
+---
+title: 跨域身份管理系统（SCIM）
+description: 将目录中的用户和组配置到 Better Auth。
+---
+
+SCIM 插件为 Better Auth 添加了一个入站跨域身份管理系统（SCIM）2.0 服务。目录可以使用此服务在你的应用程序中创建、更新、停用和删除用户及组。
+
+SCIM 在 [RFC 7643](https://www.rfc-editor.org/rfc/rfc7643) 中定义身份资源，并在 [RFC 7644](https://www.rfc-editor.org/rfc/rfc7644) 中定义 HTTP 协议。Better Auth 支持 [SCIM 参考](/docs/plugins/scim/reference)中列出的操作和属性。
+
+每个 SCIM User 都链接到一个 Better Auth User。配置不会创建登录方式，也不会授予应用程序访问权限。请单独配置身份验证；当 SCIM 应影响你的应用程序时，可以使用可选的身份和角色回调。
+
+## 安装
+
+<Steps>
+  <Step>
+    ### 安装插件
+
+    ```package-install
+    @better-auth/scim
+    ```
+  </Step>
+
+  <Step>
+    ### 启用数据库事务
+
+    SCIM 资源请求需要使用支持原生交互式事务的数据库适配器。仅当你的数据库驱动程序可以运行交互式事务回调时，才启用事务。
+
+    <Tabs items={["Kysely", "Drizzle", "Prisma"]}>
+      <Tab value="Kysely">
+        ```ts title="auth.ts"
+        const auth = betterAuth({
+          database: kyselyAdapter(db, {
+            type: "sqlite",
+            transaction: true,
+          }),
+        });
+        ```
+      </Tab>
+
+      <Tab value="Drizzle">
+        ```ts title="auth.ts"
+        const auth = betterAuth({
+          database: drizzleAdapter(db, {
+            provider: "pg",
+            transaction: true,
+          }),
+        });
+        ```
+      </Tab>
+
+      <Tab value="Prisma">
+        ```ts title="auth.ts"
+        const auth = betterAuth({
+          database: prismaAdapter(prisma, {
+            provider: "postgresql",
+            transaction: true,
+          }),
+        });
+        ```
+      </Tab>
+    </Tabs>
+
+    <Callout type="warn">
+      Cloudflare D1 不支持 SCIM 插件所需的交互式事务。
+    </Callout>
+  </Step>
+
+  <Step>
+    ### 配置连接
+
+    在你的密钥管理器中创建一个高熵 bearer token。在 Better Auth 和你的目录中配置相同的值。
+
+    ```ts title="auth.ts"
+    import { scim } from "@better-auth/scim";
+    import { betterAuth } from "better-auth";
+
+    const workforceToken = process.env.SCIM_WORKFORCE_TOKEN;
+
+    if (!workforceToken) {
+      throw new Error("SCIM_WORKFORCE_TOKEN is required");
+    }
+
+    export const auth = betterAuth({
+      baseURL: "https://app.example.com/api/auth",
+      plugins: [
+        scim({
+          connections: [
+            {
+              id: "workforce-acme",
+              provisioningDomainId: "workspace-acme",
+              credentials: [
+                {
+                  type: "bearer",
+                  id: "workforce-primary",
+                  token: workforceToken,
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+    ```
+
+    连接 ID 负责管理使用此凭据配置的资源。可选的 `provisioningDomainId` 用于标识接收生命周期和角色更新的工作区、租户、项目或其他应用边界。默认值为连接 ID。
+
+    <Callout type="info">
+      对于运行时租户接入和凭据轮换，请配置可选的[`managedConnections` 目录](/docs/plugins/scim/reference#managed-connection-catalog)。它会持久化由插件拥有的连接元数据和令牌摘要，同时由你的服务器为客户管理员 UI 执行授权。已有目录的应用程序也可以在 `authentication.verifyBearerToken` 中原子地解析连接。
+    </Callout>
+  </Step>
+
+  <Step>
+    ### 暴露 SCIM 方法
+
+    你的 Better Auth 路由必须转发 `GET`、`POST`、`PUT`、`PATCH` 和 `DELETE`。对于 Next.js，请从处理程序中导出每个方法。
+
+    ```ts title="app/api/auth/[...all]/route.ts"
+    import { auth } from "@/lib/auth";
+    import { toNextJsHandler } from "better-auth/next-js";
+
+    export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(auth);
+    ```
+  </Step>
+
+  <Step>
+    ### 创建数据库表
+
+    运行迁移；如果你的应用程序自行管理迁移，则生成架构。
+
+    <Tabs items={["migrate", "generate"]}>
+      <Tab value="migrate">
+        ```package-install
+        npx auth migrate
+        ```
+      </Tab>
+
+      <Tab value="generate">
+        ```package-install
+        npx auth generate
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+## 配置你的目录
+
+在目录的 SCIM 连接设置中使用以下值：
+
+| 设置     | 值                                                                                 |
+| ------ | --------------------------------------------------------------------------------- |
+| 基础 URL | 你的 Better Auth 基础 URL 后接 `/scim/v2`，例如 `https://app.example.com/api/auth/scim/v2` |
+| 身份验证   | Bearer token                                                                      |
+| Token  | 来自 `connections[].credentials` 的静态令牌，或 managed create 或 rotate 调用返回的一次性令牌         |
+
+目录必须将令牌作为 `Authorization: Bearer <token>` 发送。User 和 Group 请求使用 `application/scim+json` 或 `application/json`。发现端点是公开的，因此目录可以在配置之前检查支持的资源和操作。
+
+## 配置如何映射到你的应用程序
+
+该插件将目录资源与应用程序访问权限分开管理：
+
+* 一个连接负责管理一组隔离的 SCIM Users、Groups 和直接 Group memberships。
+* 一个 SCIM User 链接到一个 Better Auth User。
+* 一个 provisioning domain 用于标识应用程序应用生命周期和访问权限变更的位置。
+* 除非你配置角色投影，否则 SCIM Group 不会授予任何应用程序权限。
+
+你可以配置多个连接。它们的凭据彼此隔离，但多个连接可以共同作用于同一个 provisioning domain。
+
+## 配置用户
+
+当目录创建 SCIM User 时，Better Auth 默认会创建一个 User；如果 `identity.resolveUser` 返回 `link`，则会链接现有 User。之后，目录可以更新配置文件、设置 `active` 或删除 SCIM 资源。SCIM User 不会创建身份验证账户，因此用户仍然需要 SSO、passkey、凭据或其他登录方式。
+
+默认情况下，SCIM 源管理 Better Auth User 的电子邮件和姓名。插件绝不会通过电子邮件将传入资源链接到现有用户。
+
+### 链接现有 Better Auth User
+
+当你的应用程序已经具有从目录主体到 Better Auth User 的稳定映射时，请使用 `identity.resolveUser`。如果目录会保持 `externalId` 不变，优先使用由目录管理的 `externalId`。不要使用未经验证的电子邮件地址作为链接键。
+
+```ts title="auth.ts"
+scim({
+  connections,
+  identity: {
+    async resolveUser(input, { database }) {
+      const userId = input.resource.externalId
+        ? await findUserIdByDirectorySubject(
+            database,
+            input.connectionId,
+            input.resource.externalId,
+          )
+        : undefined;
+
+      return userId
+        ? { action: "link", userId, profile: "preserve" }
+        : { action: "create" };
+    },
+  },
+});
+```
+
+链接用户时选择配置文件行为：
+
+| 结果                                                | 行为                                       |
+| ------------------------------------------------- | ---------------------------------------- |
+| `{ action: "create" }`                            | 创建 Better Auth User，并允许 SCIM 源管理其电子邮件和姓名 |
+| `{ action: "link", userId, profile: "manage" }`   | 链接现有 User，并允许此源管理其电子邮件和姓名                |
+| `{ action: "link", userId, profile: "preserve" }` | 链接现有 User，但不更改其 Better Auth 电子邮件或姓名      |
+
+只有一个源可以管理 Better Auth User 的配置文件。不同的连接可以将保留配置文件的源链接到同一个 User，但一个连接不能为同一个已链接 User 创建两个 SCIM 资源。
+
+## 使用 SSO 对已配置的用户进行身份验证
+
+当一个 SCIM 连接控制谁可以通过配对的 OIDC provider 登录时，在 SSO 插件的 `resolveUser` 回调中使用 `acquireActiveSCIMUserLink`。该辅助函数通过精确的连接 ID 和 `externalId` 查找活跃的 SCIM User，并为活跃链接返回 `{ scimUserId, userId }`。对于缺失、非活跃、已删除、已标记删除、孤立或已停用的链接，它会返回 `null`。
+
+```ts title="auth.ts"
+import { acquireActiveSCIMUserLink, scim } from "@better-auth/scim";
+import { sso } from "@better-auth/sso";
+import { betterAuth } from "better-auth";
+
+const workforceProviderId = "acme-workforce-oidc";
+const workforceConnectionId = "workforce-acme";
+
+export const auth = betterAuth({
+  plugins: [
+    scim({ connections }),
+    sso({
+      defaultSSO: [
+        {
+          providerId: workforceProviderId,
+          domain: "acme.example",
+          oidcConfig: {
+            issuer: "https://idp.acme.example",
+            clientId: "acme-workforce-client-id",
+            clientSecret: "acme-workforce-client-secret",
+            pkce: true,
+            discoveryEndpoint:
+              "https://idp.acme.example/.well-known/openid-configuration",
+          },
+        },
+      ],
+      async resolveUser(input, context) {
+        if (input.providerId !== workforceProviderId) {
+          return { action: "continue" };
+        }
+
+        const link = await acquireActiveSCIMUserLink(
+          {
+            connectionId: workforceConnectionId,
+            externalId: input.accountKey.accountId,
+          },
+          context,
+        );
+
+        return link
+          ? {
+              action: "link",
+              userId: link.userId,
+              profile: "preserve",
+            }
+          : {
+              action: "reject",
+              code: "SCIM_USER_NOT_ACTIVE",
+            };
+      },
+    }),
+  ],
+});
+```
+
+配置目录，将 OIDC provider 的不可变且大小写精确的主体作为 SCIM User 的 `externalId` 发送。示例使用了经过验证的 OIDC `sub`，其值来自 `input.accountKey.accountId`。该辅助函数绝不会回退到 `userName`、电子邮件、其他连接或已删除资源的 tombstone。
+
+使用 `resolveUser` 提供的 `context` 调用该辅助函数；其 `database` 与用于账户链接和会话创建的原生事务适配器相同。该辅助函数会防止链接受到并发主体变更、源停用或删除以及连接停用的影响。直接调用辅助函数的调用方可以在冲突后重试整个事务。
+
+在 SSO 期间，生命周期冲突会中止当前身份验证尝试，并作为 `SSO_USER_RESOLUTION_FAILED` 返回；不会创建 Account 或 Session。SSO 不会自动重试回调，原始 OIDC 回调也无法重放。用户或客户端必须发起全新的 SSO 身份验证尝试，该尝试会重新评估当前 SCIM 状态。
+
+## 处理激活和删除
+
+使用 `identity.reconcileUser` 将组合后的 SCIM 生命周期状态应用到你的应用程序。该回调会接收与 Better Auth User 关联的每个源，以及一个 `active` 值；只要至少有一个源仍处于活跃状态，该值就是 `true`。
+
+```ts title="auth.ts"
+scim({
+  connections,
+  identity: {
+    async reconcileUser(state, { database }) {
+      await setDirectoryAccessState(database, state.userId, state.active);
+    },
+  },
+});
+```
+
+该回调与 SCIM 变更在同一个数据库事务中运行。请确保它具有幂等性，并使用提供的 `database` 事务进行写入。从回调中抛出错误会拒绝请求并回滚 SCIM 变更。
+
+当最后一个活跃源被停用或删除时，Better Auth 会删除 User 的会话。重新激活源会更新生命周期状态，但不会创建会话。
+
+<Callout type="warn">
+  删除会话并不能阻止用户再次登录。请将禁用状态持久化在 `identity.reconcileUser` 中，然后在身份验证或授权策略中执行该状态，以便在停用时阻止未来的登录。
+</Callout>
+
+删除 SCIM 资源会保留其 Better Auth User。如果资源具有 `externalId`，则通过同一连接重新创建相同的 `externalId` 会将新的 SCIM 资源链接到该 User。如果没有 `externalId`，下一次创建将遵循你的解析器，或创建另一个 Better Auth User。
+
+## 后续步骤
+
+<Cards>
+  <Card href="/docs/plugins/scim/groups-and-roles" title="Groups 和自定义角色">
+    配置直接 memberships，并将目录 Groups 映射到应用程序角色。
+  </Card>
+
+  <Card href="/docs/plugins/scim/reference" title="SCIM 参考">
+    查看选项、端点、属性、过滤器、PATCH 路径、限制和架构。
+  </Card>
+</Cards>

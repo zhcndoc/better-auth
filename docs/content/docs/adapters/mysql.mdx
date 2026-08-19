@@ -8,7 +8,7 @@ MySQL 是一种流行的开源关系型数据库管理系统（RDBMS），广泛
 
 ## 示例用法
 
-确保你已经安装并配置了 MySQL。  
+确保你已经安装并配置了 MySQL。\
 然后，你可以直接将其连接到 Better Auth。
 
 ```ts title="auth.ts"
@@ -74,28 +74,27 @@ export const auth = betterAuth({
   </Tab>
 </Tabs>
 
-## 联合查询（试验性功能）
+## 连接
 
-数据库联合查询在 Better Auth 需要从多个表中一次性获取相关数据时非常有用。  
-比如 `/get-session`、`/get-full-organization` 等端点极大受益于此功能，根据数据库延迟不同，性能提升可达到 2 到 3 倍。
+当 Better-Auth 需要在单个查询中从多个表获取相关数据时，数据库连接非常有用。
+`/get-session`、`/get-full-organization` 等端点都能从此功能中获得很大帮助，根据数据库延迟的不同，性能提升可达 2 到 3 倍。
 
-Kysely MySQL 方言从版本 `1.4.0` 起原生支持联合查询。
-
-要启用此功能，需要在你的 auth 配置中将 `experimental.joins` 选项设置为 `true`。
+Kysely MySQL 方言自 `1.4.0` 版本起原生支持连接。
+要启用此功能，请在你的 auth 配置中将 `advanced.database.joins` 设置为 `true`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-  experimental: { joins: true }
+  advanced: {
+    database: {
+      joins: true,
+    },
+  },
 });
 ```
 
-<Callout type="warn">
-  启用此功能后，可能需要运行数据库迁移。
-</Callout>
-
-## 其他信息
+## 附加信息
 
 MySQL 是通过 [Kysely](https://kysely.dev/) 适配器在底层支持的，任何由 Kysely 支持的数据库同样受到支持。 （<Link href="/docs/adapters/other-relational-databases">详细阅读</Link>）
 

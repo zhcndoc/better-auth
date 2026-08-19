@@ -152,5 +152,5 @@ description: 魔法链接插件
 存储后端本身由全局 [`verification`](/docs/reference/options#verification) 配置控制。如果你配置了 `secondaryStorage`，魔法链接验证记录可以存储在那里，而不是数据库中。
 
 <Callout type="warn">
-  当 `secondaryStorage` 承载验证（`verification.storeInDatabase: false`）时，原子性的单次使用保证要求你的 secondary storage 提供 `getAndDelete`（Redis `GETDEL`、KV `getAndDelete`）。如果实现只提供 `get` 和 `delete`，则消耗过程会回退到进程内的 JavaScript 锁，而该锁无法在多个应用实例之间协调。使用 secondary-storage 验证的多实例部署必须配置实现了 `getAndDelete` 的后端。
+  当 `secondaryStorage` 为验证提供支持时（`verification.storeInDatabase: false`），原子单次使用保证要求你的二级存储公开 `getAndDelete`（Redis `GETDEL`、KV `getAndDelete`）。Better Auth 不会在验证令牌消耗时回退到单独的 `get` 和 `delete` 操作。使用二级存储验证的多实例部署必须配置实现了 `getAndDelete` 的后端。
 </Callout>

@@ -70,6 +70,14 @@ description: Better Auth 的管理员插件
 
 在执行任何管理员操作之前，用户必须使用管理员帐户进行身份验证。管理员是指分配了 `admin` 角色的任何用户，或者其 ID 包含在 `adminUserIds` 选项中的任何用户。
 
+要创建第一个管理员用户，请在添加 Admin 插件并应用 schema 后运行 CLI：
+
+```package-install title="Terminal"
+npx auth@latest create-admin --email admin@example.com --name "Admin" --role admin
+```
+
+如果用户已经存在，CLI 会在创建另一个管理员之前要求确认。使用 `--force` 或 `--yes` 可跳过该提示。CLI 默认会将管理员电子邮件标记为已验证；传入 `--no-email-verified` 可禁用此行为。
+
 ### 创建用户
 
 允许管理员创建新用户。

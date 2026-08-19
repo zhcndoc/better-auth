@@ -19,7 +19,9 @@ description: 用于 Better Auth 的一键登录插件
 
     export const auth = betterAuth({
         plugins: [
-            oneTap(), // 添加 One Tap 服务器端插件  // [!code highlight]
+            oneTap({
+              clientId: process.env.GOOGLE_CLIENT_ID as string, // [!code highlight]
+            }),
         ]
     });
     ```
@@ -201,8 +203,8 @@ await authClient.oneTap({
 
 ### 服务器端选项
 
-* `disableSignUp`: 禁用注册选项，仅允许现有用户登录。默认是 false。
-* `clientId`: 如果社交提供程序配置中未提供客户端 ID，可以在此处选择性传递客户端 ID。
+* `disableSignUp`: 禁用注册选项，仅允许现有用户登录。默认为 false。
+* `clientId`: 用于验证 ID 令牌受众的 Google 客户端 ID。除非配置了 `socialProviders.google.clientId`，否则为必需项。
 
 <Callout type="info">
   **限制为 Google Workspace 域（`hd`）**

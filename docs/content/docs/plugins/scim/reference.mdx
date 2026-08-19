@@ -1,0 +1,557 @@
+---
+title: SCIM 参考
+description: SCIM 选项、端点、资源行为和数据库架构
+---
+
+此参考文档介绍 `@better-auth/scim` 支持的 SCIM 操作和配置
+
+## 插件选项
+
+| 选项                   | 类型                                 | 描述                                               |
+| -------------------- | ---------------------------------- | ------------------------------------------------ |
+| `connections`        | `readonly SCIMConnectionOptions[]` | 必需。配置零个或多个代码定义的连接。当 bearer 验证器或托管目录解析连接时，列表可以为空。 |
+| `authentication`     | `SCIMAuthenticationOptions`        | 可选。验证 bearer token，并可解析应用程序拥有的连接。                |
+| `managedConnections` | `SCIMManagedConnectionOptions`     | 可选。启用由 SCIM 拥有的持久化连接和凭据目录及其受信任的服务器 API。          |
+| `identity`           | `SCIMIdentity`                     | 可选。关联现有用户并应用全局生命周期状态。                            |
+| `projection`         | `SCIMProjection`                   | 可选。将 Groups 映射到角色并应用应用程序访问状态。                    |
+| `compatibility`      | `SCIMCompatibilityOptions`         | 可选。启用范围有限的、特定于提供商的 HTTP 入站格式。                    |
+
+### 连接选项
+
+| 选项                     | 类型                                       | 描述                                                                  |
+| ---------------------- | ---------------------------------------- | ------------------------------------------------------------------- |
+| `id`                   | `string`                                 | 必需的连接标识符。必须经过 trim、保持唯一，且不超过 255 个字符。                               |
+| `credentials`          | `readonly SCIMBearerCredentialOptions[]` | 必需的静态 bearer 凭据列表。当配置了 `authentication.verifyBearerToken` 时，列表可以为空。 |
+| `provisioningDomainId` | `string`                                 | 可选的应用程序边界。必须经过 trim、非空且不超过 255 个字符。默认为连接 ID，并且多个连接可以共享此值。           |
+
+连接拥有其 Users、Groups 和成员关系。在连接首次完成身份验证后更改 `provisioningDomainId` 会返回 `409 Conflict`
+
+### Bearer 凭据选项
+
+| 选项          | 类型                     | 描述                                    |
+| ----------- | ---------------------- | ------------------------------------- |
+| `type`      | `"bearer"`             | 必需的凭据类型。                              |
+| `id`        | `string`               | 必需的稳定标识符，包含在已验证的主体中。必须在连接内保持唯一。       |
+| `token`     | `string`               | 必需的不透明 token。不能包含空白字符，并且必须在所有连接中保持唯一。 |
+| `scopes`    | `readonly SCIMScope[]` | 可选的操作作用域。省略此选项时，静态凭据将获得所有作用域。         |
+| `expiresAt` | `Date`                 | 可选的有效 `Date`，在凭据轮换期间用作硬性过期时间。         |
+
+将 token 存储在密钥管理器中，为每个连接使用不同的值，并在生产环境中要求使用 HTTPS
+
+### Bearer 验证
+
+当授权服务器通过 OAuth client credentials 或其他 OAuth grant 签发访问 token 时，使用 `authentication.verifyBearerToken`。验证器会验证 token，并返回其声明所表示的已配置连接 ID、凭据 ID 和操作作用域。现有的单参数验证器回调仍受支持
+
+```ts title="auth.ts"
+scim({
+  connections: [{ id: "workforce-acme", credentials: [] }],
+  authentication: {
+    async verifyBearerToken({ token }) {
+      const claims = await verifyDirectoryAccessToken(token);
+      if (!claims) return null;
+
+      return {
+        connectionId: "workforce-acme",
+        credentialId: claims.clientId,
+        scopes: claims.scopes,
+        expiresAt: claims.expiresAt,
+      };
+    },
+  },
+});
+```
+
+插件不会签发访问 token，也不会运行 OAuth token 端点。应用程序拥有的验证器必须在返回主体之前验证签名或 introspection 响应、issuer、audience、过期时间和客户端身份
+
+回调返回严格的 `SCIMBearerTokenVerification` 联合类型。`SCIMDeclaredConnectionVerificationResult` 根据 ID 从 `connections` 中选择连接，而 `SCIMResolvedConnectionVerificationResult` 携带应用程序解析出的 `SCIMConnection`；结果不能同时包含 `connectionId` 和 `connection`
+
+验证器也可以在请求时从应用程序拥有的数据库中解析连接。此路径允许 `connections` 列表为空，并且会将连接与已验证的凭据原子地一并返回，因此插件不会执行第二次连接查找
+
+```ts title="auth.ts"
+scim({
+  connections: [],
+  authentication: {
+    async verifyBearerToken({ token }, { database }) {
+      const credential = await database.findOne<EnterpriseSCIMCredentialRecord>({
+        model: "enterpriseSCIMCredential",
+        where: [{ field: "tokenHash", value: await hashSCIMToken(token) }],
+      });
+      if (
+        !credential ||
+        credential.revokedAt ||
+        credential.expiresAt <= new Date()
+      ) {
+        return null;
+      }
+
+      await database.update({
+        model: "enterpriseSCIMCredential",
+        where: [{ field: "id", value: credential.id }],
+        update: { lastAuthenticatedAt: new Date() },
+      });
+      return {
+        connection: {
+          id: credential.connectionId,
+          provisioningDomainId: credential.provisioningDomainId,
+        },
+        credentialId: credential.id,
+        scopes: credential.scopes,
+        expiresAt: credential.expiresAt,
+      };
+    },
+  },
+});
+```
+
+通过你自己的服务器插件 schema 注册应用程序拥有的凭据模型。使用高熵凭据并设置有限的过期时间，只持久化加密哈希或 keyed digest，绝不存储原始 token。验证器上下文仅公开 `database.findOne` 和 `database.update`；此低级路径不要求使用 SCIM 拥有的目录
+
+动态连接 ID 必须是不透明的、全局唯一的、永不重复使用的，并且不能与代码定义的连接 ID 相同。返回的连接 ID 和 provisioning domain ID 必须是经过 trim、非空且不超过 255 个字符的字符串。插件会以 `401 Unauthorized` 拒绝格式错误或含义不明确的结果，会拒绝与已配置 ID 冲突的动态 ID，并保留首次持久化的连接到域绑定。验证器基础设施异常仍会作为服务器错误处理，而不会报告为无效凭据
+
+凭据撤销是面向未来生效的。验证器可以拒绝撤销后开始的每个请求，但在控制平面更新之前已完成身份验证的请求，可以通过 SCIM 事务和最终停用栅栏完成。当资源及其投影效果必须变为终态时，应停用连接
+
+### 托管连接目录
+
+当 Better Auth 应持久化运行时租户连接并签发其 bearer 凭据时，使用 `managedConnections`。此模式不需要代码定义的连接，也不会向 Better Auth User、Organization、Account 或 SSO 模型添加字段
+
+```ts title="auth.ts"
+scim({
+  connections: [],
+  managedConnections: {
+    credentialHashSecret: process.env.SCIM_CREDENTIAL_HASH_SECRET!,
+    maxActiveCredentials: 5,
+    lastUsedWriteIntervalSeconds: 300,
+  },
+});
+```
+
+`credentialHashSecret` 是独立的 HMAC 密钥，至少包含 32 个字符。将其保存在服务器密钥管理器中，并且仅通过了解所存储哈希版本的应用程序迁移来轮换。`maxActiveCredentials` 是 1 到 100 之间的整数，默认为 5。`lastUsedWriteIntervalSeconds` 是非负整数，默认为 300
+
+目录会在保留的 `ba_scim_connection_` 和 `ba_scim_credential_` 命名空间中生成不透明的连接和凭据 ID。生成的 token 包含其凭据 ID 和高熵密钥。Better Auth 仅存储带版本的 HMAC-SHA256 摘要，以恒定时间进行比较，强制执行其准确的作用域和过期时间，并限制持久化 `lastUsedAt` 的写入频率。代码定义的凭据会优先检查。属于托管凭据命名空间但无法通过目录验证的 token 不会继续交由 `authentication.verifyBearerToken` 处理
+
+所有目录方法都是仅限服务器使用的 `auth.api` 方法。它们没有 HTTP 路径，会从 OpenAPI 中省略，也不会通过浏览器客户端公开：
+
+```ts title="organization-scim-service.ts"
+// Authenticate the caller and prove that they can manage this tenant first.
+await requireOrganizationSCIMAdmin(session.user.id, organizationId);
+
+const created = await auth.api.createSCIMManagedConnection({
+  body: {
+    creationRequestId: crypto.randomUUID(),
+    provisioningDomainId: organizationId,
+    actorId: session.user.id,
+    scopes: [
+      "scim.users.read",
+      "scim.users.write",
+      "scim.groups.read",
+      "scim.groups.write",
+    ],
+    expiresAt: new Date("2027-01-01T00:00:00.000Z"),
+  },
+});
+
+// Display created.token once, then discard it.
+```
+
+`creationRequestId` 是必需的、全局唯一的不透明值，trim 后长度必须在 16 到 255 个字符之间。为逻辑上的应用程序侧创建预留生成一次，并在恢复该预留期间保持稳定。Better Auth 会将其与连接原子地持久化，并在创建、列表和获取操作中返回。它是不可变的所有权关联，而不是幂等键：重复使用它会返回带有代码 `SCIM_MANAGED_CREATION_REQUEST_ID_CONFLICT` 的 `409 Conflict`，并且永远不会重新返回原始 token。开始真正新的逻辑创建尝试时，应使用新值
+
+`actorId` 用于审计归属，而不是授权。封装这些方法的应用程序路由必须验证管理员身份、授权准确的 `provisioningDomainId`、执行正常的 CSRF 或 origin 策略、避免记录响应，并在返回原始 token 时发送 `Cache-Control: no-store`
+
+| 服务器方法                               | 必需的请求体                                                                    | 结果                              |
+| ----------------------------------- | ------------------------------------------------------------------------- | ------------------------------- |
+| `createSCIMManagedConnection`       | `creationRequestId`、`provisioningDomainId`、`actorId`、`scopes`、`expiresAt` | 创建连接和初始凭据；仅返回一次原始 token。        |
+| `listSCIMManagedConnections`        | `provisioningDomainId`                                                    | 仅列出指定 provisioning domain 中的连接。 |
+| `getSCIMManagedConnection`          | `connectionId`、`provisioningDomainId`                                     | 返回不含机密信息的连接和凭据元数据。              |
+| `rotateSCIMManagedCredential`       | `connectionId`、`provisioningDomainId`、`actorId`、`scopes`、`expiresAt`      | 原子地添加一个重叠凭据，并仅返回一次其原始 token。    |
+| `revokeSCIMManagedCredential`       | `connectionId`、`provisioningDomainId`、`credentialId`、`actorId`            | 立即拒绝未来使用该凭据的请求。                 |
+| `listSCIMManagedConnectionEvents`   | `connectionId`、`provisioningDomainId`                                     | 按序列顺序返回最近 100 个连接和凭据生命周期事件。     |
+| `decommissionSCIMManagedConnection` | `connectionId`、`provisioningDomainId`、`actorId`                           | 禁用凭据、运行规范化协调，并永久完成连接。           |
+
+每次项目查找都同时通过不透明的连接 ID 和 provisioning domain 进行限定。来自其他租户的连接和未知连接会产生相同的未找到响应。凭据创建、轮换、撤销和停用使用事务栅栏；降低活动凭据限制不能使轮换后的凭据数量超过新上限。已过期的凭据会释放名额，重叠的有效凭据会一直有效，直到过期或被显式撤销；停用会先禁用所有凭据，然后协调规范化的生命周期和投影状态
+
+停用不可逆。如果协调被中断，托管连接会保持 `decommissioning` 状态，其凭据仍不可用；再次调用 `decommissionSCIMManagedConnection` 会恢复租用的规范化 saga，并最终记录为 `decommissioned`。目录永远不会硬删除或重新启用连接
+
+| 作用域                 | 操作                  |
+| ------------------- | ------------------- |
+| `scim.users.read`   | 列出或获取 Users。        |
+| `scim.users.write`  | 创建、替换、修补或删除 Users。  |
+| `scim.groups.read`  | 列出或获取 Groups。       |
+| `scim.groups.write` | 创建、替换、修补或删除 Groups。 |
+
+缺少所需作用域的已验证 token 会收到 `403 Forbidden`。无效或过期的 token 会收到 `401 Unauthorized`
+
+## HTTP 行为
+
+SCIM 基础路径是 Better Auth 基础 URL 下的 `/scim/v2`。User 和 Group 端点要求使用 `Authorization: Bearer <token>`。Discovery 端点公开访问
+
+带请求体的请求可以使用 `application/scim+json` 或 `application/json`。响应使用 `application/scim+json`。身份验证、验证、唯一性、资源缺失和媒体类型失败使用 SCIM Error schema
+
+`POST` 和 `PUT` 请求体必须恰好包含一个匹配的核心 schema URN：
+
+* User：`urn:ietf:params:scim:schemas:core:2.0:User`，后面可选跟随 `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User`
+* Group：`urn:ietf:params:scim:schemas:core:2.0:Group`
+
+Enterprise User URI 可以在没有扩展对象的情况下声明，Microsoft Entra 在某些请求中就是如此，并且该声明会保留在响应中。不带 URI 的 Enterprise 对象无效。PATCH 请求体必须包含 `urn:ietf:params:scim:api:messages:2.0:PatchOp`。包含不支持或重复 schema URN 的 User 和 Group 创建或替换请求会返回带有 `scimType: "invalidValue"` 的 `400 Bad Request`
+
+### Microsoft Entra Group 兼容性
+
+Microsoft 的经典 Entra provisioning client 会在某些 `POST /Groups` schema 列表中包含不带属性的 URI `http://schemas.microsoft.com/2006/11/ResourceManagement/ADSCIM/2.0/Group`。当该客户端访问端点时，启用此精确的、仅限输入的例外：
+
+```ts title="auth.ts"
+scim({
+  connections,
+  compatibility: {
+    microsoftEntra: {
+      acceptLegacyGroupSchema: true,
+    },
+  },
+});
+```
+
+该选项默认为 `false`。启用后，Better Auth 会在验证 Group 创建请求前移除一个精确标记，然后仅返回和存储标准核心 Group 资源。该 URI 永远不会出现在 discovery、ResourceType 元数据、OpenAPI、持久化数据或响应中。带属性的标记、重复标记、`PUT` 或 `PATCH` 中的标记、其他未知扩展以及不同的 Microsoft Graph SCIM URI 仍然无效
+
+除了两个 Preview-tool 断言外，该插件通过 Microsoft 的 [Entra SCIM Validator](https://learn.microsoft.com/en-us/entra/identity/app-provisioning/scim-validator-tutorial)："Create a new User"（`roles`/`manager`）和 "Patch User - Replace Attributes"（primary-filtered checks）。这两项都会将响应与该工具自身发送的字符串布尔值 `primary` 和裸字符串 `manager` 字面量进行比较，而 RFC 7643 的类型约束无法在不导致该工具后续测试执行中的 schema 类型反序列化失败的情况下原样返回它们
+
+## Users
+
+| 方法       | 路径                       | 结果                                               |
+| -------- | ------------------------ | ------------------------------------------------ |
+| `POST`   | `/scim/v2/Users`         | 创建 SCIM User，并创建或显式关联 Better Auth User。返回 `201`。 |
+| `GET`    | `/scim/v2/Users`         | 以 SCIM `ListResponse` 返回连接中的 Users。              |
+| `GET`    | `/scim/v2/Users/:userId` | 返回连接拥有的一个 User。                                  |
+| `PUT`    | `/scim/v2/Users/:userId` | 替换可写配置文件，同时保留资源 ID。返回 `200`。                     |
+| `PATCH`  | `/scim/v2/Users/:userId` | 应用有序的原子更改。返回包含更新后资源的 `200`。                      |
+| `DELETE` | `/scim/v2/Users/:userId` | 删除 SCIM 资源，同时保留 Better Auth User。返回 `204`。       |
+
+删除 User 还会移除其直接 Group 成员关系和投影授权，更新受影响的 Groups，并协调生命周期和访问状态。当存在 `externalId` 时，插件会保留所需关联，以便将之后重新配置的资源关联到同一个 Better Auth User
+
+### 支持的 User 属性
+
+| 属性                                                              | 行为                                 |
+| --------------------------------------------------------------- | ---------------------------------- |
+| `userName`                                                      | 必需，在连接内不区分大小写且必须唯一。保留提供时的大小写。      |
+| `externalId`                                                    | 可选，在连接内按提供的原始值精确唯一。                |
+| `active`                                                        | 可选的生命周期状态。默认为 `true`。              |
+| `displayName`                                                   | 可选的显示名称。省略时由插件派生。                  |
+| `name.formatted`、`name.givenName`、`name.familyName`             | 可选的姓名字段。省略时插件会派生 `formatted`。      |
+| `name.middleName`、`name.honorificPrefix`、`name.honorificSuffix` | 可选的经典姓名字段。                         |
+| `emails`                                                        | 最多 20 个带类型的电子邮件值，每个不超过 254 个字符。    |
+| `title`、`userType`、`preferredLanguage`、`locale`、`timezone`      | 可选的经典 User 字符串。                    |
+| `phoneNumbers`、`addresses`、`roles`、`entitlements`               | 可选的有界多值属性。每个属性最多只能有 1 个值为 primary。 |
+| `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User`    | 可选的标准 Enterprise User 扩展，详见下文。     |
+
+RFC 7643 将 `active` 定义为 JSON Boolean，SCIM 示例、discovery、响应、回调和持久化值仍保持 Boolean 类型。作为范围有限的 Microsoft Entra 互操作性例外，User `POST`、`PUT` 和 `PATCH` 的 HTTP 入站处理也接受大小写不敏感的精确字符串 `"true"` 和 `"false"` 作为 `active`，包括无路径和带核心 schema 限定的 PATCH 操作。其他字符串、首尾空白、数字、`null`、数组和对象不会被强制转换，并会返回 `400 Bad Request`。此规范化不适用于 Groups 或无关属性
+
+`emails`、`phoneNumbers`、`addresses`、`roles` 和 `entitlements` 上定义的 `type` 值必须不区分大小写地保持唯一，符合 Microsoft Entra 的 SCIM 指南。多个条目可以省略 `type`。电子邮件值和已定义的类型会规范化为小写；每个电子邮件类型和值的元组也必须不区分大小写地保持唯一，并且最多只能有一个电子邮件设置 `primary: true`。当 PATCH 将一个值设为 primary 时，Better Auth 会清除该属性中所有其他值的 `primary`
+
+当没有电子邮件标记为 primary 时，优先使用第一个 work email，其次使用第一个 email。如果 `emails` 缺失或为空，则 `userName` 必须是有效的电子邮件，并成为 primary email
+
+格式化姓名的回退顺序为 `name.formatted`、`displayName`、拼接后的 given 和 family names，然后是 primary email。`displayName` 会回退到最终的格式化姓名
+
+管理配置文件的来源会将 primary email 和显示名称写入 Better Auth User。电子邮件必须全局唯一，否则请求返回 `409 Conflict`。更改电子邮件会清除 `emailVerified`，因为 provisioning 不会验证邮箱所有权
+
+Enterprise User 扩展支持 `employeeNumber`、`costCenter`、`organization`、`division`、`department` 和 `manager`。manager 接受非空标识符字符串、包含 `value`、`$ref` 或两者的 RFC 对象，或者包含该对象的单元素数组。Better Auth 为了兼容提供商，接受客户端提供的只读 `displayName`，但不会持久化、回显或将其传递给 identity 回调。响应和回调会将每个保留的 manager 规范化为至少包含 `value` 或 `$ref` 的对象。manager 是外部引用：Better Auth 不要求存在匹配的本地 User，也不会搜索其他连接
+
+PATCH 接受标准 Enterprise 路径，例如 `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department`。它也接受经典 Entra 别名 `manager`、`manager.value` 和 `manager.$ref` 作为输入路径，而规范响应会继续将 manager 数据放在 Enterprise User URI 下。`manager.displayName` 仍为只读
+
+```json title="Create User"
+{
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+  "externalId": "directory-user-42",
+  "userName": "Ada.Login@Example.com",
+  "displayName": "Countess of Lovelace",
+  "name": {
+    "formatted": "Augusta Ada King, Countess of Lovelace",
+    "givenName": "Augusta Ada",
+    "familyName": "King"
+  },
+  "emails": [
+    {
+      "value": "ada.work@example.com",
+      "type": "work",
+      "primary": true
+    }
+  ],
+  "active": true
+}
+```
+
+## Groups
+
+| 方法       | 路径                         | 结果                                   |
+| -------- | -------------------------- | ------------------------------------ |
+| `POST`   | `/scim/v2/Groups`          | 创建 Group 及其直接成员关系。返回 `201`。          |
+| `GET`    | `/scim/v2/Groups`          | 以 SCIM `ListResponse` 返回连接中的 Groups。 |
+| `GET`    | `/scim/v2/Groups/:groupId` | 返回连接拥有的一个 Group。                     |
+| `PUT`    | `/scim/v2/Groups/:groupId` | 替换 Group 属性和完整成员集合。返回 `200`。         |
+| `PATCH`  | `/scim/v2/Groups/:groupId` | 应用有序的原子属性和成员关系更改。返回包含更新后资源的 `200`。   |
+| `DELETE` | `/scim/v2/Groups/:groupId` | 删除 Group、成员关系和投影授权。返回 `204`。         |
+
+`displayName` 是必需的，在连接内不区分大小写且必须唯一。`externalId` 可选，并且按提供的原始值精确唯一
+
+每个 `members[].value` 必须包含来自同一连接的 SCIM User ID。成员只能是直接 Users。如果存在 `type`，则必须不区分大小写地等于 `User`。重复引用会合并，一个 Group 最多可包含 1,000 个唯一成员
+
+## Discovery
+
+| 方法    | 路径                                       | 结果                                        |
+| ----- | ---------------------------------------- | ----------------------------------------- |
+| `GET` | `/scim/v2/ServiceProviderConfig`         | 报告身份验证、过滤器、PATCH 和分页能力。                   |
+| `GET` | `/scim/v2/Schemas`                       | 列出核心 User、Enterprise User 和 Group schema。 |
+| `GET` | `/scim/v2/Schemas/:schemaId`             | 返回一个受支持的 schema。                          |
+| `GET` | `/scim/v2/ResourceTypes`                 | 列出 User 和 Group 资源类型。                     |
+| `GET` | `/scim/v2/ResourceTypes/:resourceTypeId` | 返回一个资源类型。                                 |
+
+## 过滤器和分页
+
+集合过滤器接受 1 到 10 个由 `and` 连接的等式表达式。每个表达式使用 `attribute eq "value"`。属性名称和操作符不区分大小写，属性可以包含核心 schema 前缀
+
+| 资源    | 支持的等式过滤器                                                                   |
+| ----- | -------------------------------------------------------------------------- |
+| User  | `id`、`userName`、`externalId`、`emails.value`、`emails[type eq "work"].value` |
+| Group | `id`、`displayName`、`externalId`                                            |
+
+`userName`、电子邮件值和 Group `displayName` 使用不区分大小写的匹配。`id` 和 `externalId` 使用精确匹配
+
+```http
+GET /api/auth/scim/v2/Users?filter=userName%20eq%20%22ada.login%40example.com%22
+Authorization: Bearer <token>
+```
+
+不支持逻辑 `or` 和 `not`、存在性过滤器、比较操作符和括号。不支持的语法返回 `invalidFilter`
+
+分页使用从 1 开始的 `startIndex` 和非负的 `count`。两个集合默认使用 `startIndex=1` 和 `count=100`。服务器将 `count` 限制为 100
+
+## 响应属性
+
+使用 `attributes` 或 `excludedAttributes` 选择响应字段。每个参数接受以逗号分隔的不区分大小写的路径，包括 `name.givenName`、`emails.value` 和 `members.value`。两个参数不能同时使用，且 `schemas` 和 `id` 始终保留在投影资源中
+
+```http
+GET /api/auth/scim/v2/Groups?startIndex=1&count=25&excludedAttributes=members
+Authorization: Bearer <token>
+```
+
+`POST`、`PUT` 和 `PATCH` 都会将属性选择应用于资源响应。PATCH 始终返回包含更新后资源的 `200 OK`
+
+## PATCH
+
+操作按数组顺序运行，并接受不区分大小写的 `add`、`replace` 和 `remove` 值。省略 `op` 时默认为 `replace`。空的 `Operations` 数组是有效的无操作。完整请求具有原子性
+
+```json
+{
+  "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+  "Operations": [
+    {
+      "op": "replace",
+      "path": "active",
+      "value": false
+    }
+  ]
+}
+```
+
+### User PATCH 路径
+
+| 路径                                                          | 操作                       | 行为                                         |
+| ----------------------------------------------------------- | ------------------------ | ------------------------------------------ |
+| `userName`                                                  | `add`、`replace`          | 要求值非空。                                     |
+| `externalId`                                                | `add`、`replace`、`remove` | `remove` 会清除标识符。                           |
+| `active`                                                    | `add`、`replace`、`remove` | HTTP 规范化后为 Boolean。`remove` 会将其重置为 `true`。 |
+| `displayName`                                               | `add`、`replace`、`remove` | `remove` 应用格式化姓名回退。                        |
+| `name` 及其受支持的子属性                                            | `add`、`replace`、`remove` | 保留未指定的姓名字段。                                |
+| `emails`                                                    | `add`、`replace`          | 添加条目或替换完整集合。                               |
+| `emails.value`                                              | `add`、`replace`          | 替换每个电子邮件条目中的值。                             |
+| `emails[type eq "work"].value`                              | `add`、`replace`、`remove` | 选择 work email。                             |
+| `title`、`userType`、`preferredLanguage`、`locale`、`timezone`  | `add`、`replace`、`remove` | 更新或清除一个经典 User 字符串。                        |
+| `phoneNumbers`、`addresses`、`roles`、`entitlements`、其子属性和类型路径 | `add`、`replace`、`remove` | 支持完整数组和精确的 `type eq "<type>"` 选择器。         |
+| `enterpriseUrn` 及其可写子属性                                     | `add`、`replace`、`remove` | 保留未指定的 Enterprise 字段。                      |
+| `manager`、`manager.value`、`manager.$ref`                    | `add`、`replace`、`remove` | 标准 Enterprise manager 属性的经典 Entra 别名。      |
+
+在此表中，`enterpriseUrn` 是 `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User`
+
+User 路径可以包含核心 User schema 前缀。`add` 或 `replace` 操作可以省略 `path`，并提供包含可写属性的对象，包括扁平化的 Enterprise URI 键。未过滤的 `replace` 会添加缺失的目标。`id`、`schemas`、`meta` 和 `manager.displayName` 为只读
+
+当类似 `phoneNumbers[type eq "work"].value` 的过滤值路径没有匹配任何已存储的值时，Better Auth 会创建带有筛选 `type` 或 `primary` 标记的值，而不是返回 [RFC 7644](https://datatracker.ietf.org/doc/html/rfc7644#section-3.5.2.3) 的 `noTarget` 错误。[Microsoft Entra ID](https://learn.microsoft.com/en-us/entra/identity/app-provisioning/use-scim-to-provision-users-and-groups) 会为尚未填充的属性发送这些操作，并且由于 PATCH 具有原子性，拒绝其中一个操作也会丢弃同一请求中的所有其他操作。创建的电子邮件永远不会是 primary，因此过滤器未命中不会移动登录地址。对没有匹配项的过滤路径执行 `remove` 仍是无操作，而不带路径的 `remove` 仍会返回 `noTarget`
+
+### Group PATCH 路径
+
+| 路径                                   | 操作                       | 行为                    |
+| ------------------------------------ | ------------------------ | --------------------- |
+| `displayName`                        | `add`、`replace`          | 要求非空且唯一的值。            |
+| `externalId`                         | `add`、`replace`、`remove` | `remove` 会清除标识符。      |
+| `members`                            | `add`                    | 添加提供的 User 引用。        |
+| `members`                            | `replace`                | 替换完整成员集合。             |
+| `members`                            | `remove`                 | 未提供值时清除所有成员，或移除提供的引用。 |
+| `members[value eq "<scim-user-id>"]` | `remove`                 | 移除一个 User 引用。         |
+
+Group 路径可以包含核心 Group schema 前缀。`add` 或 `replace` 操作可以省略 `path`，并提供包含 `displayName`、`externalId` 或 `members` 的对象
+
+## Identity 回调
+
+### `identity.resolveUser`
+
+```ts
+type SCIMIdentityResolution =
+  | { action: "create" }
+  | { action: "link"; userId: string; profile: "manage" | "preserve" };
+
+type resolveUser = (
+  input: {
+    connectionId: string;
+    provisioningDomainId: string;
+    resource: {
+      schemas: readonly string[];
+      externalId?: string;
+      userName: string;
+      primaryEmail: string;
+      displayName: string;
+      name: SCIMCanonicalName;
+      emails: readonly SCIMCanonicalEmail[];
+      title?: string;
+      userType?: string;
+      preferredLanguage?: string;
+      locale?: string;
+      timezone?: string;
+      phoneNumbers?: readonly SCIMCanonicalPhoneNumber[];
+      addresses?: readonly SCIMCanonicalAddress[];
+      roles?: readonly SCIMCanonicalRole[];
+      entitlements?: readonly SCIMCanonicalEntitlement[];
+      enterprise?: SCIMEnterpriseUser;
+      active: boolean;
+    };
+  },
+  context: {
+    database: Pick<DBAdapter, "count" | "findMany" | "findOne">;
+  },
+) => SCIMIdentityResolution | Promise<SCIMIdentityResolution>;
+```
+
+使用此回调为传入的 User 返回明确的创建或关联决策。对于缺少 Better Auth User 的 `link` 结果，会返回 `409 Conflict`
+
+### `identity.reconcileUser`
+
+```ts
+type reconcileUser = (
+  state: {
+    userId: string;
+    active: boolean;
+    profileSourceId?: string;
+    sources: readonly SCIMIdentitySource[];
+  },
+  context: { database: DBTransactionAdapter },
+) => void | Promise<void>;
+```
+
+使用此回调存储全局启用或禁用状态。回调会在 SCIM 事务中运行
+
+## Projection 回调
+
+### `projection.roles.map`
+
+将一个 Group 来源映射到零个或多个应用程序角色标识符。输入包括 `connectionId`、`provisioningDomainId`、`scimUserId`、`userId` 和规范 Group `source`
+
+### `projection.roles.exists`
+
+确认映射的角色存在于目标 provisioning domain 中。被拒绝的角色不会授予任何权限
+
+### `projection.reconcileUser`
+
+接收一个 Better Auth User 在一个 provisioning domain 中的完整期望访问状态。回调会在 SCIM 事务中运行，并且必须具备幂等性
+
+每个授权都包含经过验证的 `role` 以及生成该授权的规范授权 `source`。Group 来源具有 `type: "group"`、其不可变 SCIM `id`，以及可用时的当前 `externalId` 和 `displayName`。持久化键和存储列名称不属于此回调契约
+
+完整示例请参阅 [Groups and custom roles](/docs/plugins/scim/groups-and-roles)
+
+## 受信任的服务器 API
+
+这些方法没有 HTTP 路由，也不会出现在 OpenAPI 输出中。请从受信任的服务器代码调用它们
+
+### `reconcileSCIMProjection`
+
+```ts
+await auth.api.reconcileSCIMProjection({
+  body: { provisioningDomainId: "workspace-acme" },
+});
+```
+
+通过 `projection.reconcileUser` 重新处理 provisioning domain 中每个已关联的用户
+
+此方法要求配置 `projection.reconcileUser`。它返回 `provisioningDomainId`、`reconciledUsers` 和 `batches`
+
+### `decommissionSCIMConnection`
+
+```ts
+const result = await auth.api.decommissionSCIMConnection({
+  body: {
+    connectionId: "workforce-acme",
+    provisioningDomainId: "workspace-acme",
+  },
+});
+```
+
+拒绝连接的凭据，并移除其对生命周期和访问状态的贡献。如果结果为 `reconciling`，请等待 `retryAfter`，然后再次调用该方法，直到返回 `complete`
+
+对于已经存在绑定的连接，`provisioningDomainId` 是可选的。当停用可能从未完成身份验证的应用程序解析连接时，请提供它：插件会原子地保留终态的连接到域绑定，因此该 ID 永远不能被重复使用或重新分配。如果绑定已存在，提供的域必须与其完全匹配。省略域会保留之前的行为，并要求绑定已经存在
+
+对于应用程序拥有的连接目录，应先持久化 `decommissioning` 状态并禁用每个凭据，然后在应用程序事务之外使用两个不可变 ID 调用此方法。仅在此方法返回 `complete` 后持久化目录的终态。失败或中断的调用可以重试，而不会重新启用凭据或重复核心协调
+
+停用不可逆，`retryAfter` 是表示最早重试时间的 `Date`。规范 Users、Groups、成员关系、identity tombstone 和保留的绑定仍会存储；该操作会移除连接对生命周期和访问的贡献，而不是删除其目录历史
+
+## 不支持的功能
+
+该插件不支持以下 SCIM 功能：
+
+* 自定义 schema 扩展
+* `User.groups`
+* 密码、即时消息地址、照片或 X.509 证书
+* 嵌套 Groups 或非 User 的 Group 成员
+* 批量请求、基于 POST 的搜索、`/Me`、ETag、游标或排序
+* 除等式和逻辑 `and` 之外的操作符
+* 内置 OAuth token 端点、Basic 身份验证或双向 TLS
+* HTTP 管理端点、SCIM 请求审计记录或 webhooks
+
+该包仅限服务器使用，不导出客户端插件。SCIM provisioning 不会配置用户身份验证
+
+## Schema
+
+该插件添加以下模型。使用 `auth generate` 为数据库适配器生成准确的 schema
+
+| 模型                      | 用途                                         |
+| ----------------------- | ------------------------------------------ |
+| `scimConnectionBinding` | 存储连接的 provisioning domain 和停用状态。           |
+| `scimUser`              | 存储规范 User 属性和关联的 Better Auth User ID。      |
+| `scimGroup`             | 存储规范 Group 属性。                             |
+| `scimGroupMember`       | 存储直接的 Group 到 User 成员关系。                   |
+| `scimSubject`           | 协调一个 Better Auth User 的已关联 SCIM 来源和配置文件权限。 |
+| `scimIdentityTombstone` | 在 SCIM User 被删除后保留稳定的 `externalId` 关联。     |
+| `scimProjectionGrant`   | 存储经过验证的角色授权及其 Group 来源。                    |
+
+配置 `managedConnections` 时，插件还会添加以下模型：
+
+| 模型                           | 用途                                         |
+| ---------------------------- | ------------------------------------------ |
+| `scimManagedConnection`      | 存储全局唯一的创建关联、租户限定的生命周期状态和变更版本。              |
+| `scimManagedCredential`      | 存储带版本的 token 摘要、作用域、过期时间、撤销状态和受限写入的最近使用状态。 |
+| `scimManagedConnectionEvent` | 存储有界且带操作者归属的连接和凭据生命周期事件。                   |
+
+Better Auth 为每个模型提供主 `id` 字段。SCIM 模型还会在需要时引用核心 `user` 模型
+
+### Legacy SCIM 切换
+
+当前 schema 不会转换 legacy `scimProvider` 运行时连接、其凭据或 SCIM 创建的身份验证 `account` 行。选择一种切换后的模式：静态代码定义的连接、通过 `authentication.verifyBearerToken` 进行应用程序拥有的原子运行时解析，或可选的 `managedConnections` 目录
+
+在更改 schema 前使用维护窗口并暂停 provisioning。备份并清点准确的 legacy provider、account、User、Group、成员关系和应用程序拥有的行；Better Auth 不会自动识别或删除 legacy account 行，因此应保留所有无关的 account 和应用程序记录。绝不要导入 legacy token 哈希、重复使用 legacy 原始 token 或接受 legacy bearer 语法。在旧 schema 仍处于活动状态时，按依赖顺序清除 legacy SCIM 拥有的行，确认不兼容的表为空，然后再应用新 schema。托管表存在后签发新的托管凭据，或者通过选定的静态或应用程序拥有模式创建新密钥，更新目录，并要求完成 User 和 Group 的重新 provisioning 周期。完整步骤请参阅 [1.7 SCIM upgrade guide](/docs/guides/1-7-upgrade-guide#scim-requires-full-reprovisioning)
+
+`scimUser.serializedAttributes` 是完整的非索引规范配置文件的必需、有界事实来源。`formattedName`、`givenName`、`familyName` 和 `serializedEmails` 字段仍是为较早的 1.7 prerelease 创建的数据库保留的兼容性镜像，但插件不会将它们作为规范状态读取
+
+迁移有意不给 `serializedAttributes` 设置默认值，因为空 payload 会伪造目录从未提供的规范状态。因此，已填充的 1.7 prerelease 数据库必须遵循相同的 legacy 切换和完整重新 provisioning 流程
+
+## 相关内容
+
+<Cards>
+  <Card href="/docs/plugins/scim" title="SCIM setup">
+    安装插件、配置目录并 provisioning 用户
+  </Card>
+
+  <Card href="/docs/plugins/scim/groups-and-roles" title="Groups and custom roles">
+    将目录成员关系应用到应用程序的访问模型
+  </Card>
+</Cards>
