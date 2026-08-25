@@ -5,8 +5,8 @@ description: 入门 Better Auth
 
 Better Auth 提供内置的认证支持：
 
-* **Email and password**
-* **Social provider (Google, GitHub, Apple, and more)**
+* **邮箱和密码**
+* **社交提供商（Google、GitHub、Apple 等）**
 
 同时也可以通过插件轻松扩展，例如：[用户名](/docs/plugins/username)、[魔法链接](/docs/plugins/magic-link)、[通行密钥](/docs/plugins/passkey)、[邮箱验证码](/docs/plugins/email-otp) 等。
 
@@ -64,7 +64,7 @@ export const auth = betterAuth({
 })
 ```
 
-### Sign In
+### 登录
 
 要登录用户，可以使用客户端提供的 `signIn.email` 函数。
 
@@ -93,7 +93,7 @@ const { data, error } = await authClient.signIn.email({
 ```
 
 <Callout type="warn">
-  Always invoke client methods from the client side. Don't call them from the server.
+  始终在客户端调用客户端方法。不要从服务器调用它们。
 </Callout>
 
 ### 服务器端认证
@@ -113,7 +113,7 @@ const response = await auth.api.signInEmail({
 ```
 
 <Callout>
-  If the server cannot return a response object, you'll need to manually parse and set cookies. But for frameworks like Next.js we provide [a plugin](/docs/integrations/next#server-action-cookies) to handle this automatically
+  如果服务器无法返回响应对象，你需要手动解析并设置 Cookie。但对于 Next.js 等框架，我们提供了[一个插件](/docs/integrations/next#server-action-cookies)来自动处理
 </Callout>
 
 ## 社交登录
@@ -167,7 +167,7 @@ await authClient.signIn.social({
 });
 ```
 
-You can also authenticate using `idToken` or `accessToken` from the social provider instead of redirecting the user to the provider's site. See social providers documentation for more details.
+你也可以使用社交提供商提供的 `idToken` 或 `accessToken` 进行认证，而无需将用户重定向到提供商的网站。更多详情请参阅社交提供商文档。
 
 ## 登出
 
@@ -177,7 +177,7 @@ You can also authenticate using `idToken` or `accessToken` from the social provi
 await authClient.signOut();
 ```
 
-you can pass `fetchOptions` to redirect onSuccess
+你可以传入 `fetchOptions`，在 onSuccess 时进行重定向
 
 ```ts title="user-card.tsx" 
 await authClient.signOut({
@@ -395,7 +395,7 @@ const { data: session, error } = await authClient.getSession()
 </Tabs>
 
 <Callout>
-  For more details check [session-management](/docs/concepts/session-management) documentation.
+  更多详情请查看[会话管理](/docs/concepts/session-management)文档
 </Callout>
 
 ## 使用插件
@@ -406,9 +406,9 @@ Better Auth 的一大特色是拥有插件生态系统，能够通过少量代�
 
 <Steps>
   <Step>
-    ### Server Configuration
+    ### 服务器配置
 
-    To add a plugin, you need to import the plugin and pass it to the `plugins` option of the auth instance. For example, to add two factor authentication, you can use the following code:
+    要添加插件，需要导入插件并将其传入 auth 实例的 `plugins` 选项。例如，要添加双因素认证，可以使用以下代码：
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
@@ -422,35 +422,35 @@ Better Auth 的一大特色是拥有插件生态系统，能够通过少量代�
     })
     ```
 
-    now two factor related routes and method will be available on the server.
+    现在，服务器上将提供与双因素相关的路由和方法
   </Step>
 
   <Step>
-    ### Migrate Database
+    ### 迁移数据库
 
-    After adding the plugin, you'll need to add the required tables to your database. You can do this by running the `migrate` command, or by using the `generate` command to create the schema and handle the migration manually.
+    添加插件后，需要将所需的表添加到数据库中。你可以运行 `migrate` 命令，或者使用 `generate` 命令创建架构并手动处理迁移。
 
-    generating the schema:
+    生成架构：
 
     ```bash title="terminal"
     npx auth generate
     ```
 
-    using the `migrate` command:
+    使用 `migrate` 命令：
 
     ```bash title="terminal"
     npx auth migrate
     ```
 
     <Callout>
-      If you prefer adding the schema manually, you can check the schema required on the [two factor plugin](/docs/plugins/2fa#schema) documentation.
+      如果你更喜欢手动添加架构，可以查看[双因素插件](/docs/plugins/2fa#schema)文档中所需的架构
     </Callout>
   </Step>
 
   <Step>
-    ### Client Configuration
+    ### 客户端配置
 
-    Once we're done with the server, we need to add the plugin to the client. To do this, you need to import the plugin and pass it to the `plugins` option of the auth client. For example, to add two factor authentication, you can use the following code:
+    完成服务器配置后，需要将插件添加到客户端。为此，需要导入插件并将其传入认证客户端的 `plugins` 选项。例如，要添加双因素认证，可以使用以下代码：
 
     ```ts title="auth-client.ts"  
     import { createAuthClient } from "better-auth/client";
@@ -465,7 +465,7 @@ Better Auth 的一大特色是拥有插件生态系统，能够通过少量代�
     })
     ```
 
-    now two factor related methods will be available on the client.
+    现在，客户端将提供与双因素相关的方法
 
     ```ts title="profile.ts"
     import { authClient } from "./auth-client"
@@ -503,6 +503,6 @@ Better Auth 的一大特色是拥有插件生态系统，能够通过少量代�
   </Step>
 
   <Step>
-    Next step: See the <Link href="/docs/plugins/2fa">two factor plugin documentation</Link>.
+    下一步：查看 <Link href="/docs/plugins/2fa">双因素插件文档</Link>
   </Step>
 </Steps>

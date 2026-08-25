@@ -5,41 +5,115 @@ description: 将 Better Auth 与 Prisma 集成。
 
 Prisma ORM 是一个开源的数据库工具包，通过提供类型安全的查询构建器和直观的数据建模界面，简化了应用程序中的数据库访问和管理。
 
-在开始之前，请确保您已经安装并配置了 Prisma。更多信息，请参见 [Prisma 文档](https://www.prisma.io/docs/)
+有关 Prisma ORM 的介绍，请参阅
+[Prisma 入门](https://www.prisma.io/docs/getting-started)。
+
+<Callout type="info">
+  本指南使用 Prisma 7 和 PostgreSQL。如果您使用的是 Prisma 6 或更早版本，驱动适配器是可选的，您现有的 Prisma Client 设置可以保持不变。
+</Callout>
 
 ## 安装
 
-要使用 Prisma 适配器，您需要安装 `@better-auth/prisma-adapter` 包：
+要使用 Prisma 适配器，请安装 `@better-auth/prisma-adapter`：
 
 ```package-install
 @better-auth/prisma-adapter
 ```
 
-## 使用示例
+以下示例使用 Prisma 7 和 PostgreSQL。如果尚未配置 Prisma，请先按照
+[Prisma 的 PostgreSQL 快速入门](https://www.prisma.io/docs/prisma-orm/quickstart/postgresql)
+进行操作，然后再继续。
 
-您可以使用 Prisma 适配器如下连接到您的数据库。
+## 设置
 
-```ts title="auth.ts"
+以下示例使用下列项目结构：
+
+<Files>
+  <File name=".env" />
+
+  <File name="prisma.config.ts" />
+
+  <Folder name="prisma" defaultOpen>
+    <File name="schema.prisma" />
+  </Folder>
+
+  <Folder name="src" defaultOpen>
+    <Folder name="generated" defaultOpen>
+      <Folder name="prisma" defaultOpen>
+        <File name="client.ts" />
+      </Folder>
+    </Folder>
+
+    <Folder name="lib" defaultOpen>
+      <File name="prisma.ts" />
+
+      <File name="auth.ts" />
+    </Folder>
+  </Folder>
+</Files>
+
+### 配置 Prisma
+
+如果您要开始一个新的 Prisma 项目，请使用 PostgreSQL 和显式的 Prisma Client 输出路径进行初始化：
+
+```package-install title="Initialize Prisma"
+npx prisma init --datasource-provider postgresql --output ../src/generated/prisma
+```
+
+这会创建 `prisma/schema.prisma`、`prisma.config.ts` 和 `.env`。在 `.env` 中将
+`DATABASE_URL` 设置为您的 PostgreSQL 连接字符串。
+
+如果项目中已经配置了 Prisma，请保留现有的数据源和输出路径，并跳过此初始化命令。
+
+配置输出路径后生成 Prisma Client：
+
+```package-install title="Generate Prisma Client"
+npx prisma generate
+```
+
+### 创建 Prisma Client
+
+从 Prisma 模式中配置的输出路径导入 `PrismaClient`，并将 PostgreSQL 驱动适配器传递给它：
+
+```ts title="src/lib/prisma.ts"
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../generated/prisma/client";
+
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is not set");
+}
+
+const adapter = new PrismaPg({
+  connectionString: databaseUrl,
+});
+
+export const prisma = new PrismaClient({ adapter });
+```
+
+创建一个 `PrismaClient` 实例，并在整个应用程序中重复使用它。
+启用热重载的框架或无服务器运行时可能需要特定于框架的生命周期模式。
+
+### 配置 Better Auth
+
+将 Prisma Client 实例传递给 Better Auth Prisma 适配器：
+
+```ts title="src/lib/auth.ts"
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
-    provider: "sqlite",
+    provider: "postgresql",
   }),
 });
 ```
 
-<Callout type="warning">
-  从 Prisma 7 开始，`output` 路径字段是必需的。如果您在 `schema.prisma` 文件中配置了自定义输出路径（例如，`output = "../src/generated/prisma"`），请务必 [从该位置导入 Prisma 客户端](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/generating-prisma-client#the-location-of-prisma-client)，而不是使用 `@prisma/client`。
-</Callout>
-
 ## 模式生成与迁移
 
-[Better Auth CLI](/docs/concepts/cli) 允许您基于 Better Auth 配置和插件生成或迁移数据库模式。
+[Better Auth CLI](/docs/concepts/cli) 会生成 Better Auth 配置和插件所需的 Prisma 模式。使用 Prisma CLI 根据生成的模式创建并应用迁移。
 
 <table>
   <thead>
@@ -66,7 +140,15 @@ export const auth = betterAuth({
 npx auth@latest generate
 ```
 
-## 连接
+Better Auth CLI 会更新您的 Prisma 模式，但不会应用迁移。
+使用 Prisma 创建数据库迁移，然后重新生成 Prisma Client：
+
+```bash title="Terminal"
+npx prisma migrate dev --name add-better-auth
+npx prisma generate
+```
+
+## Joins
 
 数据库连接在 Better Auth 需要在单个查询中从多个表获取相关数据时非常有用。
 `/get-session`、`/get-full-organization` 以及许多其他端点都能从此功能中大幅受益，
@@ -95,5 +177,6 @@ export const auth = betterAuth({
 
 ## 其他信息
 
-* 如果您正在寻找性能改进或优化建议，请查阅我们的指南，了解如何<Link href="/docs/guides/optimizing-for-performance">优化性能</Link>。
-* [如何在 Better Auth 和 Next.js 中使用 Prisma ORM](https://www.prisma.io/docs/guides/betterauth-nextjs)。
+* 如果您正在寻找性能改进或相关技巧，请参阅我们的<链接 href="/docs/guides/optimizing-for-performance">性能优化</Link>指南。
+* [如何将 Prisma ORM 与 Better Auth 和 Next.js 结合使用](https://www.prisma.io/docs/guides/authentication/better-auth/nextjs)
+* [如何将 Prisma ORM 与 Better Auth 和 Astro 结合使用](https://www.prisma.io/docs/guides/authentication/better-auth/astro)

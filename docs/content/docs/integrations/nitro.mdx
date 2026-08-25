@@ -11,8 +11,8 @@ Better Auth 可以集成到你的 [Nitro 应用程序](https://nitro.build/)（�
 
 首先使用以下命令来搭建一个新的 Nitro 应用：
 
-```bash title="终端"
-npx giget@latest nitro nitro-app --install
+```bash title="Terminal"
+npx create-nitro-app
 ```
 
 此命令将创建 `nitro-app` 目录并安装所有依赖。你现在可以在代码编辑器中打开 `nitro-app` 目录。
@@ -86,7 +86,8 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-export const auth = betterAuth({
+
+export default betterAuth({
   database: prismaAdapter(prisma, { provider: "sqlite" }),
   emailAndPassword: { enabled: true },
 });
@@ -110,12 +111,12 @@ npx auth generate --config server/utils/auth.ts
 
 ## 挂载处理器
 
-你现在可以在 Nitro 应用中挂载 Better Auth 处理器。方法是在 `server/routes/api/auth/[...all].ts` 文件中添加以下代码：
+现在，你可以在 Nitro 应用中挂载 Better Auth 处理器。你可以将以下代码添加到 `server/api/auth/[...all].ts` 文件中：
 
-```ts title="server/routes/api/auth/[...all].ts"
-export default defineEventHandler((event) => {
-  return auth.handler(toWebRequest(event));
-});
+```ts title="server/api/auth/[...all].ts"
+import auth from "~/server/utils/auth";
+
+export default auth;
 ```
 
 <Callout>
@@ -124,73 +125,70 @@ export default defineEventHandler((event) => {
 
 ### CORS
 
-你可以通过创建插件为 Nitro 应用配置 CORS。
+你可以在 `nitro.config.ts` 中使用 [路由规则](https://nitro.build/docs/routing#cors) 为 Nitro 应用配置 CORS：
 
-先安装 cors 包：
+```ts title="nitro.config.ts"
+import { defineConfig } from "nitro";
 
-```package-install
-cors
-```
-
-然后创建新文件 `server/plugins/cors.ts`，添加以下代码：
-
-```ts title="server/plugins/cors.ts"
-import cors from "cors";
-export default defineNitroPlugin((plugin) => {
-  plugin.h3App.use(
-    fromNodeMiddleware(
-      cors({
-        origin: "*",
-      }),
-    ),
-  );
+export default defineConfig({
+  routeRules: {
+    "/api/auth/**": {
+      cors: {
+        origin: ["http://localhost:3000"],
+        credentials: true,
+      },
+    },
+  },
 });
 ```
 
 <Callout>
-  这将为所有路由启用 CORS。你可以自定义 `origin` 属性以允许特定域的请求。确保该配置与你的前端应用相匹配。
+  如果你使用基于 cookie 的会话，请设置 `credentials: true`，并在 `origin` 中列出前端的确切来源。通配符来源（`cors: true`）不能与凭据结合使用。如果你只使用 bearer token，则无需设置 `credentials`。请确保该配置与前端应用保持同步。
 </Callout>
+
+有关 CORS 的更多信息，请参阅 [Nitro 文档](https://nitro.build/docs/routing#cors)。
 
 ### 认证守卫/中间件
 
 你可以在 Nitro 应用中添加认证守卫以保护需要认证的路由。方法是创建新文件 `server/utils/require-auth.ts`，并添加以下代码：
 
 ```ts title="server/utils/require-auth.ts"
-import { EventHandler, H3Event } from "h3";
-import { fromNodeHeaders } from "better-auth/node";
+import { defineHandler, HTTPError } from "nitro";
+import auth from "~/server/utils/auth.ts";
 
 /**
  * Middleware for requiring authentication on routes.
  *
  * Can be extended to check specific roles or permissions.
  */
-export const requireAuth: EventHandler = async (event: H3Event) => {
-  const headers = event.headers;
-
+export default defineHandler(async (event) => {
   const session = await auth.api.getSession({
-    headers: headers,
+    headers: event.req.headers,
   });
-  if (!session)
-    throw createError({
-      statusCode: 401,
-      statusMessage: "未授权",
-    });
-  // 你可以将 session 保存到 event 上下文以供后续使用
+
+  if (!session) {
+    throw HTTPError.status(401, "Unauthorized");
+  }
+
+  // You can save the session to the event context for later use
   event.context.auth = session;
-};
+});
+
 ```
 
-你现在可以在路由中使用此事件处理器/中间件来保护路由：
+现在，你可以使用[对象语法事件处理器](https://h3.dev/guide/basics/handler#object-syntax)将中间件应用于特定路由：
 
-```ts title="server/routes/api/secret.get.ts"
-// 路由处理器的对象语法
-export default defineEventHandler({
-  // 用户必须登录才能访问此路由
-  onRequest: [requireAuth],
-  handler: async (event) => {
-    setResponseStatus(event, 201, "机密数据");
-    return { message: "机密数据" };
-  },
+```ts title="server/api/secret.get.ts"
+import { defineHandler } from "nitro";
+import requireAuth from "~/server/utils/require-auth.ts";
+
+export default defineHandler({
+  middleware: [requireAuth],
+  handler: () =>
+    Response.json(
+      { message: "Secret data" },
+      { status: 201, statusText: "Secret data" },
+    ),
 });
 ```
 

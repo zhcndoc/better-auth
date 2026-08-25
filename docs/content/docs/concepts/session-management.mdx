@@ -7,7 +7,7 @@ Better Auth 使用传统的基于 Cookie 的会话管理机制。会话数据存
 
 主 `session_token` Cookie 仍然是服务器端的会话标识符。如果启用 `session.cookieCache`，Better Auth 还会写入一个单独的 `session_data` Cookie，用于短时缓存会话数据。此缓存 Cookie 与 JWT 插件的 `/token` 端点和 `set-auth-jwt` 标头输出相互独立。
 
-## Session table
+## 会话表
 
 会话表用于存储会话数据，包含以下字段：
 
@@ -404,9 +404,9 @@ export const auth = betterAuth({
     session: {
         cookieCache: {
             enabled: true,
-            maxAge: 7 * 24 * 60 * 60, // 7 天缓存时间
-            strategy: "jwe", // 可选 "jwt" 或 "compact"
-            refreshCache: true, // 启用无状态刷新
+            maxAge: 7 * 24 * 60 * 60, // 7 days cache duration
+            strategy: "jwe", // can be "jwe", "jwt" or "compact"
+            refreshCache: true, // Enable stateless refresh
         },
     },
     account: {

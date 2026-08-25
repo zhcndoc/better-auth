@@ -153,25 +153,20 @@ betterAuth({
 
 ### Redis 存储
 
-Better Auth 提供官方的 Redis 存储包，基于 [ioredis](https://github.com/redis/ioredis)：
+对于大多数应用程序，我们建议使用官方的 Redis 存储包，该包使用 [ioredis](https://github.com/redis/ioredis)。
 
-```bash
-npm install @better-auth/redis-storage ioredis
-# 或者
-pnpm add @better-auth/redis-storage ioredis
+#### 官方 Redis 存储
+
+```package-install
+@better-auth/redis-storage ioredis
 ```
 
-**使用示例：**
-
-```typescript
+```typescript title="auth.ts"
 import { betterAuth } from "better-auth";
 import { Redis } from "ioredis";
 import { redisStorage } from "@better-auth/redis-storage";
 
-const redis = new Redis({
-	host: "localhost",
-	port: 6379,
-});
+const redis = new Redis(process.env.REDIS_URL!);
 
 export const auth = betterAuth({
 	// ... 其他选项
@@ -182,153 +177,125 @@ export const auth = betterAuth({
 });
 ```
 
-Redis 存储支持 ioredis 的所有连接模式，包括单机、集群和哨兵配置。
+#### 自定义实现
 
-**手动实现示例：**
+<Tabs items={["node-redis", "Upstash Redis"]}>
+  <Tab value="node-redis">
+    如果你使用的是 Redis 7 或更高版本，可以使用
+    [node-redis](https://github.com/redis/node-redis) 实现二级存储：
 
-如果你想自己实现 Redis 二级存储，下面是一个基础示例：
+    ```package-install
+    redis
+    ```
 
-```typescript title="auth.ts"
-import { createClient } from "redis";
-import { betterAuth } from "better-auth";
+    ```typescript title="auth.ts"
+    import { betterAuth, type SecondaryStorage } from "better-auth";
+    import { createClient } from "redis";
 
-const redis = createClient();
-await redis.connect();
+    const redis = createClient();
+    await redis.connect();
 
-const incrementScript = `
-local value = redis.call("INCR", KEYS[1])
-if value == 1 then
-  redis.call("EXPIRE", KEYS[1], ARGV[1])
-end
-return value
-`;
+    const redisSecondaryStorage: SecondaryStorage = {
+      get(key) {
+        return redis.get(key);
+      },
 
-export const auth = betterAuth({
-	// ... 其他选项
-	secondaryStorage: {
-		get: async (key) => {
-			return await redis.get(key);
-		},
-		getAndDelete: async (key) => {
-			return await redis.getDel(key);
-		},
-		increment: async (key, ttl) => {
-			const value = await redis.eval(incrementScript, {
-				keys: [key],
-				arguments: [String(ttl)],
-			});
-			return Number(value);
-		},
-		set: async (key, value, ttl) => {
-			if (ttl) await redis.set(key, value, { EX: ttl });
-			else await redis.set(key, value);
-		},
-		delete: async (key) => {
-			await redis.del(key);
-		}
-	}
-});
-```
+      getAndDelete(key) {
+        return redis.getDel(key);
+      },
 
-此实现允许 Better Auth 使用 Redis 存储会话数据和限速计数器。你还可以为键名添加前缀。
+      async increment(key, ttl) {
+        if (!Number.isInteger(ttl) || ttl <= 0) {
+          throw new TypeError("Redis increment TTL must be a positive integer");
+        }
 
-**示例：Upstash Redis 实现**
+        const [value] = await redis
+          .multi()
+          .incr(key)
+          .expire(key, ttl, "NX")
+          .execTyped();
 
-以下是使用 Upstash Redis 的示例。首先，安装 Upstash Redis 客户端：
-
-```bash
-npm install @upstash/redis
-```
-
-然后，创建一个新的 Redis 客户端：
-
-```typescript
-// src/lib/redis/index.ts
-
-import { Redis } from "@upstash/redis";
-
-export const redis = Redis.fromEnv();
-```
-
-别忘了设置 `UPSTASH_REDIS_REST_URL` 和 `UPSTASH_REDIS_REST_TOKEN` 环境变量。有关如何使用 Upstash Redis 结合 Node.js 的更多信息，请参见 [Upstash 文档](https://upstash.com/docs/redis/howto/connectwithupstashredis)。
-
-之后，我们可以创建一个二级存储的实现：
-
-```typescript
-// src/lib/auth/adapters/redis-secondary-storage.ts
-
-import { SecondaryStorage } from "better-auth";
-import { redis } from "~/lib/redis";
-
-export const redisSecondaryStorage: SecondaryStorage = {
-  async get(key: string) {
-    try {
-      const value = await redis.get(key);
-
-      // 处理 Redis 返回的不同类型
-      if (value === null || value === undefined) {
-        return null;
-      }
-
-      // 如果已经是字符串，则直接返回
-      if (typeof value === "string") {
         return value;
-      }
+      },
 
-      // 如果是对象，则进行字符串化
-      if (typeof value === "object") {
-        return JSON.stringify(value);
-      }
+      async set(key, value, ttl) {
+        if (ttl) await redis.set(key, value, { EX: ttl });
+        else await redis.set(key, value);
+      },
 
-      // 其他类型转换为字符串返回
-      return String(value);
-    } catch (error) {
-      console.error("Redis get 错误:", error);
-      return null;
-    }
-  },
+      async delete(key) {
+        await redis.del(key);
+      },
+    };
 
-  async set(key: string, value: string, ttl?: number) {
-    try {
-      // 确保值为字符串
-      const stringValue =
-        typeof value === "string" ? value : JSON.stringify(value);
+    export const auth = betterAuth({
+      // ... other options
+      secondaryStorage: redisSecondaryStorage,
+    });
+    ```
+  </Tab>
 
-      if (ttl) {
-        // 带 TTL（秒）设置
-        await redis.set(key, stringValue, { ex: ttl });
-      } else {
-        // 不带 TTL 设置
-        await redis.set(key, stringValue);
-      }
-    } catch (error) {
-      console.error("Redis set 错误:", error);
-      throw error;
-    }
-  },
+  <Tab value="Upstash Redis">
+    安装 Upstash Redis 客户端：
 
-  async delete(key: string) {
-    try {
-      await redis.del(key);
-    } catch (error) {
-      console.error("Redis delete 错误:", error);
-      throw error;
-    }
-  },
-};
-```
+    ```package-install
+    @upstash/redis
+    ```
 
-最后，我们可以将该实现传递给 `betterAuth` 函数。
+    在环境中设置 `UPSTASH_REDIS_REST_URL` 和 `UPSTASH_REDIS_REST_TOKEN`。
+    有关其他配置选项，请参阅 [Upstash Redis TypeScript SDK 指南](https://upstash.com/docs/redis/sdks/ts/getstarted)。
 
-```typescript
-import { betterAuth } from "better-auth";
-import { redisSecondaryStorage } from "~/lib/auth/adapters/redis-secondary-storage";
+    ```typescript title="auth.ts"
+    import { Redis } from "@upstash/redis";
+    import { betterAuth, type SecondaryStorage } from "better-auth";
 
-export const auth = betterAuth({
-  // ...其他选项
-  secondaryStorage: redisSecondaryStorage,
-});
-```
+    const redis = Redis.fromEnv();
+
+    const redisSecondaryStorage: SecondaryStorage = {
+      get(key) {
+        return redis.get(key);
+      },
+
+      getAndDelete(key) {
+        return redis.getdel(key);
+      },
+
+      async increment(key, ttl) {
+        if (!Number.isInteger(ttl) || ttl <= 0) {
+          throw new TypeError("Redis increment TTL must be a positive integer");
+        }
+
+        const [value] = await redis
+          .multi()
+          .incr(key)
+          .expire(key, ttl, "NX")
+          .exec();
+
+        return value;
+      },
+
+      async set(key, value, ttl) {
+        if (ttl) {
+          await redis.set(key, value, { ex: ttl });
+        } else {
+          await redis.set(key, value);
+        }
+      },
+
+      async delete(key) {
+        await redis.del(key);
+      },
+    };
+
+    export const auth = betterAuth({
+      // ... other options
+      secondaryStorage: redisSecondaryStorage,
+    });
+    ```
+  </Tab>
+</Tabs>
+
+直接实现二级存储时，请为其键添加前缀，以避免与共享同一 Redis 数据库的其他应用程序发生冲突。
 
 ## 核心架构
 
@@ -397,6 +364,7 @@ export const sessionTableFields = [
 		type: "string",
 		description: "The ID of the user",
 		isForeignKey: true,
+		isIndexed: true,
 		references: { model: "user", field: "id", onDelete: "cascade" },
 	},
 	{
@@ -454,6 +422,7 @@ export const accountTableFields = [
 		type: "string",
 		description: "The ID of the user",
 		isForeignKey: true,
+		isIndexed: true,
 		references: { model: "user", field: "id", onDelete: "cascade" },
 	},
 	{
@@ -546,6 +515,7 @@ export const verificationTableFields = [
 		name: "identifier",
 		type: "string",
 		description: "The identifier for the verification request",
+		isIndexed: true,
 	},
 	{
 		name: "value",

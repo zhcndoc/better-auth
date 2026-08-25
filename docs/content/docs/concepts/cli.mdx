@@ -15,9 +15,41 @@ npx auth@latest generate
 
 ### 选项
 
-* `--output` - 生成架构的保存位置。对于 Prisma，会保存在 prisma/schema.prisma；对于 Drizzle，会保存在项目根目录下的 schema.ts；对于 Kysely，会保存为项目根目录下的 schema.sql 文件。
-* `--config` - Better Auth 配置文件的路径。默认情况下，CLI 会在 **./**、**./utils**、**./lib** 或 `src` 目录下的这些目录中搜索 auth.ts 文件。
-* `--yes` - 跳过确认提示并直接生成架构。
+* `-c, --cwd` - 工作目录。默认为当前目录。
+* `--output` - 保存生成架构的位置。对于 Prisma，它将保存于 prisma/schema.prisma。对于 Drizzle，它将保存于项目根目录中的 schema.ts。对于 Kysely，它是一个保存于项目根目录中、名为 schema.sql 的 SQL 文件。
+* `--config` - Better Auth 配置文件的路径。默认情况下，CLI 会在 **./**、**./utils**、**./lib** 中，或 `src` 目录下的任意这些目录中搜索 auth.ts 文件。
+* `-y, --yes` - 跳过确认提示并直接生成架构。
+* `--adapter` - 要使用的架构生成器：`prisma`、`drizzle` 或 `kysely`。
+* `--dialect` - 目标数据库提供商。与 `--adapter drizzle` 一起使用时必需。Prisma 默认为 `postgresql`。
+
+### 在没有数据库连接的情况下生成
+
+Prisma 和 Drizzle 可以在不使用已配置数据库适配器的情况下生成架构。CLI 仍会加载你的配置，以包含插件和架构自定义。
+
+```package-install title="Terminal"
+npx auth@latest generate --adapter prisma --dialect postgresql
+```
+
+export const schemaGeneratorOptions = {
+  adapter: {
+    description: "The schema generator. Kysely still requires the configured database.",
+    type: '"prisma" | "drizzle" | "kysely"',
+    required: false,
+  },
+  dialect: {
+    description: 'The Prisma or Drizzle provider. "mongodb" is only supported by Prisma. Drizzle maps "postgresql" to "pg".',
+    type: '"postgresql" | "mysql" | "sqlite" | "mongodb"',
+    required: false,
+  },
+}
+
+<TypeTable type={schemaGeneratorOptions} />
+
+<Callout type="info">
+  Kysely 会检查配置的数据库，因此 `--adapter kysely` 不会受 `--dialect` 影响。
+</Callout>
+
+如果省略 `--adapter`，CLI 将使用 Better Auth 配置文件中配置的适配器。单独传递 `--dialect` 不会产生任何影响。
 
 `migrate` 命令直接将 Better Auth 架构应用到数据库。此功能适用于使用内置 Kysely 适配器的情况。其他适配器需要使用对应 ORM 的迁移工具来应用架构。
 

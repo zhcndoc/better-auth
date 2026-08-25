@@ -8,7 +8,7 @@ description: 将 Better Auth 与 Express 集成。
 开始之前，确保你已经配置了 Better Auth 实例。如果还没有，请查看[安装](/docs/installation)。
 
 <Callout>
-  注意 CommonJS (cjs) 不受支持。请通过 `package.json` 中设置 `"type": "module"` 或配置 `tsconfig.json` 使用 ES 模块来改用 ECMAScript 模块 (ESM)。
+  注意 CommonJS（cjs）不受支持。请通过 `package.json` 中设置 `"type": "module"` 或配置 `tsconfig.json` 使用 ES 模块来改用 ECMAScript 模块（ESM）。
 </Callout>
 
 ### 挂载处理器
@@ -16,7 +16,7 @@ description: 将 Better Auth 与 Express 集成。
 为了让 Better Auth 处理请求，我们需要将处理器挂载到一个 API 路由上。创建一个 catch-all 路由来管理所有对 `/api/auth/*` 的请求（ExpressJS v4）或 `/api/auth/*splat` 的请求（ExpressJS v5），或者使用你在 Better Auth 选项中指定的任意路径。
 
 <Callout type="warn">
-  不要在 Better Auth 处理器之前使用 `express.json()`。请仅用于其他路由，否则客户端 API 会卡在“待处理”状态。
+  在诸如 `express.json()` 的请求体解析中间件之前挂载 Better Auth 处理器。请求体解析器会在将控制权传递给下一个处理器之前，消耗传入的请求流。
 </Callout>
 
 ```ts title="server.ts"
@@ -30,8 +30,7 @@ const port = 3005;
 app.all("/api/auth/*", toNodeHandler(auth)); // 适用于 ExpressJS v4
 // app.all("/api/auth/*splat", toNodeHandler(auth)); // 适用于 ExpressJS v5 
 
-// 在 Better Auth 处理器后挂载 express json 中间件
-// 或仅将其应用于不与 Better Auth 交互的路由
+// Mount body-parsing middleware after the Better Auth handler.
 app.use(express.json());
 
 app.listen(port, () => {

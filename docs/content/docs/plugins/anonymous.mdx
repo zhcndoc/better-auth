@@ -68,15 +68,20 @@ description: 用于 Better Auth 的匿名插件。
 
 ## 用法
 
-### 登录
+### 匿名登录
 
-要匿名登录用户，请使用 `signIn.anonymous()` 方法。
+要让用户匿名登录，请使用 `signIn.anonymous()` 方法。此方法会使用生成的电子邮件地址和配置的或默认的名称创建新用户，然后建立会话。
 
-```ts
-import { authClient } from "@/lib/auth-client";
+<APIMethod path="/sign-in/anonymous" method="POST">
+  ```ts
+  type signInAnonymous = {
+  }
+  ```
+</APIMethod>
 
-const user = await authClient.signIn.anonymous()
-```
+<Callout type="info">
+  如果当前会话属于匿名用户，再次调用 `signIn.anonymous()` 将返回错误，以防止创建另一个匿名用户。请使用其他身份验证方法关联当前账户，或先登出再开始新的匿名会话。
+</Callout>
 
 ### 关联账户
 
