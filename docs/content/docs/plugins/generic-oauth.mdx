@@ -1,9 +1,10 @@
 ---
-title: 通用 OAuth
-description: 使用任何 OAuth 提供商进行用户身份验证
+icon: pluginsGenericOAuth
+title: Generic OAuth
+description: 使用任何 OAuth 提供商对用户进行身份验证
 ---
 
-Generic OAuth 插件允许你将任何 OAuth 2.1 或 OpenID Connect（OIDC）提供商添加到应用程序中。提供商会作为一等社交提供商进行注册，并使用标准的 `signIn.social` 流程，默认启用 PKCE 和发行者验证。
+Generic OAuth 插件可让你将任何 OAuth 2.0 或 OpenID Connect（OIDC）提供商添加到应用程序中。提供商会注册为一等社交提供商，并使用标准的 `signIn.social` 流程，默认启用 PKCE 和发行者验证。
 
 ## 何时使用此插件
 
@@ -19,18 +20,17 @@ Generic OAuth 插件允许你将任何 OAuth 2.1 或 OpenID Connect（OIDC）提
 
 OAuth 流程的每个方面都可以被覆盖：
 
-| 需求                        | 配置字段                                             |
-| ------------------------- | ------------------------------------------------ |
-| 提供商使用非标准令牌交换方式（GET、自定义参数） | `getToken`                                       |
-| 提供商返回非标准用户资料              | `getUserInfo`                                    |
-| 你需要将资料字段映射到用户模型           | `mapProfileToUser`                               |
-| 提供商需要额外的授权参数              | `authorizationUrlParams`                         |
-| 提供商需要额外的令牌参数              | `tokenUrlParams`                                 |
-| 提供商需要自定义 HTTP 头           | `discoveryHeaders`、`authorizationHeaders`        |
-| 提供商不支持 OIDC 发现            | 显式设置 `authorizationUrl`、`tokenUrl`、`userInfoUrl` |
-| 提供商配置共享同一个身份命名空间          | 设置相同的 `accountIssuer`                            |
-| 提供商使用非标准的不可变用户标识符         | 设置 `accountSubject`                              |
-| 提供商拒绝 PKCE                | 设置 `pkce: false`                                 |
+| 需求                                                           | 配置字段                                                 |
+| -------------------------------------------------------------- | ------------------------------------------------------------ |
+| 提供商使用非标准令牌交换（GET、自定义参数） | `getToken`                                                   |
+| 提供商返回非标准用户资料                   | `getUserInfo`                                                |
+| 需要将资料字段映射到用户模型              | `mapProfileToUser`                                           |
+| 提供商需要额外的授权参数               | `authorizationUrlParams`                                     |
+| 提供商需要额外的令牌参数                       | `tokenUrlParams`                                             |
+| 提供商需要自定义 HTTP 头                          | `discoveryHeaders`、`authorizationHeaders`                   |
+| 提供商不支持 OIDC 发现                       | 显式设置 `authorizationUrl`、`tokenUrl`、`userInfoUrl` |
+| 提供商使用非标准的不可变用户标识符         | 设置 `accountSubject`                                         |
+| 提供商拒绝 PKCE                                          | 设置 `pkce: false`                                            |
 
 ## 安装
 
@@ -188,133 +188,13 @@ genericOAuth({
 })
 ```
 
-## 预配置的提供商辅助函数
+## 提供商辅助工具
 
-Better Auth 提供了针对流行 OAuth 提供商的预配置辅助函数。这些助手处理特定提供商的配置，包括发现 URL 和用户信息端点。
-
-### 支持的提供程序
-
-* **Auth0** - `auth0(options)`
-* **HubSpot** - `hubspot(options)`
-* **Keycloak** - `keycloak(options)`
-* **LINE** - `line(options)`
-* **Microsoft Entra ID（Azure AD）** - `microsoftEntraId(options)`
-* **Okta** - `okta(options)`
-* **Slack** - `slack(options)`
-* **Patreon** - `patreon(options)`
-* **Yandex** - `yandex(options)`
-
-### 使用预配置提供程序的示例
-
-```ts title="auth.ts"
-import { betterAuth } from 'better-auth';
-import {
-	// 通用 OAuth 插件
-	genericOAuth,
-	// 提供程序
-	auth0,
-	gumroad,
-	hubspot,
-	keycloak,
-	line,
-	microsoftEntraId,
-	okta,
-	slack,
-	patreon,
-	yandex,
-} from 'better-auth/plugins';
-
-export const auth = betterAuth({
-	plugins: [
-		genericOAuth({
-			config: [
-				auth0({
-					clientId: process.env.AUTH0_CLIENT_ID,
-					clientSecret: process.env.AUTH0_CLIENT_SECRET,
-					domain: process.env.AUTH0_DOMAIN,
-				}),
-				gumroad({
-					clientId: process.env.GUMROAD_CLIENT_ID,
-					clientSecret: process.env.GUMROAD_CLIENT_SECRET,
-				}),
-				hubspot({
-					clientId: process.env.HUBSPOT_CLIENT_ID,
-					clientSecret: process.env.HUBSPOT_CLIENT_SECRET,
-					scopes: ['oauth', 'contacts'],
-				}),
-				keycloak({
-					clientId: process.env.KEYCLOAK_CLIENT_ID,
-					clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
-					issuer: process.env.KEYCLOAK_ISSUER,
-				}),
-				// LINE 支持多个渠道（国家）- 使用不同的 providerId
-				line({
-					providerId: 'line-jp',
-					clientId: process.env.LINE_JP_CLIENT_ID,
-					clientSecret: process.env.LINE_JP_CLIENT_SECRET,
-				}),
-				line({
-					providerId: 'line-th',
-					clientId: process.env.LINE_TH_CLIENT_ID,
-					clientSecret: process.env.LINE_TH_CLIENT_SECRET,
-				}),
-				microsoftEntraId({
-					clientId: process.env.MS_APP_ID,
-					clientSecret: process.env.MS_CLIENT_SECRET,
-					tenantId: process.env.MS_TENANT_ID,
-				}),
-				okta({
-					clientId: process.env.OKTA_CLIENT_ID,
-					clientSecret: process.env.OKTA_CLIENT_SECRET,
-					issuer: process.env.OKTA_ISSUER,
-				}),
-				slack({
-					clientId: process.env.SLACK_CLIENT_ID,
-					clientSecret: process.env.SLACK_CLIENT_SECRET,
-				}),
-				patreon({
-					clientId: process.env.PATREON_CLIENT_ID,
-					clientSecret: process.env.PATREON_CLIENT_SECRET,
-				}),
-				yandex({
-					clientId: process.env.YANDEX_CLIENT_ID,
-					clientSecret: process.env.YANDEX_CLIENT_SECRET,
-				}),
-			],
-		}),
-	],
-});
-```
-
-每个提供商助手接受通用 OAuth 选项（扩展自 `BaseOAuthProviderOptions`）以及提供商特定字段：
-
-* **Auth0**：需要 `domain`（例如 `dev-xxx.eu.auth0.com`）
-* **HubSpot**：没有其他必填字段。可选的 `scopes`（默认为 `["oauth"]`）
-* **Keycloak**：需要 `issuer`（例如 `https://my-domain/realms/MyRealm`）
-* **LINE**：可选的 `providerId`（默认为 `"line"`）。LINE 要求不同国家（日本、泰国、台湾等）使用单独的渠道，因此你可以多次调用 `line()`，并使用不同的 `providerId` 和凭据来支持多个国家
-* **Microsoft Entra ID**：需要具体的租户 GUID。对于多租户的 `"common"`、`"organizations"` 或 `"consumers"` authority，请使用内置的 [Microsoft 社交提供商](/docs/authentication/microsoft)；这些 authority 需要通过 ID-token 声明验证来确定账户的实际发行者
-* **Okta**：需要 `issuer`（例如 `https://dev-xxxxx.okta.com/oauth2/default`）
-* **Slack**：没有其他必填字段
-* **Patreon**：没有其他必填字段
-* **Yandex**：没有其他必填字段
-
-所有提供程序都支持相同的可选字段：
-
-* `clientSecret?: string` - OAuth 客户端密钥
-* `tokenEndpointAuth?: TokenEndpointAuth` - 令牌端点请求的客户端身份验证配置
-* `scopes?: string[]` - 要请求的 OAuth 作用域数组
-* `redirectURI?: string` - 自定义重定向 URI
-* `pkce?: boolean` - 启用 PKCE（默认为 `true`）
-* `disableImplicitSignUp?: boolean` - 禁用新用户的自动注册
-* `disableSignUp?: boolean` - 完全禁用注册
-* `overrideUserInfo?: boolean` - 登录时覆盖用户信息
-* `endSessionEndpoint?: string` - OIDC RP 发起的注销端点。可用时会从 `end_session_endpoint` 自动发现
-* `postLogoutRedirectURI?: string` - 提供商注销期间作为 `post_logout_redirect_uri` 传递的默认 URI
-* `disableProviderLogout?: boolean` - 禁用 `authClient.signOut()` 期间的自动提供商注销
+有关内置和社区维护的提供商辅助工具，请参阅[其他社交提供商](/docs/authentication/other-social-providers#provider-helpers)。
 
 ## 配置
 
-将插件添加到身份验证配置时，可以配置多个 OAuth 提供程序。可以使用上面介绍的预配置提供商助手，也可以手动创建自定义配置。
+将插件添加到身份验证配置时，可以使用提供商辅助工具或自定义配置注册多个 OAuth 提供商。
 
 ### 手动配置
 
@@ -333,9 +213,6 @@ interface GenericOAuthConfig {
   accountSubject?: (
     context: OAuthAccountKeyContext<GenericOAuthUserInfo>,
   ) => string | number | Promise<string | number>;
-  accountIssuer?:
-    | string
-    | ((context: OAuthAccountKeyContext<GenericOAuthUserInfo>) => string | Promise<string>);
   discoveryUrl?: string;
   requireIdTokenVerification?: boolean;
   authorizationUrl?: string;
@@ -366,15 +243,9 @@ interface GenericOAuthConfig {
 
 `mapProfileToUser` 无法设置账户主题。这使本地资料映射与账户识别保持分离。
 
-**accountIssuer**：（可选）与提供商账户主题配对的稳定权威命名空间。发现提供商默认使用其发现到的发行者。当显式端点提供商具有发行者、多个提供商配置代表同一权威，或经过验证的资料确定了特定租户的发行者时，请设置此字段。如果没有 discovery 或 `accountIssuer`，Better Auth 会使用 `local:oauth:<encoded providerId>`，其中提供商 ID 部分经过百分号编码。
+**discoveryUrl**：（可选）获取提供商 OAuth 2.0/OIDC 配置的 URL。如果提供了该值，则会在服务器启动时自动发现 `authorizationUrl`、`tokenUrl` 和 `userInfoUrl` 等端点。当发现文档发布了 `jwks_uri` 时，提供商返回的 `id_token` 会在其声明被使用之前，根据该地址进行验证（包括签名、发行者、受众和所公布的签名算法）；验证失败的令牌会导致登录被拒绝。发现提供商还会使用服务器生成的 OIDC `nonce` 将 `id_token` 绑定到授权请求，并拒绝未回显该值的 `id_token` 回调。如果发现返回无效的验证元数据，或者在应用显式端点和 `getToken` 后，没有可用的授权端点或令牌交换方式，Better Auth 会跳过该提供商，同时保留其他身份验证功能。重新创建身份验证实例时，会重试已跳过的提供商。发现暂时不可用时，显式端点可作为备用方案。
 
-该解析器接收经过验证的提供商数据。只能从提供商验证流程确定的声明或资料值中派生动态发行者；绝不要使用请求参数、电子邮件域名或其他由调用者控制的值。
-
-具有相同 `accountIssuer` 和主题的提供商配置会对同一个外部身份进行去重。它们共享一条账户记录和一组令牌；别名不会创建独立的授权或提供商生命周期记录。
-
-**discoveryUrl**：（可选）用于获取提供商 OAuth 2.0/OIDC 配置的 URL。如果提供，则会在服务器启动时自动发现 `authorizationUrl`、`tokenUrl` 和 `userInfoUrl` 等端点。当发现文档发布 `jwks_uri` 时，提供商返回的 `id_token` 会根据该地址进行验证（包括签名、发行者、受众和发布的签名算法），之后才会使用其中的声明；验证失败的令牌会拒绝登录。发现提供商还会使用服务器生成的 OIDC `nonce` 将 `id_token` 与授权请求绑定，并拒绝未回显该值的回调。如果发现无法建立有效配置，提供商初始化会失败，从而避免账户在其发现到的发行者与本地回退值之间切换。
-
-**requireIdTokenVerification**：（可选）要求发现过程提供可用的发行者和 `jwks_uri`，然后才注册提供商。当 `accountSubject` 或 `getUserInfo` 从 ID-token 声明中派生身份时，请启用此选项。如果发现不可用或不完整，初始化会失败，而不是回退到未经验证的令牌解码。`microsoftEntraId` 助手会自动启用此选项。
+**requireIdTokenVerification**：（可选）要求发现提供可用的发行者和 `jwks_uri`，然后才注册提供商。当 `accountSubject` 或 `getUserInfo` 从 ID Token 声明中获取身份时，请启用此选项。如果配置的发现服务不可用或不完整，Better Auth 会跳过该提供商，而不会回退到未经验证的令牌解码。未配置 `discoveryUrl` 时，缺少验证元数据属于无效的静态配置，初始化会失败。`microsoftEntraId` 辅助工具会自动启用此选项。
 
 **disableIdTokenNonceBinding**：（可选）关闭发现提供商 `id_token` 的 OIDC `nonce` 绑定。默认启用绑定，并会拒绝未回显服务器生成的 `nonce` 的 `id_token`（OIDC Core 1.0 §3.1.3.7）。只有不在授权码流程中返回 `nonce` 声明的提供商才应将其设置为 `true`；这会移除该提供商的 `id_token` 重放保护。
 
@@ -395,6 +266,20 @@ interface GenericOAuthConfig {
 **clientSecret**：由你的提供商颁发的 OAuth 客户端密钥。
 
 **tokenEndpointAuth**：（可选）令牌端点请求的客户端身份验证配置。对于 RFC 7523 客户端断言，请使用 `{ method: "private_key_jwt", getClientAssertion }`；对于基于密钥的客户端，请使用 `{ method: "client_secret_basic" }` 或 `{ method: "client_secret_post" }`；对于公共客户端，请使用 `{ method: "none" }`。基于密钥的方法要求提供 `clientSecret`；不要将 `clientSecret` 与 `private_key_jwt` 或 `none` 组合使用。如果省略该配置，Better Auth 会在配置了 `clientSecret` 时发送基于密钥的令牌请求，未配置时发送公共客户端令牌请求。
+
+对于使用非标准令牌身份验证的提供商，请使用 `method: "custom"`，在 Better Auth 设置标准授权参数后更新请求：
+
+```ts
+tokenEndpointAuth: {
+  method: "custom",
+  customizeRequest({ body }) {
+    body.set("client_key", providerClientKey);
+    body.set("client_secret", providerClientSecret);
+  },
+},
+```
+
+Better Auth 会构建标准授权参数，而 `customizeRequest` 会添加提供商所需的客户端身份验证。
 
 **scopes**：（可选）要向提供商请求的作用域数组（例如 `["openid", "email", "profile"]`）。
 

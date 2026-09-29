@@ -1,4 +1,5 @@
 ---
+icon: authenticationApple
 title: Apple
 description: Apple 提供者的设置与使用。
 ---
@@ -31,7 +32,7 @@ description: Apple 提供者的设置与使用。
        * 点击 `+` 图标。
        * 选择 `服务 ID`，然后点击 `继续`。
        * **描述：** 输入此服务的描述（例如，再次输入您的应用名称）。
-       * **标识符：** 为服务设置一个唯一标识符。将其设置为与您的 App ID 不同的反向域名格式（例如，`com.yourcompany.yourapp.si`，其中 `.si` 表示服务标识符 - 这仅用于您的组织，并非必需）。**此服务 ID 将作为您的 `clientId`。**
+       * **标识符：** 为服务设置一个唯一标识符。将其设置为与您的 App ID 不同的反向域名格式（例如，`com.yourcompany.yourapp.si`，其中 `.si` 表示服务标识符——这仅用于您的组织，并非必需）。**此服务 ID 将作为您的 `clientId`。**
        * 点击 `继续`，然后点击 `注册`。
 
     4. **配置服务 ID：**
@@ -39,7 +40,7 @@ description: Apple 提供者的设置与使用。
        * 勾选 `使用 Apple 登录` 的功能，然后点击 `配置`。
        * 在 **主 App ID** 下，选择您之前创建的 App ID（例如，`com.yourcompany.yourapp.ai`）。
        * 在 **域和子域** 下，列出您将用于 Apple 登录的所有根域（例如，`example.com`、`anotherdomain.com`）。
-       * 在 **返回 URL** 中，输入回调 URL。`https://yourdomain.com/api/auth/callback/apple`。添加所有必要的返回 URL。
+       * 在 **返回 URL** 中，输入回调 URL：`https://yourdomain.com/api/auth/callback/apple`。添加所有必要的返回 URL。
        * 点击 `下一步`，然后点击 `完成`。
        * 点击 `继续`，然后点击 `保存`。
 
@@ -49,9 +50,9 @@ description: Apple 提供者的设置与使用。
        * **密钥名称：** 输入密钥名称（例如，“使用 Apple 登录密钥”）。
        * 向下滚动并选择 `使用 Apple 登录` 的复选框。
        * 点击 `使用 Apple 登录` 旁边的 `配置` 按钮。
-       * 选择 **主 App ID** 您之前创建的。
+       * 选择您之前创建的 **主 App ID**。
        * 点击 `保存`，然后点击 `继续`，再点击 `注册`。
-       * **下载密钥：** 立即下载 `.p8` 密钥文件。**此文件只能下载一次。** 记下密钥 ID（在创建密钥后可在密钥页面找到）和您的团队 ID（在 Apple 开发者账户设置中可用）。
+       * **下载密钥：** 立即下载 `.p8` 密钥文件。**此文件只能下载一次。** 记下密钥 ID（在创建密钥后可在密钥页面找到）和您的团队 ID（可在 Apple 开发者账户设置中找到）。
 
     6. **生成客户端密钥（JWT）：**
        Apple 要求使用下载的 `.p8` 密钥、密钥 ID 和团队 ID 动态生成 JSON Web 令牌（JWT）。此 JWT 作为您的 `clientSecret`。

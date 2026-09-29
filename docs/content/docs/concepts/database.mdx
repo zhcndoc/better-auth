@@ -1,6 +1,7 @@
 ---
+icon: conceptsDatabase
 title: 数据库
-description: 了解数据库适配器、迁移、使用 Redis 的二级存储、核心架构（用户、会话、账户、验证）、自定义表、扩展架构、ID 生成、数据库钩子以及插件架构。
+description: 了解数据库适配器、迁移、使用 Redis 的二级存储、核心架构（用户、会话、账户、验证）、自定义表、扩展架构、ID 生成、数据库钩子和插件架构。
 ---
 
 ## 适配器
@@ -119,6 +120,28 @@ await runMigrations();
     </Callout>
   </Accordion>
 </Accordions>
+
+## 架构验证
+
+初始化期间，Better Auth 会将架构与其写入数据的表进行比较，并报告缺失的表、缺失的列，以及它从未填充的必需列，同时提供相应的修复方法。错误会通过你配置的日志记录器显示，无需等待身份验证请求。请求会等待同一项检查；如果架构不匹配，请求将失败。验证不会自动停止服务器或构建。每当你想显式检查架构而不发出身份验证请求时，都可以运行 [`npx auth@latest check schema`](/docs/concepts/cli#schema)。
+
+默认情况下会启用验证，包括在生产环境中；每个适配器实例都会缓存通过检查的结果或不匹配情况。编程式迁移会使同一数据库实例的缓存检查失效。等待检查结果的请求会等待新的检查结果。使用其他工具应用架构更改后，请重启。Kysely 会读取实时数据库元数据，因此初始化期间需要访问数据库。Drizzle 会检查配置的架构对象，Prisma 会检查生成的客户端数据模型，两者都不会查询数据库。这些本地检查无法检测尚未应用到数据库的迁移。精简的 `prisma-client` 模型不包含可空性信息，因此 `auth generate` 会报告未写入的必需列。没有已注册检查的自定义适配器不会进行验证。
+
+对于不支持架构验证的适配器，如果你显式设置 `validateSchema: true`，初始化时会记录一条警告；如果省略此选项，则会记录一条调试消息。数据库操作会照常进行。
+
+将 `advanced.database.validateSchema` 设置为 `false`，即可禁用运行时验证及其跳过提示。`auth migrate` 和 `auth generate` 仍会保留各自的架构诊断功能。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+	advanced: {
+		database: {
+			validateSchema: false, // [!code highlight]
+		},
+	},
+});
+```
 
 ## 二级存储
 
@@ -408,7 +431,7 @@ export const sessionTableFields = [
 
 表名：`account`
 
-账户表示与用户关联的一种身份验证方式。Better Auth 通过 `issuer` 和 `accountId` 组成的唯一对来识别提供商端身份，而 `id` 用于标识本地账户行。当账户 API 要求提供 `accountId` 时，请使用 `id`。
+账户表示与用户关联的一种身份验证方式。Better Auth 通过 `providerId` 和 `accountId` 这一对值识别提供方侧的身份，而 `id` 用于标识本地账户行。当账户 API 请求 `accountId` 时，请使用 `id`。
 
 export const accountTableFields = [
 	{
@@ -426,15 +449,9 @@ export const accountTableFields = [
 		references: { model: "user", field: "id", onDelete: "cascade" },
 	},
 	{
-		name: "issuer",
-		type: "string",
-		description:
-			"The trusted authority that issued the provider account identifier",
-	},
-	{
 		name: "accountId",
 		type: "string",
-		description: "The stable account identifier within the issuer namespace",
+		description: "The stable account identifier assigned by the provider",
 	},
 	{
 		name: "providerId",
@@ -498,7 +515,7 @@ export const accountTableFields = [
 
 <DatabaseTable name="account" fields={accountTableFields} />
 
-数据库会对 `issuer` 和 `accountId` 强制实施唯一复合索引。使用受信任 issuer 的 Providers 会使用该权限，包括用于 OpenID Connect 的已验证 issuer。没有 issuer 的 OAuth Providers 会使用合成的 `local:oauth:<encoded providerId>` 命名空间，其中 provider ID 部分会进行百分号编码。Credential accounts 使用 `local:credential` 和所关联用户的稳定 `id`。
+凭据账户使用 `credential` provider ID，并将关联用户的稳定 `id` 用作 `accountId`。
 
 ### 验证
 
@@ -947,7 +964,7 @@ export const auth = betterAuth({
 
 上下文对象（`ctx`）作为第二个参数传递给钩子，并包含有用的信息。对于 `update` 钩子，`ctx` 包含当前的 `session`，允许访问经过身份验证的用户的详细信息。
 
-```typescript title="auth.ts"
+```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({

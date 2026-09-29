@@ -1,5 +1,7 @@
 ---
-title: 以太坊登录（SIWE）
+icon: pluginsSIWE
+sidebarTitle: "Sign In With Ethereum"
+title: Sign In With Ethereum (SIWE)
 description: Better Auth 的以太坊登录插件
 ---
 
@@ -125,9 +127,9 @@ if (data) {
   SIWE 签名只能证明对钱包的控制权，而不能证明你传入的 `email` 的所有权。插件会将该电子邮件按未验证状态存储，并且仅在它尚未被使用时将其绑定到新账户。当 `anonymous` 为 `false` 且所提供的电子邮件已属于另一个账户时，新钱包账户会改为使用基于钱包派生的地址创建，因此一次登录无法附加另一个账户已拥有的电子邮件。
 </Callout>
 
-### 特定 Chain 的消息
+### 特定链的消息
 
-Chain 的选择应包含在 ERC-4361 消息中，而不是验证请求正文中。生成 nonce，使用钱包地址和目标 Chain ID 构建 SIWE 消息，要求钱包对该确切消息进行签名，然后验证已签名的消息：
+链的选择应包含在 ERC-4361 消息中，而不是验证请求正文中。生成 nonce，使用钱包地址和目标 Chain ID 构建 SIWE 消息，要求钱包对该确切消息进行签名，然后验证已签名的消息：
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -153,11 +155,11 @@ const { data, error } = await authClient.siwe.verify({
 SIWE 插件接受以下配置选项：
 
 * **domain**：你的应用程序的域名（生成 SIWE 消息时必需）
-* **emailDomainName**：不使用匿名模式时用于创建用户账户的电子邮件域名。默认为基础 URL 中的域名
+* **emailDomainName**：钱包派生地址使用的自定义电子邮件域名。如果省略，插件会使用 `{walletAddress}@siwe.placeholder.invalid`
 * **anonymous**：是否允许无需电子邮件的匿名登录。默认为 `true`
-* **getNonce**：为每次登录尝试生成全局唯一 nonce 的函数。你必须实现此函数，使其返回符合 ERC-4361 要求且经过加密安全处理的 nonce：由 8-250 个字母数字字符组成。必须返回 `Promise<string>`
-* **verifyMessage**：验证 SIWE 消息签名的函数。它只需要针对所提供的地址执行签名恢复（例如 viem 的 `verifyMessage`），并返回 `Promise<boolean>`——插件会在创建会话之前独立验证消息的 nonce、domain、地址、Chain ID 和时间限制
-* **ensLookup**：用于查询 Ethereum 地址对应的 ENS 名称和头像的可选函数
+* **getNonce**：为每次登录尝试生成全局唯一 nonce 的函数。你必须实现此函数，使其返回一个经过加密安全处理的 ERC-4361 nonce：由 8-250 个字母数字字符组成。必须返回 `Promise<string>`
+* **verifyMessage**：验证 SIWE 消息签名的函数。此函数只需针对所提供的地址执行签名恢复（例如 viem 的 `verifyMessage`），并返回 `Promise<boolean>`——插件会在创建会话之前独立验证消息的 nonce、domain、address、Chain ID 和时间限制
+* **ensLookup**：用于查询以太坊地址的 ENS 名称和头像的可选函数
 
 ### 客户端配置
 

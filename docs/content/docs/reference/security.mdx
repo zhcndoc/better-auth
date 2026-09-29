@@ -1,6 +1,7 @@
 ---
-title: 安全性
-description: Better Auth 的安全功能。
+icon: referenceSecurity
+title: 安全
+description: Better Auth 安全功能。
 ---
 
 本页面包含有关 Better Auth 安全功能的信息。
@@ -41,8 +42,10 @@ Better Auth 包含多重防护措施以防止跨站请求伪造（CSRF）攻击�
 2. **来源验证**
    每个请求的 `Origin` 头部都会被验证，以确认它来自您的应用或其他明确受信任的来源。来自不可信来源的请求会被拒绝。默认情况下，Better Auth 信任您应用的基础 URL，但您可以通过 `trustedOrigins` 配置选项指定其他受信任的来源。
 
-3. **安全 Cookie 设置**\
-   会话 Cookie 默认使用 `SameSite=Lax` 属性，防止浏览器在大多数跨站请求中发送 Cookie。您可以通过 `defaultCookieAttributes` 选项覆盖此行为。
+   使用 `Referrer-Policy: no-referrer` 的页面发起的同源表单提交可能携带 `Origin: null`。当 `Sec-Fetch-Site` 确认请求为同源时，Better Auth 会改为根据 `trustedOrigins` 验证请求 URL 的来源。缺少此类 Fetch Metadata 证据的请求，以及目标为不受信任来源的请求，仍会被拒绝。
+
+3. **安全 Cookie 设置**
+   会话 Cookie 默认使用 `SameSite=Lax` 属性，防止浏览器在大多数跨站请求中发送 Cookie。您可以使用 `defaultCookieAttributes` 选项覆盖此行为。
 
 4. **首次登录的 Fetch Metadata 防护**
    Better Auth 还使用 [Fetch Metadata 头部](https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/CSRF#fetch_metadata)（`Sec-Fetch-Site`、`Sec-Fetch-Mode`、`Sec-Fetch-Dest`）为 **首次登录场景** 提供额外的 CSRF 防护，此时客户端尚未拥有任何 Cookie。
@@ -221,7 +224,9 @@ Better Auth 使用客户端 IP 地址进行速率限制和安全监控。默认�
 
 ## 受信任来源
 
-受信任来源可以防止 CSRF 攻击并阻止开放重定向。您可以在 `trustedOrigins` 配置选项中设置受信任来源列表。不在该列表中的请求来源会被自动阻止。
+相对回调和重定向 URL 支持标准路径、查询和片段语法，但必须以单个 `/` 开头。Better Auth 会拒绝协议相对 URL（`//...`）、反斜杠、控制字符以及路径中的编码路径分隔符。
+
+### 基本用法
 
 ### 基本用法
 

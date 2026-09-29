@@ -1,6 +1,8 @@
 ---
+icon: plugins2FA
+sidebarTitle: "双重验证"
 title: 双重身份验证 (2FA)
-description: 通过双重身份验证增强您的应用安全性。
+description: 通过双重身份验证增强应用的安全性。
 ---
 
 `OTP` `TOTP` `备用代码` `受信设备`
@@ -124,6 +126,10 @@ description: 通过双重身份验证增强您的应用安全性。
 
 * 返回 `{ method: "totp", totpURI, backupCodes }`。使用 `totpURI` 显示二维码
 * 默认情况下，在用户验证 TOTP 代码之前，`twoFactorEnabled` 仍为 `false`。当服务器插件配置了 `skipVerificationOnEnable: true` 时，TOTP 会在无需验证注册代码的情况下启用。参见 [验证 TOTP](#totp)
+
+<Callout>
+  当用户已经拥有经过验证的 TOTP 认证器时，调用 `twoFactor.enable` 会返回 `TOTP_ALREADY_ENABLED`。开始新的注册前，请先禁用当前认证器。
+</Callout>
 
 当 `method` 为 `"otp"` 时：
 
@@ -264,6 +270,10 @@ TOTP（基于时间的一次性密码）是一种使用时间计数器为每次�
   ```
 </APIMethod>
 
+<Callout type="warn">
+  请将 TOTP URI 视为机密信息。它包含用户的邮箱以及用于生成 TOTP 代码的共享密钥。请在浏览器中本地生成二维码，而不要将 URI 发送到第三方二维码服务。
+</Callout>
+
 **示例：使用 React**
 
 获取到 TOTP URI 后，可以将其用于生成二维码，供用户使用认证器应用扫描。
@@ -287,10 +297,6 @@ export default function UserCard({ password }: { password: string }){
    )
 }
 ```
-
-<Callout>
-  默认情况下，TOTP 的颁发者设置为认证配置中提供的应用名称；如果未提供，则默认为 `Better Auth`。您可以通过向插件配置传递 `issuer` 来覆盖此设置。
-</Callout>
 
 #### 验证 TOTP
 

@@ -1,9 +1,10 @@
 ---
+icon: conceptsCLI
 title: CLI
-description: 了解用于生成和迁移数据库架构、创建初始管理员、初始化项目、生成密钥以及收集诊断信息的 Better Auth CLI 命令
+description: 了解 Better Auth CLI 命令，这些命令可用于生成、迁移和检查数据库架构、创建初始管理员、初始化项目、生成密钥，以及收集诊断信息。
 ---
 
-Better Auth 内置了 CLI，可帮助你管理数据库架构、创建初始管理员用户、初始化项目、为应用程序生成密钥，以及收集有关设置的诊断信息。
+Better Auth 内置了 CLI，可帮助你管理和检查数据库架构、创建初始管理员用户、初始化项目、为应用生成密钥，以及收集有关设置的诊断信息。
 
 ## 生成 (Generate)
 
@@ -65,10 +66,35 @@ npx auth@latest migrate
 <Callout type="info">
   **使用非默认架构的 PostgreSQL？**
 
-  migrate 命令会自动检测你配置的 `search_path`，并在正确的架构中创建表。配置详情请参见 [PostgreSQL 适配器文档](/docs/adapters/postgresql#use-a-non-default-schema)。
+  设置 `database.schemaName` 以显式选择架构。否则，migrate 命令会使用连接的 `search_path`。有关配置详情，请参阅 [PostgreSQL 适配器文档](/docs/adapters/postgresql#use-a-non-default-schema)。
 </Callout>
 
-## 创建管理员 (Create Admin)
+## 检查
+
+`check` 命令会运行所有可用的检查。无论是手动操作还是在自动化流程中，只要想验证 Better Auth 设置，都可以运行此命令：
+
+```bash title="Terminal"
+npx auth@latest check --config ./src/auth.ts
+```
+
+### 架构
+
+`check schema` 命令会验证配置的架构能否容纳 Better Auth 写入的数据。它不会创建架构文件或应用迁移。
+
+```bash title="Terminal"
+npx auth@latest check schema --config ./src/auth.ts
+```
+
+对于 Kysely，架构检查会读取实时数据库；对于 Drizzle，则读取配置的架构对象；对于 Prisma，则读取生成的客户端模型。Drizzle 和 Prisma 检查不会确认迁移是否已应用到数据库。如果适配器不支持验证，该命令会失败，而不是静默跳过检查。即使通过 `advanced.database.validateSchema: false` 禁用了运行时验证，该检查仍会运行。
+
+### 选项
+
+`check` 和 `check schema` 均接受以下选项：
+
+* `-c, --cwd` - 工作目录。默认为当前目录。
+* `--config` - Better Auth 配置文件的路径。默认情况下，CLI 会在常见配置位置中搜索。
+
+## 创建管理员
 
 `create-admin` 命令通过你配置的 Better Auth 实例创建初始管理员用户。它要求使用 Admin 插件和持久化数据库，并且使用与 Admin 插件相同的服务器端 `auth.api.createUser` 路径，因此密码会被哈希处理，数据库钩子也仍然会运行。
 

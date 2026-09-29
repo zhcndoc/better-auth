@@ -1,4 +1,6 @@
 ---
+icon: pluginsSSO
+sidebarTitle: "SSO"
 title: 单点登录（SSO）
 description: 将单点登录（SSO）集成到您的应用程序中。
 ---
@@ -91,7 +93,7 @@ description: 将单点登录（SSO）集成到您的应用程序中。
   注册 OIDC 提供程序时，Better Auth 会自动获取并验证提供者的 [OIDC 发现文档](#oidc-discovery)。大多数端点字段是可选的——有关自动发现字段和可能的注册错误的详细信息，请参阅[OIDC 发现](#oidc-discovery)。
 </Callout>
 
-Better Auth 根据配置的 `issuer` 和经过验证的 `sub` 声明识别 OIDC 账号。`mapping` 选项映射电子邮件、姓名和头像等资料字段，但无法替代账号主体。返回相同发行者和主体的提供者别名会解析为一个外部身份；这种身份去重不会为每个别名创建独立的授权或提供者生命周期记录。
+Better Auth 会根据提供者 ID 和经过验证的 `sub` 声明识别 OIDC 账号。`mapping` 选项用于映射电子邮件、名称和图片等资料字段，但不能替代账号主体。
 
 #### 示例
 
@@ -166,7 +168,7 @@ Better Auth 根据配置的 `issuer` 和经过验证的 `sub` 声明识别 OIDC 
 
 ### OIDC 发现
 
-Better Auth 会自动从以下地址抓取并验证提供者的 [OpenID Connect 发现文档](https://openid.net/specs/openid-connect-discovery-1_0.html)：
+Better Auth 会自动从以下地址获取并验证提供者的 [OpenID Connect 发现文档](https://openid.net/specs/openid-connect-discovery-1_0.html)：
 
 ```
 {issuer}/.well-known/openid-configuration
@@ -221,7 +223,7 @@ Better Auth 会自动从以下地址抓取并验证提供者的 [OpenID Connect 
 * `discoveryEndpoint`
 * `tokenEndpointAuthentication`（用于令牌端点客户端身份验证的方法）
 
-根据规范，我们的发现流程要求所有 URL 必须有效且是绝对 URL。也支持相对路径，它们会相对于发行者的基础 URL 解析，并保留路径（如有）。
+根据规范，我们的发现流程要求所有 URL 都必须有效且为绝对 URL。也支持相对路径，它们会相对于发行者的基础 URL 解析，并保留路径（如有）。
 
 相对端点以及没有基础路径的发行者示例：
 
@@ -416,7 +418,7 @@ const auth = betterAuth({
 
 使用带有 SAML 配置的 `registerSSOProvider` 接口注册 SAML 提供者。该提供者作为服务提供者（SP）与您的身份提供者（IdP）集成。
 
-Better Auth 根据 IdP 实体 ID 和已签名的 `NameID` 识别 SAML 账号。`issuer` 字段标识您的服务提供者，而 IdP 实体 ID 来自 `idpMetadata.metadata`，或手动配置中的显式 `idpMetadata.entityID`。属性映射可以填充资料字段，但无法替代已签名的 `NameID` 账号主体。
+Better Auth 会根据提供者 ID 和已签名的 `NameID` 识别 SAML 账号。`issuer` 字段用于标识您的服务提供者，而 IdP 实体 ID 来自 `idpMetadata.metadata`，或在手动配置中显式指定的 `idpMetadata.entityID`。属性映射可以填充资料字段，但不能替代已签名的 `NameID` 账号主体。
 
 需要在存储 SAML 连接时固定 IdP 权威的应用程序，可以通过 SAML 身份验证所使用的同一元数据解析器派生该值：
 
@@ -621,7 +623,7 @@ const res = await authClient.signIn.sso({
 });
 ```
 
-可选地，传递登录提示（例如邮箱或其他标识符）用于预填或引导身份提供者：
+也可以传递登录提示（例如邮箱或其他标识符），用于预填或引导身份提供者：
 
 ```ts title="sign-in-with-login-hint.ts"
 import { authClient } from "@/lib/auth-client"
@@ -731,7 +733,7 @@ SSO 插件提供强大的预置功能，可在用户通过 SSO 登录时自动�
 用户预置允许你在用户通过 SSO 提供者登录时运行自定义逻辑。默认情况下，`provisionUser` 仅在新用户注册时运行。若要在每次登录时都运行它，请将 `provisionUserOnEveryLogin` 设为 `true`。这在以下场景很有用：
 
 * 设置带有 SSO 提供者额外数据的用户资料
-* 同步用户属性到外部系统
+* 将用户属性同步到外部系统
 * 创建特定于用户的资源
 * 记录 SSO 登录事件
 * 从 SSO 提供者更新用户信息
@@ -776,13 +778,13 @@ const auth = betterAuth({
 
 `provisionUser` 函数接收：
 
-* **user**: 数据库中的用户对象
+* **user**：数据库中的用户对象
 
-* **userInfo**: SSO 提供者返回的用户信息（包含属性、邮箱、姓名等）
+* **userInfo**：SSO 提供者返回的用户信息（包含属性、邮箱、姓名等）
 
-* **token**: OAuth2 token（仅 OIDC 提供者，SAML 可能未定义）
+* **token**：OAuth2 token（仅 OIDC 提供者，SAML 可能未定义）
 
-* **provider**: SSO 提供者配置
+* **provider**：SSO 提供者配置
 
 * **user**：数据库中的用户对象
 
@@ -796,13 +798,13 @@ const auth = betterAuth({
 
 * 企业 SSO 场景，一个公司/域对应一个组织
 
-* 基于 SSO 属性自动角色分配
+* 基于 SSO 属性自动分配角色
 
 * 通过 SSO 管理团队成员身份
 
 * 企业 SSO 场景，一个公司/域对应一个组织
 
-* 基于 SSO 属性自动角色分配
+* 基于 SSO 属性自动分配角色
 
 * 通过 SSO 管理团队成员身份
 
@@ -862,12 +864,12 @@ const auth = betterAuth({
 });
 ```
 
-#### 将 SSO 提供者关联至组织
+#### 将 SSO 提供者关联到组织
 
 注册 SSO 提供者时可指定所属组织：
 
 <Callout type="info">
-  当启用 `organization` 插件并提供 `organizationId` 时，调用者必须是组织的 `owner` 或 `admin`。普通成员会收到 `403 FORBIDDEN`。未启用 `organization` 插件的 SSO 部署将保持之前的行为（仅查找成员身份）。
+  当启用 `organization` 插件并提供 `organizationId` 时，调用者必须是组织的 `owner` 或 `admin`。普通成员会收到 `403 FORBIDDEN`。未启用 `organization` 插件的 SSO 部署将保持先前的行为（仅查找成员身份）。
 </Callout>
 
 ```ts title="register-org-provider.ts"
@@ -888,7 +890,7 @@ await auth.api.registerSSOProvider({
 ```
 
 通过此提供者登录的用户会自动加入“Acme
-Corp”组织，因为该提供者已明确关联到该组织。通过其他登录方式基于域名进行的分配，则需要域名验证、已验证且存储的用户邮箱，以及一个明确的组织匹配项。
+Corp”组织，因为该提供者已明确关联到该组织。通过其他登录方式基于域名进行的分配，则需要域名验证、已验证并存储的用户邮箱，以及明确的组织匹配项。
 
 <Callout type="info">
   自动 SSO 预置不会接受或取消待处理的邀请。受邀用户必须先完成现有的邀请流程，之后 Better Auth 才会为同一组织创建自动成员身份。
@@ -906,11 +908,11 @@ https://dash.better-auth.com/[project]/organization/[orgId]/enterprise
 
 面板功能：
 
-* **为企业客户生成 onboarding 链接**，以便其自助配置 SAML 提供者
+* **为企业客户生成接入链接**，以便其自助配置 SAML 提供者
 * **监控每个组织的 SSO 连接状态**
 * **无需编写代码即可管理提供者配置**
 
-极大减少企业 SSO 上线时间，从数天缩短至几分钟。
+极大缩短企业 SSO 上线时间，从数天缩短至几分钟。
 
 #### 多组织示例
 
@@ -951,13 +953,13 @@ await auth.api.registerSSOProvider({
 3. 检查组织成员身份 — 如未加入关联组织
 4. 通过 `defaultRole` 或 `getRole` 函数确定角色
 5. 将用户加入组织并赋予角色
-6. 如配置，执行用户预置进一步设置
+6. 如配置，执行用户预置以进一步设置
 
 ### 预置最佳实践
 
 #### 1. 幂等操作
 
-如果启用 `provisionUserOnEveryLogin`，请确保你的预置函数可以安全地多次运行：
+如果启用 `provisionUserOnEveryLogin`，请确保预置函数可以安全地多次运行：
 
 ```ts
 provisionUser: async ({ user, userInfo }) => {
@@ -1044,23 +1046,23 @@ const auth = betterAuth({
 
 1. 数据库中未找到匹配的提供者
 
-这允许您无需数据库配置便测试 SAML 认证。defaultSSO 支持与正常 SAML 提供者相同的配置选项。
+这样无需数据库配置即可测试 SAML 认证。defaultSSO 支持与普通 SAML 提供者相同的配置选项。
 
 ### 服务提供者配置
 
 注册 SAML 提供者时须提供服务提供者（SP）元数据：
 
-* **metadata**: 服务提供者的 XML 元数据
-* **binding**: 绑定方法，通常为 "post" 或 "redirect"
-* **privateKey**: 用于签名 AuthnRequests 的私钥
-* **privateKeyPass**: 私钥密码
-* **isAssertionEncrypted**: 断言是否应加密
-* **encPrivateKey**: 用于解密的私钥（如果启用了加密）
-* **encPrivateKeyPass**: 加密私钥密码
+* **metadata**：服务提供者的 XML 元数据
+* **binding**：绑定方法，通常为 "post" 或 "redirect"
+* **privateKey**：用于签名 AuthnRequests 的私钥
+* **privateKeyPass**：私钥密码
+* **isAssertionEncrypted**：断言是否应加密
+* **encPrivateKey**：用于解密的私钥（如果启用了加密）
+* **encPrivateKeyPass**：加密私钥密码
 
 ### 签名 AuthnRequests
 
-部分企业 IdP（如 Okta、Azure AD、ADFS）要求签名的 AuthnRequests。可通过：
+部分企业 IdP（如 Okta、Azure AD、ADFS）要求签名的 AuthnRequests。可通过以下配置启用：
 
 ```ts
 samlConfig: {
@@ -1072,18 +1074,18 @@ samlConfig: {
 }
 ```
 
-启用后，SP 元数据端点自动包含 `AuthnRequestsSigned="true"`。
+启用后，SP 元数据端点会自动包含 `AuthnRequestsSigned="true"`。
 
 ### 身份提供者配置
 
 还须提供身份提供者（IdP）配置：
 
-* **metadata**: 来自身份提供者的 XML 元数据
-* **privateKey**: IdP 通信所用私钥（可选）
-* **privateKeyPass**: IdP 私钥密码（如果加密）
-* **isAssertionEncrypted**: 来自 IdP 的断言是否加密
-* **encPrivateKey**: IdP 断言解密用私钥
-* **encPrivateKeyPass**: IdP 解密密钥密码
+* **metadata**：来自身份提供者的 XML 元数据
+* **privateKey**：IdP 通信所用私钥（可选）
+* **privateKeyPass**：IdP 私钥密码（如果加密）
+* **isAssertionEncrypted**：来自 IdP 的断言是否加密
+* **encPrivateKey**：IdP 断言解密用私钥
+* **encPrivateKeyPass**：IdP 解密密钥密码
 
 ### 签名证书与轮换
 
@@ -1229,8 +1231,8 @@ Better Auth 提供灵活性支持两者：
 
 对于每个断言：
 
-* **NotBefore**: 若当前时间早于 `NotBefore - clockSkew`，则拒绝该断言
-* **NotOnOrAfter**: 若当前时间晚于 `NotOnOrAfter + clockSkew`，则拒绝该断言
+* **NotBefore**：若当前时间早于 `NotBefore - clockSkew`，则拒绝该断言
+* **NotOnOrAfter**：若当前时间晚于 `NotOnOrAfter + clockSkew`，则拒绝该断言
 
 对于每个断言：
 
@@ -1521,8 +1523,8 @@ sso({ redirectURI: "https://login.example.com/callback" })
 
     为此，您需要在域名的 DNS 设置中添加一条 `TXT` 记录：
 
-    * **Host:** `_better-auth-token-{your-provider-id}` (**注意：** 为遵循 DNS 基础设施的子域命名约定，系统会自动在前面添加一个下划线。`better-auth-token` 部分可通过 `domainVerification.tokenPrefix` 选项进行自定义)
-    * **Value:** 为您提供的验证令牌。
+    * **Host：** `_better-auth-token-{your-provider-id}`（**注意：** 为遵循 DNS 基础设施的子域命名约定，系统会自动在前面添加一个下划线。`better-auth-token` 部分可通过 `domainVerification.tokenPrefix` 选项进行自定义）
+    * **Value：** 为您提供的验证令牌。
 
     如果 SSO 提供者列出了多个以逗号分隔的域名，请在每个列出的域名下都添加此 `TXT` 记录。例如，若提供者的 `domain: "company.com,subsidiary.com"`，则必须分别为 `company.com` 和 `subsidiary.com` 发布该记录。
 
@@ -1575,15 +1577,15 @@ sso({ redirectURI: "https://login.example.com/callback" })
 
 插件会自动创建以下 SAML 端点：
 
-* **SP Metadata**: `/api/auth/sso/saml2/sp/metadata?providerId={providerId}`
-* **SAML ACS（Assertion Consumer Service）**: `/api/auth/sso/saml2/sp/acs/{providerId}`（同时支持 GET 和 POST）
+* **SP Metadata**：`/api/auth/sso/saml2/sp/metadata?providerId={providerId}`
+* **SAML ACS（Assertion Consumer Service）**：`/api/auth/sso/saml2/sp/acs/{providerId}`（同时支持 GET 和 POST）
 
 ### SAML 回调 URL 配置
 
 SAML ACS 端点（`/api/auth/sso/saml2/sp/acs/{providerId}`）同时处理 **SP 发起**和 **IdP 发起**的 SSO 流程：
 
-* **SP 发起**: 用户在您的应用中点击“使用 SSO 登录” → 重定向到 IdP → IdP 将 SAMLResponse POST 到回调端点
-* **IdP 发起**: 用户在 IdP 仪表板中点击应用图标（Okta、Azure AD 等）→ IdP 将 SAMLResponse POST 到回调端点
+* **SP 发起**：用户在您的应用中点击“使用 SSO 登录” → 重定向到 IdP → IdP 将 SAMLResponse POST 到回调端点
+* **IdP 发起**：用户在 IdP 仪表板中点击应用图标（Okta、Azure AD 等）→ IdP 将 SAMLResponse POST 到回调端点
 
 Better Auth 会根据您的 `baseURL` 和 `providerId` 自动推导 ACS URL，因此无需进行 SP 端配置。
 
@@ -1650,7 +1652,7 @@ await auth.api.registerSSOProvider({
 
 ## Schema
 
-插件要求在 `ssoProvider` 表添加存储提供者配置的字段。
+插件要求在 `ssoProvider` 表中添加用于存储提供者配置的字段。
 
 export const ssoProviderTableFields = [
 	{

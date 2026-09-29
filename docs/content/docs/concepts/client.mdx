@@ -1,6 +1,7 @@
 ---
+icon: conceptsClient
 title: 客户端
-description: 了解如何为 React、Vue、Svelte 和其他框架设置 Better Auth 客户端、使用钩子、配置 fetch 选项、处理错误，以及通过客户端插件进行扩展
+description: 了解如何为 React、Vue、Svelte 和其他框架设置 Better Auth 客户端、使用钩子、配置 fetch 选项、处理错误，以及通过客户端插件进行扩展。
 ---
 
 Better Auth 提供了一个与流行前端框架（如 React、Vue、Svelte 等）兼容的客户端库。该客户端库包含一组用于与 Better Auth 服务器交互的函数。每个框架的客户端库都建立在一个与框架无关的核心客户端库之上，因此所有方法和钩子在所有客户端库中均保持一致。
@@ -86,7 +87,7 @@ await authClient.signIn.email({
 
 ### 钩子
 
-除了标准方法外，客户端还提供钩子以便轻松访问不同的响应式数据。每个钩子都在客户端根对象中可用，且名称都以 `use` 开头。
+除了标准方法外，客户端还提供钩子，以便轻松访问不同的响应式数据。每个钩子都可以在客户端根对象中使用，且名称都以 `use` 开头。
 
 **示例：useSession**
 
@@ -204,7 +205,7 @@ await authClient.signIn.email({
 
 Better fetch 是对原生 fetch API 的封装，提供了更方便的请求方式。它由 Better Auth 团队创建，设计上与 Better Auth 无缝配合。
 
-你可以通过传递 `fetchOptions` 对象给 `createAuthClient`，为客户端设置默认的 fetch 选项。
+你可以通过向 `createAuthClient` 传递 `fetchOptions` 对象，为客户端设置默认的 fetch 选项。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -218,7 +219,7 @@ const authClient = createAuthClient({
 
 ### 禁用默认的 Fetch 插件
 
-身份验证客户端包含默认的 fetch 插件，用于处理浏览器特有的行为，比如自动重定向。对于非浏览器环境（例如 React Native/Expo），你可以通过设置 `disableDefaultFetchPlugins` 为 `true` 来禁用这些插件：
+身份验证客户端包含默认的 fetch 插件，用于处理浏览器特有的行为，比如自动重定向。对于非浏览器环境（例如 React Native/Expo），你可以通过将 `disableDefaultFetchPlugins` 设置为 `true` 来禁用这些插件：
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -455,7 +456,7 @@ if(error?.code){
 }
 ```
 
-### SSR Hydration
+### SSR 水合
 
 对于 Next.js、Nuxt 或 SvelteKit 等 SSR 框架，`useSession` 会在客户端获取 session，从而导致加载闪烁。将服务器获取的 session 传递给 `hydrateSession` 并将其用作回退值，这样首次渲染时服务器和客户端都有数据：
 
@@ -495,6 +496,8 @@ export function SessionCard({ initialSession }: Props) {
   * 只有第一次传入非 null 值的 `hydrateSession` 调用会生效
   * 传入 `null` 是安全的。它会被忽略，`useSession` 将照常获取
 </Callout>
+
+在 React 中，`useSession` 和 `useListOrganizations` 等身份验证查询钩子会在服务器渲染和水合期间返回其初始待处理状态，然后更新为当前客户端状态。这样可以使流式传输组件与其服务器 HTML 保持一致，即使其他组件已经获取或水合了该查询也是如此。如上所示，继续使用服务器获取的 session 作为回退值，以便在水合期间显示它。不使用 `useAuthQuery` 的自定义插件存储会保留其现有的快照行为。
 
 ### 插件
 

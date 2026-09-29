@@ -1,25 +1,26 @@
 ---
+icon: authenticationKakao
 title: Kakao
-description: Kakao 제공자의 설정 및 사용 방법입니다.
+description: Kakao 提供者的配置和使用方法。
 ---
 
 <Steps>
   <Step>
-    ### Kakao 자격 증명 가져오기
+    ### 获取 Kakao 凭据
 
-    Kakao로 로그인하려면 클라이언트 ID와 클라이언트 비밀번호가 필요합니다. 이 정보는 [Kakao 개발자 포털](https://developers.kakao.com)에서 가져올 수 있습니다.
+    要使用 Kakao 登录，需要客户端 ID 和客户端密钥。可以从 [Kakao 开发者门户](https://developers.kakao.com)获取这些信息。
 
-    로컬 개발을 위해 리디렉션 URL을 `http://localhost:3000/api/auth/callback/kakao`로 설정해야 합니다. 프로덕션 환경에서는 애플리케이션의 URL로 설정해야 합니다. 인증 라우트의 기본 경로를 변경하면 리디렉션 URL을 accordingly 업데이트해야 합니다.
+    对于本地开发，需要将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/kakao`。在生产环境中，应将其设置为应用程序的 URL。如果更改了身份验证路由的默认路径，则需要相应地更新重定向 URL。
   </Step>
 
   <Step>
-    ### 제공자 구성
+    ### 配置提供者
 
-    제공자를 구성하려면 제공자를 가져와서 인스턴스의 `socialProviders` 옵션에 전달해야 합니다.
+    要配置提供者，需要导入提供者并将其传递给实例的 `socialProviders` 选项。
 
     <Callout type="info">
-      * 기본 범위는 `account_email`, `profile_image`, `profile_nickname`입니다.
-      * `account_email`을 가져오려면 앱이 **비즈 앱**(사업 인증이 완료된 앱)이어야 한다는 점에 유의하세요. 자세한 내용은 [Kakao Login 범위 문서](https://developers.kakao.com/docs/latest/kakaologin/utilize#scope-user)를 참조하세요.
+      * 默认范围为 `account_email`、`profile_image`、`profile_nickname`。
+      * 请注意，要获取 `account_email`，应用必须是**商业应用**（已完成业务认证的应用）。详情请参阅 [Kakao Login 范围文档](https://developers.kakao.com/docs/latest/kakaologin/utilize#scope-user)。
     </Callout>
 
     ```ts title="auth.ts"
@@ -37,11 +38,11 @@ description: Kakao 제공자의 설정 및 사용 방법입니다.
   </Step>
 
   <Step>
-    ### Kakao로 로그인
+    ### 使用 Kakao 登录
 
-    Kakao로 로그인하려면 클라이언트에서 제공하는 `signIn.social` 함수를 사용할 수 있습니다. `signIn` 함수는 다음 속성을 가진 객체를 받습니다:
+    要使用 Kakao 登录，可以在客户端使用提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
 
-    * `provider`: 사용할 제공자입니다. `kakao`로 설정해야 합니다.
+    * `provider`：要使用的提供者。必须设置为 `kakao`。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"

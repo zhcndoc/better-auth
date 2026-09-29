@@ -1,4 +1,5 @@
 ---
+icon: pluginsPolar
 title: Polar
 description: 使用 Polar 实现更佳的支付和结账验证插件
 ---
@@ -145,12 +146,12 @@ const auth = betterAuth({
 
 ### 必需选项
 
-* `client`: Polar SDK 客户端实例
+* `client`：Polar SDK 客户端实例
 
 ### 可选选项
 
-* `createCustomerOnSignUp`: 用户注册时自动创建 Polar 客户
-* `getCustomerCreateParams`: 自定义函数，用于提供额外的客户创建元数据
+* `createCustomerOnSignUp`：用户注册时自动创建 Polar 客户
+* `getCustomerCreateParams`：自定义函数，用于提供额外的客户创建元数据
 
 ### 客户管理
 
@@ -315,7 +316,7 @@ const { data: subscriptions } = await authClient.customer.subscriptions.list({
 });
 ```
 
-**重要** — 组织支持
+**重要**——组织支持
 
 此方法**不会**返回由父组织为认证用户订购的订阅。
 
@@ -463,4 +464,4 @@ POLAR_WEBHOOK_SECRET=...
 * `onCustomerCreated` - 当创建客户时触发
 * `onCustomerUpdated` - 当更新客户时触发
 * `onCustomerDeleted` - 当删除客户时触发
-* `onCustomerStateChanged` - 当创建客户
+* `onCustomerStateChanged` - 当客户状态变更时触发

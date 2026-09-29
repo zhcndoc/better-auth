@@ -1,4 +1,6 @@
 ---
+icon: pluginsCIMD
+sidebarTitle: "CIMD"
 title: 客户端 ID 元数据文档（CIMD）
 description: 从 HTTPS 元数据文档中发现 OAuth 客户端。
 ---
@@ -141,7 +143,7 @@ export const cimdOptionsType = {
 		default:
 			"{ minimumFetchInterval: 1, maximumConcurrentFetches: 16, maximumConcurrentFetchesPerOrigin: 4, maximumFetchesPerMinute: 120, maximumFetchesPerOriginPerMinute: 30 }",
 		description:
-			"Reject-immediately request-amplification limits. Numeric minimumFetchInterval values are seconds. Minute limits use a rolling 60-second window. Set minimumFetchInterval to 0 only to disable per-client pacing.",
+			"Reject-immediately request-amplification limits. Numeric minimumFetchInterval values are seconds and pace retries after failed fetches. Successful fetches remain governed by HTTP freshness and the origin/global budgets. Minute limits use a rolling 60-second window. Set minimumFetchInterval to 0 only to disable failed-fetch pacing.",
 	},
 	originBoundFields: {
 		type: "string[]",
@@ -198,7 +200,7 @@ export const cimdOptionsType = {
 
 有效文档遵循共享缓存语义。`s-maxage` 优先于 `max-age` 和 `Expires`；验证器支持条件重新验证。`Cache-Control: no-store`、`private` 和 `Vary: *` 会阻止缓存插入。只有当请求针对现有的已验证条目发送了 `If-None-Match` 或 `If-Modified-Since` 时，才会接受 `304`。修改后的响应必须严格为 `200`
 
-元数据获取限流器独立于 HTTP 新鲜度。新鲜缓存命中以及加入同一客户端获取操作的并发调用者不会消耗预算。每次新获取开始时都会消耗其并发预算和滚动窗口预算，超出的工作会被拒绝而不是排队。`no-store` 响应永远不会被保留或复用；因此，在 `minimumFetchInterval` 内的另一个请求会以故障关闭方式失败，而不会导致立即重新获取。元数据缓存、客户端节流记录和源站预算记录分别受 `maxCacheEntries` 限制。限流器只会驱逐不活跃的记录；如果每条记录仍在保护活动间隔、滚动窗口或获取操作，则新客户端或源站会以故障关闭方式失败
+元数据获取调度器独立于 HTTP 新鲜度。新鲜缓存命中以及加入同一客户端获取操作的并发调用不会消耗预算。每次新获取开始时都会消耗其并发预算和滚动窗口预算，超出预算的工作会被拒绝，而不是排队。成功获取会清除该客户端的节流记录，因此，无法缓存或立即过期的响应可以再次获取，同时仍受来源和全局预算限制。失败的获取会保留 `minimumFetchInterval` 退避时间。元数据缓存、客户端节流记录和来源预算记录的数量都受 `maxCacheEntries` 限制。调度器只会逐出非活动记录；如果所有记录仍在保护有效间隔、滚动窗口或获取操作，则新客户端或来源会以故障关闭方式失败。
 
 刷新仍然采用故障关闭策略。网络、验证或持久化失败会保留之前的数据库／缓存状态，但会拒绝当前 OAuth 请求。`onClientRefreshed` 会接收 `previousClient`；操作员可以比较安全敏感的元数据，并选择是否撤销授权、令牌或同意
 

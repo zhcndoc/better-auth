@@ -1,9 +1,10 @@
 ---
-title: 匿名  
-description: 用于 Better Auth 的匿名插件。
+icon: pluginsAnonymous
+title: Anonymous  
+description: Better Auth 的 Anonymous 插件。
 ---
 
-匿名插件允许用户在不提供电子邮件地址、密码、OAuth 提供商或任何其他个人身份信息（PII）的情况下获得身份验证体验。用户稍后可以在准备好时将认证方式链接到其账户。
+Anonymous 插件允许用户在不提供电子邮件地址、密码、OAuth 提供商或任何其他个人身份信息（PII）的情况下获得身份验证体验。用户稍后可以在准备好时将认证方式关联到其账户。
 
 ## 安装
 
@@ -135,7 +136,7 @@ const user = await authClient.signIn.email({
 
 ### `emailDomainName`
 
-用于为匿名用户生成电子邮件地址的域名。如果未提供，则使用默认格式 `temp@{id}.com`。
+用于为匿名用户生成电子邮件地址的域名。如果未提供，则使用默认格式 `{id}@anonymous.placeholder.invalid`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -183,7 +184,7 @@ export const auth = betterAuth({
 
 ### `disableDeleteAnonymousUser`
 
-默认情况下，当匿名用户关联账户到新的认证方法时，会自动删除匿名用户记录。
+默认情况下，当匿名用户将账户关联到新的认证方法时，会自动删除匿名用户记录。
 如果您将此选项设置为 `true`，则自动删除将被禁用，
 并且匿名用户将无法访问 `/delete-anonymous-user` 端点。
 
@@ -193,7 +194,7 @@ export const auth = betterAuth({
 
 ## 模式
 
-匿名插件需要在用户表中添加一个额外字段：
+Anonymous 插件需要在用户表中添加一个额外字段：
 
 export const anonymousUserTableFields = [
 	{

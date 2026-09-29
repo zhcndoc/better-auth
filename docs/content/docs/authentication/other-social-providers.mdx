@@ -1,9 +1,10 @@
 ---
-title: 其他社交登录提供商
-description: 其他社交登录提供商的设置和使用。
+icon: authenticationOtherSocialProviders
+title: 其他社交提供商
+description: 其他社交提供商的设置和用法。
 ---
 
-Better Auth 支持任何实现了 OAuth2 协议或 OpenID Connect（OIDC）流程的社交登录提供商，通过 [Generic OAuth 插件](/docs/plugins/generic-oauth) 实现。你可以使用为常见提供商（如 Auth0、Keycloak、Okta、Microsoft Entra ID 和 Slack）预配置的辅助函数，或者手动配置任何 OAuth 提供商。
+Better Auth 通过 [Generic OAuth Plugin](/docs/plugins/generic-oauth) 支持任何实现 OAuth 2.0 或 OpenID Connect（OIDC）的社交提供商。你可以使用内置的提供商辅助工具、安装社区提供商辅助工具，或手动配置提供商。
 
 ## 安装
 
@@ -49,7 +50,7 @@ Better Auth 支持任何实现了 OAuth2 协议或 OpenID Connect（OIDC）流�
 </Steps>
 
 <Callout>
-  了解有关 Generic OAuth 插件的安装和使用的更多信息
+  详细了解 Generic OAuth 插件的安装和用法，请参阅
   [Generic OAuth 插件文档](/docs/plugins/generic-oauth#usage)。
 </Callout>
 
@@ -77,9 +78,26 @@ export const auth = betterAuth({
 })
 ```
 
-## 使用预配置提供商
+## 提供商辅助工具
 
-Better Auth 为流行的 OAuth 提供商提供了预配置的辅助函数。下面是使用 Slack 的示例：
+提供商辅助工具将特定于提供商的端点、作用域和个人资料映射封装为可复用的 `GenericOAuthConfig` 工厂函数。
+
+### 内置提供商辅助工具
+
+Better Auth 内置了以下提供商的辅助工具：
+
+* **Auth0** - `auth0(options)`
+* **Gumroad** - `gumroad(options)`
+* **HubSpot** - `hubspot(options)`
+* **Keycloak** - `keycloak(options)`
+* **LINE** - `line(options)`
+* **Microsoft Entra ID (Azure AD)** - `microsoftEntraId(options)`
+* **Okta** - `okta(options)`
+* **Patreon** - `patreon(options)`
+* **Slack** - `slack(options)`
+* **Yandex** - `yandex(options)`
+
+以下是使用 Slack 的示例：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -106,11 +124,97 @@ const response = await authClient.signIn.social({
 })
 ```
 
-有关更多预配置提供商（Auth0、Keycloak、Okta、Microsoft Entra ID）及其配置选项，请参阅 [Generic OAuth 插件文档](/docs/plugins/generic-oauth#pre-configured-provider-helpers)。
+每个辅助工具都通过 `BaseOAuthProviderOptions` 接受通用 OAuth 选项，并包含以下特定于提供商的字段：
 
-## 手动配置示例
+* **Auth0**：需要 `domain`（例如，`dev-xxx.eu.auth0.com`）
+* **HubSpot**：接受可选的 `scopes`，默认值为 `["oauth"]`
+* **Keycloak**：需要 `issuer`（例如，`https://my-domain/realms/MyRealm`）
+* **LINE**：接受可选的 `providerId`。使用不同的提供商 ID 和凭据调用 `line()`，即可支持多个特定国家/地区的频道
+* **Microsoft Entra ID**：需要具体的租户 GUID。对于多租户的 `"common"`、`"organizations"` 或 `"consumers"` authority，请使用内置的 [Microsoft 社交提供商](/docs/authentication/microsoft)
+* **Okta**：需要 `issuer`（例如，`https://dev-xxxxx.okta.com/oauth2/default`）
 
-如果你需要配置没有预定义辅助函数的提供商，可以手动进行配置：
+所有辅助工具都接受以下通用选项：
+
+* `clientId`
+* `clientSecret`
+* `tokenEndpointAuth`
+* `scopes`
+* `redirectURI`
+* `pkce`
+* `disableImplicitSignUp`
+* `disableSignUp`
+* `overrideUserInfo`
+* `endSessionEndpoint`
+* `postLogoutRedirectURI`
+* `disableProviderLogout`
+
+### 社区提供商辅助工具
+
+提供商作者和社区维护者可以发布可复用的辅助工具，这些辅助工具会返回一个类型化的 [`GenericOAuthConfig`](/docs/plugins/generic-oauth)，供 Generic OAuth 插件使用。
+
+<Callout type="info">
+  社区提供商辅助工具并非由 Better Auth 团队官方提供或验证。请自行斟酌使用，并在将其集成到应用程序之前审查其源代码。
+</Callout>
+
+| 提供商                                                            | 包                                       | 仓库                                                                                                        | 维护者                                                |
+| ----------------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| [AgentID](https://agentid.com)                                    | `@agentmail/agentid-better-auth`         | [agentmail-to/agentid-better-auth](https://github.com/agentmail-to/agentid-better-auth)                    | [@agentmail-to](https://github.com/agentmail-to)     |
+| [EVE Online](https://developers.eveonline.com/docs/services/sso/) | `@localisprimary/better-auth-eve-online` | [localisprimary/better-auth-eve-online](https://github.com/localisprimary/better-auth-eve-online)          | [@localisprimary](https://github.com/localisprimary) |
+| [ThunderID](https://thunderid.dev)                                | `@thunderid/better-auth`                 | [thunder-id/javascript-sdks](https://github.com/thunder-id/javascript-sdks/tree/main/packages/better-auth) | [@thunder-id](https://github.com/thunder-id)         |
+
+#### 创建提供商辅助工具
+
+提供商辅助工具接受凭据和特定于提供商的选项，然后返回 `GenericOAuthConfig`。
+
+```ts title="provider.ts"
+import type {
+  BaseOAuthProviderOptions,
+  GenericOAuthConfig,
+} from "better-auth/plugins/generic-oauth";
+
+export interface ExampleOptions extends BaseOAuthProviderOptions {}
+
+export function example(
+  options: ExampleOptions,
+): GenericOAuthConfig<"example"> {
+  return {
+    providerId: "example",
+    discoveryUrl: "https://auth.example.com/.well-known/openid-configuration",
+    clientId: options.clientId,
+    clientSecret: options.clientSecret,
+    tokenEndpointAuth: options.tokenEndpointAuth,
+    scopes: options.scopes ?? ["openid", "email", "profile"],
+    redirectURI: options.redirectURI,
+  };
+}
+```
+
+用户从辅助工具作者处安装该辅助工具，并将其传递给 Generic OAuth。
+
+```ts title="auth.ts"
+import { example } from "@example/better-auth";
+import { betterAuth } from "better-auth";
+import { genericOAuth } from "better-auth/plugins";
+
+export const auth = betterAuth({
+  plugins: [
+    genericOAuth({
+      config: [
+        example({
+          clientId: process.env.EXAMPLE_CLIENT_ID!,
+          clientSecret: process.env.EXAMPLE_CLIENT_SECRET!,
+        }),
+      ],
+    }),
+  ],
+});
+```
+
+如需与社区分享提供商辅助工具，请参阅[贡献指南](/docs/reference/contributing#social-provider-integrations)。
+
+## 手动配置提供商
+
+如果你需要配置的提供商没有对应的提供商辅助工具，可以手动配置：
 
 ### Instagram 示例
 

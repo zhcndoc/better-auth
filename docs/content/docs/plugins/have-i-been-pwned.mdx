@@ -1,6 +1,7 @@
 ---
-title: 我是否已经被泄露
-description: 一个用于检查密码是否已被泄露的插件
+icon: pluginsHaveIBeenPwned
+title: Have I Been Pwned
+description: 用于检查密码是否已遭泄露的插件
 ---
 
 Have I Been Pwned 插件通过阻止使用已在已知数据泄露中曝光的密码来帮助保护用户账户。它使用 [Have I Been Pwned](https://haveibeenpwned.com/) API 来检查密码是否已被泄露。
@@ -30,6 +31,21 @@ export const auth = betterAuth({
   "message": "The password you entered has been compromised. Please choose a different password."
 }
 ```
+
+### 自定义密码流程
+
+使用 `isPasswordCompromised` 在不使用 Better Auth 端点的服务端流程中检查密码。
+
+```ts
+import { isPasswordCompromised } from "better-auth/plugins/haveibeenpwned"
+
+const compromised = await isPasswordCompromised(password)
+if (compromised) {
+    throw new Error("Please choose a password that has not been compromised")
+}
+```
+
+此函数只会向 Have I Been Pwned 发送密码 SHA-1 哈希的前五个字符。如果服务无法完成检查，则会抛出 `APIError`。
 
 ## 选项
 

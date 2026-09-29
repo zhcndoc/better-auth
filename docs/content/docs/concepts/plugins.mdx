@@ -1,6 +1,7 @@
 ---
+icon: conceptsPlugins
 title: 插件
-description: 了解如何使用和创建 Better Auth 插件，包括定义端点、模式、钩子、中间件、速率限制、受信任来源，以及使用自定义操作和原子构建客户端插件。
+description: 了解如何使用和创建 Better Auth 插件，包括定义端点、模式、钩子、中间件、限速规则、受信任来源，以及使用自定义操作和 Atom 构建客户端插件。
 ---
 
 插件是 Better Auth 的关键部分，它们允许您扩展基础功能。您可以使用插件添加新的身份验证方法、功能，或者自定义行为。
@@ -85,6 +86,26 @@ export const myPlugin = () => {
   您不必将插件定义为函数，但建议这样做。这样，您可以向插件传递选项，并且与内置插件保持一致。
 </Callout>
 
+### 注册插件类型
+
+可复用插件可以扩展 `BetterAuthPluginRegistry`，使 `getPlugin()` 返回其确切类型。注册表键必须与插件的 `id` 相同：
+
+```ts title="plugin.ts"
+declare module "@better-auth/core" {
+  interface BetterAuthPluginRegistry<AuthOptions, Options> {
+    "my-plugin": {
+      creator: typeof myPlugin;
+    };
+  }
+}
+```
+
+这只影响 TypeScript。用户仍然必须在运行时将插件添加到 `plugins` 数组中。
+
+<Callout type="info">
+  如果您将插件作为独立包发布，请将 `@better-auth/core` 声明为对等依赖项，并确保其支持的版本范围与 `better-auth` 相同。
+</Callout>
+
 ### 端点
 
 要向服务器添加端点，可以传入 `endpoints`，它是一个对象，键是任意字符串，值为 `AuthEndpoint`。
@@ -117,20 +138,20 @@ const myPlugin = () => {
 
 **Context 对象**
 
-* `appName`: 应用程序的名称。默认为 "Better Auth"。
-* `options`: 传递给 Better Auth 实例的选项。
-* `tables`: 核心表定义。它是一个对象，以表名为键，模式定义为值。
-* `baseURL`: 认证服务器的 baseURL。这包括路径。例如，如果服务器运行在 `http://localhost:3000`，那么 baseURL 将是 `http://localhost:3000/api/auth`，除非用户更改。
-* `session`: 会话配置。包括 `updateAge` 和 `expiresIn` 值。
-* `secret`: 用于各种目的的秘密密钥。这由用户定义。
-* `authCookie`: 核心认证 cookie 的默认配置。
-* `logger`: Better Auth 使用的日志记录器实例。
-* `db`: Better Auth 用于与数据库交互的 Kysely 实例。
-* `adapter`: 这与 db 相同，但它提供了类似 ORM 的函数来与数据库交互。（我们建议使用这个而不是 `db`，除非您需要原始 SQL 查询或出于性能原因）。
-* `internalAdapter`: 这些是 Better Auth 内部使用的数据库调用。例如，您可以使用这些调用来创建会话，而不是直接使用 `adapter`。`internalAdapter.createSession(userId)`
-* `createAuthCookie`: 这是一个帮助函数，让您获取用于 `set` 或 `get` cookie 的 cookie `name` 和 `options`。它实现了基于连接是否安全（HTTPS）或应用程序是否运行在生产模式下的 `__Secure-` 前缀等功能。
-* `trustedOrigins`: 这是您通过 `options.trustedOrigins` 指定的受信任来源列表。
-* `isTrustedOrigin`: 这是一个帮助函数，允许您快速检查给定的 URL 或路径是否基于受信任来源配置受信任。
+* `appName`：应用程序的名称。默认为 "Better Auth"。
+* `options`：传递给 Better Auth 实例的选项。
+* `tables`：核心表定义。它是一个对象，以表名为键，模式定义为值。
+* `baseURL`：认证服务器的 baseURL。这包括路径。例如，如果服务器运行在 `http://localhost:3000`，那么 baseURL 将是 `http://localhost:3000/api/auth`，除非用户更改。
+* `session`：会话配置。包括 `updateAge` 和 `expiresIn` 值。
+* `secret`：用于各种目的的秘密密钥。这由用户定义。
+* `authCookie`：核心认证 cookie 的默认配置。
+* `logger`：Better Auth 使用的日志记录器实例。
+* `db`：Better Auth 用于与数据库交互的 Kysely 实例。
+* `adapter`：这与 db 相同，但它提供了类似 ORM 的函数来与数据库交互。（我们建议使用这个而不是 `db`，除非您需要原始 SQL 查询或出于性能原因）。
+* `internalAdapter`：这些是 Better Auth 内部使用的数据库调用。例如，您可以使用这些调用来创建会话，而不是直接使用 `adapter`。`internalAdapter.createSession(userId)`
+* `createAuthCookie`：这是一个帮助函数，让您获取用于 `set` 或 `get` cookie 的 cookie `name` 和 `options`。它实现了基于连接是否安全（HTTPS）或应用程序是否运行在生产模式下的 `__Secure-` 前缀等功能。
+* `trustedOrigins`：这是您通过 `options.trustedOrigins` 指定的受信任来源列表。
+* `isTrustedOrigin`：这是一个帮助函数，允许您快速检查给定的 URL 或路径是否基于受信任来源配置受信任。
 
 要查看其他属性，请参考 <Link href="https://github.com/bekacru/better-call">Better Call</Link> 文档和 <Link href="https://github.com/better-auth/better-auth/blob/main/packages/better-auth/src/context/create-context.ts">源代码 </Link>。
 
@@ -181,7 +202,7 @@ const myPlugin = () => {
 
 **其他 Schema 属性**
 
-`unique`: 字段是否必须唯一。（默认：`false`）
+`unique`：字段是否必须唯一。（默认：`false`）
 
 对于跨多个字段的索引，请向表中添加 `indexes` 数组。即使字段具有自定义数据库列名，索引字段也使用 `fields` 中的逻辑字段键。
 
@@ -223,7 +244,7 @@ const directoryPlugin = {
 
 **其他 Schema 属性**
 
-`disableMigration`: 表是否不应进行迁移。（默认：`false`）
+`disableMigration`：表是否不应进行迁移。（默认：`false`）
 
 ```ts title="plugin.ts"
 import type { BetterAuthPlugin } from "better-auth";

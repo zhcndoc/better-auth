@@ -1,0 +1,204 @@
+---
+icon: authenticationCloudflare
+sidebarBadge: "New"
+title: Cloudflare
+description: Cloudflare 提供商的设置和用法。
+---
+
+<Steps>
+  <Step>
+    ### 获取 Cloudflare 凭据
+
+    要将 Cloudflare 用作社交登录提供商，请从 [Cloudflare 控制面板](https://dash.cloudflare.com/?to=/:account/oauth-clients)创建 OAuth 客户端。
+
+    1. 在 Cloudflare 控制面板中选择你的账户
+    2. 前往 **Manage Account** > **OAuth clients**
+    3. 选择 **Create client**
+    4. 使用 Authorization Code 流程，并将 `code` 设为响应类型
+    5. 将 **Token Authentication Method** 设为 `client_secret_basic`
+    6. 本地开发时，将重定向 URL 设为 `http://localhost:3000/api/auth/callback/cloudflare`。在生产环境中，将其设为你的应用程序 URL，例如 `https://example.com/api/auth/callback/cloudflare`
+    7. 选择 **User Details Read** 作为必需的范围，然后选择应用程序所需的其他 Cloudflare API 范围
+    8. 安全地保存客户端 ID 和客户端密钥
+
+    如果更改了 auth 路由的基本路径，请相应地更新重定向 URL。
+  </Step>
+
+  <Step>
+    ### 配置提供商
+
+    要配置提供商，请在 auth 配置中将 `clientId` 和 `clientSecret` 传递给 `socialProviders.cloudflare`。提供商默认请求 `user-details.read`，以便 Better Auth 能够从 Cloudflare API `/user` 端点（`https://api.cloudflare.com/client/v4/user`）读取用户的个人资料详情。
+
+    <Callout>
+      Cloudflare 的 OIDC `userinfo` 端点仅返回 `sub` 声明，因此提供商会改为从 Cloudflare API `/user` 端点读取用户的电子邮件和姓名。这要求 OAuth 客户端获准使用 `user-details.read` 范围。
+    </Callout>
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth"
+
+    export const auth = betterAuth({
+        socialProviders: {
+            cloudflare: { // [!code highlight]
+                clientId: process.env.CLOUDFLARE_CLIENT_ID as string, // [!code highlight]
+                clientSecret: process.env.CLOUDFLARE_CLIENT_SECRET as string, // [!code highlight]
+            }, // [!code highlight]
+        },
+    })
+    ```
+  </Step>
+</Steps>
+
+## 用法
+
+### 使用 Cloudflare 登录
+
+要使用 Cloudflare 登录，请使用客户端提供的 `signIn.social` 函数。`provider` 应设为 `cloudflare`。
+
+```ts
+import { authClient } from "@/lib/auth-client"
+
+const { data, error } = await authClient.signIn.social({
+    provider: "cloudflare"
+})
+```
+
+## 选项
+
+如需查看所有社交登录提供商支持的完整选项列表，请参阅[提供商选项](/docs/concepts/oauth#provider-options)。
+
+### 范围
+
+Cloudflare OAuth 范围名称与 Cloudflare API 令牌权限名称相对应。创建 OAuth 客户端时，请选择应用程序所需的范围。Better Auth 不会限制你可以请求的 Cloudflare 范围；你可以传递在 Cloudflare OAuth 客户端上配置的任意范围 ID。
+
+提供商默认请求 `user-details.read`。请将其配置为 Cloudflare OAuth 客户端的必需范围，因为 Better Auth 需要使用它从 `/user` 端点读取用户的电子邮件。如果将其设为可选范围，用户可以拒绝授权，导致无法完成登录。
+
+要请求其他 Cloudflare API 范围，请在 Cloudflare OAuth 客户端上选择这些范围，并通过 `scope` 选项添加其确切的范围 ID。
+
+例如：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+
+export const auth = betterAuth({
+    socialProviders: {
+        cloudflare: {
+            clientId: process.env.CLOUDFLARE_CLIENT_ID as string,
+            clientSecret: process.env.CLOUDFLARE_CLIENT_SECRET as string,
+            scope: [ // [!code highlight]
+                "workers-platform.read", // [!code highlight]
+            ], // [!code highlight]
+        },
+    },
+})
+```
+
+<Callout type="warn">
+  授权请求不得包含 Cloudflare OAuth 客户端配置中缺少的范围。Cloudflare 文档指出，可以通过 `GET https://api.cloudflare.com/client/v4/oauth/scopes` 获取确切的 OAuth 范围 ID。
+</Callout>
+
+### 令牌身份验证方法
+
+对于常规的服务端 Better Auth 应用程序，请使用 `client_secret_basic`。配置了 `clientSecret` 时，这是 Cloudflare 提供商默认使用的方法。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+
+export const auth = betterAuth({
+    socialProviders: {
+        cloudflare: {
+            clientId: process.env.CLOUDFLARE_CLIENT_ID as string,
+            clientSecret: process.env.CLOUDFLARE_CLIENT_SECRET as string,
+            // tokenEndpointAuthMethod: "client_secret_basic", // default // [!code highlight]
+        },
+    },
+})
+```
+
+如果你的 Cloudflare OAuth 客户端配置为使用 `client_secret_post`，请将 `tokenEndpointAuthMethod` 设为 `client_secret_post`：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+
+export const auth = betterAuth({
+    socialProviders: {
+        cloudflare: {
+            clientId: process.env.CLOUDFLARE_CLIENT_ID as string,
+            clientSecret: process.env.CLOUDFLARE_CLIENT_SECRET as string,
+            tokenEndpointAuthMethod: "client_secret_post", // [!code highlight]
+        },
+    },
+})
+```
+
+### 不使用密钥的客户端
+
+Cloudflare 的 [OAuth 流程指南](https://developers.cloudflare.com/fundamentals/oauth/create-an-oauth-client/#choose-a-flow)要求无法安全存储密钥的客户端（例如基于浏览器、移动设备、桌面或 CLI 的应用程序）使用带 PKCE（`S256`）的 Authorization Code 流程，并将 `token_endpoint_auth_method` 设为 `none`。对于这类客户端，请省略 `clientSecret` 并将 `tokenEndpointAuthMethod` 设为 `none`。Better Auth 会在授权流程中提供 PKCE 挑战和验证器。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+
+export const auth = betterAuth({
+    socialProviders: {
+        cloudflare: {
+            clientId: process.env.CLOUDFLARE_CLIENT_ID as string,
+            tokenEndpointAuthMethod: "none", // [!code highlight]
+        },
+    },
+})
+```
+
+### 客户端可见性
+
+Cloudflare 的[客户端可见性](https://developers.cloudflare.com/fundamentals/oauth/create-an-oauth-client/#private-and-public-clients)与令牌端点身份验证是相互独立的。新建的 OAuth 客户端默认为私有，因此只有父级 Cloudflare 账户的成员才能授权这些客户端。若要允许任何 Cloudflare 用户授权你的应用程序，请将客户端升级为公开客户端。
+
+升级需要提供客户端名称、徽标、客户端 URL、范围，并对客户端域名进行 DNS TXT 验证。升级后无法撤销。公开可见性并不决定客户端是否使用密钥；请根据应用程序是否能够安全存储密钥来选择令牌身份验证方法。
+
+### 刷新令牌
+
+默认配置足以让用户登录。如果应用程序需要长期访问 Cloudflare API，请将 OAuth 客户端配置为同时使用 `authorization_code` 和 `refresh_token` 授权类型，然后显式请求 `offline_access` 范围：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+
+export const auth = betterAuth({
+    socialProviders: {
+        cloudflare: {
+            clientId: process.env.CLOUDFLARE_CLIENT_ID as string,
+            clientSecret: process.env.CLOUDFLARE_CLIENT_SECRET as string,
+            scope: ["offline_access"], // [!code highlight]
+        },
+    },
+})
+```
+
+如果仅在登录期间需要访问 Cloudflare，请将 `offline_access` 保持为可选配置。
+
+### 个人资料和电子邮件验证
+
+提供商会从 Cloudflare API `/user` 端点读取用户的个人资料。该端点会返回用户的 `id` 和 `email`，以及可选的 `first_name` 和 `last_name` 字段。显示名称由可用的姓名字段组成；如果两者都不存在，则使用电子邮件作为显示名称。Cloudflare 不提供个人资料图片，因此 `image` 为空。
+
+Cloudflare 的 `/user` 端点不会公开电子邮件验证状态，因此默认情况下，账户电子邮件会被视为未经验证（`emailVerified: false`）。如果应用程序通过其他可信机制验证电子邮件，请通过 `mapProfileToUser` 返回验证结果：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth"
+import { verifyEmailOwnership } from "@/lib/email-verification"
+
+export const auth = betterAuth({
+    socialProviders: {
+        cloudflare: {
+            clientId: process.env.CLOUDFLARE_CLIENT_ID as string,
+            clientSecret: process.env.CLOUDFLARE_CLIENT_SECRET as string,
+            mapProfileToUser: async (profile) => {
+                // Verify the user's email through a trusted mechanism.
+                const emailVerified = await verifyEmailOwnership(profile.email)
+                return { emailVerified }
+            },
+        },
+    },
+})
+```
+
+<Callout type="warn">
+  读取个人资料需要 `user-details.read` 范围。如果 Cloudflare OAuth 客户端未获准使用此范围，`/user` 请求将失败，导致无法完成登录。
+</Callout>
+
+如需了解有关 Cloudflare OAuth 的更多信息，请参阅 [Cloudflare OAuth 文档](https://developers.cloudflare.com/fundamentals/oauth/)。

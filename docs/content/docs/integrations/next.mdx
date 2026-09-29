@@ -1,6 +1,8 @@
 ---
+icon: integrationsNext
+sidebarTitle: "Next"
 title: Next.js 集成
-description: 将 Better Auth 与 Next.js 集成。
+description: 将 Better Auth 集成到 Next.js 中。
 ---
 
 Better Auth 可以轻松集成到 Next.js 中。在开始之前，确保你已经配置好了 Better Auth 实例。如果还没有，可以查看[安装指南](/docs/installation)。
@@ -53,7 +55,7 @@ export const authClient =  createAuthClient({
 
 从认证实例导出的 `api` 对象包含你在服务器端可以执行的所有操作。Better Auth 内部创建的每个端点都可以像函数一样被调用，包括插件端点。
 
-**示例：在服务器操作中获取 session**
+**示例：在服务器操作中获取会话**
 
 ```tsx title="server.ts"
 import { auth } from "@/lib/auth"
@@ -67,7 +69,7 @@ const someAuthenticatedAction = async () => {
 };
 ```
 
-**示例：在 RSC 中获取 Session**
+**示例：在 RSC 中获取会话**
 
 ```tsx
 import { auth } from "@/lib/auth"
@@ -177,7 +179,7 @@ export const config = {
 ```
 
 <Callout type="info">
-  **从中间件迁移（Migration from middleware）：** 将 `middleware.ts` 重命名为 `proxy.ts`，并将 `middleware` 函数重命名为 `proxy`。所有 Better Auth 方法保持不变。
+  **从中间件迁移：** 将 `middleware.ts` 重命名为 `proxy.ts`，并将 `middleware` 函数重命名为 `proxy`。所有 Better Auth 方法保持不变。
 </Callout>
 
 ### Next.js 15.2.0+（Node.js 运行时中间件）
@@ -221,7 +223,7 @@ export const config = {
 
 #### Next.js 版本 `15.1.7` 及以下
 
-如果你需要完整的 session 对象，必须从 `/api/auth/get-session` API 路由获取。由于 Next.js 中间件不能直接执行 Node.js API，你必须发起 HTTP 请求。
+如果你需要完整的会话对象，必须从 `/api/auth/get-session` API 路由获取。由于 Next.js 中间件不能直接执行 Node.js API，你必须发起 HTTP 请求。
 
 <Callout>
   示例使用 [better-fetch](https://better-fetch.vercel.app)，你也可以使用任何其他 fetch 库。
@@ -325,7 +327,7 @@ export const config = {
   ```
 </Callout>
 
-你也可以使用 `getCookieCache` 助手从 Cookie 缓存中获取 session 对象。
+你也可以使用 `getCookieCache` 助手从 Cookie 缓存中获取会话对象。
 
 ```ts title="middleware.ts"
 import { getCookieCache } from "better-auth/cookies";
@@ -341,7 +343,7 @@ export async function middleware(request: NextRequest) {
 
 ### 如何在每个页面/路由中处理认证校验
 
-此示例中，我们在服务器组件中使用 `auth.api.getSession` 获取 session 对象，然后验证其有效性。如果无效，跳转至登录页面。
+此示例中，我们在服务器组件中使用 `auth.api.getSession` 获取会话对象，然后验证其有效性。如果无效，跳转至登录页面。
 
 ```tsx title="app/dashboard/page.tsx"
 import { auth } from "@/lib/auth";

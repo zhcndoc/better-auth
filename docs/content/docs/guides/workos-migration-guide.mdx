@@ -1,6 +1,8 @@
 ---
+icon: guidesWorkOSMigrationGuide
+sidebarTitle: "WorkOS 迁移指南"
 title: 从 WorkOS 迁移到 Better Auth
-description: 一步步指导如何从 WorkOS 迁移到 Better Auth。
+description: 从 WorkOS 迁移到 Better Auth 的分步指南。
 ---
 
 本指南将带您了解如何将项目从 WorkOS 迁移到 Better Auth，涵盖如何迁移一个与 Next.js 应用集成的基础 WorkOS 设置及关键注意事项。
@@ -10,9 +12,9 @@ description: 一步步指导如何从 WorkOS 迁移到 Better Auth。
 开始之前，让我们回顾一下哪些 WorkOS 认证功能在 Better Auth 中得到了完全或部分支持。如果您在 WorkOS 中使用的某个功能是通过插件提供的，您需要在下一步进行配置。
 
 <Accordions type="multiple">
-  <Accordion title="🟢 Supported">
+  <Accordion title="🟢 已支持">
     <>
-      | from WorkOS            | to Better Auth                                                                                     |
+      | 来自 WorkOS            | Better Auth 中的对应功能                                                                                |
       | ---------------------- | -------------------------------------------------------------------------------------------------- |
       | 单点登录               | 使用 [SSO 插件](/docs/plugins/sso)。                                                               |
       | 邮箱 + 密码            | 内置支持。                                                                                          |
@@ -34,9 +36,9 @@ description: 一步步指导如何从 WorkOS 迁移到 Better Auth。
     </>
   </Accordion>
 
-  <Accordion title="🟡 Partially supported">
+  <Accordion title="🟡 部分支持">
     <>
-      | from WorkOS           | to Better Auth                                                                                                                                                   |
+      | 来自 WorkOS           | Better Auth 中的对应功能                                                                                                                                                   |
       | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
       | 即时预配              | 通过 [SSO 插件](/docs/plugins/sso) 部分支持。                                                                                                                     |
       | 邀请                  | 没有现成的仪表板可用，但可以使用 [Admin 插件](/docs/plugins/admin) + [组织插件](/docs/plugins/organization) 实现。                                                |
@@ -689,19 +691,19 @@ description: 一步步指导如何从 WorkOS 迁移到 Better Auth。
 
 ## 注意事项
 
-<strong className="underline italic">Password hashes</strong>
+<strong className="underline italic">密码哈希</strong>
 
 如果您管理的用户使用邮箱 + 密码系统，则 WorkOS 目前不支持导出密码哈希。迁移后，用户需要在您的认证系统中重置密码。请务必在迁移前后充足时间内通知用户此变更。
 
-<strong className="underline italic">Data syncing</strong>
+<strong className="underline italic">数据同步</strong>
 
 WorkOS 作为托管服务，通过 API 或 Webhook 与您的服务器保持数据同步。Better Auth 则由您自行完全掌控认证系统，通过 API 自由管理数据。但如果之前依赖 Webhook 实现同步，则需要额外调整。
 
-<strong className="underline italic">Downtime</strong>
+<strong className="underline italic">停机时间</strong>
 
 WorkOS 通过其 API 暴露数据，但有限制，如不支持导出密码哈希。基于这些限制，实现零停机迁移较为困难。请规划好迁移流程，预留足够缓冲时间，并告知用户预期影响。
 
-<strong className="underline italic">Active sessions</strong>
+<strong className="underline italic">活跃会话</strong>
 
 现有活跃会话不会被迁移。迁移后用户需重新登录，务必提前通知用户。
 

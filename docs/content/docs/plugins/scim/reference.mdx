@@ -1,6 +1,8 @@
 ---
+icon: pluginsSCIMReference
+sidebarTitle: "参考"
 title: SCIM 参考
-description: SCIM 选项、端点、资源行为和数据库架构
+description: SCIM 选项、端点、资源行为和数据库 schema。
 ---
 
 此参考文档介绍 `@better-auth/scim` 支持的 SCIM 操作和配置
@@ -275,7 +277,7 @@ PATCH 接受标准 Enterprise 路径，例如 `urn:ietf:params:scim:schemas:exte
 }
 ```
 
-## Groups
+## 组
 
 | 方法       | 路径                         | 结果                                   |
 | -------- | -------------------------- | ------------------------------------ |
@@ -290,7 +292,7 @@ PATCH 接受标准 Enterprise 路径，例如 `urn:ietf:params:scim:schemas:exte
 
 每个 `members[].value` 必须包含来自同一连接的 SCIM User ID。成员只能是直接 Users。如果存在 `type`，则必须不区分大小写地等于 `User`。重复引用会合并，一个 Group 最多可包含 1,000 个唯一成员
 
-## Discovery
+## 发现
 
 | 方法    | 路径                                       | 结果                                        |
 | ----- | ---------------------------------------- | ----------------------------------------- |
@@ -359,7 +361,7 @@ Authorization: Bearer <token>
 | `name` 及其受支持的子属性                                            | `add`、`replace`、`remove` | 保留未指定的姓名字段。                                |
 | `emails`                                                    | `add`、`replace`          | 添加条目或替换完整集合。                               |
 | `emails.value`                                              | `add`、`replace`          | 替换每个电子邮件条目中的值。                             |
-| `emails[type eq "work"].value`                              | `add`、`replace`、`remove` | 选择 work email。                             |
+| `emails[type eq "work"].value`                              | `add`、`replace`、`remove` | 选择工作电子邮件。                                  |
 | `title`、`userType`、`preferredLanguage`、`locale`、`timezone`  | `add`、`replace`、`remove` | 更新或清除一个经典 User 字符串。                        |
 | `phoneNumbers`、`addresses`、`roles`、`entitlements`、其子属性和类型路径 | `add`、`replace`、`remove` | 支持完整数组和精确的 `type eq "<type>"` 选择器。         |
 | `enterpriseUrn` 及其可写子属性                                     | `add`、`replace`、`remove` | 保留未指定的 Enterprise 字段。                      |

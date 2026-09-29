@@ -1,11 +1,12 @@
 ---
+icon: pluginsDub
 title: Dub
 description: 使用 Dub 链接和 OAuth 关联进行更好的潜在客户跟踪认证插件
 ---
 
 [Dub](https://dub.co/) 是一个面向创业者、创作者和增长团队的开源现代链接管理平台。
 
-此插件允许您在用户通过 Dub 链接注册时跟踪潜在客户。它还添加了 OAuth 关联支持，以便您构建扩展 Dub 的链接管理基础设施的集成。
+此插件允许您在用户通过 Dub 链接注册时跟踪潜在客户。它还添加了 OAuth 关联支持，以便您构建扩展 Dub 链接管理基础设施的集成。
 
 ## 安装
 
@@ -109,7 +110,7 @@ const authClient = createAuthClient({
   ```ts
   type dubLink = {
     /**
-     * URL to redirect to after linking
+     * 链接后重定向到的 URL
      * @clientOnly
     */
     callbackURL: string = "/dashboard"

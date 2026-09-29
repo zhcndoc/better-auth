@@ -1,11 +1,12 @@
 ---
+icon: conceptsAPI
 title: API
-description: 了解如何在服务器上调用更佳认证 API 端点，传递 body、headers 和 query 参数，获取响应 headers，以及处理错误。
+description: 了解如何在服务器上调用 Better Auth API 端点，传递 body、headers 和 query 参数，获取响应 headers，以及处理错误。
 ---
 
-当你创建一个新的更佳认证（Better Auth）实例时，它会为你提供一个 `api` 对象。该对象暴露了你更佳认证实例中存在的每一个端点。你可以使用它在服务器端与更佳认证进行交互。
+当你创建一个新的 Better Auth 实例时，它会为你提供一个 `api` 对象。该对象暴露了 Better Auth 实例中的每一个端点。你可以使用它在服务器端与 Better Auth 进行交互。
 
-无论是来自插件还是核心添加到更佳认证的任何端点，都可以通过 `api` 对象访问。
+无论是来自插件还是核心添加到 Better Auth 的任何端点，都可以通过 `api` 对象访问。
 
 ## 在服务器上调用 API 端点
 
@@ -59,7 +60,7 @@ await auth.api.verifyEmail({
 
 当你在服务器上调用 API 端点时，它会直接返回标准的 JavaScript 对象或数组，因为这只是一个普通函数调用。
 
-但有时你可能想获取 `headers` 或 `Response` 对象，例如你需要获取 cookies 或 headers。
+但有时你可能想获取 `headers` 或 `Response` 对象，例如需要获取 cookies 或请求头时。
 
 #### 获取 `headers`
 
@@ -78,7 +79,7 @@ const { headers, response } = await auth.api.signUpEmail({
 });
 ```
 
-`headers` 是一个 `Headers` 对象，你可以用它来获取 cookies 或 headers。
+`headers` 是一个 `Headers` 对象，你可以用它来获取 cookies 或请求头。
 
 ```ts
 const cookies = headers.getSetCookie();

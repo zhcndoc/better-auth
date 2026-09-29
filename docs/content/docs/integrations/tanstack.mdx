@@ -1,4 +1,6 @@
 ---
+icon: integrationsTanStack
+sidebarTitle: "TanStack Start"
 title: TanStack Start 集成
 description: 将 Better Auth 集成到 TanStack Start。
 ---
@@ -89,7 +91,7 @@ const signIn = async () => {
 
 ### 保护资源
 
-要保护需要认证才能访问的资源，使用带有服务器函数的 `beforeLoad`。这确保每次导航时都会进行身份认证检查，包括通过 `<Link>` 进行的客户端导航。
+要保护需要认证才能访问的资源，请使用带有服务器函数的 `beforeLoad`。这确保每次导航时都会进行身份认证检查，包括通过 `<Link>` 进行的客户端导航。
 
 首先，创建服务器端的会话检查辅助函数：
 
@@ -147,7 +149,7 @@ function Dashboard() {
 
 #### 保护多个路由（布局）
 
-要保护多个路由，使用无路径的布局路由：
+要保护多个路由，请使用无路径的布局路由：
 
 ```tsx title="src/routes/_protected.tsx"
 import { createFileRoute, redirect, Outlet } from '@tanstack/react-router'

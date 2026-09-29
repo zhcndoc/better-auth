@@ -1,4 +1,5 @@
 ---
+icon: pluginsI18n
 title: i18n
 description: 用于翻译错误信息的国际化插件
 ---
@@ -51,30 +52,30 @@ Better Auth 默认已经提供了英文错误信息，所以你只需要提供�
 
 该软件包附带 22 种语言的现成翻译，因此你无需从头编写翻译。请从 `@better-auth/i18n` 导入 `locales` 以使用它们。
 
-| Code | Language  |
-| ---- | --------- |
+| 代码 | 语言          |
+| ---- | ------------- |
 | `ar` | 阿拉伯语      |
 | `bn` | 孟加拉语      |
-| `de` | 德语        |
-| `en` | 英语        |
+| `de` | 德语          |
+| `en` | 英语          |
 | `es` | 西班牙语      |
 | `fa` | 波斯语（法尔西语） |
-| `fr` | 法语        |
-| `hi` | 印地语       |
-| `id` | 印度尼西亚语    |
+| `fr` | 法语          |
+| `hi` | 印地语        |
+| `id` | 印度尼西亚语  |
 | `it` | 意大利语      |
-| `ja` | 日语        |
-| `ko` | 韩语        |
-| `nl` | 荷兰语       |
-| `pl` | 波兰语       |
+| `ja` | 日语          |
+| `ko` | 韩语          |
+| `nl` | 荷兰语        |
+| `pl` | 波兰语        |
 | `pt` | 葡萄牙语      |
-| `ru` | 俄语        |
-| `sv` | 瑞典语       |
-| `th` | 泰语        |
+| `ru` | 俄语          |
+| `sv` | 瑞典语        |
+| `th` | 泰语          |
 | `tr` | 土耳其语      |
 | `uk` | 乌克兰语      |
-| `vi` | 越南语       |
-| `zh` | 中文（简体）    |
+| `vi` | 越南语        |
+| `zh` | 中文（简体）  |
 
 ### 使用所有内置语言环境
 
@@ -201,7 +202,7 @@ i18n({
 Accept-Language: fr-CA, fr;q=0.9, en;q=0.8
 ```
 
-这将依次尝试 `fr-CA`（映射为 `fr`）、`fr`、然后 `en`。
+这将依次尝试 `fr-CA`（映射为 `fr`）、`fr`，然后是 `en`。
 
 ### 基于 Cookie 的检测
 
@@ -261,24 +262,24 @@ i18n({
 
 常见错误代码包括：
 
-| Code                           | Default Message |
+| 代码                           | 默认信息          |
 | ------------------------------ | --------------- |
-| `USER_NOT_FOUND`               | 找不到用户           |
-| `INVALID_EMAIL_OR_PASSWORD`    | 邮箱或密码无效         |
-| `INVALID_PASSWORD`             | 密码无效            |
-| `CREDENTIAL_ACCOUNT_NOT_FOUND` | 找不到凭据账户         |
-| `EMAIL_NOT_VERIFIED`           | 邮箱未验证           |
-| `SESSION_EXPIRED`              | 会话已过期           |
+| `USER_NOT_FOUND`               | 找不到用户        |
+| `INVALID_EMAIL_OR_PASSWORD`    | 邮箱或密码无效    |
+| `INVALID_PASSWORD`             | 密码无效          |
+| `CREDENTIAL_ACCOUNT_NOT_FOUND` | 找不到凭据账户    |
+| `EMAIL_NOT_VERIFIED`           | 邮箱未验证        |
+| `SESSION_EXPIRED`              | 会话已过期        |
 
 ## 选项
 
 ### `translations`
 
-**类型:** `Record<string, Record<string, string>>`
+**类型：** `Record<string, Record<string, string>>`
 
-**必填:** 是
+**必填：** 是
 
-一个以语言代码为键的翻译字典。每个语言包含错误代码到翻译信息的映射。由于 Better Auth 已经提供英文信息，通常只需提供其他语言的翻译。
+一个以语言代码为键的翻译字典。每种语言包含错误代码到翻译信息的映射。由于 Better Auth 已经提供英文信息，通常只需提供其他语言的翻译。
 
 ```ts
 translations: {
@@ -289,39 +290,39 @@ translations: {
 
 ### `defaultLocale`
 
-**类型:** `string`
+**类型：** `string`
 
-**默认值:** `"en"`
+**默认值：** `"en"`
 
 当无法检测到语言环境或检测到的语言环境不在翻译字典中时使用的回退语言。
 
 ### `detection`
 
-**类型:** `Array<"header" | "cookie" | "session" | "callback">`
+**类型：** `Array<"header" | "cookie" | "session" | "callback">`
 
-**默认:** `["header"]`
+**默认值：** `["header"]`
 
-语言环境检测策略数组，按优先级顺序。第一个返回有效语言的策略将被采用。
+语言环境检测策略数组，按优先级顺序排列。第一个返回有效语言的策略将被采用。
 
 ### `localeCookie`
 
-**类型:** `string`
+**类型：** `string`
 
-**默认:** `"locale"`
+**默认值：** `"locale"`
 
 使用 `"cookie"` 策略时读取的 Cookie 名称。
 
 ### `userLocaleField`
 
-**类型:** `string`
+**类型：** `string`
 
-**默认:** `"locale"`
+**默认值：** `"locale"`
 
 使用 `"session"` 策略时，存储用户语言环境偏好的用户字段名。
 
 ### `getLocale`
 
-**类型:** `(ctx: GenericEndpointContext) => string | null | Promise<string | null>`
+**类型：** `(ctx: GenericEndpointContext) => string | null | Promise<string | null>`
 
 使用 `"callback"` 策略时调用的自定义语言环境检测函数。接收完整端点上下文，返回语言代码或 `null`。
 

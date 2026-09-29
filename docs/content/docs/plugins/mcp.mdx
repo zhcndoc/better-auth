@@ -1,4 +1,5 @@
 ---
+icon: pluginsMCP
 title: MCP
 description: 将您的 Better Auth 服务器变成 MCP 客户端的 OAuth 提供商
 ---
@@ -91,7 +92,7 @@ description: 将您的 Better Auth 服务器变成 MCP 客户端的 OAuth 提供
 | 授权          | `/oauth2/authorize` |
 | 令牌          | `/oauth2/token`     |
 | 动态注册（显式启用时） | `/oauth2/register`  |
-| UserInfo    | `/oauth2/userinfo`  |
+| 用户信息        | `/oauth2/userinfo`  |
 
 发现机制遵循 OAuth 2.0 Authorization Server Metadata（[RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414)）和 Protected Resource Metadata（[RFC 9728](https://datatracker.ietf.org/doc/html/rfc9728)）。众所周知的 URL 根据 issuer 派生，因此带有基础路径的服务器会在插入 issuer 的位置提供这些 URL，而不是在根路径直接提供。只有在安装了 `cimd()` 时，发现信息才会公布 `client_id_metadata_document_supported`；只有启用 DCR 时，才会公布 `registration_endpoint`。
 
@@ -286,7 +287,7 @@ export const mcpPluginOptionsType = {
 
 <TypeTable type={mcpPluginOptionsType} />
 
-以下是最常调整的 OAuth provider 选项。完整列表请参阅 [OAuth Provider Configuration](/docs/plugins/oauth-provider#configuration)。
+以下是最常调整的 OAuth 提供方选项。完整列表请参阅 [OAuth Provider Configuration](/docs/plugins/oauth-provider#configuration)。
 
 export const mcpOauthOptionsType = {
   scopes: {

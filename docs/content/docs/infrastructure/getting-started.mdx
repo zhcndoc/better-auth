@@ -1,6 +1,7 @@
 ---
-title: 入门指南
-description: 本指南将帮助您将 Better Auth 基础设施集成到您的应用程序中。
+icon: infrastructureGettingStarted
+title: 开始使用
+description: 本指南将帮助您将 Better Auth Infrastructure 集成到您的应用程序中。
 ---
 
 <Steps>
@@ -26,8 +27,7 @@ description: 本指南将帮助您将 Better Auth 基础设施集成到您的应
   <Step>
     ## 环境变量
 
-    一旦您从基础设施仪表盘获取到 API 密钥，
-    请在生产环境变量中添加 `BETTER_AUTH_API_KEY` 环境变量。
+    一旦您从基础设施仪表盘获取到 API 密钥，请在生产环境变量中添加 `BETTER_AUTH_API_KEY` 环境变量。
 
     ```dotenv
     # 必填：您的 Better Auth 基础设施 API 密钥
@@ -97,9 +97,9 @@ export const authClient = createAuthClient({
 });
 ```
 
-### Expo和React Native
+### Expo 和 React Native
 
-对于 **Expo** 或 **React Native** 客户端，请从 `@better-auth/infra/native` 导入，而不是 `@better-auth/infra/client`。原生入口提供 `dashClient`（与Web客户端相同的审计日志API）和 `sentinelNativeClient`。
+对于 **Expo** 或 **React Native** 客户端，请从 `@better-auth/infra/native` 导入，而不是 `@better-auth/infra/client`。原生入口提供 `dashClient`（与 Web 客户端相同的审计日志 API）和 `sentinelNativeClient`。
 
 ```ts
 import { createAuthClient } from "better-auth/client";
@@ -116,11 +116,11 @@ export const authClient = createAuthClient({
 });
 ```
 
-详见 [Sentinel — Expo和React Native](/docs/infrastructure/plugins/sentinel#expo-and-react-native) 了解更多详情。
+详见 [Sentinel — Expo 和 React Native](/docs/infrastructure/plugins/sentinel#expo-and-react-native) 了解更多详情。
 
 ### 插件概览
 
-* **`dash()`** - 启用分析跟踪、审计日志、仪表盘管理API等功能
+* **`dash()`** - 启用分析跟踪、审计日志、仪表盘管理 API 等功能
 * **`sentinel()`** - 启用安全检查和滥用防护
 
 您可以单独使用其中任何一个插件，但同时使用两者可获得完整的 Better Auth 基础设施体验。
@@ -129,7 +129,7 @@ export const authClient = createAuthClient({
 
 既然您已经完成基础设置，可继续探索以下内容：
 
-* [仪表盘](/docs/infrastructure/plugins/dashboard) - 分析、活动跟踪和管理API
+* [仪表盘](/docs/infrastructure/plugins/dashboard) - 分析、活动跟踪和管理 API
 * [审计日志](/docs/infrastructure/plugins/audit-logs) - 跟踪和查询认证事件
 * [Sentinel](/docs/infrastructure/plugins/sentinel) - 配置高级安全
 * [邮件服务](/docs/infrastructure/services/email) - 设置事务性邮件

@@ -1,4 +1,5 @@
 ---
+icon: pluginsOrganization
 title: 组织
 description: 组织插件允许您管理组织的成员和团队。
 ---
@@ -152,9 +153,9 @@ const auth = betterAuth({
 
 ### 组织钩子
 
-您可以使用钩子来自定义组织操作，钩子会在各种组织相关活动的前后运行。Better Auth 提供了两种配置钩子方式：
+您可以使用钩子来自定义组织操作，钩子会在各种组织相关活动的前后运行。Better Auth 提供了两种配置钩子的方式：
 
-1. **遗留的 organizationCreation 钩子**（已弃用，改用 `organizationHooks`）
+1. **旧版 organizationCreation 钩子**（已弃用，改用 `organizationHooks`）
 2. **现代的 organizationHooks**（推荐）- 提供对所有组织活动的全面控制
 
 #### 组织创建与管理钩子
@@ -211,7 +212,7 @@ export const auth = betterAuth({
 ```
 
 <Callout type="info">
-  遗留的 `organizationCreation` 钩子仍受支持但已弃用。
+  旧版 `organizationCreation` 钩子仍受支持，但已弃用。
   新项目请使用 `organizationHooks.beforeCreateOrganization` 和
   `organizationHooks.afterCreateOrganization`。
 </Callout>
@@ -489,7 +490,7 @@ export const auth = betterAuth({
 
 #### 钩子错误处理
 
-所有钩子支持错误处理。在 `before` 钩子中抛出错误将阻止操作执行：
+所有钩子都支持错误处理。在 `before` 钩子中抛出错误将阻止操作执行：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -528,7 +529,7 @@ export const auth = betterAuth({
 
 ### 列出用户所在组织
 
-要列出用户所在的所有组织，可以使用 `useListOrganizations` 钩子。它实现了响应式地获取用户成员组织列表的功能。
+要列出用户所在的所有组织，可以使用 `useListOrganizations` 钩子。它可以响应式地获取用户所属组织列表。
 
 <Tabs items={["React", "Vue", "Svelte"]} default="React">
   <Tab value="React">
@@ -668,7 +669,7 @@ export const auth = betterAuth({
 
 #### 使用活跃组织
 
-要获取用户的活跃组织，可以调用 `useActiveOrganization` 钩子。该钩子返回用户的活跃组织并会在其变化时重新评估。
+要获取用户的活跃组织，可以调用 `useActiveOrganization` 钩子。该钩子返回用户的活跃组织，并会在其变化时重新评估。
 
 <Tabs items={['React', 'Vue', 'Svelte']}>
   <Tab value="React">
@@ -741,11 +742,11 @@ export const auth = betterAuth({
   ```ts
   type getOrganization = {
       /**
-       * The organization ID to get. By default, it will use the active organization.  
+       * 要获取的组织 ID。默认情况下，将使用活跃组织。  
        */
       organizationId?: string = "org-id"
       /**
-       * The organization slug to get.  
+       * 要获取的组织短名称。  
        */
       organizationSlug?: string = "org-slug"
   }
@@ -1254,7 +1255,7 @@ const invitations = await auth.api.listUserInvitations({
   <Step>
     #### 创建访问控制
 
-    你首先需要通过调用 `createAccessControl` 函数并传入 statement 对象来创建访问控制器。statement 对象应以资源名作为键，以操作数组作为值。
+    您首先需要通过调用 `createAccessControl` 函数并传入 statement 对象来创建访问控制器。statement 对象应以资源名作为键，以操作数组作为值。
 
     ```ts title="permissions.ts"
     import { createAccessControl } from "better-auth/plugins/access";
@@ -1499,12 +1500,12 @@ export const authClient = createAuthClient({
 ```
 
 <Callout>
-  启用后，需要迁移新增数据库中 `organizationRole` 表。
+  启用后，需要迁移新增数据库中的 `organizationRole` 表。
 </Callout>
 
 <Callout type="warn">
-  `authClient.organization.checkRolePermission` 函数仍不会包含动态角色，因其是客户端同步执行。
-  请使用 [hasPermission](#access-control-usage) API 以包含动态角色权限检测。
+  `authClient.organization.checkRolePermission` 函数仍不会包含动态角色，因为它在客户端同步执行。
+  请使用 [hasPermission](#access-control-usage) API 以包含动态角色权限检查。
 </Callout>
 
 ### 创建角色
@@ -1512,8 +1513,8 @@ export const authClient = createAuthClient({
 运行时为组织创建新角色，可调用 `createRole`。
 
 仅具备 `ac` 资源中 `create` 权限的角色可创建新角色。
-默认只有管理员和所有者拥有该权限。
-且无法添加超出自身权限的权限。
+默认情况下，只有管理员和所有者拥有该权限。
+并且无法添加超出自身权限的权限。
 
 <APIMethod path="/organization/create-role" method="POST" requireSession noResult>
   ```ts
@@ -1540,7 +1541,7 @@ export const authClient = createAuthClient({
   ```
 </APIMethod>
 
-之后可随意调用 [`updateMemberRole`](#update-member-role)，将新角色赋予成员！
+之后可随时调用 [`updateMemberRole`](#update-member-role)，将新角色赋予成员！
 
 ### 删除角色
 
@@ -1568,7 +1569,7 @@ export const authClient = createAuthClient({
 ### 列出角色
 
 调用 `listOrgRoles` 列出组织内的所有角色。
-该操作需要成员具有 `ac` 资源中的 `read` 权限。
+该操作要求成员具有 `ac` 资源中的 `read` 权限。
 
 <APIMethod path="/organization/list-roles" method="GET" requireSession resultVariable="roles">
   ```ts
@@ -1654,9 +1655,9 @@ organization({
 
 #### `maximumRolesPerOrganization`
 
-限制每个组织可创建角色数量。
+限制每个组织可创建的角色数量。
 
-默认无限制。
+默认不设限制。
 
 ```ts
 organization({
@@ -1700,7 +1701,7 @@ organization({
 })
 ```
 
-若未使用 `inferOrgAdditionalFields` 推断额外字段，可以使用它推断。
+如果未使用 `inferOrgAdditionalFields` 推断额外字段，可以使用它来推断。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -1744,11 +1745,11 @@ export const authClient = createAuthClient({
 
 ## 团队
 
-团队允许您在组织内对成员进行分组。团队功能提供了额外的组织结构，可用于更细粒度地管理权限。
+团队允许您在组织内对成员进行分组。团队功能提供了额外的组织结构，可用于更精细地管理权限。
 
 ### 启用团队
 
-传递 `teams` 配置项给服务器和客户端插件启用团队：
+向服务器和客户端插件传递 `teams` 配置项以启用团队：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -1805,7 +1806,7 @@ export const authClient = createAuthClient({
 
 #### 列出团队
 
-获取组织内所有团队：
+获取组织内的所有团队：
 
 <APIMethod path="/organization/list-teams" method="GET" requireSession>
   ```ts
@@ -1856,7 +1857,7 @@ export const authClient = createAuthClient({
 
 #### 移除团队
 
-从组织删除团队：
+从组织中删除团队：
 
 <APIMethod path="/organization/remove-team" method="POST">
   ```ts
@@ -1891,7 +1892,7 @@ export const authClient = createAuthClient({
 
 #### 列出用户团队
 
-列出用户所属的所有团队。默认为当前用户，并返回该用户所属每个组织中的团队。
+列出用户所属的所有团队。默认针对当前用户，并返回该用户所属的每个组织中的团队。
 
 * 传入 `userId` 可列出其他成员所属的团队。此操作受目标组织中 `member:update` 权限的限制。
 * 传入 `organizationId` 可将结果限定为单个组织，无需切换会话的活跃组织。省略时，查询其他用户将使用会话的活跃组织。
@@ -1904,7 +1905,7 @@ export const authClient = createAuthClient({
      */
     userId?: string
     /**
-     * 用于限定团队列表范围的组织 ID。对自身进行查询时若省略，则返回该用户所属每个组织中的团队。查询其他用户时，则回退到会话的活跃组织。
+     * 用于限定团队列表范围的组织 ID。对自身进行查询时若省略，则返回该用户所属的每个组织中的团队。查询其他用户时，则回退到会话的活跃组织。
      */
     organizationId?: string
   }
@@ -1919,7 +1920,7 @@ export const authClient = createAuthClient({
   ```ts
   type listTeamMembers = {
       /**
-       * 我们应返回其成员的团队。如果未提供此项，则返回当前活跃团队的成员。
+       * 应返回其成员的团队。如果未提供此项，则返回当前活跃团队的成员。
        */
       teamId?: string = "team-id"
   }
@@ -1928,17 +1929,17 @@ export const authClient = createAuthClient({
 
 #### 添加团队成员
 
-添加成员到团队。
+将成员添加到团队。
 
 <APIMethod path="/organization/add-team-member" method="POST" requireSession>
   ```ts
   type addTeamMember = {
       /**
-       * 用户应成为其成员的团队。
+       * 用户应加入的团队。
        */
       teamId: string = "team-id"
       /**
-       * 代表要添加为成员的用户 ID。
+       * 要添加为成员的用户 ID。
        */
       userId: string = "user-id"
   }
@@ -1947,17 +1948,17 @@ export const authClient = createAuthClient({
 
 #### 移除团队成员
 
-从团队移除成员。
+从团队中移除成员。
 
 <APIMethod path="/organization/remove-team-member" method="POST" requireSession>
   ```ts
   type removeTeamMember = {
       /**
-       * 用户应从中移除的团队。
+       * 要从中移除用户的团队。
        */
       teamId: string = "team-id"
       /**
-       * 应从团队中移除的用户。
+       * 要从团队中移除的用户。
        */
       userId: string = "user-id"
   }
@@ -1981,19 +1982,19 @@ export const authClient = createAuthClient({
 
 团队功能支持以下配置：
 
-* `maximumTeams`: 限制每个组织的团队数量
+* `maximumTeams`：限制每个组织的团队数量
 
   ```ts
   teams: {
     enabled: true,
-    maximumTeams: 10 // 固定数目
+    maximumTeams: 10 // 固定数量
     // 或
     maximumTeams: async ({ organizationId, session }, ctx) => {
       // 基于组织计划动态限制
       const plan = await getPlan(organizationId)
       return plan === 'pro' ? 20 : 5
     },
-    maximumMembersPerTeam: 10 // 固定数目
+    maximumMembersPerTeam: 10 // 固定数量
     // 或
     maximumMembersPerTeam: async ({ teamId, session, organizationId }, ctx) => {
       // 基于团队计划动态限制
@@ -2003,9 +2004,9 @@ export const authClient = createAuthClient({
   }
   ```
 
-  `maximumMembersPerTeam` 在接受团队邀请、将现有组织成员添加到团队，以及通过 `teamId` 添加新组织成员时强制执行。
+  接受团队邀请、将现有组织成员添加到团队，以及通过 `teamId` 添加新组织成员时，都会强制执行 `maximumMembersPerTeam` 限制。
 
-* `allowRemovingAllTeams`: 控制是否可以移除最后一个团队
+* `allowRemovingAllTeams`：控制是否可以移除最后一个团队
   ```ts
   teams: {
     enabled: true,
@@ -2015,7 +2016,7 @@ export const authClient = createAuthClient({
 
 ### 团队成员
 
-邀请成员加入组织时可指定团队：
+邀请成员加入组织时可以指定团队：
 
 ```ts
 await authClient.organization.inviteMember({
@@ -2029,7 +2030,7 @@ await authClient.organization.inviteMember({
 
 ### 数据库模式
 
-启用团队时，数据库中新增 `team` 和 `teamMember` 表。
+启用团队时，数据库中将新增 `team` 和 `teamMember` 表。
 
 表名：`team`
 
@@ -2560,8 +2561,8 @@ await client.organization.create({
 
 **invitationExpiresIn** : `number` - 邀请链接有效时间（秒），默认 48 小时（2 天）。
 
-**cancelPendingInvitationsOnReInvite**: `boolean` - 如果用户已邀请，是否取消待处理邀请。默认 `false`。
+**cancelPendingInvitationsOnReInvite**: `boolean` - 如果用户已被邀请，是否取消待处理邀请。默认 `false`。
 
 **invitationLimit**: `number` | `((user: User) => Promise<boolean> | boolean)` - 用户允许的最大邀请数。默认 100。
 
-**requireEmailVerificationOnInvitation**: `boolean | undefined` - 是否在受邀者调用带有邀请 ID 的邀请相关接口（`acceptInvitation`、`rejectInvitation`、`getInvitation`）之前要求邮箱验证。若未设置，Better Auth 会对内置的、不可见的邀请 ID 保持正常的邮件邀请流程，包括默认生成器以及 `advanced.database.generateId: "uuid"`。对于外部可控或可预测的邀请 ID，例如 `advanced.database.generateId: "serial"` / `false` 或自定义 ID 生成方式，则会要求验证。当邀请 ID 可能在受邀用户邮箱之外可见、当组织邀请列表会向成员公开，或者你希望已验证邮箱作为按 ID 执行邀请操作的所有权证明时，请将此选项设为 `true`。客户端侧的 `listUserInvitations` 始终需要已验证的会话邮箱，因为它会从会话邮箱中枚举邀请 ID。
+**requireEmailVerificationOnInvitation**: `boolean | undefined` - 是否在受邀者调用带有邀请 ID 的邀请相关接口（`acceptInvitation`、`rejectInvitation`、`getInvitation`）之前要求邮箱验证。若未设置，Better Auth 会对内置的、不可见的邀请 ID 保持正常的邮件邀请流程，包括默认生成器以及 `advanced.database.generateId: "uuid"`。对于外部可控或可预测的邀请 ID，例如 `advanced.database.generateId: "serial"` / `false` 或自定义 ID 生成方式，则会要求验证。当邀请 ID 可能在受邀用户邮箱之外可见、组织邀请列表会向成员公开，或者你希望已验证邮箱作为按 ID 执行邀请操作的所有权证明时，请将此选项设为 `true`。客户端侧的 `listUserInvitations` 始终需要已验证的会话邮箱，因为它会从会话邮箱中枚举邀请 ID。

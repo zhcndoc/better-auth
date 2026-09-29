@@ -1,4 +1,5 @@
 ---
+icon: referenceTelemetry
 title: 远程测量
 description: Better Auth 现在会收集有关一般使用情况的匿名远程测量数据。
 ---
@@ -15,19 +16,19 @@ Better Auth 会收集匿名使用数据，以帮助我们改进项目。这是�
 
 可能会报告以下数据点。所有数据均为匿名，仅用于汇总分析。
 
-* **Anonymous identifier**: 一个不可逆的哈希值，来源于你的项目（`package.json` 名称和可选的 `baseURL`）。这使我们能够在不识别用户身份的情况下去重每个项目的事件。
-* **Runtime**: `{ name: "node" | "bun" | "deno", version }`。
-* **Environment**: `development`、`production`、`test` 或 `ci` 之一。
-* **Framework（如果检测到）**: 如 Next.js、Nuxt、React Router、Astro、SvelteKit 等框架的 `{ name, version }`。
-* **Database（如果检测到）**: 如 PostgreSQL、MySQL、SQLite、Prisma、Drizzle、MongoDB 等集成的 `{ name, version }`。
-* **System info**: 平台、操作系统版本、架构、CPU 数量/型号/速度、总内存，以及 `isDocker`、`isWSL`、`isTTY` 等标志。
-* **Package manager**: 从 npm 用户代理中解析出的 `{ name, version }`。
-* **Redacted auth config snapshot**: 通过 `getTelemetryAuthConfig` 生成的 `betterAuth` 选项的精简、隐私保护视图。
+* **匿名标识符**：一个不可逆的哈希值，来源于你的项目（`package.json` 名称和可选的 `baseURL`）。这使我们能够在不识别用户身份的情况下去重每个项目的事件。
+* **运行时**：`{ name: "node" | "bun" | "deno", version }`。
+* **环境**：`development`、`production`、`test` 或 `ci` 之一。
+* **框架（如果检测到）**：如 Next.js、Nuxt、React Router、Astro、SvelteKit 等框架的 `{ name, version }`。
+* **数据库（如果检测到）**：如 PostgreSQL、MySQL、SQLite、Prisma、Drizzle、MongoDB 等集成的 `{ name, version }`。
+* **系统信息**：平台、操作系统版本、架构、CPU 数量/型号/速度、总内存，以及 `isDocker`、`isWSL`、`isTTY` 等标志。
+* **包管理器**：从 npm 用户代理中解析出的 `{ name, version }`。
+* **经过删减的身份验证配置快照**：通过 `getTelemetryAuthConfig` 生成的 `betterAuth` 选项的精简、隐私保护视图。
 
 我们还会从 CLI 收集匿名遥测数据：
 
-* **CLI generate (`cli_generate`)**: 结果为 `generated | overwritten | appended | no_changes | aborted`，并附带精简后的配置。
-* **CLI migrate (`cli_migrate`)**: 结果为 `migrated | no_changes | aborted | unsupported_adapter`，并附带适配器 ID（如果相关）以及精简后的配置。
+* **CLI 生成（`cli_generate`）**：结果为 `generated | overwritten | appended | no_changes | aborted`，并附带精简后的配置。
+* **CLI 迁移（`cli_migrate`）**：结果为 `migrated | no_changes | aborted | unsupported_adapter`，并附带适配器 ID（如果相关）以及精简后的配置。
 
 <Callout type="info">
   你可以通过设置环境变量 `BETTER_AUTH_TELEMETRY_DEBUG=1` 在本地审计远程测量，或在身份验证配置中设置 `telemetry: { debug: true }`。在此调试模式下，远程测量事件仅记录到控制台。
@@ -46,15 +47,15 @@ Better Auth 会收集匿名使用数据，以帮助我们改进项目。这是�
 
 所有收集的数据完全匿名，仅在汇总时有用。无法追溯到任何个人来源，仅由少数 Better Auth 核心维护者访问，用于指导产品路线图决策。
 
-* **No PII or secrets**: 我们不会收集电子邮件、用户名、令牌、密钥、客户端 ID、客户端密钥或数据库 URL。
-* **No full config**: 我们永远不会发送你完整的 `betterAuth` 配置。相反，我们发送的是经过精简、脱敏的非敏感开关和计数的快照。
-* **Redaction by design**: 请参阅 Better Auth 源代码中的 [detect-auth-config.ts](https://github.com/better-auth/better-auth/blob/main/packages/telemetry/src/detectors/detect-auth-config.ts)，以了解所包含内容的确切结构。它故意将敏感值转换为布尔值、计数或通用标识符。
+* **不收集个人身份信息或机密信息**：我们不会收集电子邮件、用户名、令牌、密钥、客户端 ID、客户端密钥或数据库 URL。
+* **不收集完整配置**：我们永远不会发送你完整的 `betterAuth` 配置。相反，我们发送的是经过精简、脱敏的非敏感开关和计数的快照。
+* **通过设计进行脱敏**：请参阅 Better Auth 源代码中的 [detect-auth-config.ts](https://github.com/better-auth/better-auth/blob/main/packages/telemetry/src/detectors/detect-auth-config.ts)，以了解所包含内容的确切结构。它故意将敏感值转换为布尔值、计数或通用标识符。
 
 ## 如何启用？
 
 你可以在身份验证配置中启用远程测量，或设置环境变量。
 
-* Via your auth config.
+* 通过身份验证配置。
 
   ```ts title="auth.ts"
   export const auth = betterAuth({
@@ -65,7 +66,7 @@ Better Auth 会收集匿名使用数据，以帮助我们改进项目。这是�
   });
   ```
 
-* Via an environment variable.
+* 通过环境变量。
 
   ```txt title=".env"
   # 启用远程测量
@@ -75,9 +76,9 @@ Better Auth 会收集匿名使用数据，以帮助我们改进项目。这是�
   BETTER_AUTH_TELEMETRY=0
   ```
 
-### When is telemetry sent?
+### 何时发送远程测量数据？
 
 * 在 `betterAuth` 初始化时（`type: "init"`）。
-* 在 CLI 动作中：如上所述的 `generate` 和 `migrate`。
+* 在 CLI 操作中：如上所述的 `generate` 和 `migrate`。
 
 除非被内部工具显式覆盖，否则在测试（`NODE_ENV=test`）中会自动禁用遥测。

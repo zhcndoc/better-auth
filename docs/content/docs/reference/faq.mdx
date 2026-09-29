@@ -1,12 +1,13 @@
 ---
-title: 常见问题解答
-description: 关于 Better Auth 的常见问题解答。
+icon: referenceFAQ
+title: 常见问题
+description: 关于 Better Auth 的常见问题。
 ---
 
 此页面包含有关 Better Auth 的常见问题、常见问题及其他有用信息。
 
 <Accordions>
-  <Accordion id="auth-client-not-working" title="Auth client not working">
+  <Accordion id="auth-client-not-working" title="认证客户端无法正常工作">
     当遇到 `createAuthClient` 相关错误时，请确保使用正确的导入路径，因为其会根据环境而有所不同。
 
     如果你在 React 前端使用认证客户端，你需要从 `/react` 导入它：
@@ -22,7 +23,7 @@ description: 关于 Better Auth 的常见问题解答。
     ```
   </Accordion>
 
-  <Accordion id="getsession-not-working" title="getSession not working">
+  <Accordion id="getsession-not-working" title="getSession 无法正常工作">
     如果尝试在服务器环境（例如 Next.js 服务器组件）中调用 `authClient.getSession`，它是无法工作的，因为它无法访问 Cookie。你可以使用 `auth.api.getSession` 并传入请求头。
 
     ```tsx title="server.tsx"

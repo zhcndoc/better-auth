@@ -1,6 +1,7 @@
 ---
+icon: authenticationSalesforce
 title: Salesforce
-description: Salesforce 提供者的设置和使用。
+description: Salesforce 提供程序的设置和使用。
 ---
 
 <Steps>
@@ -8,22 +9,22 @@ description: Salesforce 提供者的设置和使用。
     ### 获取 Salesforce 凭证
 
     1. 登录您的 Salesforce 组织（生产版或开发者版）
-    2. 导航至 **Setup > App Manager**
-    3. 点击 **New Connected App**
+    2. 导航至 **设置 > 应用管理器**
+    3. 点击 **新建连接应用**
     4. 填写基本信息：
-       * Connected App Name：您的应用名称
-       * API Name：根据应用名称自动生成
-       * Contact Email：您的电子邮件地址
+       * 连接应用名称：您的应用名称
+       * API 名称：根据应用名称自动生成
+       * 联系邮箱：您的电子邮件地址
     5. 启用 OAuth 设置：
-       * 勾选 **Enable OAuth Settings**
-       * 将 **Callback URL** 设置为您的重定向 URI（例如开发环境使用 `http://localhost:3000/api/auth/callback/salesforce`）
+       * 勾选 **启用 OAuth 设置**
+       * 将 **回调 URL** 设置为您的重定向 URI（例如开发环境使用 `http://localhost:3000/api/auth/callback/salesforce`）
        * 选择所需的 OAuth 范围：
          * 访问基本信息（id）
          * 访问身份 URL 服务（openid）
          * 访问电子邮件地址（email）
          * 随时代表您发起请求（refresh_token, offline_access）
-    6. 启用 **Require Proof Key for Code Exchange (PKCE)**（必需）
-    7. 保存并记录您的 **Consumer Key**（客户端 ID）和 **Consumer Secret**（客户端密钥）
+    6. 启用 **要求使用代码交换证明密钥（PKCE）**（必需）
+    7. 保存并记录您的 **消费者密钥**（客户端 ID）和 **消费者密钥**（客户端密钥）
 
     <Callout type="info">
       * 开发环境中可以使用 `http://localhost:3000` 网址，但生产环境需要 HTTPS

@@ -1,6 +1,7 @@
 ---
-title: 一键登录
-description: 用于 Better Auth 的一键登录插件
+icon: pluginsOneTap
+title: One Tap
+description: Better Auth 的 One Tap 插件
 ---
 
 一键登录插件允许用户通过 Google 的 One Tap API 只需轻点一次即可登录。该插件为您提供一个简单的方式将 One Tap 集成到您的应用中，负责处理客户端和服务器端的逻辑。
@@ -175,36 +176,36 @@ await authClient.oneTap({
 
 ### 客户端选项
 
-* `clientId`: 您的 Google One Tap API 的客户端 ID。
-* `autoSelect`: 如果用户已登录，自动选择账户。默认为 false。
-* `cancelOnTapOutside`: 当用户点击弹窗外部时取消 One Tap 弹窗。请注意，当 FedCM 处于活动状态时，此选项可能无效，因为浏览器会管理取消行为。默认为 true。
-* `uxMode`: Google One Tap 流程使用的模式。可以是 "popup" 或 "redirect"。默认为 "popup"。
-* `context`: 应使用 One Tap API 的上下文。可以是 "signin"、"signup" 或 "use"。默认为 "signin"。
-* `additionalOptions`: 额外的选项，按照 [Google Identity Services 文档](https://developers.google.com/identity/gsi/web/reference/js-reference#google.accounts.id.prompt) 传递给 Google 的初始化方法。
-* `promptOptions`: 提示行为和指数退避的配置：
-  * `baseDelay`: 重试延迟基数（毫秒）。默认是 1000。
-  * `maxAttempts`: 触发 onPromptNotification 回调前的最大尝试次数。默认是 5。
-  * `fedCM`: 启用时，调用 [`navigator.credentials.preventSilentAccess()`](https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/preventSilentAccess) 以在登出时清除浏览器的 FedCM 凭据状态。FedCM 本身由 Google Identity Services 库管理，无法禁用。默认是 true。
+* `clientId`：您的 Google One Tap API 的客户端 ID。
+* `autoSelect`：如果用户已登录，自动选择账户。默认为 false。
+* `cancelOnTapOutside`：当用户点击弹窗外部时取消 One Tap 弹窗。请注意，当 FedCM 处于活动状态时，此选项可能无效，因为浏览器会管理取消行为。默认为 true。
+* `uxMode`：Google One Tap 流程使用的模式。可以是 "popup" 或 "redirect"。默认为 "popup"。
+* `context`：应使用 One Tap API 的上下文。可以是 "signin"、"signup" 或 "use"。默认为 "signin"。
+* `additionalOptions`：额外的选项，按照 [Google Identity Services 文档](https://developers.google.com/identity/gsi/web/reference/js-reference#google.accounts.id.prompt) 传递给 Google 的初始化方法。
+* `promptOptions`：提示行为和指数退避的配置：
+  * `baseDelay`：重试延迟基数（毫秒）。默认是 1000。
+  * `maxAttempts`：触发 onPromptNotification 回调前的最大尝试次数。默认是 5。
+  * `fedCM`：启用时，调用 [`navigator.credentials.preventSilentAccess()`](https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/preventSilentAccess) 以在登出时清除浏览器的 FedCM 凭据状态。FedCM 本身由 Google Identity Services 库管理，无法禁用。默认是 true。
 
 ### 按钮模式选项
 
 使用按钮模式时，向 `oneTap` 方法传递 `button` 对象，包含以下属性：
 
-* `container`: 渲染按钮的 HTML 元素或 CSS 选择器（必需）
-* `config`: 按钮配置选项（可选）：
-  * `type`: 按钮类型 - `"standard"`（默认）或 `"icon"`（仅图标）
-  * `theme`: 按钮主题 - `"outline"`（默认）、`"filled_blue"` 或 `"filled_black"`
-  * `size`: 按钮大小 - `"large"`（默认）、`"medium"` 或 `"small"`
-  * `text`: 按钮文本 - `"signin_with"`（默认）、`"signup_with"`、`"continue_with"` 或 `"signin"`
-  * `shape`: 按钮形状 - `"rectangular"`（默认）、`"pill"`、`"circle"` 或 `"square"`
-  * `logo_alignment`: Google Logo 对齐方式 - `"left"`（默认）或 `"center"`（仅标准按钮）
-  * `width`: 最小按钮宽度（像素，最大 400）
-  * `locale`: 使用指定的语言代码显示按钮（例如 `"zh_CN"`）
+* `container`：渲染按钮的 HTML 元素或 CSS 选择器（必需）
+* `config`：按钮配置选项（可选）：
+  * `type`：按钮类型——`"standard"`（默认）或 `"icon"`（仅图标）
+  * `theme`：按钮主题——`"outline"`（默认）、`"filled_blue"` 或 `"filled_black"`
+  * `size`：按钮大小——`"large"`（默认）、`"medium"` 或 `"small"`
+  * `text`：按钮文本——`"signin_with"`（默认）、`"signup_with"`、`"continue_with"` 或 `"signin"`
+  * `shape`：按钮形状——`"rectangular"`（默认）、`"pill"`、`"circle"` 或 `"square"`
+  * `logo_alignment`：Google Logo 对齐方式——`"left"`（默认）或 `"center"`（仅标准按钮）
+  * `width`：最小按钮宽度（像素，最大 400）
+  * `locale`：使用指定的语言代码显示按钮（例如 `"zh_CN"`）
 
 ### 服务器端选项
 
-* `disableSignUp`: 禁用注册选项，仅允许现有用户登录。默认为 false。
-* `clientId`: 用于验证 ID 令牌受众的 Google 客户端 ID。除非配置了 `socialProviders.google.clientId`，否则为必需项。
+* `disableSignUp`：禁用注册选项，仅允许现有用户登录。默认为 false。
+* `clientId`：用于验证 ID 令牌受众的 Google 客户端 ID。除非配置了 `socialProviders.google.clientId`，否则为必需项。
 
 <Callout type="info">
   **限制为 Google Workspace 域（`hd`）**
@@ -217,4 +218,4 @@ await authClient.oneTap({
 
 ### 已授权的 JavaScript 来源
 
-请确保为您的客户端 ID 配置已授权的 JavaScript 来源（例如 [http://localhost:3000](http://localhost:3000), [https://example.com](https://example.com)）。这是 Google One Tap API 的必需步骤，除非正确设置了来源，否则无法正常工作。
+请确保为您的客户端 ID 配置已授权的 JavaScript 来源（例如 [http://localhost:3000](http://localhost:3000)、[https://example.com](https://example.com)）。这是 Google One Tap API 的必需步骤，除非正确设置了来源，否则无法正常工作。

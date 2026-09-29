@@ -1,4 +1,5 @@
 ---
+icon: authenticationSlack
 title: Slack
 description: Slack 提供者的设置和使用说明。
 ---
@@ -18,7 +19,7 @@ description: Slack 提供者的设置和使用说明。
     5. 从“基本信息”页面复制你的客户端 ID 和客户端密钥
 
     <Callout>
-      生产环境中，Slack 要求重定向 URL 使用 HTTPS。在本地开发时，你可以使用 [ngrok](https://ngrok.com/) 等工具创建安全隧道。
+      在生产环境中，Slack 要求重定向 URL 使用 HTTPS。在本地开发时，你可以使用 [ngrok](https://ngrok.com/) 等工具创建安全隧道。
     </Callout>
   </Step>
 
@@ -61,7 +62,7 @@ const signIn = async () => {
 
 ### 请求额外权限范围
 
-默认情况下，Slack 使用 OpenID Connect 的权限范围：`openid`、`profile` 和 `email`。你可以在登录时请求额外的 Slack 权限：
+默认情况下，Slack 使用 OpenID Connect 权限范围：`openid`、`profile` 和 `email`。你可以在登录时请求额外的 Slack 权限：
 
 ```ts title="auth-client.ts"
 const signInWithSlack = async () => {
@@ -100,5 +101,5 @@ if (session?.user) {
 ```
 
 <Callout>
-  Slack 提供者默认使用 OpenID Connect，这提供了基础的用户信息。如果需要访问其他 Slack API，请确保在登录时请求相应的权限范围。
+  Slack 提供者默认使用 OpenID Connect，它提供了基础的用户信息。如果需要访问其他 Slack API，请确保在登录时请求相应的权限范围。
 </Callout>

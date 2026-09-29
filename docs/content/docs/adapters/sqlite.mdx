@@ -1,18 +1,19 @@
 ---
+icon: adaptersSQLite
 title: SQLite
 description: 将 Better Auth 与 SQLite 集成。
 ---
 
-SQLite 是一个轻量级、无服务器、自包含的 SQL 数据库引擎，广泛用于应用中的本地数据存储。\
-查看更多信息请访问 [这里。](https://www.sqlite.org/)
+SQLite 是一种轻量级、无服务器、自包含的 SQL 数据库引擎，广泛用于应用程序中的本地数据存储。\
+查看更多信息，请访问[这里。](https://www.sqlite.org/)
 
 ## 示例用法
 
-Better Auth 支持多种 SQLite 驱动。请选择最适合您环境的驱动：
+Better Auth 支持多种 SQLite 驱动程序。请选择最适合您环境的驱动程序：
 
 ### Better-SQLite3（推荐）
 
-Node.js 中最流行且稳定的 SQLite 驱动：
+Node.js 中最流行且稳定的 SQLite 驱动程序：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -109,11 +110,11 @@ export const auth = betterAuth({
 
 ## 联接
 
-当 Better Auth 需要在单个查询中从多个表获取相关数据时，数据库联接非常有用\
-像 `/get-session`、`/get-full-organization` 等许多端点都能从此功能中受益匪浅，根据数据库延迟的不同，性能提升可达 2 到 3 倍
+当 Better Auth 需要在单个查询中从多个表获取相关数据时，数据库联接非常有用。\
+像 `/get-session`、`/get-full-organization` 等许多端点都能从此功能中受益匪浅。根据数据库延迟的不同，性能可提升 2 到 3 倍。
 
-自 `1.4.0` 版本起，Kysely SQLite 方言开箱即支持联接\
-要启用此功能，请在您的 auth 配置中将 `advanced.database.joins` 设置为 `true`
+自 `1.4.0` 版本起，Kysely SQLite 方言开箱即支持联接。\
+要启用此功能，请在您的 auth 配置中将 `advanced.database.joins` 设置为 `true`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -129,6 +130,6 @@ export const auth = betterAuth({
 
 ## 其他信息
 
-SQLite 通过 [Kysely](https://kysely.dev/) 适配器在底层支持，Kysely 支持的任何数据库同样受到支持。(<Link href="/docs/adapters/other-relational-databases">点击这里了解更多</Link>)
+SQLite 通过 [Kysely](https://kysely.dev/) 适配器在底层提供支持，Kysely 支持的任何数据库同样受到支持。(<Link href="/docs/adapters/other-relational-databases">点击这里了解更多</Link>)
 
-如果您在寻求性能提升或优化建议，请查看我们的 <Link href="/docs/guides/optimizing-for-performance">性能优化指南</Link>。
+如果您希望提升性能或寻求优化建议，请查看我们的 <Link href="/docs/guides/optimizing-for-performance">性能优化指南</Link>。

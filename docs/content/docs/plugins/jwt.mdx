@@ -1,4 +1,5 @@
 ---
+icon: pluginsJWT
 title: JWT
 description: 在无法使用 session 的服务中使用 JWT 令牌进行用户认证
 ---
@@ -416,7 +417,7 @@ export const jwksTableFields = [
 <DatabaseTable name="jwks" fields={jwksTableFields} />
 
 <Callout>
-  你可以自定义 `jwks` 表的表名和字段。详见 [数据库概念文档](/docs/concepts/database#custom-table-names) 获取如何自定义插件 Schema 的更多信息。
+  你可以自定义 `jwks` 表的表名和字段。详见 [数据库概念文档](/docs/concepts/database#custom-table-names)，了解如何自定义插件 Schema 的更多信息。
 </Callout>
 
 ## 选项
@@ -433,7 +434,7 @@ jwt({
 
 ### 密钥对算法
 
-用于生成密钥对的算法，默认是基于 **Ed25519** 曲线的 **EdDSA**。可用选项如下：
+用于生成密钥对的算法，默认为基于 **Ed25519** 曲线的 **EdDSA**。可用选项如下：
 
 ```ts title="auth.ts"
 jwt({
@@ -448,10 +449,10 @@ jwt({
 
 #### EdDSA
 
-* **默认曲线**: `Ed25519`
-* **可选属性**: `crv`
-  * 可用选项: `Ed25519`, `Ed448`
-  * 默认: `Ed25519`
+* **默认曲线**：`Ed25519`
+* **可选属性**：`crv`
+  * 可用选项：`Ed25519`、`Ed448`
+  * 默认值：`Ed25519`
 
 #### ES256
 
@@ -459,21 +460,21 @@ jwt({
 
 #### RSA256
 
-* **可选属性**: `modulusLength`
-  * 期望一个数字
-  * 默认: `2048`
+* **可选属性**：`modulusLength`
+  * 需要一个数字
+  * 默认值：`2048`
 
 #### PS256
 
-* **可选属性**: `modulusLength`
-  * 期望一个数字
-  * 默认: `2048`
+* **可选属性**：`modulusLength`
+  * 需要一个数字
+  * 默认值：`2048`
 
 #### ECDH-ES
 
-* **可选属性**: `crv`
-  * 可用选项: `P-256`, `P-384`, `P-521`
-  * 默认: `P-256`
+* **可选属性**：`crv`
+  * 可用选项：`P-256`、`P-384`、`P-521`
+  * 默认值：`P-256`
 
 #### ES512
 
@@ -481,7 +482,7 @@ jwt({
 
 ### 禁用私钥加密
 
-默认情况下，私钥使用 AES256 GCM 加密。你可以通过设置 `disablePrivateKeyEncryption` 选项为 `true` 禁用加密。
+默认情况下，私钥使用 AES256 GCM 加密。你可以将 `disablePrivateKeyEncryption` 选项设置为 `true` 来禁用加密。
 
 出于安全考虑，建议保持私钥加密。
 
@@ -495,9 +496,9 @@ jwt({
 
 ### 密钥轮换
 
-你可以通过设置 `rotationInterval` 选项启用密钥轮换。该选项会在指定间隔内自动轮换密钥对。
+你可以通过设置 `rotationInterval` 选项启用密钥轮换。该选项会按照指定的间隔自动轮换密钥对。
 
-默认值为 `undefined`（禁用）。
+默认值为 `undefined`（已禁用）。
 
 ```ts title="auth.ts"
 jwt({
@@ -508,12 +509,12 @@ jwt({
 })
 ```
 
-* `rotationInterval`: 以秒为单位的密钥对轮换间隔。
-* `gracePeriod`: 轮换后保留旧密钥对有效的时间（秒）。这允许客户端验证使用旧密钥对签名的令牌。默认值为 30 天。
+* `rotationInterval`：密钥对轮换间隔，单位为秒。
+* `gracePeriod`：轮换后旧密钥对继续有效的时间，单位为秒。这允许客户端验证使用旧密钥对签名的令牌。默认值为 30 天。
 
 ### 修改 JWT 载荷
 
-默认将整个用户对象加入 JWT 载荷。你可以通过 `definePayload` 选项传入函数修改载荷。
+默认情况下，整个用户对象都会加入 JWT 载荷。你可以通过 `definePayload` 选项传入函数来修改载荷。
 
 ```ts title="auth.ts"
 jwt({
@@ -549,7 +550,7 @@ jwt({
 
 ### 自定义适配器
 
-默认情况下，JWT 插件会从你的数据库中存储和获取 JWKS。你可以提供自定义适配器覆盖此行为，使 JWKS 可存储在 Redis、外部服务或内存等其他位置。
+默认情况下，JWT 插件会从你的数据库中存储和获取 JWKS。你可以提供自定义适配器来覆盖此行为，使 JWKS 可以存储在 Redis、外部服务或内存等其他位置。
 
 ```ts title="auth.ts"
 jwt({

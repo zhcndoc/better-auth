@@ -1,4 +1,6 @@
 ---
+icon: integrationsElectron
+sidebarTitle: "Electron"
 title: Electron 集成
 description: 将 Better Auth 集成到 Electron 中。
 ---
@@ -30,7 +32,7 @@ Better Auth 可以集成到 Electron 应用中，提供安全的认证流程，�
     ```
 
     <Callout type="info">
-      我们支持比最新稳定版本的 Electron 主要版本晚两个主要版本。
+      我们支持比最新稳定版本的 Electron 主版本晚两个主版本。
       这样能让您使用获得安全更新的版本，且符合 [Electron 的版本支持策略](https://www.electronjs.org/docs/latest/tutorial/electron-timelines#breaking-api-changes)。
     </Callout>
   </Step>
@@ -319,7 +321,7 @@ function SignIn({
 
 要处理已登录用户，可以使用 `electron.transferUser` 方法在客户端和 `electronTransferUser` 在服务器端将用户转移到 Electron 应用中。[参见示例](https://github.com/better-auth/better-auth/blob/main/demo/nextjs/app/\(auth\)/sign-in/_components/electron.tsx)
 
-### Electron 中的身份认证处理
+### Electron 中的身份验证处理
 
 在 Electron 的渲染进程中，您可以使用预加载脚本暴露的 IPC 桥：
 
@@ -547,7 +549,7 @@ useEffect(() => {
 }, []);
 ```
 
-更多详细信息请参考 Electron 的[进程间通信（IPCs）](https://www.electronjs.org/docs/latest/tutorial/ipc) 教程。
+更多详细信息请参考 Electron 的[进程间通信（IPC）](https://www.electronjs.org/docs/latest/tutorial/ipc)教程。
 
 ## 选项
 

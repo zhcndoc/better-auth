@@ -1,4 +1,6 @@
 ---
+icon: integrationsExpo
+sidebarTitle: "Expo"
 title: Expo 集成
 description: 将 Better Auth 与 Expo 集成。
 ---
@@ -480,9 +482,9 @@ export function TRPCProvider(props: { children: React.ReactNode }) {
 
 ## 选项
 
-### Expo Client
+### Expo 客户端
 
-**storage**：用于缓存会话数据和 Cookie 的 SecureStore 兼容存储。
+**storage**：用于缓存会话数据和 Cookie 的 SecureStore 兼容存储。访问相同存储数据的客户端应复用同一个存储实例。
 
 ```ts title="lib/auth-client.ts"
 import { createAuthClient } from "better-auth/react";
@@ -572,6 +574,6 @@ const authClient = createAuthClient({
   **重要提示：** 如果你使用了如 passkey 这类插件，并设置了自定义的 `webAuthnChallengeCookie`，请确保将对应前缀包含在 `cookiePrefix` 数组内。例如若配置了 `webAuthnChallengeCookie: "my-app-passkey"`，则应在 `cookiePrefix` 中包含 `"my-app"`。详情请参考[Passkey 插件文档](/docs/plugins/passkey#expo-integration)。
 </Callout>
 
-### Expo Servers
+### Expo 服务端
 
 **disableOriginOverride**：是否禁用 Expo API Routes 的 Origin 覆盖，默认值为 false。如果你遇到 Expo API Routes 的 CORS Origin 问题，可以启用此配置。

@@ -1,4 +1,6 @@
 ---
+icon: referenceInstrumentation
+sidebarTitle: "仪器化"
 title: 仪器化（实验性）
 description: Better Auth 的分布式追踪
 ---
@@ -16,7 +18,25 @@ Better Auth 使用 OpenTelemetry API 来创建跨度。为了收集和导出追�
 
 有关设置说明，请参阅官方 OpenTelemetry 文档：
 
-* **[Node.js getting started](https://opentelemetry.io/docs/languages/js/getting-started/nodejs/)** – Node.js 应用设置指南
+* **[Node.js 入门](https://opentelemetry.io/docs/languages/js/getting-started/nodejs/)** – Node.js 应用设置指南
+
+## 禁用仪器化
+
+若要阻止 Better Auth 创建 OpenTelemetry 跨度，请将 `experimental.instrumentation.enabled` 设置为 `false`：
+
+```ts
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+  experimental: {
+    instrumentation: {
+      enabled: false,
+    },
+  },
+});
+```
+
+仪器化默认处于启用状态。禁用仪器化仅影响此 auth 实例，不会影响您的应用和其他库生成的跨度。
 
 ## 支持的跨度
 
@@ -85,4 +105,4 @@ Better Auth 支持以下跨度：
 * **属性：**
   * `better_auth.hook.type` - 钩子类型（例如 `create.before`、`create.after`、`update.before`）
   * `better_auth.context` - 执行上下文：`"user"` 或 `"plugin:{pluginId}"`
-  * `db.collection.name` - 数据库集合/模型名称（例如 `user`）
+  * `db.collection.name` - 数据库集合/模型名称（例如 `user`)

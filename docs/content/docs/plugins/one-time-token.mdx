@@ -1,6 +1,8 @@
 ---
+icon: pluginsOneTimeToken
+sidebarTitle: "一次性令牌"
 title: 一次性令牌插件
-description: 生成和验证一次性令牌
+description: 生成和验证单次使用令牌
 ---
 
 一次性令牌（OTT）插件提供生成和验证安全的一次性会话令牌的功能。这些令牌通常用于跨域身份验证。
@@ -29,7 +31,7 @@ description: 生成和验证一次性令牌
   <Step>
     ### 添加客户端插件
 
-    接下来，在您的认证客户端实例中包含 one-time-token 客户端插件。
+    接下来，在您的认证客户端实例中包含一次性令牌客户端插件。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -80,8 +82,8 @@ description: 生成和验证一次性令牌
 
 添加 `oneTimeToken` 插件时可以配置以下选项：
 
-* **`disableClientRequest`** (boolean): 可选。如果为 `true`，令牌将仅在服务器端生成。默认值：`false`。
-* **`expiresIn`** (number): 可选。令牌有效的持续时间（分钟）。默认值：`3`。
+* **`disableClientRequest`**（boolean）：可选。如果为 `true`，令牌将仅在服务器端生成。默认值：`false`。
+* **`expiresIn`**（number）：可选。令牌有效的持续时间（分钟）。默认值：`3`。
 
 ```ts
 oneTimeToken({
@@ -89,13 +91,13 @@ oneTimeToken({
 })
 ```
 
-* **`generateToken`**: 一个自定义令牌生成函数，接收 `session` 对象和 `ctx` 作为参数。
+* **`generateToken`**：一个自定义令牌生成函数，接收 `session` 对象和 `ctx` 作为参数。
 
 * **`storeToken`**：可选。此选项允许您配置如何在数据库中存储令牌。
 
-  * **`plain`**: 令牌以明文存储。（默认）
-  * **`hashed`**: 令牌使用默认哈希算法进行哈希处理。
-  * **`custom-hasher`**: 一个自定义哈希函数，接收令牌并返回哈希后的令牌。
+  * **`plain`**：令牌以明文存储。（默认）
+  * **`hashed`**：令牌使用默认哈希算法进行哈希处理。
+  * **`custom-hasher`**：一个自定义哈希函数，接收令牌并返回哈希后的令牌。
 
 <Callout type="info">
   注意：这不会影响发送的令牌，它只会影响存储在数据库中的令牌。
@@ -109,13 +111,13 @@ oneTimeToken({
 })
 ```
 
-```ts title="built-in hasher"
+```ts title="内置哈希器"
 oneTimeToken({
     storeToken: "hashed"
 })
 ```
 
-```ts title="custom hasher"
+```ts title="自定义哈希器"
 oneTimeToken({
     storeToken: {
         type: "custom-hasher",

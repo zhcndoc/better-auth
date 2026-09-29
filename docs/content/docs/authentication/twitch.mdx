@@ -1,15 +1,16 @@
 ---
+icon: authenticationTwitch
 title: Twitch
-description: Twitch 提供者设置和使用。
+description: Twitch 提供者的设置和使用。
 ---
 
 <Steps>
   <Step>
     ### 获取 Twitch 凭据
 
-    要使用 Twitch 登录，您需要一个客户端 ID 和客户端密钥。您可以从 [Twitch 开发者门户](https://dev.twitch.tv/console/apps) 获取它们。
+    要使用 Twitch 登录，您需要客户端 ID 和客户端密钥。您可以从 [Twitch 开发者门户](https://dev.twitch.tv/console/apps) 获取它们。
 
-    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/twitch` 用于本地开发。对于生产环境，您应该将其设置为应用程序的 URL。如果更改了认证路由的基本路径，请相应地更新重定向 URL。
+    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/twitch`，用于本地开发。对于生产环境，您应该将其设置为应用程序的 URL。如果更改了认证路由的基本路径，请相应地更新重定向 URL。
   </Step>
 
   <Step>
@@ -37,7 +38,7 @@ description: Twitch 提供者设置和使用。
     要使用 Twitch 登录，您可以使用客户端提供的 `signIn.social` 函数。
     `signIn` 函数接受一个包含以下属性的对象：
 
-    * `provider`: 要使用的提供者。应设置为 `twitch`。
+    * `provider`：要使用的提供者。应设置为 `twitch`。
 
     ```ts title="auth-client.ts"  
     import { createAuthClient } from "better-auth/client"

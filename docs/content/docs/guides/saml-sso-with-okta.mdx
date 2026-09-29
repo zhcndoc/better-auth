@@ -1,6 +1,7 @@
 ---
-title: 使用 Okta 的 SAML 单点登录
-description: 一份使用 Okta 集成 SAML 单点登录（SSO）到 Better Auth 的指南
+icon: guidesSAMLSSOWithOkta
+title: 使用 Okta 实现 SAML SSO
+description: 使用 Okta 将 SAML 单点登录（SSO）集成到 Better Auth 的指南
 ---
 
 本指南将引导你使用身份提供商（IdP）设置 SAML 单点登录（SSO），以 Okta 为示例。有关高级配置细节及完整 API 参考，请查阅 [SSO 插件文档](/docs/plugins/sso)。
@@ -12,11 +13,11 @@ SAML（安全断言标记语言）是一种基于 XML 的标准，用于在身�
 在该配置中：
 
 * **IdP (Okta)**：对用户进行身份验证并发送有关其身份的断言
-* **SP (Better Auth)**：验证断言并登录用户.up.
+* **SP (Better Auth)**：验证断言并登录用户
 
 ### 第一步：在 Okta 中创建 SAML 应用
 
-1. 登录 Okta Admin Console
+1. 登录 Okta 管理控制台
 
 2. 导航至 Applications > Applications
 
@@ -33,7 +34,7 @@ SAML（安全断言标记语言）是一种基于 XML 的标准，用于在身�
 6. 下载 IdP 元数据 XML 文件和证书
 
 <Callout type="info">
-  **IdP-Initiated SSO**：如果你希望用户从 Okta 仪表板访问你的应用，请确保 **Single Sign-on URL** 指向回调端点（`/api/auth/sso/saml2/sp/acs/{providerId}`）。Better Auth 会自动处理 SP-Initiated 和 IdP-Initiated 流程。
+  **IdP 发起的 SSO**：如果你希望用户从 Okta 仪表板访问你的应用，请确保 **Single Sign-on URL** 指向回调端点（`/api/auth/sso/saml2/sp/acs/{providerId}`）。Better Auth 会自动处理 SP 发起和 IdP 发起的流程。
 </Callout>
 
 ### 第二步：配置 Better Auth

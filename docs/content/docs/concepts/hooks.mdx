@@ -1,6 +1,7 @@
 ---
+icon: conceptsHooks
 title: 钩子
-description: 了解如何使用前置和后置钩子来自定义端点行为、修改请求和响应、处理 Cookie、抛出错误、访问认证上下文以及运行后台任务。
+description: 了解如何使用前置和后置钩子自定义端点行为、修改请求和响应、处理 Cookie、抛出错误、访问认证上下文以及运行后台任务。
 ---
 
 Better Auth 中的**钩子**允许你“钩入”生命周期并执行自定义逻辑。它们提供了一种在不编写完整插件的情况下自定义 Better Auth 行为的方式。
@@ -125,16 +126,16 @@ export const auth = betterAuth({
 
 调用 `createAuthMiddleware` 时会传入一个 `ctx` 对象，提供了许多有用的属性，包括：
 
-* **Path:** `ctx.path` 用于获取当前端点路径。
-* **Body:** `ctx.body` 用于解析请求体（仅适用于 POST 请求）。
-* **Headers:** `ctx.headers` 用于访问请求头。
-* **Request:** `ctx.request` 用于访问请求对象（在仅服务端端点中可能不存在）。
-* **Query Parameters:** `ctx.query` 用于访问查询参数。
-* **Context**: `ctx.context` 认证相关上下文，用于访问新创建的会话、Cookie 配置、密码哈希器、配置等。
+* **路径：** `ctx.path` 用于获取当前端点路径。
+* **请求体：** `ctx.body` 用于解析请求体（仅适用于 POST 请求）。
+* **请求头：** `ctx.headers` 用于访问请求头。
+* **请求：** `ctx.request` 用于访问请求对象（在仅服务端端点中可能不存在）。
+* **查询参数：** `ctx.query` 用于访问查询参数。
+* **上下文**：`ctx.context` 认证相关上下文，用于访问新创建的会话、Cookie 配置、密码哈希器、配置等。
 
 以及更多信息。
 
-### 请求响应
+### 请求与响应
 
 此工具允许你获取请求信息并从钩子中发送响应。
 
@@ -259,8 +260,8 @@ createAuthMiddleware(async (ctx) => {
 
 密码对象提供了 `hash` 和 `verify` 方法：
 
-* `ctx.context.password.hash`: 用于对给定密码进行哈希处理。
-* `ctx.context.password.verify`: 用于验证给定的密码和哈希值。
+* `ctx.context.password.hash`：用于对给定密码进行哈希处理。
+* `ctx.context.password.verify`：用于验证给定的密码和哈希值。
 
 #### 适配器（Adapter）
 

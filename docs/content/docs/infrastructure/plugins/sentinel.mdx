@@ -1,6 +1,8 @@
 ---
+icon: infrastructurePluginsSentinel
+sidebarTitle: "Sentinel"
 title: 安全插件（sentinel）
-description: "`sentinel()` 插件为您的认证系统提供全面的安全和滥用防护。它能够检测并防止多种攻击手段，包括凭证填充、不可能的旅行、免费试用滥用等。"
+description: `sentinel()` 插件为你的身份验证系统提供全面的安全和滥用防护。它能够检测并防止多种攻击手段，包括凭证填充、不可能的旅行、免费试用滥用等
 ---
 
 ## 安装
@@ -26,8 +28,8 @@ export const auth = betterAuth({
 
 | 选项           | 类型                | 描述                                                                             |
 | ------------ | ----------------- | ------------------------------------------------------------------------------ |
-| `apiUrl`     | `string`          | Better Auth infrastructure API URL。默认值：`https://dash.better-auth.com`          |
-| `kvUrl`      | `string`          | Better Auth identification infrastructure URL。默认值：`https://kv.better-auth.com` |
+| `apiUrl`     | `string`          | Better Auth 基础设施 API URL。默认值：`https://dash.better-auth.com`          |
+| `kvUrl`      | `string`          | Better Auth 身份识别基础设施 URL。默认值：`https://kv.better-auth.com` |
 | `apiKey`     | `string`          | 用于身份验证的 API 密钥                                                                 |
 | `apiOptions` | `object`          | Dash API HTTP 选项。接受以毫秒为单位的 `timeout?: number`                                  |
 | `kvOptions`  | `object`          | KV HTTP 选项。接受 `timeout?: number` 和 `retry?: { attempts?: number; ... }`        |
@@ -346,7 +348,7 @@ export const authClient = createAuthClient({
 
 | 选项                   | 类型        | 默认值                                                                        | 描述                              |
 | -------------------- | --------- | -------------------------------------------------------------------------- | ------------------------------- |
-| `identifyUrl`        | `string`  | `BETTER_AUTH_KV_URL` 或 `https://kv.better-auth.com`                        | identify endpoint 的基础 URL       |
+| `identifyUrl`        | `string`  | `BETTER_AUTH_KV_URL` 或 `https://kv.better-auth.com`                        | identify 端点的基础 URL       |
 | `identifyOptions`    | `object`  | `{ timeout: 1000, retry: { attempts: 2, baseDelay: 400, maxDelay: 600 } }` | Identify HTTP 客户端设置             |
 | `autoSolveChallenge` | `boolean` | `true`                                                                     | 自动解决 PoW 挑战                     |
 | `kvTimeout`          | `number`  | `1000`                                                                     | `identifyOptions.timeout` 的弃用别名 |
@@ -395,7 +397,7 @@ export const authClient = createAuthClient({
 对于 **Expo** 应用，安装以下软件包以获得更丰富的原生身份信息。
 
 <Callout type="info">
-  **Expo:** 在添加基础设施插件之前，请遵循 [Expo 集成](/docs/integrations/expo) 指南。
+  **Expo：** 在添加基础设施插件之前，请遵循 [Expo 集成](/docs/integrations/expo) 指南。
 </Callout>
 
 ```package-install
@@ -430,7 +432,7 @@ export const authClient = createAuthClient({
 
 | 选项                    | 类型                              | 默认值                                                                        | 描述                                                             |
 | --------------------- | ------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `identifyUrl`         | `string`                        | `BETTER_AUTH_KV_URL`，然后是 `https://kv.better-auth.com`                      | Identify endpoint 基础 URL                                       |
+| `identifyUrl`         | `string`                        | `BETTER_AUTH_KV_URL`，然后是 `https://kv.better-auth.com`                      | Identify 端点基础 URL                                       |
 | `identifyOptions`     | `object`                        | `{ timeout: 1000, retry: { attempts: 2, baseDelay: 400, maxDelay: 600 } }` | Identify HTTP 超时和重试策略                                          |
 | `kvTimeout`           | `number`                        | `1000`                                                                     | `identifyOptions.timeout` 的弃用别名                                |
 | `autoSolveChallenge`  | `boolean`                       | `true`                                                                     | 遇到带有 `X-PoW-Challenge` 的 `423` 时，解决挑战并使用 `X-PoW-Solution` 重试一次 |
@@ -562,5 +564,5 @@ export const auth = betterAuth({
 如果合法用户被阻止：
 
 1. 增加阈值
-2. 将操作从 "block" 改为 "challenge"
+2. 将操作从“block”改为“challenge”
 3. 查看安全事件以识别模式

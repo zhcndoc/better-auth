@@ -1,4 +1,5 @@
 ---
+icon: conceptsCookies
 title: Cookies
 description: 了解 Better Auth 如何使用 cookies，包括 cookie 前缀、自定义 cookie 属性、跨子域共享、安全 cookies，以及使用代理处理 Safari ITP。
 ---
@@ -15,7 +16,7 @@ Cookies 用于存储会话令牌、会话数据、OAuth 状态等数据。
 
 ### Cookie 前缀
 
-默认情况下，Better Auth 的 Cookies 格式为 `${prefix}.${cookie_name}`。默认前缀是 "better-auth"。您可以通过在认证选项的 `advanced` 对象中设置 `cookiePrefix` 来更改前缀。
+默认情况下，Better Auth 的 Cookies 格式为 `${prefix}.${cookie_name}`。默认前缀是“better-auth”。您可以通过在认证选项的 `advanced` 对象中设置 `cookiePrefix` 来更改前缀。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -125,8 +126,7 @@ fetch("https://domainA.com/api/auth/get-session", {
 })
 ```
 
-Safari 会将 `domainA.com` 视为第三方，并阻止其 Cookies。这可能导致会话无法持久化，
-`Set-Cookie` 头被忽略，用户在登录后依然显示未登录状态，或是在 Chrome 中工作正常但 Safari 中失败。
+Safari 会将 `domainA.com` 视为第三方，并阻止其 Cookies。这可能导致会话无法持久化，`Set-Cookie` 头被忽略，用户在登录后依然显示未登录状态，或是在 Chrome 中工作正常但 Safari 中失败。
 
 要解决此问题，有两种方案：
 

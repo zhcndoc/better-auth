@@ -1,6 +1,8 @@
 ---
+icon: conceptsUsersAccounts
+sidebarTitle: "用户与账户"
 title: 用户与账户
-description: 了解如何管理用户和账户，包括更新用户信息、更改邮箱和密码、验证删除用户、令牌加密以及账户关联与解除关联。
+description: 了解如何管理用户和账户，包括更新用户信息、更改邮箱和密码、通过验证删除用户、令牌加密，以及关联和解除关联账户。
 ---
 
 除了认证用户外，Better Auth 还提供了一组管理用户的方法。这包括更新用户信息、更改密码等。
@@ -403,11 +405,7 @@ export const auth = betterAuth({
 
 Better Auth 通过电子邮件和密码、Google 或企业身份提供者等提供者支持多种认证方式。与用户关联的每种方式都会作为一个账户存储。
 
-账户包含本地记录 ID 和提供者身份。`id` 用于标识 Better Auth 账户记录，也是向账户管理 API 传递的 `accountId` 值。`issuer` 和 `accountId` 的组合用于标识外部账户：`issuer` 表示受信任的机构，而 `accountId` 是该机构分配的稳定标识符。`providerId` 用于标识 Better Auth 在协议操作中使用的提供者配置。
-
-没有受信任发行者的 OAuth 提供者使用 `local:oauth:<encoded providerId>` 作为其账户命名空间，其中提供者 ID 部分经过百分号编码。凭证账户使用 `local:credential`；不要将此凭证命名空间用于 OAuth 提供者。
-
-这种分离使同一发行者的多个提供者配置能够对同一外部身份进行去重，同时不会将来自另一发行者的标识符视为同一个人。提供者别名共享同一个账户记录和令牌集；它们没有独立的授权或提供者生命周期记录。完整字段列表请参阅[账户模式](/docs/concepts/database#account)。
+账户具有本地记录 ID 和提供者身份。`id` 用于标识 Better Auth 账户记录，是传递给账户管理 API 的 `accountId` 值。`providerId` 和 `accountId` 的组合用于标识外部账户：`providerId` 是提供者配置的名称，而 `accountId` 是提供者分配的稳定标识符。有关完整字段列表，请参阅[账户模式](/docs/concepts/database#account)。
 
 ### 列出用户账户
 
@@ -614,7 +612,7 @@ export const auth = betterAuth({
   ```
 
 <Callout>
-  `setPassword` 不能从客户端调用，出于安全考虑。
+  出于安全考虑，不能从客户端调用 `setPassword`。
 </Callout>
 
 ### 账户解除关联

@@ -1,6 +1,7 @@
 ---
+icon: installation
 title: 安装
-description: 学习如何在你的项目中配置 Better Auth。
+description: 了解如何在项目中配置 Better Auth。
 ---
 
 <Steps>
@@ -175,7 +176,7 @@ description: 学习如何在你的项目中配置 Better Auth。
 
     Better Auth 包含一个 CLI 工具，可帮助管理库所需的模式。
 
-    * **生成**: 此命令生成 ORM 架构或 SQL 迁移文件。
+    * **生成**：此命令生成 ORM 架构或 SQL 迁移文件。
 
     <Callout>
       如果你使用的是 Kysely，你可以直接使用 `migrate` 命令应用迁移。使用 `generate` 仅在你计划手动应用迁移时需要。
@@ -185,7 +186,7 @@ description: 学习如何在你的项目中配置 Better Auth。
     npx auth@latest generate
     ```
 
-    * **迁移**: 此命令直接在数据库中创建所需的表。（仅适用于内置的 Kysely 适配器）
+    * **迁移**：此命令直接在数据库中创建所需的表。（仅适用于内置的 Kysely 适配器）
 
       ```package-install
       npx auth@latest migrate

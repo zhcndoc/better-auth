@@ -1,4 +1,5 @@
 ---
+icon: adaptersMSSQL
 title: MS SQL
 description: 将 Better Auth 与 MS SQL 集成。
 ---
@@ -102,13 +103,13 @@ export const auth = betterAuth({
   </Tab>
 </Tabs>
 
-## Joins
+## 连接
 
 当 Better-Auth 需要在单个查询中从多个表获取相关数据时，数据库连接非常有用。
 `/get-session`、`/get-full-organization` 等端点都能从此功能中大幅受益，
 根据数据库延迟的不同，性能提升可达 2 倍至 3 倍。
 
-Kysely MS SQL dialect 从 `1.4.0` 版本开始开箱即用地支持连接。
+Kysely 的 MS SQL 方言从 `1.4.0` 版本开始开箱即用地支持连接。
 要启用此功能，请在你的 auth 配置中将 `advanced.database.joins` 设置为 `true`。
 
 ```ts title="auth.ts"

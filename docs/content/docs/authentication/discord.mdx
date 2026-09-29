@@ -1,4 +1,5 @@
 ---
+icon: authenticationDiscord
 title: Discord
 description: Discord 提供程序的设置和使用。
 ---
@@ -9,7 +10,7 @@ description: Discord 提供程序的设置和使用。
 
     要使用 Discord 登录，您需要客户端 ID 和客户端密钥。您可以从 [Discord 开发者门户](https://discord.com/developers/applications) 获取它们。
 
-    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/discord` 用于本地开发。对于生产环境，您应将其设置为应用程序的 URL。如果更改了认证路由的基本路径，您应该相应地更新重定向 URL。
+    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/discord`，用于本地开发。对于生产环境，您应将其设置为应用程序的 URL。如果更改了认证路由的基本路径，您应该相应地更新重定向 URL。
   </Step>
 
   <Step>
@@ -42,7 +43,7 @@ description: Discord 提供程序的设置和使用。
 
 要使用 Discord 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
 
-* `provider`: 要使用的提供程序。应设置为 `discord`。
+* `provider`：要使用的提供程序。应设置为 `discord`。
 
 ```ts title="auth-client.ts"
 import { createAuthClient } from "better-auth/client"
@@ -62,7 +63,7 @@ const signIn = async () => {
 
 ### 机器人权限（可选）
 
-如果在 Discord OAuth 中使用了 `bot` 范围，可以使用 `permissions` 选项指定机器人权限。它可以是一个按位值（例如 `2048 | 16384` 表示发送消息和嵌入链接）或一个特定的权限值（例如 `16384` 表示嵌入链接）。
+如果在 Discord OAuth 中使用了 `bot` 范围，可以使用 `permissions` 选项指定机器人权限。它可以是一个按位值（例如 `2048 | 16384` 表示发送消息和嵌入链接），或一个特定的权限值（例如 `16384` 表示嵌入链接）。
 
 ```ts title="auth.ts" 
 import { betterAuth } from "better-auth"

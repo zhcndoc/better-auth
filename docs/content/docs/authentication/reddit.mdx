@@ -1,4 +1,5 @@
 ---
+icon: authenticationReddit
 title: Reddit
 description: Reddit 提供者的设置与使用。
 ---
@@ -9,8 +10,8 @@ description: Reddit 提供者的设置与使用。
 
     要使用 Reddit 登录，您需要一个客户端 ID 和客户端密钥。您可以从 [Reddit 开发者门户](https://www.reddit.com/prefs/apps) 获取它们。
 
-    1. 点击 "Create App" 或 "Create Another App"
-    2. 选择 "web app" 作为应用程序类型
+    1. 点击“创建应用”或“创建另一个应用”
+    2. 选择“Web 应用”作为应用程序类型
     3. 将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/reddit` 用于本地开发
     4. 对于生产环境，将其设置为应用程序的域名（例如：`https://example.com/api/auth/callback/reddit`）
     5. 创建应用后，您将获得客户端 ID（位于应用名称下方）和客户端密钥
@@ -42,7 +43,7 @@ description: Reddit 提供者的设置与使用。
 
     要使用 Reddit 登录，可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
 
-    * `provider`: 要使用的提供者，应设置为 `reddit`。
+    * `provider`：要使用的提供者，应设置为 `reddit`。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"
@@ -78,10 +79,10 @@ export const auth = betterAuth({
 
 常见的 Reddit 权限范围包括：
 
-* `identity`: 访问基本账户信息
-* `read`: 访问帖子和评论
-* `submit`: 提交帖子和评论
-* `subscribe`: 管理子版块订阅
-* `history`: 访问投票历史
+* `identity`：访问基本账户信息
+* `read`：访问帖子和评论
+* `submit`：提交帖子和评论
+* `subscribe`：管理子版块订阅
+* `history`：访问投票历史
 
 完整的权限范围列表，请参阅 [Reddit OAuth2 文档](https://www.reddit.com/dev/api/oauth)。

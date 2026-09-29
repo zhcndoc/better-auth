@@ -1,4 +1,5 @@
 ---
+icon: pluginsDodoPayments
 title: Dodo Payments
 description: 更好的 Dodo Payments 认证插件
 ---
@@ -10,8 +11,8 @@ description: 更好的 Dodo Payments 认证插件
   请访问 [Dodo Payments GitHub 仓库](https://github.com/dodopayments/dodo-adapters)。
 </Callout>
 
-<Card href="https://discord.gg/bYqAp4ayYh" title="Get support on Dodo Payments' Discord">
-  Have questions? Our team is available on Discord to assist you anytime.
+<Card href="https://discord.gg/bYqAp4ayYh" title="在 Dodo Payments 的 Discord 上获取支持">
+  有问题吗？我们的团队随时可以在 Discord 上为您提供帮助。
 </Card>
 
 ## 功能
@@ -197,14 +198,14 @@ const { data: payments, error } = await authClient.dodopayments.customer.payment
 
 ### 插件选项
 
-* **client** (必需): DodoPayments 客户端实例
-* **createCustomerOnSignUp** (可选): 在用户注册时自动创建客户
-* **use** (必需): 要启用的插件数组（checkout、portal、webhooks）
+* **client**（必需）：DodoPayments 客户端实例
+* **createCustomerOnSignUp**（可选）：在用户注册时自动创建客户
+* **use**（必需）：要启用的插件数组（checkout、portal、webhooks）
 
 ### 结账插件选项
 
-* **products**: 产品数组或返回产品的异步函数
-* **successUrl**: 支付成功后重定向的 URL
-* **authenticatedUsersOnly**: 要求用户认证（默认：false）
+* **products**：产品数组或返回产品的异步函数
+* **successUrl**：支付成功后重定向的 URL
+* **authenticatedUsersOnly**：要求用户认证（默认：false）
 
 如果遇到任何问题，请参考 [Dodo Payments 文档](https://docs.dodopayments.com) 进行排查。

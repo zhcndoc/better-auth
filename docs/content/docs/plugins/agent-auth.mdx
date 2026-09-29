@@ -1,4 +1,6 @@
 ---
+icon: pluginsAgentAuth
+sidebarBadge: "New"
 title: Agent Auth
 description: AI Agent 的身份认证、注册、发现以及基于能力的授权。
 ---
@@ -15,8 +17,8 @@ Agent Auth 插件让你的 Better Auth 服务器充当一个 **Agent Auth 提供
 
 ## 特性
 
-* **OpenAPI adapter** — 从 OpenAPI 3.x 规范直接派生能力、输入/输出 Schema 以及代理 `onExecute` 处理器
-* **MCP adapter** — 将 agent-auth 暴露为 MCP 工具，以便任何 MCP 兼容的 AI agent 可以发现并调用你的能力
+* **OpenAPI 适配器** — 从 OpenAPI 3.x 规范直接派生能力、输入/输出 Schema 以及代理 `onExecute` 处理器
+* **MCP 适配器** — 将 agent-auth 暴露为 MCP 工具，以便任何 MCP 兼容的 AI agent 可以发现并调用你的能力
 * 在 `/.well-known/agent-configuration` 提供发现文档
 * 能力列表、描述和执行（每个能力可选配 `location` URL）
 * 委托和自主代理模式
@@ -449,13 +451,13 @@ agentAuth({
 
 * 代理创建和撤销
 * 主机创建和注册
-* 功能请求和授权
-* 功能执行
+* 能力请求和审批
+* 能力执行
 
-* agent creation and revocation
-* host creation and enrollment
-* capability requests and approvals
-* capability execution
+* 代理创建和撤销
+* 主机创建和注册
+* 能力请求和审批
+* 能力执行
 
 ## 配置
 

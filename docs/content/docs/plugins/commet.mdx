@@ -1,9 +1,10 @@
 ---
+icon: pluginsCommet
 title: Commet
 description: 使用 Commet 的账单和订阅 Better Auth 插件
 ---
 
-[Commet](https://commet.co) 是一个 Merchant of Record，负责处理订阅、基于用量的计费、功能门控、税费以及全球支付。这个插件将 Commet 与 Better Auth 集成，通过一组可组合的子插件，将你的身份验证层与计费和功能访问连接起来。
+[Commet](https://commet.co) 是一个记录商户（Merchant of Record），负责处理订阅、基于用量的计费、功能门控、税费以及全球支付。这个插件将 Commet 与 Better Auth 集成，通过一组可组合的子插件，将你的身份验证层与计费和功能访问连接起来。
 
 <Callout>
   此插件由 Commet 团队维护。若有漏洞、问题或功能请求，请访问 [Commet GitHub
@@ -18,7 +19,7 @@ description: 使用 Commet 的账单和订阅 Better Auth 插件
 * 功能访问控制（布尔型、按用量计费和按席位）
 * 按用量计费的使用情况跟踪
 * 按用户定价的席位管理
-* 带签名验证的安全 webhook 处理
+* 带签名验证的安全 Webhook 处理
 
 ## 安装
 
@@ -48,7 +49,7 @@ Commet 插件附带了一组子插件，用于为你的技术栈增加功能。�
 * Features — 为已认证用户检查功能访问权限
 * Usage — 跟踪按用量计费的使用事件
 * Seats — 管理基于席位的许可证
-* Webhooks — 处理带签名验证的 Commet webhooks
+* Webhooks — 处理带签名验证的 Commet Webhooks
 
 ```typescript title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -115,17 +116,17 @@ commet({
 
 ### 必需选项
 
-* `client`: Commet SDK 客户端实例
-* `use`: Commet 子插件数组（至少一个）
+* `client`：Commet SDK 客户端实例
+* `use`：Commet 子插件数组（至少一个）
 
 ### 可选选项
 
-* `createCustomerOnSignUp`: 用户注册时自动创建 Commet 客户
-* `getCustomerCreateParams`: 提供额外客户创建参数的自定义函数（`fullName`、`domain`、`metadata`）
+* `createCustomerOnSignUp`：用户注册时自动创建 Commet 客户
+* `getCustomerCreateParams`：提供额外客户创建参数的自定义函数（`fullName`、`domain`、`metadata`）
 
 ### 客户
 
-当启用 `createCustomerOnSignUp` 时，新用户注册后会自动创建一个 Commet 客户。该客户的 `id` 会设置为 Better Auth 用户 ID，因此你无需在用户与 Commet 客户之间进行任何映射。
+启用 `createCustomerOnSignUp` 后，新用户注册时会自动创建一个 Commet 客户。该客户的 `id` 会设置为 Better Auth 用户 ID，因此你无需在用户与 Commet 客户之间进行任何映射。
 
 ## Portal 插件
 
@@ -148,7 +149,7 @@ await authClient.customer.portal();
 
 ### 配置
 
-* `returnUrl`: 客户离开门户后返回的 URL
+* `returnUrl`：客户离开门户后返回的 URL
 
 ## Subscriptions 插件
 
@@ -227,7 +228,7 @@ await authClient.usage.track({
 });
 ```
 
-已认证用户会自动与该事件关联。`feature` 字段对应于你 Commet 方案中的功能代码。
+已认证用户会自动与该事件关联。`feature` 字段对应于你的 Commet 方案中的功能代码。
 
 ## Seats 插件
 
@@ -261,7 +262,7 @@ await authClient.seats.setAll({ admin: 2, member: 10, viewer: 50 });
 
 ## Webhooks 插件
 
-通过签名验证处理 Commet webhooks。webhooks 是可选的——你始终可以通过其他子插件查询当前状态。
+通过签名验证处理 Commet Webhooks。Webhooks 是可选的——你始终可以通过其他子插件查询当前状态。
 
 ```typescript title="auth.ts"
 import { commet, webhooks } from "@commet/better-auth";
@@ -280,13 +281,13 @@ commet({
 });
 ```
 
-在你的 Commet 控制台中配置一个指向 `/api/auth/commet/webhooks` 的 webhook 端点，并将签名密钥添加到你的环境中。
+在你的 Commet 控制台中配置一个指向 `/api/auth/commet/webhooks` 的 Webhook 端点，并将签名密钥添加到你的环境中。
 
 ```bash title=".env"
 COMMET_WEBHOOK_SECRET=whsec_...
 ```
 
-该插件支持所有 Commet webhook 事件的处理器：
+该插件支持处理所有 Commet Webhook 事件的处理器：
 
 * `onPayload` — 任意传入事件的通用处理器
 * `onSubscriptionCreated` — 在订阅创建时触发

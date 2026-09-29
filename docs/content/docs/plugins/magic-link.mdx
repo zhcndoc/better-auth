@@ -1,4 +1,6 @@
 ---
+icon: pluginsMagicLink
+sidebarTitle: "魔法链接"
 title: 魔法链接
 description: 魔法链接插件
 ---
@@ -120,22 +122,22 @@ description: 魔法链接插件
 
 **sendMagicLink**：当用户请求魔法链接时调用 `sendMagicLink` 函数。该函数接收一个包含以下属性的对象：
 
-* `email`: 用户的电子邮件地址。
-* `url`: 要发送给用户的 URL。此 URL 包含令牌。
-* `token`: 如果你想通过自定义 URL 发送令牌，则使用此令牌。
-* `metadata`: 从 `signIn.magicLink` 传递的附加请求元数据。
+* `email`：用户的电子邮件地址。
+* `url`：要发送给用户的 URL。此 URL 包含令牌。
+* `token`：如果你想通过自定义 URL 发送令牌，则使用此令牌。
+* `metadata`：从 `signIn.magicLink` 传递的附加请求元数据。
 
 此外，函数的第二个参数为上下文对象 `ctx`。
 
 **expiresIn**：指定魔法链接过期的时间（以秒为单位）。默认值为 `300` 秒（5 分钟）。
 
-**allowedAttempts** (deprecated): 每次验证调用现在都会在首次尝试时以原子方式消耗令牌，因此无论此设置如何，重试都会始终失败并返回 `?error=INVALID_TOKEN`。保留此选项仅为保持源码兼容性，但会被忽略；不再支持多次尝试兑换。将其设置为除 `1` 之外的任何值都会在启动时发出 `console.warn`（包括 `0`，它以前会立即拒绝，而现在没有任何效果）。
+**allowedAttempts**（已弃用）：每次验证调用现在都会在首次尝试时以原子方式消耗令牌，因此无论此设置如何，重试都会始终失败并返回 `?error=INVALID_TOKEN`。保留此选项仅为保持源码兼容性，但会被忽略；不再支持多次尝试兑换。将其设置为除 `1` 之外的任何值都会在启动时发出 `console.warn`（包括 `0`，它以前会立即拒绝，而现在没有任何效果）。
 
 **disableSignUp**：如果设置为 `true`，用户将无法使用魔法链接进行注册。默认值为 `false`。
 
 **generateToken**：用于生成唯一标识用户的令牌的函数。默认生成一个随机字符串。函数参数：
 
-* `email`: 用户的电子邮件地址。
+* `email`：用户的电子邮件地址。
 
 <Callout type="warn">
   使用 `generateToken` 时，请确保返回的字符串难以猜测，因为它用于以保密方式验证用户身份。默认情况下，我们返回一个长度较长且密码学安全的字符串。
@@ -145,9 +147,9 @@ description: 魔法链接插件
 
 `storeToken` 可为以下之一：
 
-* `"plain"`: 令牌以明文形式存储。
-* `"hashed"`: 使用默认哈希器对令牌进行哈希处理。
-* `{ type: "custom-hasher", hash: (token: string) => Promise<string> }`: 使用自定义哈希器对令牌进行哈希处理。
+* `"plain"`：令牌以明文形式存储。
+* `"hashed"`：使用默认哈希器对令牌进行哈希处理。
+* `{ type: "custom-hasher", hash: (token: string) => Promise<string> }`：使用自定义哈希器对令牌进行哈希处理。
 
 存储后端本身由全局 [`verification`](/docs/reference/options#verification) 配置控制。如果你配置了 `secondaryStorage`，魔法链接验证记录可以存储在那里，而不是数据库中。
 

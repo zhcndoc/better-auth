@@ -1,4 +1,5 @@
 ---
+icon: authenticationLine
 title: LINE
 description: LINE 提供者的设置和使用。
 ---
@@ -9,10 +10,10 @@ description: LINE 提供者的设置和使用。
 
     1. 在 LINE Developers Console 中创建一个频道。
     2. 记下你的 Channel ID（client\_id）和 Channel secret（client\_secret）。
-    3. 在频道设置中，添加你的 Redirect URI，例如 `http://localhost:3000/api/auth/callback/line` 用于本地开发。
-    4. 启用所需的作用域（至少 `openid`；如果需要名称、头像或电子邮件，则添加 `profile`、`email`）。
+    3. 在频道设置中，添加你的重定向 URI，例如用于本地开发的 `http://localhost:3000/api/auth/callback/line`。
+    4. 启用所需的作用域（至少需要 `openid`；如果需要名称、头像或电子邮件，则添加 `profile`、`email`）。
 
-    详细信息请参考 [LINE Login v2.1 参考文档](https://developers.line.biz/en/reference/line-login/#issue-access-token)。
+    详细信息请参阅 [LINE Login v2.1 参考文档](https://developers.line.biz/en/reference/line-login/#issue-access-token)。
   </Step>
 
   <Step>

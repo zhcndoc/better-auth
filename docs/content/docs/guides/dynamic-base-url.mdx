@@ -1,6 +1,7 @@
 ---
+icon: guidesDynamicBaseURL
 title: 动态基础 URL
-description: 为预览部署、多域名以及按请求解析 URL 配置 Better Auth。
+description: 为预览部署、多个域名和按请求解析 URL 配置 Better Auth。
 ---
 
 当你的应用从不止一个主机名提供服务时，请使用动态基础 URL，例如：
@@ -93,7 +94,7 @@ export const auth = betterAuth({
 })
 ```
 
-仅在明确地“使用规范（canonical）域名回退”比直接失败更可取时使用它。
+仅在明确地“使用规范域名回退”比直接失败更可取时使用它。
 
 ## 跨子域名的 Cookie
 

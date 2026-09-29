@@ -1,6 +1,8 @@
 ---
+icon: pluginsBearer
+sidebarTitle: "Bearer"
 title: Bearer 令牌认证
-description: 使用 Bearer 令牌而非浏览器 cookie 来认证 API 请求
+description: 使用 Bearer 令牌而非浏览器 cookie 对 API 请求进行认证
 ---
 
 Bearer 插件支持使用 Bearer 令牌进行认证，作为浏览器 cookie 的替代方案。它会拦截请求，在转发到你的 API 之前，将 Bearer 令牌添加到 Authorization 头中。
@@ -142,6 +144,6 @@ export async function handler(req, res) {
 }
 ```
 
-## Options
+## 选项
 
-**requireSignature** (布尔值): 是否需要对令牌进行签名。默认值：`false`。
+**requireSignature**（布尔值）：是否需要对令牌进行签名。默认值：`false`。

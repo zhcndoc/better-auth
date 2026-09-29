@@ -1,6 +1,7 @@
 ---
-title: 微信
-description: 微信提供者设置和使用。
+icon: authenticationWeChat
+title: WeChat
+description: WeChat 提供者的设置和使用方法。
 ---
 
 <Steps>
@@ -53,7 +54,7 @@ description: 微信提供者设置和使用。
 
     要使用微信登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
 
-    * `provider`: 要使用的提供者，应设置为 `wechat`。
+    * `provider`：要使用的提供者，应设置为 `wechat`。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"

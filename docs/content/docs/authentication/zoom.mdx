@@ -1,4 +1,5 @@
 ---
+icon: authenticationZoom
 title: Zoom
 description: Zoom 提供者的设置和使用。
 ---
@@ -9,7 +10,7 @@ description: Zoom 提供者的设置和使用。
 
     1. 访问 [Zoom Marketplace](https://marketplace.zoom.us)。
 
-    2. 悬停在 `Develop` 按钮上并选择 `Build App`
+    2. 将鼠标悬停在 `Develop` 按钮上并选择 `Build App`
 
     3. 选择 `General App` 并点击 `Create`
   </Step>
@@ -17,7 +18,7 @@ description: Zoom 提供者的设置和使用。
   <Step>
     ### 配置你的 Zoom 应用
 
-    确保你处于应用设置的 `Basic Information` 页面。
+    确保你位于应用设置的 `Basic Information` 页面。
 
     1. 在 `Select how the app is managed` 中，选择 `User-managed`
 
@@ -33,11 +34,11 @@ description: Zoom 提供者的设置和使用。
          对于生产环境，你应该将其设置为应用程序的 URL。如果更改了认证路由的基本路径，你需要相应地更新重定向 URL。
        </Callout>
 
-    跳转到 `Scopes` 部分，然后
+    转到 `Scopes` 部分，然后
 
     1. 点击 `Add Scopes` 按钮
     2. 搜索 `user:read:user`（查看用户）并选择它
-    3. 添加你的应用程序需要的其他范围并点击 `Done`
+    3. 添加应用程序需要的其他范围并点击 `Done`
   </Step>
 
   <Step>
@@ -63,7 +64,7 @@ description: Zoom 提供者的设置和使用。
     ### 使用 Zoom 登录
 
     要使用 Zoom 登录，你可以使用客户端提供的 `signIn.social` 函数。
-    你需要指定 `zoom` 作为提供者。
+    你需要将 `zoom` 指定为提供者。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"

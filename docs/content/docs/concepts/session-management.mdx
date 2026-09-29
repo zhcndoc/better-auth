@@ -1,4 +1,6 @@
 ---
+icon: conceptsSessionManagement
+sidebarTitle: "会话"
 title: 会话管理
 description: 了解 Better Auth 中的会话管理，包括会话过期、新鲜度、Cookie 缓存策略、次级存储、无状态会话以及自定义会话响应。
 ---
@@ -111,7 +113,7 @@ import { authClient } from "@/lib/auth-client"
 const { data: session } = await authClient.getSession()
 ```
 
-有关自定义会话响应的说明，请参阅 [自定义会话响应](#customizing-session-response) 部分。
+有关自定义会话响应的说明，请参阅[自定义会话响应](#customizing-session-response)部分。
 
 ### 使用会话
 

@@ -1,6 +1,8 @@
 ---
+icon: integrationsHono
+sidebarTitle: "Hono"
 title: Hono 集成
-description: 将 Better Auth 集成到 Hono 中。
+description: 将 Better Auth 集成到 Hono。
 ---
 
 Hono 和 Better Auth 都使用 Web Standard `Request` 和 `Response` API，因此你可以直接在 Hono 应用中挂载 Better Auth，而无需适配器。
@@ -41,7 +43,7 @@ export default app;
 `app.all()` 使用来自 `c.req.raw` 的原始 Web Standard `Request` 将每个 HTTP 方法转发给 Better Auth。Better Auth 会验证方法，并返回一个由 Hono 直接发送的 `Response`。请在任何可能先处理请求的全捕获路由之前注册 Auth 路由。
 
 <Callout type="info">
-  生成的 Hono 路由必须匹配你的 Better Auth `basePath`，该路径默认为 `/api/auth`。如果你的应用已经使用 `new
+  最终的 Hono 路由必须与 Better Auth 的 `basePath` 匹配，该值默认为 `/api/auth`。如果你的应用已经使用了 `new
           Hono().basePath("/api")`，请将 Better Auth 挂载到 `/auth/*`：
 
   ```ts
@@ -153,7 +155,7 @@ export default app;
 
 Better Auth 客户端默认使用 `credentials: "include"`。如果你使用 Hono RPC 从其他源调用需要身份验证的 Hono 路由，请将 RPC 客户端配置为同样包含凭据：
 
-<Tabs items={["Client", "Server"]}>
+<Tabs items={["客户端", "服务器"]}>
   <Tab value="Client">
     ```ts title="src/client.ts"
     import { hc } from "hono/client";

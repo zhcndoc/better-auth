@@ -1,6 +1,8 @@
 ---
+icon: integrationsSvelteKit
+sidebarTitle: "SvelteKit"
 title: SvelteKit 集成
-description: 将 Better Auth 集成到 SvelteKit 中。
+description: 将 Better Auth 集成到 SvelteKit。
 ---
 
 在开始之前，确保你已经配置好了一个 Better Auth 实例。如果还没有，请查看 [安装说明](/docs/installation)。
@@ -21,7 +23,7 @@ export async function handle({ event, resolve }) {
 
 ### 在事件中填充会话数据（`event.locals`）
 
-`svelteKitHandler` 不会自动填充 `event.locals.user` 或 `event.locals.session`。如果你想在服务器端代码中访问当前会话（例如在 `+layout.server.ts`、actions 或 endpoints 中），需要在 `handle` 钩子中手动填充 `event.locals`：
+`svelteKitHandler` 不会自动填充 `event.locals.user` 或 `event.locals.session`。如果你想在服务器端代码中访问当前会话（例如在 `+layout.server.ts`、actions 或端点中），需要在 `handle` 钩子中手动填充 `event.locals`：
 
 ```ts title="hooks.server.ts"
 import { auth } from "$lib/auth";

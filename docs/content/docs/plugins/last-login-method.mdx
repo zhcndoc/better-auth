@@ -1,6 +1,7 @@
 ---
+icon: pluginsLastLoginMethod
 title: 上次登录方式
-description: 跟踪并显示用户最后使用的身份验证方式
+description: 跟踪并显示用户上次使用的身份验证方式
 ---
 
 上次登录方式插件用于跟踪用户最近一次使用的身份验证方式（邮箱、OAuth 提供商等）。这使您能够在登录页面上显示有用的指示标志，例如“上次使用 Google 登录”，或根据用户偏好优先显示某些登录方式。
@@ -407,10 +408,10 @@ export const authClient = createAuthClient({
 
 ## GDPR 合规
 
-最后登录方式 cookie 在 GDPR 法规下被视为非必要 cookie。
-为了符合 GDPR 及类似隐私法规，只有在用户明确同意后，你才应该存储此 cookie。
+最后登录方式 Cookie 在 GDPR 法规下被视为非必要 Cookie。
+为了符合 GDPR 及类似隐私法规，只有在用户明确同意后，你才应该存储此 Cookie。
 
-`beforeStoreCookie` 钩子允许你在存储 cookie 之前实现同意检查：
+`beforeStoreCookie` 钩子允许你在存储 Cookie 之前实现同意检查：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -440,7 +441,7 @@ export const auth = betterAuth({
 ```
 
 <Callout type="warn">
-  当 `beforeStoreCookie` 返回 `false` 或抛出错误时，cookie 将不会被设置。认证仍然会正常成功 - 只会阻止 cookie 的存储。
+  当 `beforeStoreCookie` 返回 `false` 或抛出错误时，Cookie 将不会被设置。认证仍然会正常成功 - 只会阻止 Cookie 的存储。
 </Callout>
 
 ## 高级示例

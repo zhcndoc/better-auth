@@ -1,6 +1,7 @@
 ---
+icon: pluginsAPIKeyAdvanced
 title: 高级功能
-description: 高级 API 密钥功能，包括会话、多配置、组织密钥、存储模式等。
+description: 高级 API 密钥功能，包括会话、多种配置、组织密钥、存储模式等
 ---
 
 ## 来自 API 密钥的会话
@@ -155,7 +156,7 @@ const secretKey = await auth.api.createApiKey({
 
 <Callout type="warn">
   `get`、`update` 和 `delete` 必须传入与该密钥创建时相同的 `configId`。
-  `verify` 会解析密钥自身的配置，因此只有当某个配置在存储或哈希方面与默认配置不同的时候，才需要传入 `configId`。
+  `verify` 会解析密钥自身的配置，因此只有当某个配置在存储或哈希方面与默认配置不同时，才需要传入 `configId`。
 </Callout>
 
 ### 在 API 密钥操作中使用 configId
@@ -742,7 +743,7 @@ const apiKey = await auth.api.createApiKey({
 });
 ```
 
-之后你可以从 API 密钥对象中读取 metadata。
+之后你可以从 API 密钥对象中读取元数据。
 
 ```ts title="get-api-key.ts"
 import { auth } from "@/lib/auth"

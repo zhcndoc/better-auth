@@ -1,4 +1,5 @@
 ---
+icon: authenticationLinkedIn
 title: LinkedIn
 description: LinkedIn 提供商
 ---
@@ -9,7 +10,7 @@ description: LinkedIn 提供商
 
     要使用 LinkedIn 登录，您需要一个客户端 ID 和客户端密钥。您可以从 [LinkedIn 开发者门户](https://www.linkedin.com/developers/) 获取它们。
 
-    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/linkedin` 用于本地开发。生产环境中，您应将其设置为应用程序的 URL。如果更改了认证路由的基本路径，请相应更新重定向 URL。
+    请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/linkedin`，用于本地开发。生产环境中，您应将其设置为应用程序的 URL。如果更改了认证路由的基本路径，请相应更新重定向 URL。
   </Step>
 
   <Callout type="info">
@@ -17,7 +18,7 @@ description: LinkedIn 提供商
   </Callout>
 
   这里有一些不同的指南：
-  [授权码流程（3 腿 OAuth）(已过时)](https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow)
+  [授权码流程（3 腿 OAuth）（已过时）](https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow)
   [使用 OpenID Connect 的 LinkedIn 登录](https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2?context=linkedin%2Fconsumer%2Fcontext)
 
   <Step>
@@ -48,7 +49,7 @@ description: LinkedIn 提供商
 
     要使用 LinkedIn 登录，可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接受一个包含以下属性的对象：
 
-    * `provider`: 要使用的提供程序。应设置为 `linkedin`。
+    * `provider`：要使用的提供程序。应设置为 `linkedin`。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"

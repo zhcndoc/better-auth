@@ -1,4 +1,5 @@
 ---
+icon: authenticationPayPal
 title: PayPal
 description: PayPal 提供商的设置和使用。
 ---
@@ -64,8 +65,8 @@ description: PayPal 提供商的设置和使用。
 
     PayPal 提供商接受以下选项：
 
-    * `environment`: `'sandbox' | 'live'` - 要使用的 PayPal 环境（默认：`'sandbox'`）
-    * `requestShippingAddress`: `boolean` - 是否请求收货地址信息（默认：`false`）
+    * `environment`：`'sandbox' | 'live'` - 要使用的 PayPal 环境（默认：`'sandbox'`）
+    * `requestShippingAddress`：`boolean` - 是否请求收货地址信息（默认：`false`）
 
     ```ts title="auth.ts"
     export const auth = betterAuth({
@@ -101,7 +102,7 @@ description: PayPal 提供商的设置和使用。
 
     ### 附加选项：
 
-    * `environment`：要使用的 PayPal 环境。
+    * `environment`：要请求的 PayPal 环境。
       * 默认值：`"sandbox"`
       * 选项：`"sandbox"` | `"live"`
     * `requestShippingAddress`：是否请求收货地址信息。

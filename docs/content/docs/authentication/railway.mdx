@@ -1,6 +1,7 @@
 ---
-title: Railway（铁路）
-description: Railway 提供者的设置和使用。
+icon: authenticationRailway
+title: Railway
+description: Railway 提供者设置和使用方法。
 ---
 
 <Steps>
@@ -47,7 +48,7 @@ description: Railway 提供者的设置和使用。
 
 要使用 Railway 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
 
-* `provider`: 要使用的提供者，应设置为 `railway`
+* `provider`：要使用的提供者，应设置为 `railway`
 
 ```ts title="auth-client.ts"  
 import { createAuthClient } from "better-auth/client"
@@ -68,7 +69,7 @@ const signIn = async () => {
 
 Railway OAuth 支持以下权限范围：
 
-| Scope              | 描述                                          |
+| 权限范围           | 描述                                          |
 | ------------------ | -------------------------------------------- |
 | `openid`           | 所有请求必需（默认包含）                      |
 | `email`            | 访问用户的电子邮件地址（默认包含）            |

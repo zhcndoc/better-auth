@@ -1,9 +1,20 @@
 ---
+icon: infrastructurePluginsDashboard
 title: 仪表盘
-description: "`dash()` 插件将您的 Better Auth 实例连接到 Better Auth 基础设施，实现分析跟踪、活动监控和管理员仪表盘 API。"
+description: `dash()` 插件将您的 Better Auth 实例连接到 Better Auth Infrastructure，从而支持分析跟踪、活动监控、事件记录和管理仪表盘 API。
 ---
 
 仪表盘插件是您的 Better Auth 实例和 Better Auth 基础设施之间的核心连接。它为网页仪表盘提供实时数据，跟踪用户活动，并启用管理员 API。
+
+## 仪表盘插件的功能
+
+启用 `dash()` 后，Better Auth Infrastructure 仪表盘将为您提供：
+
+* **用户管理** — 查看、搜索、封禁和删除用户
+* **会话监控** — 查看活跃会话并撤销会话
+* **组织概览** — 管理组织和成员
+* **分析** — 跟踪注册、登录和活跃用户随时间的变化
+* **审计日志** — 查询事件历史记录（[了解更多](/docs/infrastructure/plugins/audit-logs)）
 
 ## 安装
 
@@ -20,19 +31,21 @@ export const auth = betterAuth({
 
 ## 配置选项
 
-| 选项                     | 类型       | 描述                                                                          |
-| ---------------------- | -------- | --------------------------------------------------------------------------- |
-| `apiUrl`               | `string` | Better Auth Infrastructure API URL。默认值：`https://dash.better-auth.com`       |
-| `kvUrl`                | `string` | KV 存储 URL。默认值：`https://kv.better-auth.com`                                  |
-| `apiKey`               | `string` | 用于身份验证的 API 密钥。如果环境变量中存在 `BETTER_AUTH_API_KEY`，则使用该变量的值。                    |
-| `apiOptions`           | `object` | Dash API HTTP 客户端选项。接受以毫秒为单位的 `timeout?: number`。                           |
-| `kvOptions`            | `object` | KV HTTP 客户端选项。接受 `timeout?: number` 和 `retry?: { attempts?: number; ... }`。 |
-| `apiTimeout`           | `number` | `apiOptions.timeout` 的已弃用别名。                                                |
-| `kvTimeout`            | `number` | `kvOptions.timeout` 的已弃用别名。                                                 |
-| `activityTracking`     | `object` | 活动跟踪配置。                                                                     |
-| `managedDirectorySync` | `object` | 托管目录同步控制平面选项。                                                               |
+### DashOptions
 
-## 活动跟踪
+| Option                 | Type     | Description                                                                                  |
+| ---------------------- | -------- | -------------------------------------------------------------------------------------------- |
+| `apiUrl`               | `string` | Better Auth Infrastructure API URL. Default: `https://dash.better-auth.com`                  |
+| `kvUrl`                | `string` | KV store URL. Default: `https://kv.better-auth.com`                                          |
+| `apiKey`               | `string` | Your API key for authentication. Falls back to `BETTER_AUTH_API_KEY` in env.                 |
+| `apiOptions`           | `object` | Dash API HTTP client options. Accepts `timeout?: number` in ms.                              |
+| `kvOptions`            | `object` | KV HTTP client options. Accepts `timeout?: number` and `retry?: { attempts?: number; ... }`. |
+| `apiTimeout`           | `number` | Deprecated alias for `apiOptions.timeout`.                                                   |
+| `kvTimeout`            | `number` | Deprecated alias for `kvOptions.timeout`.                                                    |
+| `activityTracking`     | `object` | Activity tracking configuration.                                                             |
+| `managedDirectorySync` | `object` | Managed directory-sync control-plane options.                                                |
+
+### 活动跟踪
 
 跟踪用户在您的应用中的最后活跃时间。启用后，用户活动时会自动更新 `lastActiveAt` 字段。
 
@@ -46,7 +59,7 @@ dash({
 }),
 ```
 
-### 模式变更
+#### 模式变更
 
 启用活动跟踪时，插件会在您的用户模式中添加一个字段：
 
@@ -60,9 +73,17 @@ user: {
 }
 ```
 
-启用活动跟踪后，请务必运行数据库迁移。
+<Callout type="warning">
+  启用活动跟踪需要为 `lastActiveAt` 用户字段执行数据库迁移。请先运行迁移步骤，再依赖活动数据。
+</Callout>
 
-## Managed Directory Sync
+```package-install
+npx auth migrate
+```
+
+如果您的应用单独管理模式生成，请运行 `npx auth generate`，然后使用您首选的工具应用生成的迁移。
+
+## 托管目录同步
 
 `managedDirectorySync` 选项是 SCIM 1.7 插件托管运行时流程在仪表盘侧的配套功能。当 `enabled` 为 `true` 时，仪表盘会安装托管目录同步状态所需的预留表和 API。`ssoPairing` 会启用目录关联用户身份与 SSO 提供商配对时所需的 SSO 钩子，而 `membershipProjection` 则允许系统将 SCIM 成员变更投影到组织成员记录中。
 
@@ -71,13 +92,284 @@ dash({
   apiKey: process.env.BETTER_AUTH_API_KEY,
   managedDirectorySync: {
     enabled: true,
+    ssoPairing: true,
+    membershipProjection: {
+      enabled: true,
+      role: "member",
+    },
   },
 })
 ```
 
-此功能专用于 1.7 托管目录同步流程。有关完整的托管目录同步模式和选项，请参阅 [仪表盘插件（`dash()`）中的托管目录同步部分](/docs/infrastructure/plugins/dash#managed-directory-sync)。有关完整的 SCIM 模型和迁移详情，请参阅 [SCIM 插件参考](/docs/plugins/scim/reference) 和 [1.7 升级指南](/docs/guides/1-7-upgrade-guide)。
+此可选控制平面适用于 SCIM 1.7 插件托管运行时流程。在 Better Auth 1.7 中，SCIM 支持三种连接模式：
 
-## 客户端设置
+* 静态代码定义的连接
+* 应用自行管理的运行时验证
+* 通过 `managedConnections` 管理的插件运行时连接
+
+`managedDirectorySync` 选项可在 `dash` 中启用用于目录同步预配的插件托管模式。它会创建管理目录连接和配对 SSO 状态所需的预留模式和 API。
+
+### 托管目录同步选项
+
+| Option                         | Type      | Description                                                                                                                                                  |
+| ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `enabled`                      | `boolean` | Enables the managed directory-sync control plane and the SCIM reservation tables / APIs. Default: `false`.                                                   |
+| `ssoPairing`                   | `boolean` | Installs the SSO `resolveUser` and provider-mutation hooks required when a paired directory needs to reconcile a user identity through SSO. Default: `true`. |
+| `membershipProjection`         | `object`  | Enables SCIM-to-organization membership projection when a directory should create group or member membership records.                                        |
+| `membershipProjection.enabled` | `boolean` | Enables the projection hook. Default: `true`.                                                                                                                |
+| `membershipProjection.role`    | `string`  | Role assigned to projected organization memberships. Default: `"member"`.                                                                                    |
+
+当应用希望 Better Auth 管理 SCIM 的运行时租户连接生命周期，并将其与基于 SSO 的身份解析配对时，可使用此选项。此选项适用于新的 1.7 流程，并与 `scim({ managedConnections })` 配合使用。
+
+<Callout type="warning">
+  启用 `managedDirectorySync` 需要为相应的托管目录同步表执行数据库迁移。请先运行迁移步骤，再使用托管运行时流程。
+</Callout>
+
+```package-install
+npx auth migrate
+```
+
+如果您的应用单独管理模式生成，请运行 `npx auth generate`，然后使用您首选的工具应用生成的迁移。
+
+### 数据库模式
+
+当 `managedDirectorySync.enabled` 为 `true` 时，dash 插件会添加以下模型。Better Auth 会为每个模型提供主 `id` 字段。
+
+#### `directorySyncConnection`
+
+存储托管目录的组织、SCIM 连接、SSO 配对、生命周期和停用状态。
+
+| Column                  | Type      | Constraints                   | Description                                      |
+| ----------------------- | --------- | ----------------------------- | ------------------------------------------------ |
+| `organizationId`        | `string`  | Required, indexed             | Organization that owns the directory.            |
+| `providerId`            | `string`  | Required                      | SSO provider identifier.                         |
+| `aliasKey`              | `string`  | Required, unique, hidden      | Internal directory alias.                        |
+| `provisioningDomainId`  | `string`  | Required, unique              | SCIM provisioning domain.                        |
+| `activeOrganizationKey` | `string`  | Required, unique, hidden      | Active organization key for reconciliation.      |
+| `connectionId`          | `string`  | Optional, unique              | Managed SCIM connection identifier.              |
+| `creationRequestId`     | `string`  | Required, unique, hidden      | Immutable ownership correlation value.           |
+| `status`                | `string`  | Required                      | Current directory lifecycle status.              |
+| `revision`              | `number`  | Required, default `0`, hidden | Mutation revision used for concurrency control.  |
+| `createdAt`             | `date`    | Required                      | Creation timestamp.                              |
+| `createdByActorId`      | `string`  | Required                      | Actor that created the directory.                |
+| `updatedAt`             | `date`    | Required                      | Last update timestamp.                           |
+| `lastActorId`           | `string`  | Required                      | Actor responsible for the latest mutation.       |
+| `ssoProviderId`         | `string`  | Optional                      | Paired SSO provider ID.                          |
+| `ssoProviderRecordId`   | `string`  | Optional, indexed             | Paired SSO provider record.                      |
+| `activeSsoProviderKey`  | `string`  | Required, unique, hidden      | Active SSO provider key.                         |
+| `serializedSsoPairing`  | `string`  | Optional, hidden              | Serialized SSO pairing metadata.                 |
+| `pairingEnforced`       | `boolean` | Required, default `false`     | Whether the SSO pairing requirement is enforced. |
+| `unpairedAt`            | `date`    | Optional                      | Time at which the directory was unpaired.        |
+| `unpairedBy`            | `string`  | Optional                      | Actor that removed the pairing.                  |
+| `decommissionStartedAt` | `date`    | Optional                      | Time decommissioning started.                    |
+| `decommissionedAt`      | `date`    | Optional                      | Time decommissioning completed.                  |
+| `lastError`             | `string`  | Optional, hidden              | Most recent reconciliation error.                |
+
+#### `directorySyncMembershipProvenance`
+
+跟踪通过目录同步投影创建或管理的组织成员关系，使插件只能协调其拥有的成员关系。
+
+| Column                 | Type     | Constraints              | Description                                |
+| ---------------------- | -------- | ------------------------ | ------------------------------------------ |
+| `membershipKey`        | `string` | Required, unique, hidden | Stable key for the projected membership.   |
+| `organizationId`       | `string` | Required, indexed        | Organization containing the membership.    |
+| `userId`               | `string` | Required, indexed        | Better Auth User receiving the membership. |
+| `memberId`             | `string` | Required, unique         | Organization `member` record identifier.   |
+| `ownership`            | `string` | Required, hidden         | Projection ownership state.                |
+| `provisioningDomainId` | `string` | Required, indexed        | SCIM provisioning domain that produced it. |
+| `createdAt`            | `date`   | Required                 | Creation timestamp.                        |
+| `updatedAt`            | `date`   | Required                 | Last update timestamp.                     |
+
+完整的 SCIM 模型和迁移指南，请参阅 [SCIM 插件参考](/docs/plugins/scim/reference)和 [1.7 升级指南](/docs/guides/1-7-upgrade-guide)。
+
+## 事件跟踪
+
+dash 插件会自动跟踪以下事件：
+
+### 用户事件
+
+| Event                        | Trigger                      |
+| ---------------------------- | ---------------------------- |
+| `user_signed_up`             | New user registration        |
+| `user_profile_updated`       | User updates their profile   |
+| `user_profile_image_updated` | User changes their avatar    |
+| `user_email_verified`        | Email verification completed |
+| `user_banned`                | User is banned               |
+| `user_unbanned`              | User is unbanned             |
+| `user_deleted`               | User account deleted         |
+
+### 会话事件
+
+| Event                        | Trigger                         |
+| ---------------------------- | ------------------------------- |
+| `user_signed_in`             | Successful sign-in              |
+| `user_signed_out`            | User signs out                  |
+| `session_created`            | New session created             |
+| `session_revoked`            | Single session revoked          |
+| `sessions_revoked_all`       | All sessions revoked            |
+| `user_impersonated`          | Admin starts impersonating user |
+| `user_impersonation_stopped` | Admin stops impersonating       |
+
+### 账户事件
+
+| Event              | Trigger                 |
+| ------------------ | ----------------------- |
+| `account_linked`   | Social account linked   |
+| `account_unlinked` | Social account unlinked |
+| `password_changed` | Password updated        |
+
+### 验证事件
+
+| Event                      | Trigger                  |
+| -------------------------- | ------------------------ |
+| `password_reset_requested` | Password reset initiated |
+| `password_reset_completed` | Password reset finished  |
+| `email_verification_sent`  | Verification email sent  |
+
+### 组织事件
+
+如果您使用组织插件，也会跟踪以下事件：
+
+| Event                  | Trigger                          |
+| ---------------------- | -------------------------------- |
+| `organization_created` | New organization created         |
+| `organization_updated` | Organization settings changed    |
+| `member_added`         | Member added to organization     |
+| `member_removed`       | Member removed from organization |
+| `member_role_updated`  | Member role changed              |
+| `member_invited`       | Invitation sent                  |
+| `invite_accepted`      | Invitation accepted              |
+| `invite_rejected`      | Invitation rejected              |
+| `invite_cancelled`     | Invitation cancelled             |
+| `team_created`         | Team created                     |
+| `team_updated`         | Team updated                     |
+| `team_deleted`         | Team deleted                     |
+| `team_member_added`    | Member added to team             |
+| `team_member_removed`  | Member removed from team         |
+
+## 仪表盘端点
+
+dash 插件会为仪表盘注册大量管理端点：
+
+### 用户管理
+
+| Endpoint                   | Method | Description                |
+| -------------------------- | ------ | -------------------------- |
+| `/dash/users`              | GET    | List users with pagination |
+| `/dash/users/online-count` | GET    | Get online users count     |
+| `/dash/user`               | GET    | Get user details           |
+| `/dash/user`               | POST   | Create a new user          |
+| `/dash/user`               | PATCH  | Update user                |
+| `/dash/user`               | DELETE | Delete user                |
+| `/dash/user/ban`           | POST   | Ban user                   |
+| `/dash/user/unban`         | POST   | Unban user                 |
+| `/dash/user/password`      | POST   | Set user password          |
+| `/dash/user/impersonate`   | POST   | Impersonate user           |
+
+### 会话管理
+
+| Endpoint                    | Method | Description              |
+| --------------------------- | ------ | ------------------------ |
+| `/dash/sessions`            | GET    | List all sessions        |
+| `/dash/sessions`            | DELETE | Delete sessions          |
+| `/dash/session/revoke`      | POST   | Revoke single session    |
+| `/dash/sessions/revoke-all` | POST   | Revoke all user sessions |
+
+### 组织管理
+
+| Endpoint                         | Method | Description              |
+| -------------------------------- | ------ | ------------------------ |
+| `/dash/organizations`            | GET    | List organizations       |
+| `/dash/organization`             | GET    | Get organization details |
+| `/dash/organization`             | POST   | Create organization      |
+| `/dash/organization`             | PATCH  | Update organization      |
+| `/dash/organization`             | DELETE | Delete organization      |
+| `/dash/organization/members`     | GET    | List members             |
+| `/dash/organization/member`      | POST   | Add member               |
+| `/dash/organization/member`      | DELETE | Remove member            |
+| `/dash/organization/member/role` | PATCH  | Update member role       |
+
+### 团队管理
+
+| Endpoint                         | Method | Description        |
+| -------------------------------- | ------ | ------------------ |
+| `/dash/organization/teams`       | GET    | List teams         |
+| `/dash/organization/team`        | POST   | Create team        |
+| `/dash/organization/team`        | PATCH  | Update team        |
+| `/dash/organization/team`        | DELETE | Delete team        |
+| `/dash/organization/team/member` | POST   | Add team member    |
+| `/dash/organization/team/member` | DELETE | Remove team member |
+
+### 邀请管理
+
+| Endpoint                           | Method | Description       |
+| ---------------------------------- | ------ | ----------------- |
+| `/dash/organization/invitations`   | GET    | List invitations  |
+| `/dash/organization/invite`        | POST   | Send invitation   |
+| `/dash/organization/invite/cancel` | POST   | Cancel invitation |
+| `/dash/organization/invite/resend` | POST   | Resend invitation |
+
+### SSO 管理
+
+| Endpoint                                        | Method | Description         |
+| ----------------------------------------------- | ------ | ------------------- |
+| `/dash/organization/sso-providers`              | GET    | List SSO providers  |
+| `/dash/organization/sso-provider`               | POST   | Create SSO provider |
+| `/dash/organization/sso-provider`               | PATCH  | Update SSO provider |
+| `/dash/organization/sso-provider`               | DELETE | Delete SSO provider |
+| `/dash/organization/sso-provider/verify-domain` | POST   | Verify domain       |
+
+### 目录同步
+
+| Endpoint                             | Method | Description      |
+| ------------------------------------ | ------ | ---------------- |
+| `/dash/organization/directories`     | GET    | List directories |
+| `/dash/organization/directory`       | POST   | Create directory |
+| `/dash/organization/directory`       | DELETE | Delete directory |
+| `/dash/organization/directory/token` | POST   | Regenerate token |
+
+### 日志转发
+
+| Endpoint                            | Method | Description      |
+| ----------------------------------- | ------ | ---------------- |
+| `/dash/organization/log-drains`     | GET    | List log drains  |
+| `/dash/organization/log-drain`      | POST   | Create log drain |
+| `/dash/organization/log-drain`      | PATCH  | Update log drain |
+| `/dash/organization/log-drain`      | DELETE | Delete log drain |
+| `/dash/organization/log-drain/test` | POST   | Test log drain   |
+
+### 事件与审计日志
+
+| Endpoint             | Method | Description     |
+| -------------------- | ------ | --------------- |
+| `/events/list`       | GET    | Get user events |
+| `/events/audit-logs` | GET    | Get audit logs  |
+| `/events/types`      | GET    | Get event types |
+
+### 分析
+
+| Endpoint          | Method | Description         |
+| ----------------- | ------ | ------------------- |
+| `/dash/stats`     | GET    | Get user statistics |
+| `/dash/graph`     | GET    | Get graph data      |
+| `/dash/retention` | GET    | Get retention data  |
+| `/dash/map`       | GET    | Get geographic data |
+
+### 双重验证管理
+
+| Endpoint                               | Method | Description          |
+| -------------------------------------- | ------ | -------------------- |
+| `/dash/user/2fa/enable`                | POST   | Enable 2FA for user  |
+| `/dash/user/2fa/disable`               | POST   | Disable 2FA for user |
+| `/dash/user/2fa/totp-uri`              | GET    | Get TOTP URI         |
+| `/dash/user/2fa/backup-codes`          | GET    | View backup codes    |
+| `/dash/user/2fa/backup-codes/generate` | POST   | Generate new codes   |
+
+## 客户端集成
+
+### dashClient()
+
+客户端插件提供访问审计日志查询的功能：
 
 ```ts
 import { createAuthClient } from "better-auth/client";
@@ -88,7 +380,9 @@ export const authClient = createAuthClient({
 });
 ```
 
-### 客户端配置
+**注意**：对于 **Expo** 或 **React Native**，请从 `@better-auth/infra/native` 导入 `dashClient`（API 相同），并将其与 `sentinelNativeClient` 配合使用，具体请参阅 [Sentinel — Expo 和 React Native](/docs/infrastructure/plugins/sentinel#expo-and-react-native)。
+
+### 配置
 
 ```ts
 dashClient({
@@ -98,15 +392,50 @@ dashClient({
 }),
 ```
 
-## Dashboard 插件的功能
+### 获取当前用户的审计日志
 
-启用 `dash()` 后，Better Auth 基础设施仪表盘为您提供：
+返回**当前用户**的审计事件；如果您以成员身份传入 `organizationId`，则返回组织范围内的事件。
 
-* **用户管理** — 查看、搜索、封禁和删除用户
-* **会话监控** — 查看活跃会话并撤销它们
-* **组织概览** — 管理组织和成员
-* **分析功能** — 跟踪注册、登录和活跃用户随时间的变化
-* **审计日志** — 查询事件历史记录（[了解更多](/docs/infrastructure/plugins/audit-logs)）
+#### 基本查询
+
+```ts
+const session = await authClient.getSession();
+
+const logs = await authClient.dash.getAuditLogs({
+  session: session.data,
+  limit: 50,
+  offset: 0,
+});
+
+// Access the data
+console.log(logs.data?.events);  // Array of audit log events
+console.log(logs.data?.total);   // Total count
+console.log(logs.data?.limit);   // Page size
+console.log(logs.data?.offset);  // Current offset
+```
+
+更多信息请参阅[获取当前用户的审计日志](/docs/infrastructure/plugins/audit-logs#get-current-users-audit-logs)。
+
+### 获取所有审计日志
+
+返回当前用户拥有**管理员**或**所有者**访问权限的组织中的所有审计事件。角色检查需要[组织插件](/docs/plugins/organization)。
+
+#### 基本查询
+
+```ts
+const session = await authClient.getSession();
+
+const activity = await authClient.dash.getAllAuditLogs({
+  session: session.data,
+  limit: 50,
+  offset: 0,
+});
+
+console.log(activity.data?.events);
+console.log(activity.data?.total);
+```
+
+更多信息请参阅[获取所有审计日志](/docs/infrastructure/plugins/audit-logs#get-all-audit-logs)。
 
 ## 最佳实践
 

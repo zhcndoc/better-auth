@@ -1,6 +1,7 @@
 ---
+icon: pluginsTestUtils
 title: 测试工具
-description: 用于集成测试和端到端测试的测试实用工具
+description: 用于集成测试和端到端测试的测试工具
 ---
 
 Test Utils 插件为 Better Auth 编写集成测试和端到端测试提供了辅助工具。它包括工厂函数、数据库辅助函数、认证辅助函数以及 OTP 捕获功能。
@@ -155,13 +156,16 @@ const member = await test.addMember({
 
 认证辅助函数用于创建认证会话，以测试受保护路由。
 
+这三个辅助函数都接受一个可选的 `session` 对象，用于传入通过 `session.additionalFields` 或插件的会话架构配置的字段。提供的值会覆盖默认值；未提供的字段保留其默认值。`id`、`userId`、`token` 和时间戳等标准会话字段会被忽略。
+
 #### login
 
 为用户创建会话并返回会话详情、请求头、cookies 和令牌。
 
 ```ts
 const { session, user, headers, cookies, token } = await test.login({
-    userId: user.id
+    userId: user.id,
+    session: { providerToken: "test-token" } // optional additional fields
 })
 
 // session - 包含 userId、token 等信息的会话对象

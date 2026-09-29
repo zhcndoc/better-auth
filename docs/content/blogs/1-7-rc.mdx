@@ -157,46 +157,45 @@ export const auth = betterAuth({
 
 ### 重大变更
 
-| 变更                                            | 需要执行的操作                                                                                                                  |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| 账户身份按 issuer 划分                               | 回填 `issuer` 和 `accountId`，解决冲突，然后在部署前添加唯一的 `(issuer, accountId)` 索引。                                                     |
-| Microsoft 账户使用稳定的 `oid` claim                 | 在添加账户索引前，将每个现有 Microsoft 账户旧的 `sub` 标识符替换为经过验证的目录 `oid`。                                                                 |
-| SIWE 从签名消息派生身份                                | 从 nonce 请求中移除 wallet 和 chain 字段；从自定义 `getNonce` 返回 8 到 250 个字符的字母数字 nonce。                                               |
-| 受保护资源取代 `validAudiences`                      | 将每个 audience 移入 `resources`，将客户端关联到资源，并运行 schema 迁移。                                                                     |
-| DPoP 改变 token 验证方式                            | 重命名 bearer-token helper，在需要时使用 DPoP 请求验证器，并运行 schema 迁移。                                                                 |
-| Back-channel logout 会撤销绑定会话的 token            | 运行 schema 迁移，预期已登出的 token 会变为 inactive，并审查 logout URI，确保其使用公开的 HTTPS，且不包含凭据或片段。                                          |
-| 通用 OAuth 使用社交提供商路径                            | 更新登录调用、关联调用、回调 URL 和客户端插件。                                                                                               |
-| 自定义社交提供商使用一个身份令牌验证器                           | 将提供商的 `verifyIdToken` 方法替换为 `idToken` 配置。                                                                                |
-| 旧的 `oidcProvider` 插件已移除                       | 将提供商配置迁移到 `@better-auth/oauth-provider`。                                                                                 |
-| OAuth Provider 移除 `silenceWarnings`           | 从 `oauthProvider()` 配置中删除 `silenceWarnings`。                                                                             |
-| MCP 移至 `@better-auth/mcp`                     | 更新导入、endpoint 路径、helper 名称、配置结构和 schema。                                                                                 |
-| SAML 默认值和配置发生变化                               | 更新已移除的字段，更新回调 URL，并审查由 IdP 发起的流程。                                                                                        |
-| SCIM 需要完整重新供应                                 | 停止供应，审查旧身份，替换不兼容的表和凭据，然后运行完整的 User 和 Group 供应周期。                                                                         |
-| 默认不信任代理头                                      | 仅当你的代理需要时，才通过 `advanced.trustedProxyHeaders: true` 选择启用。                                                                 |
-| 自定义适配器和存储需要原子方法                               | 实现 `incrementOne` 和 `consumeOne`（适配器）、`increment` 和 `getAndDelete`（secondary storage），或 `consume`（rate-limit storage）。   |
-| Expo 安全存储访问是异步的                               | 等待 `getCookie()`，在自定义存储中提供异步方法，并在必须等待写入时使用 `storageAdapter.setItemAsync()`。                                              |
-| Captcha 规则匹配完整路径                              | 将 `/sign-in` 这样的部分路径替换为 `/sign-in/*` 或 `/sign-in/**`。                                                                    |
-| 自定义协议的可信来源按主机匹配                               | 类似 `myapp://callback` 的带主机条目不再接受 `myapp://callback.attacker.tld`。重新检查原生端和移动端的 `trustedOrigins`。                          |
-| Electron 要求 S256 PKCE                         | 同时升级 Electron 客户端和服务器。                                                                                                   |
-| OIDC ID token 不再包含 profile/email scope claims | 从 UserInfo endpoint，而不是 ID token 中读取 profile 和 email claims。                                                             |
-| 同步 OAuth2 请求构建器已移除                            | 将 `createAuthorizationCodeRequest`、`createRefreshAccessTokenRequest` 和 `createClientCredentialsTokenRequest` 替换为对应的异步版本。 |
-| `jwt.sign` 回调必须匹配 `keyPairConfig.alg`         | 让自定义 ID-token 签名 alg 与配置的密钥对保持一致，否则会拒绝签发。                                                                                |
-| 更严格的 Dynamic Client Registration 验证           | 发送相互对应的 `response_types`/`grant_types`（`code` response type 要求 `authorization_code` grant）。                              |
-| 未认证注册会保留客户端身份验证方法                             | 注册默认是 confidential。对于必须保持 public 的客户端，将 `token_endpoint_auth_method: "none"`。                                            |
-| `/oauth2/revoke` 拒绝有效的 JWT access token       | 预期返回 `400 unsupported_token_type`。请改为撤销 refresh 或 opaque token。                                                          |
-| OAuth 回调错误代码重命名                               | 将 `email_doesn't_match` 的处理更新为 `email_does_not_match`。                                                                   |
-| `generateState()` 签名发生变化                      | 使用新的 options 对象调用它，而不是传入位置参数 `(c, link, additionalData)`。                                                                |
-| SSO SAML 配置注册发生变化                             | 提供签名证书来源，并预期获得完整的小写 ACS 错误重定向代码，而不是简短别名。                                                                                 |
-| `/sso/update-provider` 拒绝部分映射                 | 发送完整的 OIDC/SAML 映射对象，而不是部分对象。                                                                                            |
-| auth CLI 要求 Node.js 22.12+                    | 升级用于运行 CLI 的 Node.js。                                                                                                    |
-| 新增 organization 列                             | 运行 `team.memberCount` 和 `teamMember.membershipKey` 的迁移。                                                                  |
-| Stripe 组织订阅需要 `organization.enabled`          | 除非在 Stripe 插件配置中设置 `organization: { enabled: true }`，否则 `referenceMiddleware` 会拒绝组织范围的订阅。                                |
-| 数据库 joins 移出 `experimental`                   | 将 `experimental.joins` 替换为 `advanced.database.joins`，然后重新生成 Drizzle 或 Prisma relations。                                  |
-| 默认 Drizzle schema 使用单数 relation key           | 重新生成并审查你的 Drizzle schema relations。                                                                                      |
-| Device Authorization schema 和 OAuth grant     | 为两个 code 列添加索引，将 code 保持在 191 个字符以内，并且仅在启用 OAuth Device Authorization 时添加 `oauthClientId` 和 `resources`。                 |
-| Stripe `onSubscriptionCancel` event 是必需的      | 更新回调，使其预期接收非可选的 `event`。                                                                                                 |
-| 仅 OTP 的双因素启用                                  | `enableTwoFactor` 接受新的 `method` 参数并返回判别联合响应。更新调用方。                                                                       |
-| 公共导出 `getIp` 重命名为 `getIP`                     | 更新 IP helper 的导入。                                                                                                        |
+| 变更                                                    | 需要做什么                                                                                                                                           |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Microsoft 账户使用稳定的 `oid` claim             | 在添加账户索引前，将每个现有 Microsoft 账户的旧 `sub` 标识符替换为经过验证的目录 `oid`。                    |
+| SIWE 从签名消息派生身份             | 从 nonce 请求中移除钱包和链字段；从自定义 `getNonce` 返回一个 8 到 250 个字符的字母数字 nonce。                        |
+| 受保护资源取代 `validAudiences`              | 将每个 audience 移到 `resources` 中，将客户端关联到资源，并运行 schema 迁移。                                                        |
+| DPoP 改变 token 验证方式                           | 重命名 bearer-token helper，在需要时使用 DPoP 请求验证器，并运行 schema 迁移。                                            |
+| Back-channel logout 会撤销与 session 绑定的 token          | 运行 schema 迁移，预期已登出的 token 会变为非活动状态，并检查 logout URI 是否为不含凭据或片段的公开 HTTPS 地址。      |
+| 通用 OAuth 使用社交提供商路径               | 更新登录调用、链接调用、回调 URL 和客户端插件。                                                                                 |
+| 自定义社交提供商使用统一的身份令牌验证器   | 将提供商的 `verifyIdToken` 方法替换为 `idToken` 配置。                                                                                |
+| 旧的 `oidcProvider` 插件已移除                  | 将提供商配置迁移到 `@better-auth/oauth-provider`。                                                                                               |
+| OAuth Provider 移除了 `silenceWarnings`                  | 从 `oauthProvider()` 配置中删除 `silenceWarnings`。                                                                                       |
+| MCP 迁移到 `@better-auth/mcp`                           | 更新导入、endpoint 路径、helper 名称、配置结构和 schema。                                                                              |
+| SAML 默认设置和配置发生变化                           | 更新已移除的字段、更新回调 URL，并检查由 IdP 发起的流程。                                                                         |
+| SCIM 需要完整重新供应                         | 停止供应，检查旧身份，替换不兼容的表和凭据，然后运行完整的 User 和 Group 供应周期。 |
+| 默认不信任代理头                  | 仅当代理需要时，通过 `advanced.trustedProxyHeaders: true` 显式启用。                                                                   |
+| 自定义适配器和存储需要原子方法           | 实现 `incrementOne` 和 `consumeOne`（适配器）、`increment` 和 `getAndDelete`（secondary storage），或 `consume`（rate-limit storage）。         |
+| Expo 安全存储访问是异步的                | 对 `getCookie()` 使用 await，在自定义存储中提供异步方法，并在需要等待写入时使用 `storageAdapter.setItemAsync()`。            |
+| 验证码规则匹配完整路径                            | 将 `/sign-in` 这样的部分路径替换为 `/sign-in/*` 或 `/sign-in/**`。                                                                            |
+| 自定义协议的受信任来源按主机匹配               | 带主机的条目（如 `myapp://callback`）不再接受 `myapp://callback.attacker.tld`。重新检查原生和移动端的 `trustedOrigins`。         |
+| Electron 需要 S256 PKCE                               | 同时升级 Electron 客户端和服务器。                                                                                                     |
+| OIDC ID token 不再包含 profile/email scope claims            | 从 UserInfo endpoint 读取 profile 和 email claims，而不是从 ID token 读取。                                                                          |
+| 同步 OAuth2 请求构建器已移除               | 将 `createAuthorizationCodeRequest`、`createRefreshAccessTokenRequest` 和 `createClientCredentialsTokenRequest` 替换为异步版本。   |
+| `jwt.sign` 回调必须匹配 `keyPairConfig.alg`       | 将自定义 ID-token 签名 alg 与配置的密钥对对齐，否则会拒绝签发。                                                        |
+| Dynamic Client Registration 验证更加严格           | 发送相互对应的 `response_types`/`grant_types`（`code` response type 需要 `authorization_code` grant）。                                     |
+| 未经身份验证的注册会保留客户端身份验证方法 | 默认注册为 confidential。对于必须保持 public 的客户端，请设置 `token_endpoint_auth_method: "none"`。                               |
+| `/oauth2/revoke` 会拒绝有效的 JWT access token          | 预期会收到 `400 unsupported_token_type`。请改为撤销 refresh token 或 opaque token。                                                                        |
+| OAuth 回调错误代码重命名                         | 将 `email_doesn't_match` 的处理更新为 `email_does_not_match`。                                                                                  |
+| `generateState()` 签名已更改                       | 使用新的 options 对象调用，而不是传入位置参数 `(c, link, additionalData)`。                                                               |
+| SSO SAML 配置注册发生变化                      | 提供签名证书来源，并预期收到完整的小写 ACS 错误重定向代码，而不是简短别名。                                           |
+| `/sso/update-provider` 会拒绝部分映射           | 发送完整的 OIDC/SAML 映射对象，而不是部分对象。                                                                                         |
+| auth CLI 需要 Node.js 22.12+                          | 升级运行 CLI 所用的 Node.js。                                                                                                             |
+| 新增 organization 列                                  | 为 `team.memberCount` 和 `teamMember.membershipKey` 运行迁移。                                                                             |
+| Stripe 组织订阅需要 `organization.enabled`      | 除非在 Stripe 插件配置中设置 `organization: { enabled: true }`，否则 `referenceMiddleware` 会拒绝组织范围的订阅。                  |
+| 数据库 joins 移出 `experimental`                | 将 `experimental.joins` 替换为 `advanced.database.joins`，然后重新生成 Drizzle 或 Prisma relations。                                            |
+| 默认 Drizzle schema 使用单数关系键        | 重新生成并检查 Drizzle schema relations。                                                                                                 |
+| Device Authorization schema 和 OAuth grant               | 为两个 code 列建立索引，将 code 保持在 191 个字符以内，并且仅在启用 OAuth Device Authorization 时添加 `oauthClientId` 和 `resources`。    |
+| Stripe `onSubscriptionCancel` 事件为必需           | 更新回调，使其预期 `event` 一定存在。                                                                                                |
+| 仅启用 OTP 的双因素身份验证                            | `enableTwoFactor` 接受新的 `method` 参数并返回判别式响应。更新调用方。                                                   |
+| 公共导出 `getIp` 重命名为 `getIP`                  | 更新 IP helper 的导入。                                                                                                                     |
 
 ### 行为变化
 
@@ -259,19 +258,18 @@ better-auth@rc
 
 在应用 1.7 schema 之前，完成 account identities、OAuth clients、SCIM 和 Device Authorization 所需的任何手动准备工作。然后，对于内置 Kysely adapter，使用 `npx auth@rc migrate`；或者运行 `npx auth@rc generate`，并通过你的 Drizzle、Prisma 或自定义迁移流程应用生成的结果。在 1.7 稳定之前，不带范围的 `npx auth` 仍会解析到 1.6 CLI。有关所需顺序和详细步骤，请参阅 [1.7 升级指南](/docs/guides/1-7-upgrade-guide)。
 
-| 如果你使用                                       | 预期情况                                                                                    |
-| ------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Basic Better Auth setup                     | 通常只需要安装 `@rc` 版本并审查 schema 变更                                                           |
-| Existing external account rows              | 在应用 account index 前，回填按 issuer 划分的身份并解决冲突                                               |
-| Social login、通用 OAuth、One Tap 或 SIWE        | 新的登录客户端行为，包括 Microsoft `oid`、无地址的 SIWE nonce，以及 Google One Tap                          |
-| `@better-auth/oauth-provider`               | 客户端数据准备，以及 resources、DPoP、back-channel logout、`max_age` 和更安全的 OAuth 检查                  |
-| MCP                                         | 迁移到 `@better-auth/mcp` 包、官方 v2 客户端或服务器、新的 endpoint 路径，以及 schema 变更                      |
-| SAML 或 SCIM                                 | 更安全的 SAML 和 SSO 检查，以及完整的 SCIM 切换和 User、Group 重新供应                                       |
-| Device Authorization                        | 具备索引且受长度限制的 code；还可以选择添加包含 `oauthClientId` 和 `resources` 的 `oauthDeviceAuthorization()` |
-| Magic links 或 email OTP                     | 对邮箱从未确认的账户进行更安全的处理                                                                      |
-| Expo 或 React Native                         | 等待 cookie 读取，并更新自定义 SecureStore 兼容存储实现                                                  |
-| Custom adapters、storage 或 rate-limit stores | 需要新的原子方法                                                                                |
-| Custom proxy 或 TLS termination              | 在依赖 DPoP 或 identity-provider 重定向前，检查应用如何计算其公开 origin                                    |
+| 如果你使用                                     | 需要注意                                                                                               |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 基础 Better Auth 配置                        | 通常只需安装 `@rc` 并检查 schema 变更                                                        |
+| 社交登录、通用 OAuth、One Tap 或 SIWE  | 登录客户端行为会改变，包括 Microsoft `oid`、无地址的 SIWE nonce 和 Google One Tap            |
+| `@better-auth/oauth-provider`                  | 准备客户端数据，并处理 resources、DPoP、back-channel logout、`max_age` 和更安全的 OAuth 检查         |
+| MCP                                            | 包迁移到 `@better-auth/mcp`、使用官方 v2 客户端或服务器、新 endpoint 路径和 schema 变更 |
+| SAML 或 SCIM                                   | SAML 和 SSO 检查更安全，并且需要完整切换 SCIM 以及重新供应 User 和 Group                        |
+| Device Authorization                           | code 会建立索引并限制长度；也可以添加 `oauthDeviceAuthorization()`，并设置 `oauthClientId` 和 `resources`     |
+| Magic links 或 email OTP                       | 更安全地处理邮箱从未确认的账户                                                  |
+| Expo 或 React Native                           | 等待 cookie 读取完成，并更新自定义 SecureStore 兼容存储实现                          |
+| 自定义适配器、存储或限流存储 | 需要新增原子方法                                                                              |
+| 自定义代理或 TLS 终止                | 在依赖 DPoP 或身份提供商重定向之前，检查应用如何计算其公共 origin          |
 
 ***
 

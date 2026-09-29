@@ -1,6 +1,7 @@
 ---
+icon: authenticationDropbox
 title: Dropbox
-description: Dropbox 提供商设置和使用。
+description: Dropbox 提供程序设置和使用。
 ---
 
 <Steps>
@@ -38,7 +39,7 @@ description: Dropbox 提供商设置和使用。
 
     要使用 Dropbox 登录，您可以使用客户端提供的 `signIn.social` 函数。`signIn` 函数接收一个包含以下属性的对象：
 
-    * `provider`: 要使用的提供程序。应设置为 `dropbox`。
+    * `provider`：要使用的提供程序。应设置为 `dropbox`。
 
     ```ts title="auth-client.ts"
     import { createAuthClient } from "better-auth/client"

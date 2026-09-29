@@ -1,4 +1,5 @@
 ---
+icon: pluginsAdmin
 title: 管理员
 description: Better Auth 的管理员插件
 ---
@@ -830,10 +831,22 @@ admin({
 
 ### 禁止用户消息
 
-禁止用户尝试登录时显示的消息。默认为 "You have been banned from this application. Please contact support if you believe this is an error."
+禁止用户尝试登录时显示的消息。默认为“您已被禁止使用此应用程序。如果您认为这是一个错误，请联系支持团队。”
+
+您也可以传入一个同步或异步函数，该函数接收被禁止的用户并返回消息。
 
 ```ts title="auth.ts"
 admin({
   bannedUserMessage: "自定义禁止用户提示信息",
+});
+```
+
+```ts title="auth.ts"
+admin({
+  bannedUserMessage: (user) => {
+    return user.banReason
+      ? `You have been banned. Reason: ${user.banReason}`
+      : "You have been banned.";
+  },
 });
 ```

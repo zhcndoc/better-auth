@@ -1,4 +1,6 @@
 ---
+icon: adaptersDrizzle
+sidebarTitle: "Drizzle"
 title: Drizzle ORM 适配器
 description: 将 Better Auth 与 Drizzle ORM 集成。
 ---
@@ -235,8 +237,8 @@ export const session = authSchema.table("session", {...});
 
 ## Drizzle Relations v2
 
-当前的 Drizzle 适配器使用 Drizzle Relations v1。
-要使用 Drizzle Relations v2，你需要使用 `@better-auth/drizzle-adapter/relations-v2` 适配器。
+默认的 Drizzle 适配器使用 Relations v1。要使用 Drizzle Relations v2，请使用
+`@better-auth/drizzle-adapter/relations-v2`。
 
 安装适配器：
 
@@ -244,18 +246,18 @@ export const session = authSchema.table("session", {...});
 npm install @better-auth/drizzle-adapter
 ```
 
-更新导入以使用 relations-v2 适配器：
+使用 v2 适配器和 auth 模式配置 Better Auth：
 
 ```ts title="auth.ts"
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from '@better-auth/drizzle-adapter/relations-v2'; // [!code highlight]
-import { db } from './database.ts';
-import * as schema from './schema.ts';
+import { db } from './db.ts';
+import * as schema from './auth-schema.ts';
 
 export const auth = betterAuth({
 	database: drizzleAdapter(db, {
 		provider: 'sqlite', // or "pg" or "mysql"
-		schema,
+		schema, // [!code highlight]
 	}),
 	//... the rest of your config
 });
@@ -272,19 +274,14 @@ npx auth@latest generate
   模式生成器会自动输出新的 v2 格式。
 </Callout>
 
-生成的 auth 模式会使用 `defineRelationsPart` 导出关联关系，该方法旨在与应用自己的 `defineRelations` 合并使用。将两者传递给 drizzle 实例——从 Drizzle v1 RC 开始，不再需要 `schema`：
+在现有的 Drizzle 配置中，将生成的 auth 关联合并到应用关联之后：
 
 ```ts title="db.ts"
-import { drizzle } from 'drizzle-orm/...';
-// generated relations from auth CLI (uses defineRelationsPart)
 import { authRelations } from './auth-schema.ts';
-// your app's own relations (uses defineRelations)
 import { relations } from './app-schema.ts';
 
 export const db = drizzle({
 	client,
-	// authRelations uses defineRelationsPart, // [!code highlight]
-	// so it must come after the main relations // [!code highlight]
 	relations: { ...relations, ...authRelations }, // [!code highlight]
 });
 ```

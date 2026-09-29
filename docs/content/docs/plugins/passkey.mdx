@@ -1,6 +1,7 @@
 ---
-title: Passkey 密钥
-description: Passkey 密钥
+icon: pluginsPasskey
+title: Passkey
+description: Passkey
 ---
 
 Passkey 密钥是一种安全的无密码认证方法，使用加密密钥对，由 WebAuthn 和 FIDO2 标准支持，适用于网页浏览器。它用独特的密钥对替代密码：私钥存储在用户设备上，公钥共享给网站。用户可以通过生物识别、PIN 码或安全密钥登录，提供强大且抗钓鱼的认证，免除了传统密码的使用。
@@ -248,6 +249,8 @@ console.log(result.webauthn?.clientExtensionResults);
 每一条 passkey 记录都带有一个 `aaguid`，即认证器*型号*的标识符（例如 Google Password Manager 或 1Password）。Better Auth 会在注册时存储它，并在 `listPasskeys` 中返回，因此您可以在渲染 passkey 时确定显示标签。由于解析发生在读取时，更新后的提供商列表也会应用于已存在的 passkey。
 
 该插件为最常见的认证器附带了一个小型、尽力而为的查找表：
+
+* [passkeydeveloper/passkey-authenticator-aaguids](https://github.com/passkeydeveloper/passkey-authenticator-aaguids)
 
 ```ts title="passkey-list.tsx"
 import { getAuthenticatorName } from "@better-auth/passkey";

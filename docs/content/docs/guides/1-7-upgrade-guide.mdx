@@ -1,4 +1,7 @@
 ---
+icon: guidesV17UpgradeGuide
+sidebarTitle: "1.7 升级指南"
+sidebarBadge: "New"
 title: 升级到 Better Auth 1.7
 description: 将 Better Auth 从 1.6 升级到 1.7，包括 Expo、OAuth、OpenID Connect、MCP、SAML、SCIM、代理和自定义适配器变更。
 ---
@@ -33,31 +36,40 @@ npx auth upgrade
 
 这些功能会更改 schema：
 
-| 功能        | 增加内容                                                                           | 需要手动准备？                              |
-| --------- | ------------------------------------------------------------------------------ | ------------------------------------ |
-| 受保护资源     | 新的资源表和键列                                                                       | 否                                    |
-| 资源绑定令牌    | 令牌表中的资源列                                                                       | 否                                    |
-| DPoP      | 令牌绑定列                                                                          | 否                                    |
-| 刷新令牌重用窗口  | 刷新令牌上的缓存重放响应列                                                                  | 否                                    |
-| 授权码重放     | 两个令牌表上带索引的 `authorizationCodeId` 列                                             | 否                                    |
-| 后端注销      | 注销 URL 和撤销列                                                                    | 否                                    |
-| 请求的用户信息声明 | 令牌表和同意表中的请求声明列                                                                 | 否                                    |
-| 账号身份      | issuer 列，以及与现有 provider-account 列的复合索引                                         | **是，需要回填**                           |
-| SCIM      | 七个配置模型，以及三个可选的托管目录模型，其布局会替代旧版 SCIM 模型                                          | **是，需要重新配置**                         |
-| 组织团队计数器   | `team.memberCount` 和 `teamMember.membershipKey` 列                              | 否                                    |
-| 提供方客户端存储  | `oauthApplication` 变为 `oauthClient`，并增加新的令牌表                                   | **是，需要移动客户端数据**                      |
-| 设备授权      | `deviceCode` 和 `userCode` 上的唯一索引；可选 OAuth 授权还会增加 `oauthClientId` 和 `resources` | **是，需要去重；MySQL/SQL Server 还需要绑定字符串** |
+| 功能                       | 添加内容                                                                                                                  | 需要手动准备？              |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 受保护资源        | 新的资源表和密钥列                                                                                     | 否                                                        |
+| 资源绑定令牌      | 令牌表中的资源列                                                                                    | 否                                                        |
+| DPoP                       | 令牌绑定列                                                                                                  | 否                                                        |
+| 刷新令牌重用窗口 | 刷新令牌上的缓存重放响应列                                                                       | 否                                                        |
+| 授权码重放  | 两个令牌表上带索引的 `authorizationCodeId` 列                                                            | 否                                                        |
+| 后端通道注销        | 注销 URL 和已撤销列                                                                                          | 否                                                        |
+| 请求的用户信息声明 | 令牌表和同意表上的请求声明列                                                               | 否                                                        |
+| SCIM                       | 七个预配模型，以及三个可选的托管目录模型；其布局会取代旧版 SCIM 模型 | **是，重新预配**                                      |
+| 组织团队计数器 | `team.memberCount` 和 `teamMember.membershipKey` 列                                                               | 否                                                        |
+| 提供方客户端存储      | `oauthApplication` 变为 `oauthClient`，并新增令牌表                                                         | **是，迁移客户端数据**                                 |
+| 设备授权       | `deviceCode` 和 `userCode` 上的唯一索引；可选 OAuth 授权还会添加 `oauthClientId` 和 `resources`       | **是，去重；MySQL/SQL Server 还需绑定字符串** |
 
 <Callout type="warn">
-  在应用生成的 1.7 schema 之前，准备好账号身份、OAuth 客户端和 SCIM 数据。CLI 会增加表、列和索引，但不会为你选择发行者、复制 OAuth 客户端或转换旧版 SCIM 数据。
+  应用生成的 1.7 schema 之前，请先准备好 OAuth 客户端和 SCIM 数据。CLI 会添加表、列和索引，但不会复制 OAuth 客户端，也不会转换旧版 SCIM 数据。
 </Callout>
 
 请按以下顺序操作：
 
-1. 当相关章节适用于你的项目时，完成[账号身份按发行者进行限定](#账号身份按发行者进行限定)、[OAuth 客户端记录](#迁移-oauth-客户端记录)、[SCIM](#scim-需要完整重新配置) 和[设备授权](#设备授权)中的手动准备工作。
-2. 应用 1.7 schema。使用内置 Kysely 适配器时，运行 `npx auth migrate`。使用 Drizzle、Prisma 或自定义 schema 工作流时，运行 `npx auth generate`，检查输出，然后使用你的迁移工具应用它。
+1. 检查是否存在[重复的账号键](#check-for-duplicate-account-keys)，并在适用时完成[OAuth 客户端记录](#migrate-oauth-client-records)、[SCIM](#scim-requires-full-reprovisioning) 和[设备授权](#device-authorization)中的手动准备工作。
+2. 应用 1.7 schema。使用内置 Kysely 适配器时，运行 `npx auth migrate`。使用 Drizzle、Prisma 或自定义 schema 工作流时，运行 `npx auth generate`，检查生成结果，然后使用你的迁移工具应用。
 3. 一起部署 1.7 软件包和配置变更。
-4. 完成所有部署后工作，包括重新配置 SCIM。
+4. 完成所有部署后工作，包括 SCIM 重新预配。
+
+### 检查是否存在重复的账号键
+
+升级之前，请检查是否存在重复的 `(providerId, accountId)` 对，包括从 1.6 升级的情况。在 PostgreSQL 中运行：
+
+```sql
+SELECT "providerId", "accountId", count(*) FROM account GROUP BY 1, 2 HAVING count(*) > 1;
+```
+
+请使用你配置的表名和列名。升级前解决查询返回的所有记录。如果不同发行者共享一个提供方 ID，并使用相同的账号 ID，请为每个发行者指定独立的提供方 ID，并更新对应的账号行。不同用户应保持独立。如果多个行与该键匹配，Better Auth 会拒绝账号查询。
 
 ***
 
@@ -65,89 +77,90 @@ npx auth upgrade
 
 本节涵盖邮箱和密码、社交登录、通用 OAuth 插件、One Tap 以及使用 SSO。
 
-### 账号身份按发行者进行限定
+### 账号身份保留提供方键
 
-Better Auth 现在通过 `issuer` 和 `accountId` 的唯一组合识别外部账号。`providerId` 仍然是本地提供方配置，而 `account.id` 标识 Better Auth 账号行，`account.accountId` 仍然是提供方分配的稳定标识符。账号 schema 增加了必需的 `issuer` 字段，并在两个身份字段上创建唯一复合索引，但不会重命名 `accountId`。
+Better Auth 1.7.0 到 1.7.2 在 `account` 表中添加了必需的 `issuer` 列，以及 `issuer` 和 `accountId` 上的唯一索引。Better Auth 1.7.3 移除了此要求。与 1.6 一样，账号通过 `providerId` 和 `accountId` 识别。
 
-<Callout type="warn">
-  在更改账号 schema 之前，请使用维护窗口并停止身份验证写入，包括直接向 `account` 插入数据的后台任务和管理 API。生成的迁移无法替你选择可信发行者或解决身份冲突。
-</Callout>
+**账号 schema 与 1.6 相同。** 无需添加任何列。
 
 <Callout type="warn">
-  如果你在完成回填之前已经针对 MySQL 运行了 `auth migrate`，请先检查是否发生数据损坏。在 SQLite、Postgres 和 SQL Server 上，为没有默认值的必填列增加数据会安全失败，但 MySQL 的默认 `sql_mode` 会静默接受该操作，并将所有现有行的 `issuer` 回填为空字符串，而不是抛出错误。
-
-  ```sql title="MySQL corruption check"
-  SELECT COUNT(*) FROM account WHERE issuer = '';
-  ```
-
-  非零计数意味着数据库需要修复，而不只是回填：重新回填之前先删除复合唯一索引，因为该索引建立在损坏的空字符串值之上，当行解析为相同的真实发行者时会抛出重复键错误。MySQL 对表不支持 `DROP INDEX IF EXISTS`，并且如果索引创建从未运行，该索引可能尚不存在，因此请先检查。
-
-  ```sql title="Drop the compound index if it exists (MySQL)"
-  SHOW INDEX FROM account WHERE Key_name = 'account_issuer_accountId_uidx';
-  -- Run the DROP INDEX below only if the query above returned a row.
-  DROP INDEX account_issuer_accountId_uidx ON account;
-  ```
-
-  所有行都有正确值后，作为下面第 5 步的一部分重新创建索引。
-
-  ```sql title="Recreate the compound index (MySQL)"
-  CREATE UNIQUE INDEX account_issuer_accountId_uidx ON account (issuer, accountId);
-  ```
+  只有运行过 1.7.0 到 1.7.2 的数据库才需要执行以下步骤。新行不再写入 `issuer`，因此在放宽约束之前，`NOT NULL` 列会拒绝所有注册和账号关联操作。
 </Callout>
 
-**回填账号身份：**
+<Steps>
+  <Step>
+    #### 检查该列是否存在
 
-1. 备份 `account` 和 `user` 表，然后盘点每个不同的 `providerId`。将 `account.fields` 中的自定义物理字段名也纳入盘点。
-2. 在回填期间将 `issuer` 添加为可空字段。保留现有的物理 `accountId` 列。
-3. 根据账号类型填充两个字段：
+    ```sql
+    SELECT * FROM account LIMIT 0;
+    ```
 
-   | 账号类型                                   | `issuer`                           | `accountId`                 |
-   | -------------------------------------- | ---------------------------------- | --------------------------- |
-   | 凭据                                     | `local:credential`                 | 链接的 `user` 行中的稳定 `id`       |
-   | SIWE 钱包，`providerId` 为 `siwe`          | `local:siwe`                       | 现有的 `<address>:<chainId>` 值 |
-   | Google One Tap，`providerId` 为 `google` | `https://accounts.google.com`      | 现有的 Google `sub`            |
-   | 具有发行者的提供方                              | 提供方使用的确切可信发行者                      | 现有的提供方账号标识符                 |
-   | 没有发行者的 OAuth 提供方                       | `local:oauth:<encoded providerId>` | 现有的提供方账号标识符                 |
+    如果结果中没有 `issuer` 列，则无需操作。`account` 表中已有数据的 1.6 数据库无法添加此列，因为没有默认值的 `NOT NULL` 列无法添加到已填充数据的表中。
+  </Step>
 
-   合成发行者会严格按照 `encodeURIComponent(providerId)` 对其提供方 ID 片段进行百分号编码；例如，`local:oauth:github` 和 `local:oauth:team%2Fgithub`。请为你的部署构建明确的 `providerId` 到发行者映射。代表同一 OpenID Connect 权威机构的多个提供方配置必须使用同一个发行者。不要根据邮箱、显示名称、未经验证的请求值或可变的授权端点推导发行者。SIWE 和 Google One Tap 不是 OAuth 提供方，因此合成的 `local:oauth:` 命名空间不适用于它们。
-4. 在创建唯一索引之前查找冲突。根据你的物理表和字段名调整此查询：
+  <Step>
+    #### 放宽约束
 
-   ```sql title="Identity collision check"
-   SELECT issuer, accountId, COUNT(*) AS accountCount,
-          COUNT(DISTINCT userId) AS userCount
-   FROM account
-   GROUP BY issuer, accountId
-   HAVING COUNT(*) > 1;
-   ```
+    删除约束即可，并且可以恢复。删除列是独立的清理操作，可在任何时候执行。
 
-   如果重复行属于同一个用户，请选择要保留的账号记录，并在删除其他记录之前协调其提供方配置、令牌、作用域和时间戳。如果一个键属于多个用户，请停止迁移，并根据可信的提供方数据确定所有者。绝不要仅通过匹配邮箱来合并用户。
-5. 确认每一行都有两个身份字段，然后将 `issuer` 设为非空，并在 `issuer` 和 `accountId` 上添加唯一复合索引。`auth migrate` 永远不会生成将现有可空列设为非空的语句；请自行运行此 DDL。
+    <Callout type="warn">
+      先删除索引，再删除列。MySQL 会保留列消失后仍引用该列的索引，并在其余列上重建索引，从而将复合唯一索引变成仅针对 `accountId` 的唯一约束。这会拒绝同一用户在两个提供方持有相同账号 ID 的情况。
+    </Callout>
 
-   ```sql title="Postgres"
-   ALTER TABLE account ALTER COLUMN issuer SET NOT NULL;
-   CREATE UNIQUE INDEX account_issuer_accountId_uidx ON account (issuer, accountId);
-   ```
+    <Tabs items={["Postgres", "MySQL and SQL Server", "SQLite", "Prisma and Drizzle", "MongoDB"]}>
+      <Tab value="Postgres">
+        ```sql
+        ALTER TABLE account ALTER COLUMN issuer DROP NOT NULL;
+        DROP INDEX account_issuer_accountId_uidx;
+        ```
+      </Tab>
 
-   ```sql title="MySQL"
-   ALTER TABLE account MODIFY COLUMN issuer VARCHAR(255) NOT NULL;
-   CREATE UNIQUE INDEX account_issuer_accountId_uidx ON account (issuer, accountId);
-   ```
+      <Tab value="MySQL and SQL Server">
+        ```sql
+        ALTER TABLE account MODIFY issuer VARCHAR(255) NULL;
+        DROP INDEX account_issuer_accountId_uidx ON account;
+        ```
 
-   ```sql title="SQL Server"
-   ALTER TABLE account ALTER COLUMN issuer VARCHAR(255) NOT NULL;
-   CREATE UNIQUE INDEX account_issuer_accountId_uidx ON account (issuer, accountId);
-   ```
+        在严格模式之外，MySQL 从不会拒绝此插入操作。它会将 `issuer` 填为空字符串，因此注册仍会正常进行，而唯一索引会悄悄变成仅针对 `accountId` 的约束。这里也需要放宽该列。
+      </Tab>
 
-   SQLite 没有可以添加 `NOT NULL` 约束的 `ALTER COLUMN`，因此请改为重建表：创建带有该约束的替代表，将所有行复制过去，删除原表，重命名替代表，然后重新创建原表拥有的所有索引和外键。
+      <Tab value="SQLite">
+        SQLite 不支持 `ALTER COLUMN`，因此请改为删除该列。
 
-   ```sql title="SQLite table rebuild"
-   CREATE TABLE account_new (/* same columns as account, with issuer TEXT NOT NULL */);
-   INSERT INTO account_new SELECT * FROM account;
-   DROP TABLE account;
-   ALTER TABLE account_new RENAME TO account;
-   CREATE UNIQUE INDEX account_issuer_accountId_uidx ON account (issuer, accountId);
-   ```
-6. 更新自定义适配器、数据库钩子和生成的 schema，使其包含 `issuer`。凭据账号继续将所链接用户的稳定 `id` 作为 `accountId`；邮箱仍然是可变的登录标识符，不会改变账号键。
+        ```sql
+        DROP INDEX account_issuer_accountId_uidx;
+        ALTER TABLE account DROP COLUMN issuer;
+        ```
+      </Tab>
+
+      <Tab value="Prisma and Drizzle">
+        请重新生成，而不是编写 SQL。生成的 `account` 模型会同时删除该字段和复合唯一索引，并由你自己的工具生成迁移。
+
+        ```bash
+        npx auth@latest generate
+        ```
+      </Tab>
+
+      <Tab value="MongoDB">
+        MongoDB 没有 `NOT NULL`，因此插入操作仍会正常进行。如果存在唯一索引，请将其删除：由于不再写入 `issuer`，该索引会将所有新账号视为共享同一个发行者，并拒绝使用相同账号 ID 的两个提供方。此索引会在首次使用时延迟创建，因此已包含重复账号 ID 的集合从未创建过该索引。
+
+        ```js
+        db.account.dropIndex("account_issuer_accountId_uidx");
+        ```
+      </Tab>
+    </Tabs>
+
+    生成的索引名称为 `account_issuer_accountId_uidx`。如果你自己的迁移使用了其他名称，请相应调整；如果你在 1.7 中通过 `account.fields.issuer` 重命名了列，请使用自己的列名。
+  </Step>
+
+  <Step>
+    #### 确认
+
+    注册一个新用户，并使用现有账号登录。
+  </Step>
+</Steps>
+
+在 1.7.0 到 1.7.2 中共享同一个账号发行者的提供方配置，不再会合并到同一个账号行中。与 1.6 一样，每个提供方 ID 都会重新保留自己的行。
 
 账号专用 API 现在使用明确的强类型选择器。从 `listAccounts` 读取 `id`，然后将其作为 `accountId` 传递给 `unlinkAccount`。对于 `getAccessToken`、`refreshToken` 和 `accountInfo`，请从以下请求形状中选择一个：
 
@@ -156,18 +169,16 @@ Better Auth 现在通过 `issuer` 和 `accountId` 的唯一组合识别外部账
 
 从每个账号选择器中删除 `providerId`。选择器的 `accountId` 值是本地的 `account.id`，而不是提供方一侧的 `account.accountId`。以前省略选择器以使用账号 Cookie 的令牌或提供方配置文件请求，现在必须发送 `useAccountCookie: true`；同时省略两个受支持的选择器是无效的。
 
-只有在冲突查询不返回任何行且所需的唯一索引存在后才能部署。针对迁移后的数据验证邮箱和密码登录、返回式 OAuth 和 SSO 登录、显式账号链接、取消链接、提供方配置文件获取以及令牌刷新。
-
-检查每个自定义 OAuth 提供方的账号 subject。OpenID Connect 发现型提供方现在使用经过验证的 `sub`；普通 OAuth 提供方使用 `id`；之前在这两个字段之间进行运行时回退的行为已移除。当任一默认值不是提供方的不可变标识符时，请设置 `accountSubject`。现在 `getUserInfo().user` 只包含可变的本地用户字段；请将提供方标识符保留在 `getUserInfo().data` 中。`mapProfileToUser` 不再能返回 `id`。`accountInfo` 响应会将选定的身份公开为 `account.accountId`，而不是 `user.id`。
+检查每个自定义 OAuth 提供方的账号主体。OpenID Connect 发现型提供方现在使用经过验证的 `sub`；普通 OAuth 提供方使用 `id`；此前在运行时于这些字段之间进行的回退逻辑已移除。如果这两种默认值都不是提供方的不可变标识符，请设置 `accountSubject`。`getUserInfo().user` 现在只包含可变的本地用户字段；请将提供方标识符保留在 `getUserInfo().data` 中。`mapProfileToUser` 现在不能再返回 `id`。`accountInfo` 响应会通过 `account.accountId` 而不是 `user.id` 暴露所选身份。
 
 #### 迁移 Microsoft 账号标识符
 
-Microsoft 账号现在使用稳定的目录 `oid` 声明，而不是成对且特定于应用的 `sub` 声明。请在账号身份回填的第 3 步中完成此操作，即检查冲突或添加复合账号索引之前：
+Microsoft 账号现在使用稳定的目录 `oid` 声明，而不是成对使用、应用专属的 `sub` 声明。在生产环境启用 1.7 流量之前，请完成此数据迁移：
 
-1. 盘点内置提供方中 `providerId: "microsoft"` 的行，以及 Generic OAuth 辅助工具中 `providerId: "microsoft-entra-id"` 的行。
-2. 在账号身份回填过程中为每一行分配其可信发行者，并将其旧的基于 `sub` 的 `accountId` 替换为该目录用户经过验证的 `oid`。
-3. 如果有已存储的 Microsoft ID 令牌，请验证每个令牌并复制其 `oid` 声明。`mapProfileToUser` 无法覆盖由提供方拥有的账号标识符。
-4. 如果没有已存储的 ID 令牌，请在切换期间暂停 Microsoft 登录和账号链接，并从可信的 Microsoft Entra 导出中获取映射。Better Auth 无法仅从旧账号行推导 `oid`；在迁移之前接受流量可能会创建重复账号。
+1. 检查 `providerId: "microsoft"`（适用于内置提供方）和 `providerId: "microsoft-entra-id"`（适用于 Generic OAuth 辅助工具）的行。
+2. 将每行旧的、基于 `sub` 的 `accountId` 替换为该目录用户经过验证的 `oid`。
+3. 如果有存储的 Microsoft ID 令牌，请验证每个令牌并复制其 `oid` 声明。`mapProfileToUser` 无法覆盖此提供方管理的账号标识符。
+4. 如果没有存储的 ID 令牌，请在切换期间暂停 Microsoft 登录和账号关联，并从可信的 Microsoft Entra 导出中获取映射。Better Auth 无法仅凭旧账号行推导出 `oid`；在迁移前接受流量可能会创建重复账号。
 
 如果你使用带有自定义作用域或 `getToken` 的 Generic OAuth `microsoftEntraId` 辅助工具，请确保令牌交换仍然返回 Microsoft 的 `id_token`，并且发现机制提供验证它所需的发行者和 JWKS 元数据。该辅助工具还要求提供具体的租户 GUID。请将 `common`、`organizations` 或 `consumers` 配置替换为内置的 Microsoft 社交提供方，该提供方会验证租户声明并推导令牌的实际发行者。
 
@@ -468,13 +479,13 @@ OAuth 端点从 `/mcp/*` 移至 `/oauth2/*`。基于发现机制的客户端会�
 
 OIDC SSO 现在使用经过验证的 `sub` 声明作为账号 subject，SAML 使用已签名的 `NameID`。配置文件映射仍然可以选择邮箱、姓名、图片和其他字段，但 `oidcConfig.mapping.id` 和 `samlConfig.mapping.id` 已被移除。不提供 `idpMetadata.metadata` 的手动 SAML 配置必须设置 `idpMetadata.entityID`；`samlConfig.issuer` 标识服务提供方，不再作为 IdP 回退值。
 
-**操作方法：** 从每个 OIDC 和 SAML 映射中删除 `id`，然后确认每个 OIDC 提供方都返回稳定的 `sub`，每个 SAML 提供方都返回稳定且已签名的 `NameID`。在账号身份回填期间，使用确切的 OIDC 发行者和 subject，或确切的 SAML IdP entity ID 和 `NameID`。具有相同 OIDC 发行者和 subject 的提供方别名会去重为一个外部身份，但此变更不会为这些别名引入独立的授权或提供方生命周期记录。
+**要做什么：** 从每个 OIDC 和 SAML 映射中移除 `id`，然后确认每个 OIDC 提供方都返回稳定的 `sub`，每个 SAML 提供方都返回稳定且已签名的 `NameID`。
 
-如果之前的映射使用了 `mapping.id`，请在维护窗口前准备替代值。构建从每个旧账号 subject 到协议定义身份的可信映射，然后在添加复合索引之前重写这些账号行：OIDC 需要确切的发行者和经过验证的 `sub`；SAML 需要实际的 IdP 元数据 entity ID 和已签名的 `NameID`。请从身份提供方获取此映射，而不是使用邮箱或可变的配置文件属性。不要为旧映射部署运行时回退。
+如果之前的映射使用了 `mapping.id`，请在维护窗口前准备替代方案。为每个旧账号 subject 与协议定义的身份建立可信映射，然后重写这些账号行：OIDC 需要经过验证的 `sub`；SAML 需要已签名的 `NameID`。请从身份提供方获取此映射，而不是依据邮箱或可变的配置文件属性。不要为旧映射部署运行时回退方案。
 
 ### IdP 发起的 SAML 默认关闭
 
-身份提供商发起的未请求登录现在默认被禁用。登录响应会针对 `InResponseTo` 进行校验，因此不能重放到它未发起请求的登录上，而单点注销请求会通过 `SessionIndex` 匹配到对应会话。
+身份提供方发起的未请求登录现在默认被禁用。登录响应会针对 `InResponseTo` 进行校验，因此不能重放到它未发起请求的登录上，而单点注销请求会通过 `SessionIndex` 匹配到对应会话。
 
 **该怎么做：** 如果你依赖旧行为，请设置 `saml.allowIdpInitiated: true` 来恢复它。
 
@@ -582,11 +593,11 @@ scim({
 
 ## 代理后面
 
-### Dynamic base URLs do not trust forwarded headers by default
+### 动态基础 URL 默认不信任转发标头
 
 当 `baseURL` 使用 `allowedHosts` 时，除非主动选择启用，否则 Better Auth 会忽略转发的标头。
 
-**What to do:** 如果你的代理仅通过 `x-forwarded-host` 暴露公共主机名，请选择启用：
+**该怎么做：** 如果你的代理仅通过 `x-forwarded-host` 暴露公共主机名，请选择启用：
 
 ```ts
 betterAuth({
@@ -599,7 +610,7 @@ betterAuth({
 
 代理会为你重写主机的配置（例如 nginx、Vercel、Cloudflare 和 Netlify）无需更改。
 
-如果没有配置 `baseURL.fallback`，当请求没有可用主机，或其主机与 `allowedHosts` 不匹配时，动态 base URL 会默认拒绝。因而，直接的服务器 API 调用必须包含能够解析到允许的公共源的请求 URL 或标头数据，或者配置受信任的回退值。Better Auth 会在每个请求中根据解析出的源重建 base URL、受信任源、提供方 URL 和 cookies；OAuth issuer、discovery、protected-resource 和 JWKS URL 也会遵循相同的请求源。
+如果没有配置 `baseURL.fallback`，当请求没有可用主机，或其主机与 `allowedHosts` 不匹配时，动态 base URL 会默认拒绝。因此，直接的服务器 API 调用必须包含能够解析到允许的公共源的请求 URL 或标头数据，或者配置受信任的回退值。Better Auth 会在每个请求中根据解析出的源重建 base URL、受信任源、提供方 URL 和 cookies；OAuth issuer、discovery、protected-resource 和 JWKS URL 也会遵循相同的请求源。
 
 ### IdP 重定向和 DPoP 需要你的规范源
 
@@ -645,17 +656,17 @@ Drizzle 模式生成器现在会为多对一关系输出单数键。这只会影
 
 ## 验证码
 
-### 验证码匹配完整路径
+原子状态相关工作会改变自定义适配器和存储的契约。如果你只使用内置适配器和存储，可以跳过这一部分。
 
-验证码规则现在会匹配完整的请求路径或显式通配符，这样就堵住了通过部分路径匹配来跳过验证码规则的一种方式。内置的 `/sign-in/email-otp` 例外也已移除。
+### 数据库适配器原子方法再次变为可选
 
-**该怎么做：** 将像 `/sign-in` 这样的部分路径替换为 `/sign-in/*` 或 `/sign-in/**`。请注意，`/sign-in/*` 通配符现在也会匹配 `/sign-in/email-otp`，而之前的例外并不会覆盖它：如果对其加上门禁，那么对于不发送 `x-captcha-response` 的客户端，email-OTP 登录将返回 `400 MISSING_RESPONSE`。如果要让 email-OTP 登录不受门禁限制，请列出你要保护的确切端点（例如 `/sign-in/email`），而不是使用宽泛的 `/sign-in` 通配符；或者让你的 email-OTP 客户端发送验证码令牌。
+1.7.0 到 1.7.2 版本要求自定义数据库适配器实现 `incrementOne` 和 `consumeOne`。现在它们再次变为可选。内置适配器仍会使用其原生实现。
 
-## 双因素和无密码安全
+**该怎么做：** 确保你的适配器提供原子条件写入和准确的受影响行数。工厂回退逻辑会在写入前检查存储值，并拒绝不安全的快照或已耗尽的重试。完整的回退要求请参阅[适配器指南](/docs/guides/create-a-db-adapter#consumeone-method)。
 
 ### 双因素 `enableTwoFactor` 返回区分响应
 
-`enableTwoFactor` 现在接受 `"otp"` 或 `"totp"`（默认 `"totp"`） 的 `method`，并在响应中返回该方法。`totpURI` 和备用代码仅在 `"totp"` 时提供。`skipVerificationOnEnable` 选项仍然有效。
+`enableTwoFactor` 现在接受 `"otp"` 或 `"totp"`（默认 `"totp"`）的 `method`，并在响应中返回该方法。`totpURI` 和备用代码仅在 `"totp"` 时提供。`skipVerificationOnEnable` 选项仍然有效。
 
 **该怎么做：** 更新读取 `totpURI` 或备用代码的调用方，根据返回的 `method` 分支处理。
 
@@ -750,13 +761,13 @@ export const authClient = createAuthClient({
 
 `enableTwoFactor` 现在接受值为 `"otp"` 或 `"totp"`（默认值为 `"totp"`）的 `method`，并在响应中返回该方法。`totpURI` 和备用代码仅在 `"totp"` 时存在。`skipVerificationOnEnable` 选项仍然有效。
 
-**要做什么：** 更新读取 `totpURI` 或备用代码的调用方，根据返回的 `method` 分支处理。
+**该怎么做：** 更新读取 `totpURI` 或备用代码的调用方，根据返回的 `method` 分支处理。
 
 ### 魔法链接和电子邮件 OTP 登录可以清除未经证明的凭证
 
 魔法链接和电子邮件 OTP 登录现在会将已证明的邮箱控制权视为某个邮箱从未确认过的账户的事实来源。如果该账户存在未经证明的密码或其他关联账户，Better Auth 会将其全部移除，并在用户登录之前撤销现有会话。
 
-**要做什么：** 如果用户使用电子邮件和密码注册，但在确认验证邮件之前改为通过魔法链接或电子邮件 OTP 首次登录，请要求他们通过密码重置设置新密码。
+**该怎么做：** 如果用户使用电子邮件和密码注册，但在确认验证邮件之前改为通过魔法链接或电子邮件 OTP 首次登录，请要求他们通过密码重置设置新密码。
 
 ***
 

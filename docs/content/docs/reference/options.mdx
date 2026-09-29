@@ -1,4 +1,5 @@
 ---
+icon: referenceOptions
 title: 选项
 description: Better Auth 配置选项参考。
 ---
@@ -307,19 +308,19 @@ export const auth = betterAuth({
 })
 ```
 
-* `enabled`: 启用邮箱与密码认证（默认：`false`）
-* `disableSignUp`: 禁用邮箱与密码注册（默认：`false`）
-* `requireEmailVerification`: 在创建会话前要求进行邮箱验证
-* `minPasswordLength`: 最小密码长度（默认：`8`）
-* `maxPasswordLength`: 最大密码长度（默认：`128`）
-* `autoSignIn`: 用户注册后自动登录
-* `sendResetPassword`: 发送重置密码邮件的函数
-* `onPasswordReset`: 当用户密码成功更改时触发的回调
-* `revokeSessionsOnPasswordReset`: 重置密码时撤销所有其他会话（默认：`false`）
-* `resetPasswordTokenExpiresIn`: 重置密码令牌的有效期（秒）（默认：`3600` 秒）
-* `onExistingUserSignUp`: 当有人使用已注册的邮箱进行注册时触发的回调。仅在 `requireEmailVerification` 为 `true` 或 `autoSignIn` 为 `false` 时调用（默认：`undefined`）。
-* `customSyntheticUser`: 用于邮箱枚举防护的自定义合成用户构建函数。当插件向用户表添加字段时请使用。参见 [邮箱枚举防护](/docs/authentication/email-password#plugins-that-add-user-fields)。
-* `password`: 自定义密码哈希与验证函数。
+* `enabled`：启用邮箱与密码认证（默认：`false`）
+* `disableSignUp`：禁用邮箱与密码注册（默认：`false`）
+* `requireEmailVerification`：在创建会话前要求进行邮箱验证
+* `minPasswordLength`：最小密码长度（默认：`8`）
+* `maxPasswordLength`：最大密码长度（默认：`128`）
+* `autoSignIn`：用户注册后自动登录
+* `sendResetPassword`：发送重置密码邮件的函数
+* `onPasswordReset`：当用户密码成功更改时触发的回调
+* `revokeSessionsOnPasswordReset`：重置密码时撤销所有其他会话（默认：`false`）
+* `resetPasswordTokenExpiresIn`：重置密码令牌的有效期（秒）（默认：`3600` 秒）
+* `onExistingUserSignUp`：当有人使用已注册的邮箱进行注册时触发的回调。仅在 `requireEmailVerification` 为 `true` 或 `autoSignIn` 为 `false` 时调用（默认：`undefined`）。
+* `customSyntheticUser`：用于邮箱枚举防护的自定义合成用户构建函数。当插件向用户表添加字段时请使用。参见 [邮箱枚举防护](/docs/authentication/email-password#plugins-that-add-user-fields)。
+* `password`：自定义密码哈希与验证函数。
 
 ## `socialProviders`
 
@@ -343,24 +344,24 @@ export const auth = betterAuth({
 })
 ```
 
-* `clientId`: 提供商提供的 OAuth 客户端 ID
-* `clientSecret`: 提供商提供的 OAuth 客户端密钥
-* `clientKey`: 客户端密钥（某些提供商（如 TikTok）使用它代替 clientId）（可选）
-* `redirectURI`: OAuth 回调的自定义重定向 URI（可选）
-* `scope`: 要请求的其他 OAuth 作用域（可选）
-* `mapProfileToUser`: 将提供商资料映射到用户的自定义函数（可选）
-* `disableSignUp`: 禁止新用户注册（可选）
-* `disableImplicitSignUp`: 禁止新用户隐式注册（可选）
-* `overrideUserInfoOnSignIn`: 登录时使用提供商用户信息覆盖用户信息（可选）
-* `requireEmailVerification`: 在创建会话前要求验证此提供商的邮箱。按提供商单独启用，并且独立于 `emailAndPassword.requireEmailVerification`。仅对报告可信 `email_verified` 信号的提供商启用（可选）
-* `prompt`: 授权码请求使用的提示方式（`"select_account"`、`"consent"`、`"login"`、`"none"`、`"select_account consent"`）（可选）
-* `responseMode`: 使用的响应模式（`"query"`、`"form_post"`）（可选）
-* `getUserInfo`: 从提供商获取用户信息的自定义函数（可选）
-* `refreshAccessToken`: 刷新令牌的自定义函数。接收存储的刷新令牌并返回新的 OAuth 令牌（可选）
-* `verifyIdToken`: 验证 ID 令牌的自定义函数。接收 `(token, nonce?, ctx?)`，其中 `ctx` 是请求端点上下文（可选）。设置后会替代提供商内置的验证逻辑
-* `disableIdTokenSignIn`: 禁止使用从客户端发送的 ID 令牌登录（可选）
-* `disableDefaultScope`: 禁用提供商的默认作用域（可选）
-* `authorizationEndpoint`: 自定义授权端点 URL（可选）
+* `clientId`：提供商提供的 OAuth 客户端 ID
+* `clientSecret`：提供商提供的 OAuth 客户端密钥
+* `clientKey`：客户端密钥（某些提供商（如 TikTok）使用它代替 clientId）（可选）
+* `redirectURI`：OAuth 回调的自定义重定向 URI（可选）
+* `scope`：要请求的其他 OAuth 作用域（可选）
+* `mapProfileToUser`：将提供商资料映射到用户的自定义函数（可选）
+* `disableSignUp`：禁止新用户注册（可选）
+* `disableImplicitSignUp`：禁止新用户隐式注册（可选）
+* `overrideUserInfoOnSignIn`：登录时使用提供商用户信息覆盖用户信息（可选）
+* `requireEmailVerification`：在创建会话前要求验证此提供商的邮箱。按提供商单独启用，并且独立于 `emailAndPassword.requireEmailVerification`。仅对报告可信 `email_verified` 信号的提供商启用（可选）
+* `prompt`：授权码请求使用的提示方式（`"select_account"`、`"consent"`、`"login"`、`"none"`、`"select_account consent"`）（可选）
+* `responseMode`：使用的响应模式（`"query"`、`"form_post"`）（可选）
+* `getUserInfo`：从提供商获取用户信息的自定义函数（可选）
+* `refreshAccessToken`：刷新令牌的自定义函数。接收存储的刷新令牌并返回新的 OAuth 令牌（可选）
+* `verifyIdToken`：验证 ID 令牌的自定义函数。接收 `(token, nonce?, ctx?)`，其中 `ctx` 是请求端点上下文（可选）。设置后会替代提供商内置的验证逻辑
+* `disableIdTokenSignIn`：禁止使用从客户端发送的 ID 令牌登录（可选）
+* `disableDefaultScope`：禁用提供商的默认作用域（可选）
+* `authorizationEndpoint`：自定义授权端点 URL（可选）
 
 ## `plugins`
 
@@ -422,11 +423,11 @@ export const auth = betterAuth({
 })
 ```
 
-* `modelName`: 用户的模型名称（默认：`"user"`）
-* `fields`: 将字段映射到不同的列名
-* `additionalFields`: 用户表的附加字段
-* `changeEmail`: 更改邮箱的配置
-* `deleteUser`: 用户删除的配置。
+* `modelName`：用户的模型名称（默认：`"user"`）
+* `fields`：将字段映射到不同的列名
+* `additionalFields`：用户表的附加字段
+* `changeEmail`：更改邮箱的配置
+* `deleteUser`：用户删除的配置。
 
 ## `session`
 
@@ -451,22 +452,22 @@ export const auth = betterAuth({
 		storeSessionInDatabase: true, // 提供二级存储时存数据库（默认：`false`）
 		preserveSessionInDatabase: false, // 在二级存储删除后保留数据库中会话记录（默认：`false`）
 		cookieCache: {
-			enabled: true, // Enable caching session in cookie (default: `false`)	
-			maxAge: 300, // 5 minutes
+			enabled: true, // 在 cookie 中缓存会话（默认：`false`）
+			maxAge: 300, // 5 分钟
 			strategy: "jwt"
 		}
 	},
 })
 ```
 
-* `modelName`: 会话的模型名称（默认：`"session"`）
-* `fields`: 将字段映射到不同的列名
-* `expiresIn`: 会话令牌过期时间（秒）（默认：`604800` - 7 天）
-* `updateAge`: 会话需要刷新的频率（秒）（默认：`86400` - 1 天）
-* `additionalFields`: 会话表的附加字段
-* `storeSessionInDatabase`: 在提供二级存储时，将会话存入数据库（默认：`false`）
-* `preserveSessionInDatabase`: 当从二级存储删除会话时，在数据库中保留会话记录（默认：`false`）
-* `cookieCache`: 启用在 cookie 中缓存会话。
+* `modelName`：会话的模型名称（默认：`"session"`）
+* `fields`：将字段映射到不同的列名
+* `expiresIn`：会话令牌过期时间（秒）（默认：`604800` - 7 天）
+* `updateAge`：会话需要刷新的频率（秒）（默认：`86400` - 1 天）
+* `additionalFields`：会话表的附加字段
+* `storeSessionInDatabase`：在提供二级存储时，将会话存入数据库（默认：`false`）
+* `preserveSessionInDatabase`：当从二级存储删除会话时，在数据库中保留会话记录（默认：`false`）
+* `cookieCache`：启用在 cookie 中缓存会话。
 
 ## `account`
 
@@ -492,8 +493,8 @@ export const auth = betterAuth({
 })
 ```
 
-* `modelName`: 账号的模型名称
-* `fields`: 将字段映射到不同的列名
+* `modelName`：账号的模型名称
+* `fields`：将字段映射到不同的列名
 
 ### `encryptOAuthTokens`
 
@@ -651,6 +652,7 @@ export const auth = betterAuth({
 			})) | false | "serial" | "uuid",
 			defaultFindManyLimit: 100,
 			joins: false,
+			validateSchema: true,
 		},
 		backgroundTasks: {
 			handler: (promise) => { /* 如 waitUntil(promise) */ }
@@ -680,9 +682,10 @@ export const auth = betterAuth({
 
 为 ID 生成、findMany 查询和数据库连接设置自定义策略。
 
-* `generateId`: 控制记录 ID 的生成方式。接受自定义函数、`false`、`"serial"` 或 `"uuid"`（默认值：[随机 base62 字符串](https://github.com/better-auth/better-auth/blob/main/packages/core/src/utils/id.ts)）。更多信息请参阅[数据库文档](/docs/concepts/database#id-generation)。
-* `defaultFindManyLimit`: `findMany` 适配器方法返回的记录默认最大数量（默认值：`100`）
-* `joins`: 为支持连接的适配器启用数据库连接。禁用时（默认值），相关数据会通过单独查询获取。更多信息请参阅[数据库文档](/docs/concepts/database#joins)。（默认值：`false`）
+* `generateId`: 控制记录 ID 的生成方式。接受自定义函数、`false`、`"serial"` 或 `"uuid"`（默认：[随机 base62 字符串](https://github.com/better-auth/better-auth/blob/main/packages/core/src/utils/id.ts)）。更多信息请参阅[数据库文档](/docs/concepts/database#id-generation)。
+* `defaultFindManyLimit`: `findMany` 适配器方法返回记录数的默认上限。（默认：`100`）
+* `joins`: 为支持联接的适配器启用数据库联接。禁用时（默认），相关数据会通过单独的查询获取。更多信息请参阅[数据库文档](/docs/concepts/database#joins)。（默认：`false`）
+* `validateSchema`: 在首次请求前，将架构与 Better Auth 写入的表进行比较，并报告所有差异及其修复方法。更多信息请参阅[数据库文档](/docs/concepts/database#schema-validation)。（生产环境之外默认：`true`）
 
 ```ts
 import { betterAuth } from "better-auth";

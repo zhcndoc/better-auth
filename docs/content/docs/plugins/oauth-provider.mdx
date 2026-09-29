@@ -1,6 +1,8 @@
 ---
-title: OAuth 2.1 提供者
-description: 一个更好的认证插件，使您的认证服务器能够作为 OAuth 2.1 提供者运行。
+icon: pluginsOAuthProvider
+sidebarTitle: "OAuth Provider"
+title: OAuth 2.1 Provider
+description: 一个 Better Auth 插件，可让您的认证服务器充当 OAuth 2.1 提供者。
 ---
 
 **OAuth 2.1 Provider** 插件会将您的 Better Auth 服务器转换为 OAuth 授权服务器。应用程序可以通过授权码流程请求用户访问权限，而服务可以使用客户端凭证。当客户端还需要 OpenID Connect（OIDC）身份声明时，请添加 `openid` scope。
@@ -854,7 +856,7 @@ export const GET = oauthProviderAuthServerMetadata(auth);
   如果您在本地测试时遇到 CORS 问题，例如使用 [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) 时，这是因为前端在调用端点而不是后端。测试时请添加 `Access-Control-Allow-Methods": "GET"` 和 `"Access-Control-Allow-Origin": "*"`。
 </Callout>
 
-## API Server
+## API 服务器
 
 本节展示如何让您的 API 验证来自客户端的令牌。
 
@@ -1027,7 +1029,24 @@ oauthProvider({
 })
 ```
 
-插件会将用户重定向至指定路径，并附带 `client_id`、`scope` 以及（在请求时）`claims` 查询参数。使用 `scope` 和 `claims.userinfo` 在同意页面中显示完整的访问请求。用户同意后，可以调用 `oauth2.consent` 完成授权。
+插件会使用 `client_id`、`scope` 以及（如有请求）`claims` 查询参数将用户重定向至指定路径。在显示同意屏幕前，请在服务器上验证签名查询。使用 OAuth provider 所用的相同 secret；`auth.$context.secret` 会解析已配置的 secret，包括使用版本化 `secrets` 时的情况。请将其保留在服务器端。
+
+```ts title="consent-query.ts"
+import { verifyOAuthQueryParams } from "@better-auth/oauth-provider";
+import { auth } from "@/lib/auth";
+
+export async function getVerifiedConsentQuery(request: Request) {
+  const query = new URL(request.url).search.slice(1);
+  const { secret } = await auth.$context;
+  if (!(await verifyOAuthQueryParams(query, secret))) {
+    return null;
+  }
+
+  return new URLSearchParams(query);
+}
+```
+
+从服务器端的同意路由调用此辅助函数。如果返回 `null`，则返回错误响应，并使用返回的参数渲染页面。签名检查会拒绝被修改或已过期的查询。它不会检查客户端是否存在、用户是否已登录，也不会验证请求的 scopes 是否有效。使用 `scope` 和 `claims.userinfo` 在同意屏幕上显示完整的访问请求。用户同意后，调用 `oauth2.consent` 完成授权。
 
 ```ts title="consent-page.ts"
 import { authClient } from "@/lib/auth-client"
@@ -1215,10 +1234,10 @@ oauthProvider({
 
 Scopes 授权客户端访问指定资源。目前默认支持：
 
-* `openid`: 返回用户的 ID（`sub` 声明）。
-* `profile`: 从 UserInfo 返回 name、picture、given\_name、family\_name
-* `email`: 从 UserInfo 返回 email 和 email\_verified
-* `offline_access`: 返回刷新令牌
+* `openid`：返回用户的 ID（`sub` 声明）。
+* `profile`：从 UserInfo 返回 name、picture、given\_name、family\_name
+* `email`：从 UserInfo 返回 email 和 email\_verified
+* `offline_access`：返回刷新令牌
 
 您可以自由定义所支持的 scopes！注意：需包含 `openid` 以满足 OIDC 服务器，否则为标准 OAuth 2.1 服务器。所有支持的 scopes 必须包含于此数组。
 
@@ -1248,7 +1267,7 @@ oauthProvider({
       locale: "en-GB",
     };
   },
-  // Attach claims to access tokens
+  // 将声明附加到 access tokens
   customAccessTokenClaims: ({ user, scopes, referenceId, resources, metadata }) => {
     return {
       "https://example.com/org": referenceId,
@@ -1414,10 +1433,10 @@ PKCE 是防止授权码被截获的一种安全机制。插件遵循 OAuth 2.1 �
 
 #### 每客户端 PKCE 配置
 
-Admin-created confidential clients can opt out of the PKCE requirement if needed for compatibility:
+管理员创建的机密客户端可按需停用 PKCE 要求以兼容旧系统：
 
 ```ts title="admin-create-oauth.ts"
-// Register a confidential client that doesn't support PKCE
+// 注册一个不支持 PKCE 的机密客户端
 const response = await auth.api.adminCreateOAuthClient({
   headers,
   body: {
@@ -1716,7 +1735,7 @@ const auth = betterAuth({
 })
 ```
 
-### 广告公布元数据
+### 广告元数据
 
 可自定义元数据端点，实现对外展示的 scopes 和 claims 与实际支持的不同，避免暴露所有支持的权限。
 
