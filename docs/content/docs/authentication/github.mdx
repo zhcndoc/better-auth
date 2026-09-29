@@ -69,7 +69,7 @@ GitHub 有两种应用类型：GitHub 应用和 OAuth 应用。
 这样就可以了！现在你可以复制应用的客户端 ID 和客户端密钥！
 
 <Callout>
-  如果你遇到 `email_not_found` 错误，通常是因为：（a）你创建了一个 GitHub App，但没有授予“Email addresses: Read-only”权限；或者（b）用户将其主邮箱设置为私密，在这种情况下 `GET /user` 会返回 `email: null`。有关推荐的 `mapProfileToUser` 回退方案，请参阅[处理无邮箱提供者](/docs/concepts/oauth#handling-providers-without-email)；用户的私密地址也可通过 [`/user/emails`](https://docs.github.com/en/rest/users/emails) 获取。
+  如果你遇到 `email_not_found` 错误，通常是因为：（a）你创建了一个 GitHub App，但没有授予“Email addresses: Read-only”权限；或者（b）用户将其主邮箱设置为私密，在这种情况下 `GET /user` 会返回 `email: null`。有关推荐的 `mapProfileToUser` 回退方案，请参阅[处理无邮箱提供者](/docs/concepts/oauth#处理不提供邮箱的提供商)；用户的私密地址也可通过 [`/user/emails`](https://docs.github.com/en/rest/users/emails) 获取。
 </Callout>
 
 ### 为什么我没有刷新令牌？

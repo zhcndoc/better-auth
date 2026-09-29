@@ -80,7 +80,7 @@ description: Microsoft 提供商的设置与使用。
     ```
 
     <Callout type="warn">
-      默认情况下，Entra 不会为受管用户发出 `email` 声明，并且该值[可由租户变更且从不由 Microsoft 验证](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference)；它绝不能用于授权决策。对于受管用户，请将 `email` 作为[可选声明](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims)请求，并使用 `profile.oid`（如果需要跨租户关联，则再加上 `profile.tid`）作为稳定的身份锚点。有关 `mapProfileToUser` 的回退方式，请参阅[处理不提供电子邮件的提供商](/docs/concepts/oauth#handling-providers-without-email)。
+      默认情况下，Entra 不会为受管用户发出 `email` 声明，并且该值[可由租户变更且从不由 Microsoft 验证](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference)；它绝不能用于授权决策。对于受管用户，请将 `email` 作为[可选声明](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims)请求，并使用 `profile.oid`（如果需要跨租户关联，则再加上 `profile.tid`）作为稳定的身份锚点。有关 `mapProfileToUser` 的回退方式，请参阅[处理不提供电子邮件的提供商](/docs/concepts/oauth#处理不提供邮箱的提供商)。
     </Callout>
   </Step>
 </Steps>
@@ -90,7 +90,7 @@ description: Microsoft 提供商的设置与使用。
 Better Auth 使用经过验证的 Microsoft Entra `oid` 声明作为提供商所属的账户标识符。`mapProfileToUser` 可以映射本地用户字段，但无法替换此标识符。
 
 <Callout type="warn">
-  从 Better Auth 1.6 升级需要执行一次性迁移，将现有 Microsoft 账户行中的标识符从 `sub` 迁移为 `oid`。在 1.7 上接受生产流量之前，请按照[迁移 Microsoft 账户标识符](/docs/guides/1-7-upgrade-guide#migrate-microsoft-account-identifiers)操作。
+  从 Better Auth 1.6 升级需要执行一次性迁移，将现有 Microsoft 账户行中的标识符从 `sub` 迁移为 `oid`。在 1.7 上接受生产流量之前，请按照[迁移 Microsoft 账户标识符](/docs/guides/1-7-upgrade-guide#迁移-microsoft-账号标识符)操作。
 </Callout>
 
 ## 大型个人资料图片 ⚠️

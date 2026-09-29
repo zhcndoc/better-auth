@@ -53,7 +53,7 @@ description: 将您的 Better Auth 服务器变成 MCP 客户端的 OAuth 提供
     });
     ```
 
-    Node.js 部署可以使用上面所示的内置传输。Bun、Deno、Workers 以及其他运行时必须注入等效传输，该传输需要解析每个主机名一次，拒绝 RFC 6890 特殊用途地址，为连接固定已批准的地址，并拒绝重定向。该传输会获取 Client ID Metadata Document 以及 `jwks_uri` 等由发现机制管理的资源。完整契约请参阅 [CIMD security boundary](/docs/plugins/cimd#security-boundary)。
+    Node.js 部署可以使用上面所示的内置传输。Bun、Deno、Workers 以及其他运行时必须注入等效传输，该传输需要解析每个主机名一次，拒绝 RFC 6890 特殊用途地址，为连接固定已批准的地址，并拒绝重定向。该传输会获取 Client ID Metadata Document 以及 `jwks_uri` 等由发现机制管理的资源。完整契约请参阅 [CIMD security boundary](/docs/plugins/cimd#安全边界)。
 
     <Callout>
       `mcp()` 就是 OAuth 提供商。不要在同一个应用中另外注册单独的 `oauthProvider()` 插件。
@@ -79,7 +79,7 @@ description: 将您的 Better Auth 服务器变成 MCP 客户端的 OAuth 提供
       </Tab>
     </Tabs>
 
-    MCP 插件使用与 OAuth Provider 插件相同的架构（`oauthClient`、`oauthAccessToken`、`oauthRefreshToken`、`oauthConsent`、`oauthClientAssertion`）。详情请参阅 [OAuth Provider Schema](/docs/plugins/oauth-provider#schema) 部分。
+    MCP 插件使用与 OAuth Provider 插件相同的架构（`oauthClient`、`oauthAccessToken`、`oauthRefreshToken`、`oauthConsent`、`oauthClientAssertion`）。详情请参阅 [OAuth Provider Schema](/docs/plugins/oauth-provider#表结构) 部分。
   </Step>
 </Steps>
 
@@ -130,7 +130,7 @@ export const auth = betterAuth({
 
 `mcp()` 已经是 OAuth Provider，因此这种组合不会添加单独的 `oauthProvider()` 插件。MCP 客户端继续使用发现机制和带 PKCE 的授权码流程。已注册的公共 CLI 可以通过 `/device/code` 请求相同的 MCP 资源，并轮询 `/oauth2/token` 以获取受众绑定的访问令牌。
 
-仅在 MCP 客户端明确实现了 [RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628) 时使用设备授权。向服务器添加 `oauthDeviceAuthorization()` 不会改变现有 MCP 客户端选择的标准流程。有关客户端注册和令牌轮询，请参阅[授权 CLI 调用 API](/docs/plugins/device-authorization#authorize-a-cli-to-call-an-api)。
+仅在 MCP 客户端明确实现了 [RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628) 时使用设备授权。向服务器添加 `oauthDeviceAuthorization()` 不会改变现有 MCP 客户端选择的标准流程。有关客户端注册和令牌轮询，请参阅[授权 CLI 调用 API](/docs/plugins/device-authorization#授权-cli-调用-api)。
 
 ### 受保护资源元数据
 
@@ -263,7 +263,7 @@ requireMcpAuth(auth, async (request, accessTokenClaims) => {
 
 ## 配置
 
-`mcp()` 扩展了 [OAuth Provider](/docs/plugins/oauth-provider#configuration) 选项。所有 OAuth provider 选项都会以扁平形式传递（不存在嵌套的 `oidcConfig`）。必需的 MCP 专属选项是 `resource`。
+`mcp()` 扩展了 [OAuth Provider](/docs/plugins/oauth-provider#配置-1) 选项。所有 OAuth provider 选项都会以扁平形式传递（不存在嵌套的 `oidcConfig`）。必需的 MCP 专属选项是 `resource`。
 
 对于通过 `mcp()` 配置的每个客户端，插件会将 `refreshTokenReuseInterval` 默认设置为 30 秒。这样，当另一个请求已经使用了某个刷新令牌时，客户端可以使用旧令牌重试，并收到相同的轮换令牌响应。OAuth Provider 本身默认仍然严格；在 `mcp()` 上设置 `refreshTokenReuseInterval: 0` 可禁用重叠时间窗口。
 
@@ -287,7 +287,7 @@ export const mcpPluginOptionsType = {
 
 <TypeTable type={mcpPluginOptionsType} />
 
-以下是最常调整的 OAuth 提供方选项。完整列表请参阅 [OAuth Provider Configuration](/docs/plugins/oauth-provider#configuration)。
+以下是最常调整的 OAuth 提供方选项。完整列表请参阅 [OAuth Provider Configuration](/docs/plugins/oauth-provider#配置-1)。
 
 export const mcpOauthOptionsType = {
   scopes: {

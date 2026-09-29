@@ -31,7 +31,7 @@ description: 从 WorkOS 迁移到 Better Auth 的分步指南。
       | 身份关联               | 内置支持。                                                                                          |
       | 冒充                   | 使用 [Admin 插件](/docs/plugins/admin)。                                                           |
       | JWT 模板               | 使用 [JWT 插件](/docs/plugins/jwt)。                                                               |
-      | 元数据外部 ID          | 可以通过[扩展核心 schema](/docs/concepts/database#extending-core-schema)自由添加。                 |
+      | 元数据外部 ID          | 可以通过[扩展核心 schema](/docs/concepts/database#扩展核心架构)自由添加。                 |
       | 角色和权限             | 使用 [组织插件](/docs/plugins/organization)。                                                      |
     </>
   </Accordion>
@@ -127,7 +127,7 @@ description: 从 WorkOS 迁移到 Better Auth 的分步指南。
 
     {/* cspell:disable-next-line */}
 
-    您很可能在 WorkOS 中使用了 metadata。为了保留这些 metadata 以及来自 WorkOS 的用户 id（例如 user\_01KBT4BMFF7ASGRDD0WZ6W63FF），请如下扩展 `user` schema。Better Auth 提供了更灵活的方式来存储用户数据。更多信息请参阅[扩展核心 schema 文档](/docs/concepts/database#extending-core-schema)。
+    您很可能在 WorkOS 中使用了 metadata。为了保留这些 metadata 以及来自 WorkOS 的用户 id（例如 user\_01KBT4BMFF7ASGRDD0WZ6W63FF），请如下扩展 `user` schema。Better Auth 提供了更灵活的方式来存储用户数据。更多信息请参阅[扩展核心 schema 文档](/docs/concepts/database#扩展核心架构)。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";

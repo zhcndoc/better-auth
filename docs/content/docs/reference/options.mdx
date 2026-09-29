@@ -10,7 +10,7 @@ Better Auth 配置的所有可用选项列表。详见 [Better Auth 选项](http
 
 你的应用名称。默认值为 `"Better Auth"`。
 
-它会在需要标识应用的场景中作为显示名称使用——例如，用户使用验证器应用（如 Google Authenticator）设置双因素认证时，`appName` 会作为 TOTP 条目中的发行方名称显示。该名称可按插件覆盖（例如 [2FA 插件的 `issuer` 选项](/docs/plugins/2fa#issuer)）。
+它会在需要标识应用的场景中作为显示名称使用——例如，用户使用验证器应用（如 Google Authenticator）设置双因素认证时，`appName` 会作为 TOTP 条目中的发行方名称显示。该名称可按插件覆盖（例如 [2FA 插件的 `issuer` 选项](/docs/plugins/2fa#发布者issuer)）。
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -250,7 +250,7 @@ export const auth = betterAuth({
 })
 ```
 
-阅读更多关于 [二级存储](/docs/concepts/database#secondary-storage)。
+阅读更多关于 [二级存储](/docs/concepts/database#二级存储)。
 
 ## `emailVerification`
 
@@ -319,7 +319,7 @@ export const auth = betterAuth({
 * `revokeSessionsOnPasswordReset`：重置密码时撤销所有其他会话（默认：`false`）
 * `resetPasswordTokenExpiresIn`：重置密码令牌的有效期（秒）（默认：`3600` 秒）
 * `onExistingUserSignUp`：当有人使用已注册的邮箱进行注册时触发的回调。仅在 `requireEmailVerification` 为 `true` 或 `autoSignIn` 为 `false` 时调用（默认：`undefined`）。
-* `customSyntheticUser`：用于邮箱枚举防护的自定义合成用户构建函数。当插件向用户表添加字段时请使用。参见 [邮箱枚举防护](/docs/authentication/email-password#plugins-that-add-user-fields)。
+* `customSyntheticUser`：用于邮箱枚举防护的自定义合成用户构建函数。当插件向用户表添加字段时请使用。参见 [邮箱枚举防护](/docs/authentication/email-password#为用户字段添加插件)。
 * `password`：自定义密码哈希与验证函数。
 
 ## `socialProviders`
@@ -682,10 +682,10 @@ export const auth = betterAuth({
 
 为 ID 生成、findMany 查询和数据库连接设置自定义策略。
 
-* `generateId`: 控制记录 ID 的生成方式。接受自定义函数、`false`、`"serial"` 或 `"uuid"`（默认：[随机 base62 字符串](https://github.com/better-auth/better-auth/blob/main/packages/core/src/utils/id.ts)）。更多信息请参阅[数据库文档](/docs/concepts/database#id-generation)。
+* `generateId`: 控制记录 ID 的生成方式。接受自定义函数、`false`、`"serial"` 或 `"uuid"`（默认：[随机 base62 字符串](https://github.com/better-auth/better-auth/blob/main/packages/core/src/utils/id.ts)）。更多信息请参阅[数据库文档](/docs/concepts/database#id-生成)。
 * `defaultFindManyLimit`: `findMany` 适配器方法返回记录数的默认上限。（默认：`100`）
-* `joins`: 为支持联接的适配器启用数据库联接。禁用时（默认），相关数据会通过单独的查询获取。更多信息请参阅[数据库文档](/docs/concepts/database#joins)。（默认：`false`）
-* `validateSchema`: 在首次请求前，将架构与 Better Auth 写入的表进行比较，并报告所有差异及其修复方法。更多信息请参阅[数据库文档](/docs/concepts/database#schema-validation)。（生产环境之外默认：`true`）
+* `joins`: 为支持联接的适配器启用数据库联接。禁用时（默认），相关数据会通过单独的查询获取。更多信息请参阅[数据库文档](/docs/concepts/database#连接)。（默认：`false`）
+* `validateSchema`: 在首次请求前，将架构与 Better Auth 写入的表进行比较，并报告所有差异及其修复方法。更多信息请参阅[数据库文档](/docs/concepts/database#架构验证)。（生产环境之外默认：`true`）
 
 ```ts
 import { betterAuth } from "better-auth";

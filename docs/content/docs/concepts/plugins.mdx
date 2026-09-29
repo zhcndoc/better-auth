@@ -164,6 +164,8 @@ const myPlugin = () => {
 * 确保使用 `createAuthEndpoint` 函数创建 API 端点。
 * 确保路径具有唯一性，以避免与其他插件发生冲突。如果使用常见路径，请将插件名称作为路径前缀。（使用 `/my-plugin/hello-world`，而不是 `/hello-world`。）
 
+### 模式
+
 您可以通过传入 `schema` 对象定义插件的数据库模式。`schema` 对象以表名为键，模式定义为值。
 
 ```ts title="plugin.ts"
@@ -467,7 +469,7 @@ const myPlugin = () => {
 }
 ```
 
-更多信息请参见[受信任来源和安全](/docs/reference/security#trusted-origins)文档。
+更多信息请参见[受信任来源和安全](/docs/reference/security#受信任来源)文档。
 
 ### 服务器插件辅助函数
 

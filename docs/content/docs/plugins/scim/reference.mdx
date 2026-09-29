@@ -540,7 +540,7 @@ Better Auth 为每个模型提供主 `id` 字段。SCIM 模型还会在需要时
 
 当前 schema 不会转换 legacy `scimProvider` 运行时连接、其凭据或 SCIM 创建的身份验证 `account` 行。选择一种切换后的模式：静态代码定义的连接、通过 `authentication.verifyBearerToken` 进行应用程序拥有的原子运行时解析，或可选的 `managedConnections` 目录
 
-在更改 schema 前使用维护窗口并暂停 provisioning。备份并清点准确的 legacy provider、account、User、Group、成员关系和应用程序拥有的行；Better Auth 不会自动识别或删除 legacy account 行，因此应保留所有无关的 account 和应用程序记录。绝不要导入 legacy token 哈希、重复使用 legacy 原始 token 或接受 legacy bearer 语法。在旧 schema 仍处于活动状态时，按依赖顺序清除 legacy SCIM 拥有的行，确认不兼容的表为空，然后再应用新 schema。托管表存在后签发新的托管凭据，或者通过选定的静态或应用程序拥有模式创建新密钥，更新目录，并要求完成 User 和 Group 的重新 provisioning 周期。完整步骤请参阅 [1.7 SCIM upgrade guide](/docs/guides/1-7-upgrade-guide#scim-requires-full-reprovisioning)
+在更改 schema 前使用维护窗口并暂停 provisioning。备份并清点准确的 legacy provider、account、User、Group、成员关系和应用程序拥有的行；Better Auth 不会自动识别或删除 legacy account 行，因此应保留所有无关的 account 和应用程序记录。绝不要导入 legacy token 哈希、重复使用 legacy 原始 token 或接受 legacy bearer 语法。在旧 schema 仍处于活动状态时，按依赖顺序清除 legacy SCIM 拥有的行，确认不兼容的表为空，然后再应用新 schema。托管表存在后签发新的托管凭据，或者通过选定的静态或应用程序拥有模式创建新密钥，更新目录，并要求完成 User 和 Group 的重新 provisioning 周期。完整步骤请参阅 [1.7 SCIM upgrade guide](/docs/guides/1-7-upgrade-guide#scim-需要完整重新配置)
 
 `scimUser.serializedAttributes` 是完整的非索引规范配置文件的必需、有界事实来源。`formattedName`、`givenName`、`familyName` 和 `serializedEmails` 字段仍是为较早的 1.7 prerelease 创建的数据库保留的兼容性镜像，但插件不会将它们作为规范状态读取
 

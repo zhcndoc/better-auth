@@ -736,7 +736,7 @@ export const adminSessionTableFields = [
 
 ### 电子邮件枚举保护
 
-如果您使用 [电子邮件枚举保护](/docs/authentication/email-password#email-enumeration-protection)（`requireEmailVerification` 或 `autoSignIn: false`），您需要配置 `customSyntheticUser`，在伪造的注册响应中包含管理员插件字段：
+如果您使用 [电子邮件枚举保护](/docs/authentication/email-password#邮箱枚举保护)（`requireEmailVerification` 或 `autoSignIn: false`），您需要配置 `customSyntheticUser`，在伪造的注册响应中包含管理员插件字段：
 
 ```ts title="auth.ts"
 export const auth = betterAuth({

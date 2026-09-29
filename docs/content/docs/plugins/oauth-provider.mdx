@@ -15,7 +15,7 @@ description: 一个 Better Auth 插件，可让您的认证服务器充当 OAuth
 * \*\*OpenID Connect：\*\*签发 ID 令牌、提供 UserInfo，并在客户端请求 `openid` 时支持 [RP 发起的注销](https://openid.net/specs/openid-connect-rpinitiated-1_0.html)
 * \*\*客户端注册：\*\*支持管理员管理的客户端、第一方受信任客户端，以及可选的[动态客户端注册](#动态注册端点)
 * \*\*公有客户端和机密客户端：\*\*根据 `token_endpoint_auth_method` 推导身份验证方式；对于无法安全保存密钥的客户端，请使用 `"none"`
-* \*\*资源绑定的访问权限：\*\*为受保护资源签发令牌，支持核查和撤销，并通过 JWT 插件的 [`/jwks`](/docs/plugins/jwt#verifying-the-token) 端点公开签名密钥
+* \*\*资源绑定的访问权限：\*\*为受保护资源签发令牌，支持核查和撤销，并通过 JWT 插件的 [`/jwks`](/docs/plugins/jwt#验证令牌) 端点公开签名密钥
 * \*\*授权提示：\*\*支持同意和账户选择提示
 * \*\*MCP 组合：\*\*当受保护资源是 MCP 服务器时，请使用 [MCP 插件](#mcp)
 
@@ -24,7 +24,7 @@ description: 一个 Better Auth 插件，可让您的认证服务器充当 OAuth
 * \*\*`authorization_code`：\*\*使用 S256 PKCE 交换用户授权码
 * \*\*`refresh_token`：\*\*通过 `offline_access` scope 更新访问权限
 * \*\*`client_credentials`：\*\*签发机器到机器的访问令牌
-* \*\*`device_code`：\*\*为 CLI 和输入受限的客户端添加可选的[设备授权](/docs/plugins/device-authorization#authorize-a-cli-to-call-an-api)流程
+* \*\*`device_code`：\*\*为 CLI 和输入受限的客户端添加可选的[设备授权](/docs/plugins/device-authorization#授权-cli-调用-api)流程
 
 `client_credentials` 默认拒绝访问。客户端用户委托的 `scope` 元数据永远不会授权机器访问。管理员必须通过管理创建或更新端点分配非空的 `client_credentials_scopes` 值，并且 `clientPrivileges` 必须明确批准 `configure-client-credentials-scopes` 操作。分配的值既是可请求 scope 的最大集合，也是令牌请求省略 `scope` 时使用的默认值。DCR、CIMD 和用户管理的注册可以声明该授权方式，但无法分配此服务器拥有的 scope 上限。
 
@@ -619,7 +619,7 @@ oauthProvider({
 
 #### 设备码授权方式
 
-设备授权方式（[RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628)）允许输入受限的客户端（CLI、智能电视、IoT）获取 OAuth 访问令牌。在 `oauthProvider()` 旁添加 `oauthDeviceAuthorization()`，以注册 `urn:ietf:params:oauth:grant-type:device_code` 令牌授权方式并公开 `device_authorization_endpoint`。该集成会添加 OAuth 客户端绑定和 RFC 8707 资源字段；独立的设备授权安装保持不变。设备会在 `/device/code` 请求代码，用户批准代码，然后客户端轮询 `/oauth2/token` 获取完整的 OAuth 令牌。请参见[授权 CLI 调用 API](/docs/plugins/device-authorization#authorize-a-cli-to-call-an-api)。
+设备授权方式（[RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628)）允许输入受限的客户端（CLI、智能电视、IoT）获取 OAuth 访问令牌。在 `oauthProvider()` 旁添加 `oauthDeviceAuthorization()`，以注册 `urn:ietf:params:oauth:grant-type:device_code` 令牌授权方式并公开 `device_authorization_endpoint`。该集成会添加 OAuth 客户端绑定和 RFC 8707 资源字段；独立的设备授权安装保持不变。设备会在 `/device/code` 请求代码，用户批准代码，然后客户端轮询 `/oauth2/token` 获取完整的 OAuth 令牌。请参见[授权 CLI 调用 API](/docs/plugins/device-authorization#授权-cli-调用-api)。
 
 在 `/device/code` 中，机密客户端使用其注册的方法进行身份验证。使用 `client_secret_basic` 的客户端可以发送 `Authorization: Basic ...` 标头，并省略正文中的 `client_id`；使用 `client_secret_post` 的客户端发送 `client_id` 和 `client_secret`；使用 `none` 的公有客户端发送 `client_id`。无论顺序如何，空的 `client_id`、`scope`、`user_id` 和身份验证参数都会被视为省略。重复的非空客户端标识、基础请求或身份验证参数，以及多个身份验证方法都会返回 `invalid_request`；而重复的 `resource` 参数仍受支持。
 
@@ -1581,7 +1581,7 @@ authenticate: async ({ ctx, opts, assertion, expectedAudience }) => {
 
 OAuth 客户端注册时绑定用户或 `reference_id`，且不可变。
 
-若使用 [组织插件](/docs/plugins/organization)，请确保在新建客户端时，激活会话中的 [`activeOrganizationId`](/docs/plugins/organization#active-organization) 已被设置。
+若使用 [组织插件](/docs/plugins/organization)，请确保在新建客户端时，激活会话中的 [`activeOrganizationId`](/docs/plugins/organization#活跃组织) 已被设置。
 
 ```ts title="auth.ts"
 oauthProvider({
@@ -1844,7 +1844,7 @@ JWT 访问令牌始终使用真实用户 ID 作为 `sub`，因为资源服务器
 
 `mcp()` 就是该 Better Auth 实例的 OAuth Provider，因此不要同时注册 `mcp()` 和 `oauthProvider()`。它直接接受 OAuth Provider 选项。当 MCP 路由与认证实例共享时，请使用 `requireMcpAuth`；当资源服务器独立运行时，请使用 `createMcpProtectedRequestHandler`。
 
-MCP 插件还可以通过设备授权类型支持单独注册的 CLI。MCP 客户端继续使用由发现驱动的授权码流程，而 CLI 则通过设备授权向同一提供者请求绑定资源的令牌。请参阅[为您自己的 CLI 添加设备授权](/docs/plugins/mcp#add-device-authorization-for-your-own-cli)。
+MCP 插件还可以通过设备授权类型支持单独注册的 CLI。MCP 客户端继续使用由发现驱动的授权码流程，而 CLI 则通过设备授权向同一提供者请求绑定资源的令牌。请参阅[为您自己的 CLI 添加设备授权](/docs/plugins/mcp#为您自己的-cli-添加设备授权)。
 
 ## 表结构
 

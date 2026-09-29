@@ -244,7 +244,7 @@ Better Auth 会自动从以下地址获取并验证提供者的 [OpenID Connect 
 
 #### 受信任的来源
 
-发现端点及发现过程中解析到的任意 URL 都必须符合您应用的 [`trustedOrigins`](/docs/reference/security#trusted-origins) 配置。
+发现端点及发现过程中解析到的任意 URL 都必须符合您应用的 [`trustedOrigins`](/docs/reference/security#受信任来源) 配置。
 如果未明确添加，将导致发现失败，并返回错误代码 `discovery_untrusted_origin`。
 
 ```ts
@@ -285,7 +285,7 @@ trustedOrigins: async (request) => {
 }
 ```
 
-更多详细信息请参阅 [`trustedOrigins`](/docs/reference/security#trusted-origins) 文档。
+更多详细信息请参阅 [`trustedOrigins`](/docs/reference/security#受信任来源) 文档。
 
 #### 重定向 OIDC 端点
 

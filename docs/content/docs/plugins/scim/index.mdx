@@ -107,7 +107,7 @@ SCIM 在 [RFC 7643](https://www.rfc-editor.org/rfc/rfc7643) 中定义身份资�
     连接 ID 负责管理使用此凭据配置的资源。可选的 `provisioningDomainId` 用于标识接收生命周期和角色更新的工作区、租户、项目或其他应用边界。默认值为连接 ID。
 
     <Callout type="info">
-      对于运行时租户接入和凭据轮换，请配置可选的[`managedConnections` 目录](/docs/plugins/scim/reference#managed-connection-catalog)。它会持久化由插件拥有的连接元数据和令牌摘要，同时由你的服务器为客户管理员 UI 执行授权。已有目录的应用程序也可以在 `authentication.verifyBearerToken` 中原子地解析连接。
+      对于运行时租户接入和凭据轮换，请配置可选的[`managedConnections` 目录](/docs/plugins/scim/reference#托管连接目录)。它会持久化由插件拥有的连接元数据和令牌摘要，同时由你的服务器为客户管理员 UI 执行授权。已有目录的应用程序也可以在 `authentication.verifyBearerToken` 中原子地解析连接。
     </Callout>
   </Step>
 

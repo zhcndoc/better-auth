@@ -32,7 +32,7 @@ description: Discord 提供程序的设置和使用。
     ```
 
     <Callout>
-      对于仅有手机号的账户，即使授予了 `email` 范围，Discord 也会返回 `email: null`。请参阅 [处理没有邮箱的提供程序](/docs/concepts/oauth#handling-providers-without-email)，了解推荐的 `mapProfileToUser` 回退方案。
+      对于仅有手机号的账户，即使授予了 `email` 范围，Discord 也会返回 `email: null`。请参阅 [处理没有邮箱的提供程序](/docs/concepts/oauth#处理不提供邮箱的提供商)，了解推荐的 `mapProfileToUser` 回退方案。
     </Callout>
   </Step>
 </Steps>
@@ -59,7 +59,7 @@ const signIn = async () => {
 
 ## 选项
 
-有关所有社交提供程序支持的完整选项列表，请查看 [提供程序选项](/docs/concepts/oauth#provider-options)。
+有关所有社交提供程序支持的完整选项列表，请查看 [提供程序选项](/docs/concepts/oauth#提供商选项)。
 
 ### 机器人权限（可选）
 

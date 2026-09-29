@@ -215,7 +215,7 @@ const response = await fetch(`${authBaseURL}/oauth2/token`, {
 const tokens = await response.json();
 ```
 
-访问令牌是一个已签名的 JWT，其 `aud` 标识为 `https://api.example.com`。将其作为 `Authorization: Bearer <access_token>` 发送给该 API，然后在 API 中验证其签名、签发者、受众、过期时间和所需作用域。请参阅 [API 服务器验证](/docs/plugins/oauth-provider#api-server)。如果 CLI 请求了 `offline_access`，请将返回的刷新令牌存储在操作系统的安全凭据存储中，并使用它来续期有效期较短的访问令牌。
+访问令牌是一个已签名的 JWT，其 `aud` 标识为 `https://api.example.com`。将其作为 `Authorization: Bearer <access_token>` 发送给该 API，然后在 API 中验证其签名、签发者、受众、过期时间和所需作用域。请参阅 [API 服务器验证](/docs/plugins/oauth-provider#api-服务器)。如果 CLI 请求了 `offline_access`，请将返回的刷新令牌存储在操作系统的安全凭据存储中，并使用它来续期有效期较短的访问令牌。
 
 <Callout type="warn">
   不要为此 OAuth 流程调用 `authClient.device.token`。该客户端方法会轮询 `/device/token` 并返回 Better Auth 会话令牌。已注册的 OAuth 客户端必须轮询 `/oauth2/token`。

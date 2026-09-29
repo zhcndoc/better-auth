@@ -171,7 +171,7 @@ await authClient.revokeSessions()
 
 ### 更新会话
 
-如果你为会话配置了[额外字段](/docs/concepts/database#extending-core-schema)，可以使用 `updateSession` 函数来更新它们。
+如果你为会话配置了[额外字段](/docs/concepts/database#扩展核心架构)，可以使用 `updateSession` 函数来更新它们。
 
 ```ts title="auth-client.ts"
 import { authClient } from "@/lib/auth-client"
@@ -330,7 +330,7 @@ await auth.api.getSession({
 
 ## 次级存储中的会话
 
-默认情况下，如果在身份验证配置中提供了[次级存储](/docs/concepts/database#secondary-storage)，会话将存储于次级存储中。
+默认情况下，如果在身份验证配置中提供了[次级存储](/docs/concepts/database#二级存储)，会话将存储于次级存储中。
 
 ```ts
 import { betterAuth } from "better-auth";

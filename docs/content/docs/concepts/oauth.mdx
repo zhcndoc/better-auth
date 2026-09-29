@@ -73,7 +73,7 @@ await auth.api.linkSocialAccount({
 
 ### 验证 OAuth 用户信息
 
-使用 [`user.validateUserInfo`](/docs/concepts/users-accounts#callbacks) 在 Better Auth 创建用户、关联新账户或让现有用户重新登录之前拒绝 OAuth 身份。回调会接收映射后的 `user`，以及 `source.oauth` 中的提供商 id 和原始提供商资料。
+使用 [`user.validateUserInfo`](/docs/concepts/users-accounts#回调函数) 在 Better Auth 创建用户、关联新账户或让现有用户重新登录之前拒绝 OAuth 身份。回调会接收映射后的 `user`，以及 `source.oauth` 中的提供商 id 和原始提供商资料。
 
 当 OAuth 身份首次创建时（来自常规回调、ID token 登录、One Tap 或 OAuth Proxy 的 `create-user`），关联新账户时（`link-account`），以及现有 OAuth 用户每次登录时（`sign-in`），都会运行该回调。在 `sign-in` 操作中，`user` 携带的是提供商的*最新*邮箱，因此，如果用户的提供商邮箱后来变更为不允许的域名，域名检查会拒绝该用户。它适用于无状态配置，因为无论是否使用数据库，都会在相同的时间点运行。
 
@@ -616,7 +616,7 @@ export const auth = betterAuth({
 此选项需按提供商单独启用，并且独立于 `emailAndPassword.requireEmailVerification`：启用邮箱和密码验证不会限制社交登录。
 
 <Callout type="warn">
-  仅为报告可信 `email_verified` 信号的提供商启用此选项。有些提供商始终将邮箱报告为未验证（或从不返回邮箱），在这些提供商上启用该选项会阻止所有登录。请参阅[处理不提供邮箱的提供商](/docs/concepts/oauth#handling-providers-without-email)。
+  仅为报告可信 `email_verified` 信号的提供商启用此选项。有些提供商始终将邮箱报告为未验证（或从不返回邮箱），在这些提供商上启用该选项会阻止所有登录。请参阅[处理不提供邮箱的提供商](/docs/concepts/oauth#处理不提供邮箱的提供商)。
 </Callout>
 
 ### mapProfileToUser
@@ -649,7 +649,7 @@ export const auth = betterAuth({
 
 <Callout type="info">
   在 `user.additionalFields`
-  [选项](/docs/concepts/database#extending-core-schema)中声明映射字段，
+  [选项](/docs/concepts/database#扩展核心架构)中声明映射字段，
   并允许这些字段作为输入。无状态身份验证配置同样适用此规则。
 </Callout>
 
@@ -659,7 +659,7 @@ export const auth = betterAuth({
 
 `input` 和 `returned` 控制不同的方向。例如，`{ input: false, returned: true }` 定义了一个可读取的服务器拥有字段。API 输入和 `mapProfileToUser` 无法提供该字段，但 Better Auth 会在响应中包含其存储的值。
 
-如果提供商声明决定了谁可以登录，请在 Better Auth 完成 OAuth 登录之前执行该策略。不要等到登录完成后再检查，因为 Better Auth 可能已经签发了有效会话。提供商存在专用选项时，优先使用该选项，例如 Google 提供商用于限制 Google Workspace 域名的 [`hd` 选项](/docs/authentication/google#restrict-sign-in-to-google-workspace)。对于调用 [`getUserInfo`](/docs/concepts/oauth#getuserinfo) 的流程，可以通过自定义实现验证提供商响应，并在策略验证失败时返回 `null`。对于不调用 `getUserInfo` 的独立登录路径，也要配置等效的强制执行逻辑。
+如果提供商声明决定了谁可以登录，请在 Better Auth 完成 OAuth 登录之前执行该策略。不要等到登录完成后再检查，因为 Better Auth 可能已经签发了有效会话。提供商存在专用选项时，优先使用该选项，例如 Google 提供商用于限制 Google Workspace 域名的 [`hd` 选项](/docs/authentication/google#将登录限制为-google-workspace)。对于调用 [`getUserInfo`](/docs/concepts/oauth#getuserinfo) 的流程，可以通过自定义实现验证提供商响应，并在策略验证失败时返回 `null`。对于不调用 `getUserInfo` 的独立登录路径，也要配置等效的强制执行逻辑。
 
 如果还需要存储经过验证的声明，请将字段保持为 `input: false`，并使用应用程序的数据库层写入该字段。仅当静态值适用于通过该身份验证配置创建的每个用户时，才使用 `defaultValue`；不要将其用于存储从提供商个人资料中派生的值。
 

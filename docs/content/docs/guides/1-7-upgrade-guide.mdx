@@ -662,7 +662,7 @@ Drizzle 模式生成器现在会为多对一关系输出单数键。这只会影
 
 1.7.0 到 1.7.2 版本要求自定义数据库适配器实现 `incrementOne` 和 `consumeOne`。现在它们再次变为可选。内置适配器仍会使用其原生实现。
 
-**该怎么做：** 确保你的适配器提供原子条件写入和准确的受影响行数。工厂回退逻辑会在写入前检查存储值，并拒绝不安全的快照或已耗尽的重试。完整的回退要求请参阅[适配器指南](/docs/guides/create-a-db-adapter#consumeone-method)。
+**该怎么做：** 确保你的适配器提供原子条件写入和准确的受影响行数。工厂回退逻辑会在写入前检查存储值，并拒绝不安全的快照或已耗尽的重试。完整的回退要求请参阅[适配器指南](/docs/guides/create-a-db-adapter#consumeone-方法)。
 
 ### 双因素 `enableTwoFactor` 返回区分响应
 
@@ -751,7 +751,7 @@ export const authClient = createAuthClient({
 });
 ```
 
-请参阅[授权 CLI 调用 API](/docs/plugins/device-authorization#authorize-a-cli-to-call-an-api)，了解客户端注册、批准和轮询示例。
+请参阅[授权 CLI 调用 API](/docs/plugins/device-authorization#授权-cli-调用-api)，了解客户端注册、批准和轮询示例。
 
 ***
 

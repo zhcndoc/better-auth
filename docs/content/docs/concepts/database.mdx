@@ -11,7 +11,7 @@ Better Auth 连接数据库以存储数据。数据库将用于存储用户、�
 你可以通过在数据库选项中传入支持的数据库实例，将数据库连接传递给 Better Auth。你可以在 [其他关系型数据库](/docs/adapters/other-relational-databases) 文档中了解更多支持的数据库适配器。
 
 <Callout type="info">
-  Better Auth 也可以在没有任何数据库的情况下工作。更多详情请参见 [无状态会话管理](/docs/concepts/session-management#stateless-session-management)。
+  Better Auth 也可以在没有任何数据库的情况下工作。更多详情请参见 [无状态会话管理](/docs/concepts/session-management#无状态会话管理)。
 </Callout>
 
 ## 命令行工具（CLI）
@@ -27,7 +27,7 @@ npx auth@latest migrate
 ```
 
 <Callout type="info">
-  对于 PostgreSQL 用户：migrate 命令支持非默认 schema。它会自动检测你的 `search_path` 配置，并在正确的 schema 中创建表。详情请参见 [PostgreSQL 适配器](/docs/adapters/postgresql#use-a-non-default-schema)。
+  对于 PostgreSQL 用户：migrate 命令支持非默认 schema。它会自动检测你的 `search_path` 配置，并在正确的 schema 中创建表。详情请参见 [PostgreSQL 适配器](/docs/adapters/postgresql#使用非默认模式)。
 </Callout>
 
 ### 生成架构
@@ -123,7 +123,7 @@ await runMigrations();
 
 ## 架构验证
 
-初始化期间，Better Auth 会将架构与其写入数据的表进行比较，并报告缺失的表、缺失的列，以及它从未填充的必需列，同时提供相应的修复方法。错误会通过你配置的日志记录器显示，无需等待身份验证请求。请求会等待同一项检查；如果架构不匹配，请求将失败。验证不会自动停止服务器或构建。每当你想显式检查架构而不发出身份验证请求时，都可以运行 [`npx auth@latest check schema`](/docs/concepts/cli#schema)。
+初始化期间，Better Auth 会将架构与其写入数据的表进行比较，并报告缺失的表、缺失的列，以及它从未填充的必需列，同时提供相应的修复方法。错误会通过你配置的日志记录器显示，无需等待身份验证请求。请求会等待同一项检查；如果架构不匹配，请求将失败。验证不会自动停止服务器或构建。每当你想显式检查架构而不发出身份验证请求时，都可以运行 [`npx auth@latest check schema`](/docs/concepts/cli#架构)。
 
 默认情况下会启用验证，包括在生产环境中；每个适配器实例都会缓存通过检查的结果或不匹配情况。编程式迁移会使同一数据库实例的缓存检查失效。等待检查结果的请求会等待新的检查结果。使用其他工具应用架构更改后，请重启。Kysely 会读取实时数据库元数据，因此初始化期间需要访问数据库。Drizzle 会检查配置的架构对象，Prisma 会检查生成的客户端数据模型，两者都不会查询数据库。这些本地检查无法检测尚未应用到数据库的迁移。精简的 `prisma-client` 模型不包含可空性信息，因此 `auth generate` 会报告未写入的必需列。没有已注册检查的自定义适配器不会进行验证。
 
@@ -665,7 +665,7 @@ res.user.lang; // > "fr"
 ```
 
 <Callout>
-  有关如何在客户端推断额外字段信息的更多详细信息，请参阅 [TypeScript](/docs/concepts/typescript#inferring-additional-fields-on-client) 文档。
+  有关如何在客户端推断额外字段信息的更多详细信息，请参阅 [TypeScript](/docs/concepts/typescript#在客户端推断额外字段) 文档。
 </Callout>
 
 对于 `user.additionalFields`，`input` 和 `returned` 是相互独立的：
@@ -677,7 +677,7 @@ res.user.lang; // > "fr"
 | `{ input: false, returned: true }`  | API 输入和提供商配置文件映射无法提供该字段。配置的 `defaultValue` 可以对其进行初始化；否则请使用应用程序管理的数据库写入操作。 | 包含存储的字段。 |
 | `{ input: false, returned: false }` | API 输入和提供商配置文件映射无法提供该字段。配置的 `defaultValue` 可以对其进行初始化；否则请使用应用程序管理的数据库写入操作。 | 忽略存储的字段。 |
 
-如果您使用社交登录或 OAuth 提供商，`mapProfileToUser` 可以在这些字段允许输入时，从提供商配置文件中填充额外字段。映射器在您的服务器上运行，但 Better Auth 仍会将其返回值视为提供商输入。标记为 `input: false` 的字段仍由服务器管理，提供商为这些字段提供的值会被忽略，并且当 OAuth 创建用户时，配置的 `defaultValue` 值仍会生效。有关安全处理模式，请参阅[服务器管理的字段和授权声明](/docs/concepts/oauth#server-owned-fields-and-authorization-claims)。
+如果您使用社交登录或 OAuth 提供商，`mapProfileToUser` 可以在这些字段允许输入时，从提供商配置文件中填充额外字段。映射器在您的服务器上运行，但 Better Auth 仍会将其返回值视为提供商输入。标记为 `input: false` 的字段仍由服务器管理，提供商为这些字段提供的值会被忽略，并且当 OAuth 创建用户时，配置的 `defaultValue` 值仍会生效。有关安全处理模式，请参阅[服务器管理的字段和授权声明](/docs/concepts/oauth#服务器拥有的字段与授权声明)。
 
 **将配置映射到用户的示例：映射 `firstName` 和 `lastName`**
 
@@ -1028,10 +1028,10 @@ export const auth = betterAuth({
 
 请阅读与您所用适配器相关的连接文档：
 
-* [DrizzleORM](/docs/adapters/drizzle#joins)
-* [PrismaORM](/docs/adapters/prisma#joins)
-* [SQLite](/docs/adapters/sqlite#joins)
-* [MySQL](/docs/adapters/mysql#joins)
-* [PostgreSQL](/docs/adapters/postgresql#joins)
-* [MSSQL](/docs/adapters/mssql#joins)
-* [MongoDB](/docs/adapters/mongo#joins)
+* [DrizzleORM](/docs/adapters/drizzle#联接)
+* [PrismaORM](/docs/adapters/prisma#连接)
+* [SQLite](/docs/adapters/sqlite#联接)
+* [MySQL](/docs/adapters/mysql#连接)
+* [PostgreSQL](/docs/adapters/postgresql#连接)
+* [MSSQL](/docs/adapters/mssql#连接)
+* [MongoDB](/docs/adapters/mongo#联接)

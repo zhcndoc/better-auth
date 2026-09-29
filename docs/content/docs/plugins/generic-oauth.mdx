@@ -72,7 +72,7 @@ await authClient.signIn.social({
 })
 ```
 
-你也可以传入 `additionalData`（一个 `Record<string, any>`），在整个流程中往返传递客户端数据；在回调中通过 `getOAuthState()` 读取这些数据，并将其视为不受信任的数据。请参阅[在 OAuth 流程中传递额外数据](/docs/concepts/oauth#passing-additional-data-through-oauth-flow)。
+你也可以传入 `additionalData`（一个 `Record<string, any>`），在整个流程中往返传递客户端数据；在回调中通过 `getOAuthState()` 读取这些数据，并将其视为不受信任的数据。请参阅[在 OAuth 流程中传递额外数据](/docs/concepts/oauth#通过-oauth-流程传递额外数据)。
 
 ### 使用 ID Token 登录
 
@@ -106,7 +106,7 @@ await authClient.linkSocial({
 
 ## 验证 OAuth 用户信息
 
-使用 [`user.validateUserInfo`](/docs/concepts/users-accounts#callbacks) 在 Better Auth 创建用户（`create-user`）、关联新账户（`link-account`）或让现有用户重新登录（`sign-in`）之前拒绝 Generic OAuth 用户。在 `sign-in` 操作中，该回调会接收提供商最新的电子邮件和资料，因此可以通过域名或组织检查，拒绝其提供商身份后来超出范围的用户。检查 `source.oauth?.providerId`，将验证范围限定到特定的 Generic OAuth 提供商，并使用 `source.oauth?.profile` 获取提供商特定的资料字段。
+使用 [`user.validateUserInfo`](/docs/concepts/users-accounts#回调函数) 在 Better Auth 创建用户（`create-user`）、关联新账户（`link-account`）或让现有用户重新登录（`sign-in`）之前拒绝 Generic OAuth 用户。在 `sign-in` 操作中，该回调会接收提供商最新的电子邮件和资料，因此可以通过域名或组织检查，拒绝其提供商身份后来超出范围的用户。检查 `source.oauth?.providerId`，将验证范围限定到特定的 Generic OAuth 提供商，并使用 `source.oauth?.profile` 获取提供商特定的资料字段。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
@@ -190,7 +190,7 @@ genericOAuth({
 
 ## 提供商辅助工具
 
-有关内置和社区维护的提供商辅助工具，请参阅[其他社交提供商](/docs/authentication/other-social-providers#provider-helpers)。
+有关内置和社区维护的提供商辅助工具，请参阅[其他社交提供商](/docs/authentication/other-social-providers#提供商辅助工具)。
 
 ## 配置
 

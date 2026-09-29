@@ -7,9 +7,9 @@ description: 了解如何管理用户和账户，包括更新用户信息、更�
 
 除了认证用户外，Better Auth 还提供了一组管理用户的方法。这包括更新用户信息、更改密码等。
 
-用户表存储用户的认证数据 [点击此处查看模式](/docs/concepts/database#user)。
+用户表存储用户的认证数据 [点击此处查看模式](/docs/concepts/database#用户表)。
 
-用户表可以通过[附加字段](/docs/concepts/database#extending-core-schema)或插件进行扩展，以存储额外的数据。
+用户表可以通过[附加字段](/docs/concepts/database#扩展核心架构)或插件进行扩展，以存储额外的数据。
 
 ## 更新用户
 
@@ -405,7 +405,7 @@ export const auth = betterAuth({
 
 Better Auth 通过电子邮件和密码、Google 或企业身份提供者等提供者支持多种认证方式。与用户关联的每种方式都会作为一个账户存储。
 
-账户具有本地记录 ID 和提供者身份。`id` 用于标识 Better Auth 账户记录，是传递给账户管理 API 的 `accountId` 值。`providerId` 和 `accountId` 的组合用于标识外部账户：`providerId` 是提供者配置的名称，而 `accountId` 是提供者分配的稳定标识符。有关完整字段列表，请参阅[账户模式](/docs/concepts/database#account)。
+账户具有本地记录 ID 和提供者身份。`id` 用于标识 Better Auth 账户记录，是传递给账户管理 API 的 `accountId` 值。`providerId` 和 `accountId` 的组合用于标识外部账户：`providerId` 是提供者配置的名称，而 `accountId` 是提供者分配的稳定标识符。有关完整字段列表，请参阅[账户模式](/docs/concepts/database#账户表)。
 
 ### 列出用户账户
 

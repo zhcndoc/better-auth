@@ -985,7 +985,7 @@ await stripeClient.customers.update(organization.stripeCustomerId, {
 
 ### 处理用户删除
 
-有活跃订阅的组织会被自动阻止删除，但用户不会。若要在用户删除时实现相同行为，可在订阅活跃时于[`beforeDelete`](/docs/concepts/users-accounts#callbacks)回调中抛出错误：
+有活跃订阅的组织会被自动阻止删除，但用户不会。若要在用户删除时实现相同行为，可在订阅活跃时于[`beforeDelete`](/docs/concepts/users-accounts#回调函数)回调中抛出错误：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";

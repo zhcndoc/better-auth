@@ -23,11 +23,11 @@ description: 一步步创建你的第一个 Better Auth 插件的指南。
   <Step>
     ## 首先创建服务端插件
 
-    Better Auth 插件以成对形式工作：一个 <Link href="/docs/concepts/plugins#create-a-server-plugin">服务端插件</Link> 和一个 <Link href="/docs/concepts/plugins#creating-a-client-plugin">客户端插件</Link>。
+    Better Auth 插件以成对形式工作：一个 <Link href="/docs/concepts/plugins#创建服务器插件">服务端插件</Link> 和一个 <Link href="/docs/concepts/plugins#创建客户端插件">客户端插件</Link>。
     服务端插件构成了你认证系统的基础，而客户端插件则提供了方便的前端 API，用于与服务端实现进行交互。
 
     <Callout>
-      你可以在我们的 <Link href="/docs/concepts/plugins#creating-a-plugin">文档</Link> 中了解更多关于服务端/客户端插件的信息。
+      你可以在我们的 <Link href="/docs/concepts/plugins#创建插件">文档</Link> 中了解更多关于服务端/客户端插件的信息。
     </Callout>
 
     ### 创建服务端插件
@@ -57,7 +57,7 @@ description: 一步步创建你的第一个 Better Auth 插件的指南。
     虽然这段代码什么也不做，但严格来说，你刚刚已经创建了自己的第一个插件，恭喜！🎉
 
     <Callout type="info">
-      要发布可复用的插件？<Link href="/docs/concepts/plugins#register-a-plugin-type">注册其服务端类型</Link>，这样 `getPlugin()` 就能推断出准确的返回类型。
+      要发布可复用的插件？<Link href="/docs/concepts/plugins#注册插件类型">注册其服务端类型</Link>，这样 `getPlugin()` 就能推断出准确的返回类型。
     </Callout>
   </Step>
 
@@ -69,7 +69,7 @@ description: 一步步创建你的第一个 Better Auth 插件的指南。
     在这里创建数据表结构，也能让 <Link href="/docs/concepts/cli">Better Auth 的 CLI</Link> 生成更新数据库所需的脚本。
 
     <Callout type="info">
-      你可以在这里了解更多关于 <Link href="/docs/concepts/plugins#schema">插件数据表结构</Link>。
+      你可以在这里了解更多关于 <Link href="/docs/concepts/plugins#模式">插件数据表结构</Link>。
     </Callout>
 
     ```ts title="index.ts"
@@ -98,7 +98,7 @@ description: 一步步创建你的第一个 Better Auth 插件的指南。
     在这个示例指南中，我们将设置认证逻辑来检查并确保注册用户年龄大于 5 岁。
     但同样的概念也可以应用于验证用户是否同意服务条款等情况。
 
-    为此，我们将使用 <Link href="/docs/concepts/plugins#hooks">钩子（Hooks）</Link>，它允许我们在某个操作执行 `之前` 或 `之后` 运行代码。
+    为此，我们将使用 <Link href="/docs/concepts/plugins#钩子hooks">钩子（Hooks）</Link>，它允许我们在某个操作执行 `之前` 或 `之后` 运行代码。
 
     ```ts title="index.ts"
     export const birthdayPlugin = () => ({
@@ -233,7 +233,7 @@ description: 一步步创建你的第一个 Better Auth 插件的指南。
 
     不要忘记将你的 `birthday` 字段添加到 `user` 表模型中！
 
-    或者，使用 `generate` <Link href="/docs/concepts/cli#generate">CLI 命令</Link>：
+    或者，使用 `generate` <Link href="/docs/concepts/cli#生成-generate">CLI 命令</Link>：
 
     ```bash
     npx auth@latest generate
@@ -249,4 +249,4 @@ description: 一步步创建你的第一个 Better Auth 插件的指南。
 如果你有一个想要与社区分享的插件，请随时通过
 我们的 <Link href="https://discord.gg/better-auth">Discord 服务器</Link>
 或通过 <Link href="https://github.com/better-auth/better-auth/pulls">拉取请求</Link>
-与我们联系，我们可能会将其添加到 <Link href="/docs/plugins/community-plugins">社区插件列表</Link！。
+与我们联系，我们可能会将其添加到 <Link href="/docs/plugins/community-plugins">社区插件列表</Link>！。
