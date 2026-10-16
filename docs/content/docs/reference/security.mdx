@@ -12,9 +12,11 @@ Better Auth 默认使用 `scrypt` 算法进行密码哈希。该算法设计为�
 
 ## 秘钥轮换
 
-Better Auth 支持对 `BETTER_AUTH_SECRET` 进行非破坏性的轮换。当您通过 `secrets` 选项或 `BETTER_AUTH_SECRETS` 环境变量配置版本化秘钥时，所有新的加密数据都会包含一个密钥版本标识符。解密时会直接通过版本号查找密钥——无需尝试性解密。
+Better Auth 支持在相同加密格式和用途内无破坏性地轮换 `BETTER_AUTH_SECRET`。通过 `secrets` 选项或 `BETTER_AUTH_SECRETS` 环境变量配置版本化密钥后，所有新加密的数据都会包含密钥版本标识符。解密时会根据版本直接查找密钥，无需尝试性解密。
 
-轮换前使用旧秘钥加密的遗留数据（裸十六进制格式）仍可通过原始的 `BETTER_AUTH_SECRET` 作为回退进行解密。无需数据库迁移或停机。数据在下一次写入时会懒惰地使用当前密钥重新加密。
+在相同加密用途内，轮换前使用旧密钥加密的遗留数据（裸十六进制格式）仍可通过原始 `BETTER_AUTH_SECRET` 作为回退解密。常规密钥轮换无需数据库迁移或停机。数据下次写入时会惰性地使用当前密钥重新加密。
+
+从共享加密密钥升级到用途专属密钥会改变待处理 OAuth 和 SAML state cookie 以及 OAuth Proxy 载荷使用的格式。保留原始密钥无法继续这些待处理流程。请一起升级参与的服务器，并重新启动切换前开始的登录和账户关联流程。请参阅 [state cookie 升级说明](/docs/reference/options#storestatestrategy)和 [OAuth Proxy 升级指南](/docs/plugins/oauth-proxy#upgrading-existing-deployments)。
 
 配置细节请参见 [`secrets` 选项](/docs/reference/options#secrets)。
 

@@ -1,0 +1,109 @@
+---
+icon: integrationsEffect
+sidebarTitle: "Effect"
+title: Effect 集成
+description: 将 Better Auth 集成到 Effect HTTP 服务器。
+---
+
+Better Auth 使用 Web 标准的 `Request` 和 `Response` 对象。Effect 4 可以通过 `HttpEffect.fromWebHandler` 挂载 `auth.handler`。
+
+开始之前，请先[配置 Better Auth 实例](/docs/installation)。
+
+## 安装 Effect
+
+```package-install
+effect
+```
+
+如果要新建 Effect 项目，请遵循 [Effect 安装指南](https://effect.website/docs/v4/getting-started/installation#javascript-runtimes)。
+
+## 挂载 auth 处理器
+
+以下示例运行于 Node.js。若要使用其他运行时，请参阅 [Effect Platform 指南](https://effect.website/docs/v4/platform/introduction)。
+
+```package-install
+@effect/platform-node
+```
+
+```ts title="src/index.ts"
+import { createServer } from "node:http";
+import { NodeHttpServer, NodeRuntime } from "@effect/platform-node";
+import { Layer } from "effect";
+import { HttpEffect, HttpRouter, HttpServerResponse } from "effect/http";
+import { auth } from "./auth.ts";
+
+const homeRoute = HttpRouter.add(
+  "GET",
+  "/",
+  HttpServerResponse.text("Hello Better Auth"),
+);
+
+const authRoutes = HttpRouter.add( // [!code highlight]
+  "*", // [!code highlight]
+  "/api/auth/*", // Match your Better Auth basePath. // [!code highlight]
+  HttpEffect.fromWebHandler(auth.handler), // [!code highlight]
+); // [!code highlight]
+
+const routes = Layer.mergeAll(homeRoute, authRoutes);
+
+const server = HttpRouter.serve(routes).pipe(
+  Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 })),
+);
+
+Layer.launch(server).pipe(NodeRuntime.runMain);
+```
+
+## 跨域请求
+
+如果前端运行在不同的 origin，请同时在 Effect 服务器的 CORS 中间件和 Better Auth 的 `trustedOrigins` 中允许该来源。中间件会应用于所有路由，因此只需列出需要访问 cookie 的来源。
+
+```ts title="src/auth.ts"
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+  trustedOrigins: ["http://localhost:5173"], // [!code highlight]
+});
+```
+
+```ts title="src/index.ts"
+import { HttpMiddleware } from "effect/http";
+
+const server = HttpRouter.serve(routes, {
+  middleware: HttpMiddleware.cors({
+    allowedOrigins: ["http://localhost:5173"], // [!code highlight]
+    credentials: true,
+  }),
+}).pipe(
+  Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 })),
+);
+```
+
+有关跨站 cookie，请参阅 [Cookies](/docs/concepts/cookies)。
+
+## 保护应用路由
+
+你可以通过 Better Auth 检查会话，以保护应用资源：
+
+```ts title="src/index.ts"
+import { Effect } from "effect";
+import { HttpServerRequest, HttpServerResponse } from "effect/http";
+
+const profileRoute = HttpRouter.add(
+  "GET",
+  "/profile",
+  Effect.gen(function* () {
+    const request = yield* HttpServerRequest.HttpServerRequest;
+    const session = yield* Effect.tryPromise(() =>
+      auth.api.getSession({ headers: request.headers }),
+    );
+
+    if (!session) {
+      return HttpServerResponse.empty({ status: 401 });
+    }
+
+    return yield* HttpServerResponse.json(session.user);
+  }),
+);
+
+const routes = Layer.mergeAll(homeRoute, authRoutes, profileRoute);
+```

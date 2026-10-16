@@ -285,7 +285,11 @@ const isVerified = await authClient.phoneNumber.verify({
   ```
 </APIMethod>
 
-## 选项
+如果新密码被拒绝（例如被 [Have I Been Pwned](/docs/plugins/have-i-been-pwned) 插件拒绝），OTP 不会被消耗，可以再次使用。如果重置后续步骤失败，例如撤销会话或保存密码，只有在数据库适配器启用了事务且验证值存储在数据库中时，OTP 才仍可使用。未配置二级存储时默认如此；使用[二级存储](/docs/concepts/database#secondary-storage)时，请设置 [`verification.storeInDatabase: true`](/docs/reference/options#verification)。错误的 OTP 仍会计入 `allowedAttempts`。
+
+使用自定义 [`verifyOTP`](#verifyotp) 时，验证码由你的提供方检查且通常会被消耗，因此不适用上述保证。过短或过长的密码会在调用提供方之前被拒绝；但之后被拒绝的密码（例如被 Have I Been Pwned 拒绝）已经消耗验证码，用户需要重新申请。
+
+## Options
 
 ### `otpLength`
 
@@ -332,6 +336,8 @@ export const auth = betterAuth({
 ### `verifyOTP`
 
 自定义 OTP 验证函数。提供后将替代默认内部验证逻辑。适用于需要集成外部短信服务提供商（如 Twilio Verify、AWS SNS）进行 OTP 验证的场景。函数接收带有 `phoneNumber` 和 `code` 属性的对象及请求对象，返回布尔值或返回布尔值的 Promise，表示 OTP 是否有效。
+
+The function checks the codes for phone number verification, [`consumePhoneNumberOTP`](#consume-an-otp-on-the-server), and [password reset](#request-password-reset). If `sendPasswordResetOTP` sends the code Better Auth generates rather than a code from your provider, `verifyOTP` must accept that code too.
 
 ```ts
 import { betterAuth } from "better-auth";

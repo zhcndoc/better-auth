@@ -155,9 +155,11 @@ description: 了解如何在项目中配置 Better Auth。
         import { client } from "@/db"; // 你的 mongodb 客户端
 
         export const auth = betterAuth({
-            database: mongodbAdapter(client),
+            database: mongodbAdapter(client.db(), { client }),
         });
         ```
+
+        独立服务器的设置方法请参阅 [MongoDB 适配器指南](/docs/adapters/mongo)。
       </Tab>
     </Tabs>
 
@@ -270,9 +272,9 @@ description: 了解如何在项目中配置 Better Auth。
 
       <Tab value="svelte-kit">
         ```ts title="hooks.server.ts"
-        import { auth } from "$lib/auth"; // auth 文件路径
+        import { auth } from "#lib/auth.js"; // SvelteKit 2: "$lib/auth"
         import { svelteKitHandler } from "better-auth/svelte-kit";
-        import { building } from '$app/environment'
+        import { building } from "$app/env"; // SvelteKit 2: "$app/environment"
 
         export async function handle({ event, resolve }) {
             return svelteKitHandler({ event, resolve, auth, building });

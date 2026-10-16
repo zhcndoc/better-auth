@@ -6,7 +6,7 @@ description: 了解如何在 Better Auth 中配置速率限制，包括 IP 地�
 
 Better Auth 包含内置的速率限制器，以帮助管理流量和防止滥用。默认情况下，在生产模式下，速率限制器设置为：
 
-* 窗口：60 秒
+* 窗口：10 秒
 * 最大请求数：100 次请求
 
 <Callout type="warning">
@@ -45,7 +45,7 @@ export const auth = betterAuth({
 
 此外，插件也会为特定路径定义自定义规则。例如，`twoFactor` 插件具有自定义规则：
 
-* `/two-factor/verify`：在 10 秒内限制为 3 次请求。
+* `/two-factor/*`：在 10 秒内限制为 3 次请求。
 
 这些自定义规则确保敏感操作受到更严格的限制保护。
 

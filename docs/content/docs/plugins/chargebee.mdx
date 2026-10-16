@@ -1089,10 +1089,10 @@ Chargebee 插件会自动防止用户获得多个免费试用期。一旦用户�
 
 **解决方案：**
 
-1. 运行 `npx better-auth generate`，使用 Chargebee 插件字段重新生成 schema
-2. 将迁移应用到数据库
-3. 如果是从另一个适配器手动迁移，请确保列名与数据库适配器的命名约定一致
-4. 查阅 [Better Auth 适配器文档](https://www.better-auth.com/docs/concepts/database)，了解与你的适配器（Prisma、Drizzle、Kysely 等）对应的字段名映射
+1. 运行 `npx auth generate`，使用 Chargebee 插件字段重新生成 schema。
+2. 运行 `npx auth migrate` 将迁移应用到数据库，或使用 ORM 的迁移工具。
+3. 如果是从另一个适配器手动迁移，请确保列名符合数据库适配器的命名约定。
+4. 查阅[数据库文档](/docs/concepts/database)，了解与你的适配器（Prisma、Drizzle、Kysely 等）对应的字段名映射。
 
 ### Webhook 问题
 

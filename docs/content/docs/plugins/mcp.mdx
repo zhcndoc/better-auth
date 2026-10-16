@@ -148,7 +148,9 @@ mcp({
 
 `resource` 必须是没有查询参数、片段或凭据的 HTTPS URL；仅在本地开发的回环主机上接受 HTTP。URL 需要查询组件的资源不能使用 `mcp()`、`requireMcpAuth` 或 `createMcpProtectedRequestHandler`。请使用 `better-auth/oauth2` 中的 `verifyAccessTokenRequest` 验证其令牌，并使用 `@better-auth/oauth-provider` 中的 `createResourceServerChallenge` 构建质询。
 
-`mcp()` 还会将此标识符注册为默认的客户端注册资源。即使动态注册的客户端在其注册请求中省略了非标准的 `resources` 字段，该客户端也会与 MCP 资源关联。您提供的任何 `clientRegistrationDefaultResources` 都会保留，并且 MCP 资源只会追加一次。
+使用 Prisma 和 PostgreSQL、CockroachDB 或 MongoDB 时，还需在 `resources` 中为此资源声明明确的 `allowedScopes`；请参阅[资源](/docs/plugins/oauth-provider#resources)。
+
+`mcp()` also registers this identifier as a default client-registration resource. A dynamically registered client is linked to the MCP resource even when its registration request omits the non-standard `resources` field. Any `clientRegistrationDefaultResources` you provide are preserved, and the MCP resource is appended once.
 
 ### 可选的 DCR 回退
 
@@ -161,10 +163,13 @@ mcp({
   resource: "https://api.example.com/mcp",
   allowDynamicClientRegistration: true,
   allowUnauthenticatedClientRegistration: true,
+  clientRegistrationDefaultApplicationType: "infer",
 })
 ```
 
-除非启用 DCR，否则发现信息中不会包含注册端点。DCR 请求不需要 Better Auth 的 `resources` 扩展：`mcp()` 会将其规范资源添加为服务器拥有的默认资源。
+一些 MCP 客户端（例如 Cursor 和较早版本的 Claude Code）会省略 `application_type`，并注册自定义 scheme 回调，或注册指向 `localhost`、`127.0.0.1`、`[::1]` 的 `http` 回调；默认的 `web` 类型会拒绝这些回调。设置 `clientRegistrationDefaultApplicationType: "infer"` 可将这些客户端注册为 `native`；请参阅[应用类型](/docs/plugins/oauth-provider#dynamic-registration-endpoint)。
+
+The registration endpoint is absent from discovery unless DCR is enabled. A DCR request does not need Better Auth's `resources` extension: `mcp()` adds its canonical resource as a server-owned default.
 
 ### 保护 MCP 路由
 

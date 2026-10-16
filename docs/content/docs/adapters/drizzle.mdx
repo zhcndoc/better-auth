@@ -191,6 +191,12 @@ export const auth = betterAuth({
 });
 ```
 
+## 日期列
+
+CLI 生成的 schema 会使用 Drizzle 的日期模式存储日期，例如 PostgreSQL 和 MySQL 上的 `timestamp()`，以及 SQLite 上的 `integer({ mode: "timestamp_ms" })`。字符串类型的日期列也可用：`timestamp({ mode: "string" })`、MySQL 的 `datetime({ mode: "string" })`，以及 SQLite 的 `text()`。
+
+对于字符串列，Better Auth 会以 UTC 写入日期：ISO 8601 格式（`2026-01-16T16:50:54.888Z`），MySQL 上则为 `2026-01-16 16:50:54.888`。读取不含时区的值时会将其视为 UTC。在 PostgreSQL 上，`timestamp({ mode: "string", withTimezone: true })` 存储绝对时间点，读取时返回的值带有偏移量，因此不受上述规则影响。
+
 ## 使用复数表名
 
 如果你的所有表名都是复数形式，你可以直接传入 `usePlural` 选项：
@@ -223,7 +229,7 @@ export const auth = betterAuth({
 然后使用 Better Auth CLI 时，它将生成类似如下的模式：
 
 ```bash
-npx @better-auth/cli@latest generate
+npx auth@latest generate
 ```
 
 ```ts

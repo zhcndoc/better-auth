@@ -309,6 +309,8 @@ Better Auth 初始化后，可以在 Expo 应用中使用 `authClient` 进行用
 
 对于社交登录，可以使用 `authClient.signIn.social` 方法，传入提供者名称和回调 URL。如果传入相对路径（如 "/dashboard"），Expo 插件会自动使用 `Linking.createURL` 将其转换为深度链接。
 
+将 auth 后端升级到带用途前缀的验证标识符或用途专属的 state cookie 密钥时，请重新启动待处理的基于重定向的社交登录。请遵循[验证存储](/docs/reference/options#verification)和 [state cookie](/docs/reference/options#storestatestrategy)切换说明。这些格式变化不需要新的 Expo 客户端配置，也不会影响不使用重定向 state 的原生 [ID token 登录](#idtoken-sign-in)。
+
 ```tsx title="app/social-sign-in.tsx"
 import { Button } from "react-native";
 import { router } from "expo-router";

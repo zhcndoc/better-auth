@@ -2,7 +2,7 @@
   "app_dir": "/",
   "build_command": "cd docs && pnpm run build",
   "ignore_dockerfile": true,
-  "install_command": "npm install -g pnpm && pnpm install",
+  "install_command": "npm install -g pnpm@11.1.1 && pnpm install --frozen-lockfile",
   "output_dir": "",
-  "start_command": "cd docs && pnpm run start"
+  "start_command": "cd docs && pnpm run start -- --hostname 0.0.0.0 --port ${PORT:-3000}"
 }

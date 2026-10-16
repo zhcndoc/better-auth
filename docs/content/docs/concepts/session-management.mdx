@@ -209,6 +209,8 @@ await authClient.changePassword({
 })
 ```
 
+对于存储在数据库中的会话，如果适配器启用了事务，密码修改与会话撤销会在一个事务中完成，并先撤销会话。撤销失败时，请求会返回错误，当前密码保持不变。未启用事务时，如果保存新密码失败，当前密码仍然有效，但会话已经撤销。使用[二级存储](/docs/concepts/database#secondary-storage)时，只有事务提交后才会从二级存储中删除会话。删除失败会记录日志，新密码仍会生效，而这些会话可能会一直有效到过期。
+
 ## 会话缓存
 
 ### Cookie 缓存
@@ -347,7 +349,7 @@ betterAuth({
 
 默认情况下，Better Auth 将会话存储在数据库中。但如果提供了次级存储，Better Auth 会将会话存储到次级存储而非数据库。
 
-你也可以通过在会话配置中传入 `storeSessionInDatabase: true` 来选择将会话存储回数据库，而非次级存储。
+设置 `storeSessionInDatabase: true` 可将会话同时存储在数据库和二级存储中。查询会话令牌时会先检查二级存储；除非启用了 `preserveSessionInDatabase`，否则找不到记录时会回退到数据库。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";

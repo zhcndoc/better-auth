@@ -53,7 +53,7 @@ description: 魔法链接插件
 
 ### 使用魔法链接登录
 
-<APIMethod path="/sign-in/magic-link" method="POST" requireSession>
+<APIMethod path="/sign-in/magic-link" method="POST" requireHeaders>
   ```ts
   type signInMagicLink = {
       /**
@@ -69,12 +69,13 @@ description: 魔法链接插件
        */
       callbackURL?: string = "/dashboard"
       /**
-       * 新用户注册后重定向的 URL
+       * URL to redirect after new user signup.
        */
       newUserCallbackURL?: string = "/welcome"
       /**
-       * 验证出错时重定向的 URL
-       * 如果只提供了 callbackURL 而没有 errorCallbackURL，则会带有 `error` 查询参数重定向到 callbackURL。
+       * URL to redirect if an error happens on verification
+       * If only callbackURL is provided but without an `errorCallbackURL` then they will be
+       * redirected to the callbackURL with an `error` query parameter.
        */
       errorCallbackURL?: string = "/error"
       /**
@@ -103,7 +104,7 @@ description: 魔法链接插件
 
 如果你想手动处理验证（例如，如果你向用户发送了不同的 URL），可以使用 `verify` 函数。
 
-<APIMethod path="/magic-link/verify" method="GET" requireSession>
+<APIMethod path="/magic-link/verify" method="GET" requireHeaders>
   ```ts
   type magicLinkVerify = {
       /**
@@ -114,6 +115,16 @@ description: 魔法链接插件
        * 验证后重定向的 URL，如果未提供则返回会话。 
        */
       callbackURL?: string = "/dashboard"
+      /**
+       * URL to redirect after new user signup.
+       */
+      newUserCallbackURL?: string = "/welcome"
+      /**
+       * URL to redirect if an error happens on verification.
+       * If only callbackURL is provided but without an `errorCallbackURL` then they will be
+       * redirected to the callbackURL with an `error` query parameter.
+       */
+      errorCallbackURL?: string = "/error"
   }
   ```
 </APIMethod>
@@ -135,7 +146,9 @@ description: 魔法链接插件
 
 **disableSignUp**：如果设置为 `true`，用户将无法使用魔法链接进行注册。默认值为 `false`。
 
-**generateToken**：用于生成唯一标识用户的令牌的函数。默认生成一个随机字符串。函数参数：
+**rateLimit**：`/sign-in/magic-link` 和 `/magic-link/verify` 端点的速率限制。默认值为 `{ window: 60, max: 5 }`。详情请参阅[速率限制](/docs/concepts/rate-limit)。
+
+**generateToken**：`generateToken` 函数用于生成唯一标识用户的令牌。默认值为随机字符串。函数接收一个参数：
 
 * `email`：用户的电子邮件地址。
 
@@ -143,15 +156,19 @@ description: 魔法链接插件
   使用 `generateToken` 时，请确保返回的字符串难以猜测，因为它用于以保密方式验证用户身份。默认情况下，我们返回一个长度较长且密码学安全的字符串。
 </Callout>
 
-**storeToken**：`storeToken` 函数控制魔法链接令牌在被 Better Auth 的验证层存储前的转换方式。默认值为 `"plain"`。
+**storeToken**：控制 Better Auth 在创建验证标识符之前如何转换魔法链接令牌。默认值为 `"plain"`。
 
-`storeToken` 可为以下之一：
+`storeToken` 可为以下值之一：
 
-* `"plain"`：令牌以明文形式存储。
-* `"hashed"`：使用默认哈希器对令牌进行哈希处理。
-* `{ type: "custom-hasher", hash: (token: string) => Promise<string> }`：使用自定义哈希器对令牌进行哈希处理。
+* `"plain"`：Better Auth 创建验证标识符前不转换令牌。
+* `"hashed"`：创建标识符前使用默认哈希器对令牌进行哈希处理。
+* `{ type: "custom-hasher", hash: (token: string) => Promise<string> }`：创建标识符前使用自定义哈希器转换令牌。
+
+Better Auth 会在转换后的令牌前添加 `magic-link:`，然后应用全局 [`verification.storeIdentifier`](/docs/reference/options#verification) 设置。链接中发送的令牌值以及传给 `sendMagicLink` 的值均不会改变。自定义 `storeToken` 哈希器接收原始令牌，无需添加此前缀。
 
 存储后端本身由全局 [`verification`](/docs/reference/options#verification) 配置控制。如果你配置了 `secondaryStorage`，魔法链接验证记录可以存储在那里，而不是数据库中。
+
+升级到带用途前缀的验证标识符后，请为升级前发出的魔法链接重新申请链接。新版本无法兑换旧链接，并会返回 `INVALID_TOKEN`。现有用户和账号无需迁移数据。请同时升级所有共用验证存储的服务器，以确保它们对哪些链接可兑换的判断一致。
 
 <Callout type="warn">
   当 `secondaryStorage` 为验证提供支持时（`verification.storeInDatabase: false`），原子单次使用保证要求你的二级存储公开 `getAndDelete`（Redis `GETDEL`、KV `getAndDelete`）。Better Auth 不会在验证令牌消耗时回退到单独的 `get` 和 `delete` 操作。使用二级存储验证的多实例部署必须配置实现了 `getAndDelete` 的后端。

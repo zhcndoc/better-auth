@@ -194,6 +194,21 @@ SCIM 基础路径是 Better Auth 基础 URL 下的 `/scim/v2`。User 和 Group �
 
 Enterprise User URI 可以在没有扩展对象的情况下声明，Microsoft Entra 在某些请求中就是如此，并且该声明会保留在响应中。不带 URI 的 Enterprise 对象无效。PATCH 请求体必须包含 `urn:ietf:params:scim:api:messages:2.0:PatchOp`。包含不支持或重复 schema URN 的 User 和 Group 创建或替换请求会返回带有 `scimType: "invalidValue"` 的 `400 Bad Request`
 
+根据 [RFC 7643](https://datatracker.ietf.org/doc/html/rfc7643#section-2.1) 的要求，属性名称不区分大小写。在 User 和 Group 的 HTTP 请求中，`POST` 和 `PUT` 请求体及 PATCH 值中的键与已声明的属性和子属性名称匹配时不区分大小写，包括 Enterprise User URI 键。响应会使用已声明的名称。如果请求体或 PATCH 值以不同大小写重复指定同一属性（例如 `active` 和 `Active`），会返回 `400 Bad Request`，且 `scimType` 为 `"invalidSyntax"`。
+
+### Null attribute values
+
+[RFC 7643](https://datatracker.ietf.org/doc/html/rfc7643#section-2.5) 将 JSON `null` 视为未赋值属性。[Microsoft Entra ID](https://learn.microsoft.com/en-us/entra/identity/app-provisioning/use-scim-to-provision-users-and-groups) 会为目录中未填充的属性发送 `null`。User 和 Group 的 HTTP 请求会根据 `null` 出现的位置进行处理：
+
+| `null` 出现的位置                                                                                                                                                                    | 影响                                                                                                                                                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST` 或 `PUT` 请求体中的属性或子属性                                                                                                                                                   | 视为省略。如果复杂属性的所有子属性均为 `null`，也会省略该属性。由于 `PUT` 会替换资源，因此省略的属性会被清除。                                                                                       |
+| PATCH `add` 或 `replace` 操作的 `value`                                                                                                                                             | 移除目标，效果等同于对相同路径执行 `remove` 操作。                                                                                                                               |
+| 合并到已存储值的 PATCH 值中的键：无路径值、`name`、Enterprise 扩展、`manager` 或 `addresses[type eq "work"]` 等筛选值                                                                      | 在应用操作中的其他键后，移除该属性或子属性。因此，移除 `name.formatted` 时会使用更新后的姓名组成部分。                                                                                               |
+| PATCH 中用于添加或替换完整值（如 `emails` 或 `addresses`）的值的子属性                                                                                                                     | 视为从该值中省略。                                                                                                                                                         |
+
+所有请求中的 `active: null` 都会返回 `400 Bad Request`，因为省略或移除 `active` 会使其变为 `true`，从而重新激活 User。在 PATCH 中，对于不可移除的属性（如 User 的 `userName` 或 `emails`，以及 Group 的 `displayName`），设置 `null` 的处理方式与 `remove` 操作相同，即请求会失败。在 `POST` 和 `PUT` 请求体中，必需属性若传入 `null`，会被视为缺失。只读子属性（如 `manager.displayName`）的 `null` 会被忽略。数组中的 `null` 条目会保留并导致验证失败。
+
 ### Microsoft Entra Group 兼容性
 
 Microsoft 的经典 Entra provisioning client 会在某些 `POST /Groups` schema 列表中包含不带属性的 URI `http://schemas.microsoft.com/2006/11/ResourceManagement/ADSCIM/2.0/Group`。当该客户端访问端点时，启用此精确的、仅限输入的例外：
@@ -215,31 +230,31 @@ scim({
 
 ## Users
 
-| 方法       | 路径                       | 结果                                               |
-| -------- | ------------------------ | ------------------------------------------------ |
-| `POST`   | `/scim/v2/Users`         | 创建 SCIM User，并创建或显式关联 Better Auth User。返回 `201`。 |
-| `GET`    | `/scim/v2/Users`         | 以 SCIM `ListResponse` 返回连接中的 Users。              |
-| `GET`    | `/scim/v2/Users/:userId` | 返回连接拥有的一个 User。                                  |
-| `PUT`    | `/scim/v2/Users/:userId` | 替换可写配置文件，同时保留资源 ID。返回 `200`。                     |
-| `PATCH`  | `/scim/v2/Users/:userId` | 应用有序的原子更改。返回包含更新后资源的 `200`。                      |
-| `DELETE` | `/scim/v2/Users/:userId` | 删除 SCIM 资源，同时保留 Better Auth User。返回 `204`。       |
+| 方法     | 路径                     | 结果                                                                                                                                                 |
+| -------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST`   | `/scim/v2/Users`         | 创建 SCIM User 并创建或显式关联 Better Auth User，或使用相同的 `externalId` 重新配置已停用的 User。返回 `201`。 |
+| `GET`    | `/scim/v2/Users`         | 以 SCIM `ListResponse` 返回连接中的 Users。                                                                                                            |
+| `GET`    | `/scim/v2/Users/:userId` | 返回由该连接拥有的一个 User。                                                                                                                           |
+| `PUT`    | `/scim/v2/Users/:userId` | 替换可写资料，同时保留资源 ID。返回 `200`。                                                                                                               |
+| `PATCH`  | `/scim/v2/Users/:userId` | 按顺序应用原子性更改。返回包含更新后资源的 `200`。                                                                                                         |
+| `DELETE` | `/scim/v2/Users/:userId` | 删除 SCIM 资源，同时保留 Better Auth User。返回 `204`。                                                                                                  |
 
 删除 User 还会移除其直接 Group 成员关系和投影授权，更新受影响的 Groups，并协调生命周期和访问状态。当存在 `externalId` 时，插件会保留所需关联，以便将之后重新配置的资源关联到同一个 Better Auth User
 
 ### 支持的 User 属性
 
-| 属性                                                              | 行为                                 |
-| --------------------------------------------------------------- | ---------------------------------- |
-| `userName`                                                      | 必需，在连接内不区分大小写且必须唯一。保留提供时的大小写。      |
-| `externalId`                                                    | 可选，在连接内按提供的原始值精确唯一。                |
-| `active`                                                        | 可选的生命周期状态。默认为 `true`。              |
-| `displayName`                                                   | 可选的显示名称。省略时由插件派生。                  |
-| `name.formatted`、`name.givenName`、`name.familyName`             | 可选的姓名字段。省略时插件会派生 `formatted`。      |
-| `name.middleName`、`name.honorificPrefix`、`name.honorificSuffix` | 可选的经典姓名字段。                         |
-| `emails`                                                        | 最多 20 个带类型的电子邮件值，每个不超过 254 个字符。    |
-| `title`、`userType`、`preferredLanguage`、`locale`、`timezone`      | 可选的经典 User 字符串。                    |
-| `phoneNumbers`、`addresses`、`roles`、`entitlements`               | 可选的有界多值属性。每个属性最多只能有 1 个值为 primary。 |
-| `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User`    | 可选的标准 Enterprise User 扩展，详见下文。     |
+| 属性                                                              | 行为                                                                                                                                       |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `userName`                                                        | 必需，在连接内不区分大小写且必须唯一。保留提供时的大小写。                                                                                                 |
+| `externalId`                                                      | 可选，在连接内按提供的原始值精确唯一。使用已停用 User 的 `externalId` 创建 User 会重新配置该用户。                                                               |
+| `active`                                                          | 可选的生命周期状态。默认为 `true`。                                                                                                               |
+| `displayName`                                                     | 可选的显示名称。省略时由插件派生。                                                                                                                    |
+| `name.formatted`、`name.givenName`、`name.familyName`               | 可选的姓名字段。省略时插件会派生 `formatted`。                                                                                                         |
+| `name.middleName`、`name.honorificPrefix`、`name.honorificSuffix`   | 可选的经典姓名字段。                                                                                                                               |
+| `emails`                                                          | 最多 20 个带类型的电子邮件值，每个不超过 254 个字符。                                                                                                     |
+| `title`、`userType`、`preferredLanguage`、`locale`、`timezone`      | 可选的经典 User 字符串。                                                                                                                          |
+| `phoneNumbers`、`addresses`、`roles`、`entitlements`                | 可选的有界多值属性。每个属性最多只能有 1 个值为 primary。                                                                                                    |
+| `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User`      | 可选的标准 Enterprise User 扩展，详见下文。                                                                                                           |
 
 RFC 7643 将 `active` 定义为 JSON Boolean，SCIM 示例、discovery、响应、回调和持久化值仍保持 Boolean 类型。作为范围有限的 Microsoft Entra 互操作性例外，User `POST`、`PUT` 和 `PATCH` 的 HTTP 入站处理也接受大小写不敏感的精确字符串 `"true"` 和 `"false"` 作为 `active`，包括无路径和带核心 schema 限定的 PATCH 操作。其他字符串、首尾空白、数字、`null`、数组和对象不会被强制转换，并会返回 `400 Bad Request`。此规范化不适用于 Groups 或无关属性
 
@@ -369,7 +384,7 @@ Authorization: Bearer <token>
 
 在此表中，`enterpriseUrn` 是 `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User`
 
-User 路径可以包含核心 User schema 前缀。`add` 或 `replace` 操作可以省略 `path`，并提供包含可写属性的对象，包括扁平化的 Enterprise URI 键。未过滤的 `replace` 会添加缺失的目标。`id`、`schemas`、`meta` 和 `manager.displayName` 为只读
+User 路径可以包含核心 User schema 前缀。`add` 或 `replace` 操作可以省略 `path`，并提供包含可写属性的对象，包括扁平化的 Enterprise URI 键。未过滤的 `replace` 会添加缺失的目标。`id`、`schemas`、`meta` 和 `manager.displayName` 为只读。`null` 值会移除目标，详见 [Null 属性值](#null-attribute-values)。
 
 当类似 `phoneNumbers[type eq "work"].value` 的过滤值路径没有匹配任何已存储的值时，Better Auth 会创建带有筛选 `type` 或 `primary` 标记的值，而不是返回 [RFC 7644](https://datatracker.ietf.org/doc/html/rfc7644#section-3.5.2.3) 的 `noTarget` 错误。[Microsoft Entra ID](https://learn.microsoft.com/en-us/entra/identity/app-provisioning/use-scim-to-provision-users-and-groups) 会为尚未填充的属性发送这些操作，并且由于 PATCH 具有原子性，拒绝其中一个操作也会丢弃同一请求中的所有其他操作。创建的电子邮件永远不会是 primary，因此过滤器未命中不会移动登录地址。对没有匹配项的过滤路径执行 `remove` 仍是无操作，而不带路径的 `remove` 仍会返回 `noTarget`
 
@@ -384,7 +399,7 @@ User 路径可以包含核心 User schema 前缀。`add` 或 `replace` 操作可
 | `members`                            | `remove`                 | 未提供值时清除所有成员，或移除提供的引用。 |
 | `members[value eq "<scim-user-id>"]` | `remove`                 | 移除一个 User 引用。         |
 
-Group 路径可以包含核心 Group schema 前缀。`add` 或 `replace` 操作可以省略 `path`，并提供包含 `displayName`、`externalId` 或 `members` 的对象
+Group 路径可以包含核心 Group schema 前缀。`add` 或 `replace` 操作可以省略 `path`，并提供包含 `displayName`、`externalId` 或 `members` 的对象。`null` 值会移除目标，详见 [Null 属性值](#null-attribute-values)。
 
 ## Identity 回调
 

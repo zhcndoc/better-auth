@@ -297,7 +297,12 @@ scim({
   删除会话并不能阻止用户再次登录。请将禁用状态持久化在 `identity.reconcileUser` 中，然后在身份验证或授权策略中执行该状态，以便在停用时阻止未来的登录。
 </Callout>
 
-删除 SCIM 资源会保留其 Better Auth 用户。如果资源具有 `externalId`，则通过同一连接重新创建相同的 `externalId` 会将新的 SCIM 资源链接到该用户。如果没有 `externalId`，下一次创建将遵循你的解析器，或创建另一个 Better Auth 用户。
+目录可以在停用或删除用户后重新创建该用户。例如，Okta 在通过 `userName` 查找不到匹配项时会再次创建用户。若创建请求通过同一连接携带相同的 `externalId`，Better Auth 会保留已有的 Better Auth User：
+
+* 如果之前的 SCIM User 已停用，创建操作会重新配置该用户。资源保留其 SCIM ID，采用提交的资料和 `active` 值，并返回 `201`。
+* 如果之前的 SCIM User 已删除，创建操作会将新的 SCIM 资源关联到同一个 Better Auth User。
+
+这两种情况都不会调用 `identity.resolveUser`，因为 `externalId` 已足以标识用户。若创建操作复用仍处于活动状态的 SCIM User 的 `externalId`，或复用另一个 SCIM User 的 `userName`，仍会返回 `409`。Better Auth 不会通过 `userName` 或电子邮件重新配置用户。未提供 `externalId` 时，后续创建操作会遵循你的解析器，或创建另一个 Better Auth User。
 
 ## 后续步骤
 

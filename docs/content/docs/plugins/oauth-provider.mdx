@@ -292,7 +292,18 @@ await auth.api.adminUpdateOAuthClient({
 });
 ```
 
-#### 轮换客户端密钥
+如需暂停令牌签发但不删除客户端，可通过仅限服务器调用的更新 API 设置 `disabled`：
+
+```ts
+await auth.api.adminUpdateOAuthClient({
+  headers,
+  body: { client_id, update: { disabled: true } },
+});
+```
+
+设置 `disabled: false` 可恢复签发。已禁用的客户端无法获取新令牌，introspection 也会将其现有令牌报告为非活动状态。若资源服务器在本地验证 JWT，而你希望立即断开客户端，仍需检查当前客户端或应用授权；JWT 签名在到期前仍然有效。与会话绑定的 `updateOAuthClient` 端点不能更改 `disabled`。
+
+#### Rotate Client Secret
 
 <Callout type="warn">
   当前实现会立即轮换客户端密钥，并且会立即使旧密钥失效。
@@ -440,13 +451,45 @@ const client = await authClient.oauth2.register({
 
 所有参数详情请参见 [RFC 7591 注册部分](https://datatracker.ietf.org/doc/html/rfc7591#section-2)。
 
-`application_type`（[OIDC Registration §2](https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata)）省略时默认为 `web`。`web` 客户端在非回环主机上要求使用 `https` 重定向 URI。`native` 客户端可以使用已声明的 `https` URI、仅位于 `localhost`、`127.0.0.1` 或 `[::1]` 且端口任意的 `http` 回环 URI，或者使用带有反向域名 scheme 的无 authority 私有用途 URI，例如 `com.example.app:/callback`（[RFC 8252 §7](https://datatracker.ietf.org/doc/html/rfc8252#section-7)）。回环主机匹配使用原始 URI authority，因此 `127.1` 等替代的数字 IPv4 拼写会在 URL 规范化之前被拒绝。Better Auth 还会拒绝凭证、片段、格式错误的 scheme，以及 `file:` 和 `mailto:` 等保留 scheme；同时拒绝回环 `https` 和可路由主机的 `http` 重定向。
+动态注册只会保留本服务器支持的已请求 `grant_types`，注册响应中会列出最终注册的授权类型（[RFC 7591 §3.2.1](https://datatracker.ietf.org/doc/html/rfc7591#section-3.2.1)）。例如，Claude 的 MCP connector 会同时请求 `urn:ietf:params:oauth:grant-type:jwt-bearer`、`authorization_code` 和 `refresh_token`，但只会使用后两者注册。移除 `authorization_code` 时，`code` 响应类型也会一并移除。注册请求与服务器没有任何共同授权类型时，会以 `invalid_client_metadata` 拒绝。通过 `createOAuthClient` 或 `adminCreateOAuthClient` 创建的客户端不会缩减授权类型；不支持的授权类型会被拒绝。
+
+未提供 `application_type` 时，默认值为 `web`（[OIDC Registration §2](https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata)）。`web` 客户端在非 loopback 主机上必须使用 `https` 重定向 URI。`native` 客户端可以使用以下任一形式的重定向 URI：
+
+* 非 loopback 主机上的已声明 `https` URI。
+* 主机必须恰好为 `localhost`、`127.0.0.1` 或 `[::1]` 的 `http` loopback URI，端口不限。
+* 使用反向域名 scheme 且不含 authority 的私有 URI，例如 `com.example.app:/callback`。这是 [RFC 8252 §7.1](https://datatracker.ietf.org/doc/html/rfc8252#section-7.1) 推荐的形式。
+* 包含主机和路径的自定义 scheme URI，例如 `cursor://anysphere.cursor-mcp/oauth/callback`。scheme 无需包含句点。没有路径的 URI（例如 `cursor://anysphere.cursor-mcp`）会被拒绝。
+
+Loopback 主机匹配使用原始 URI authority，因此 `127.1` 等其他数字 IPv4 写法会在 URL 规范化前被拒绝。Better Auth 还会拒绝凭据、片段、格式错误的 URI、loopback `https` 和指向可路由主机的 `http` 重定向。Native 客户端不能使用以下保留 scheme：`ws:`、`wss:`、`file:`、`ftp:`、`mailto:`、`javascript:`、`data:`、`vbscript:`、`blob:`、`about:` 或 `view-source:`。主机加路径形式可以使用其他 scheme；但不含 authority 的 URI（例如 `myapp:/callback`）仍需使用反向域名 scheme。
 
 应用类型与客户端身份验证相互独立。例如，native 客户端可以使用 `client_secret_post`，而 web 客户端可以使用 `token_endpoint_auth_method: "none"`。身份验证能力仅根据 `token_endpoint_auth_method` 推导；已移除的 `type` 和 `public` 元数据字段不会被接受或返回。
 
 [MCP 2026-07-28 规范](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration#application-type-and-redirect-uri-constraints)要求 MCP 客户端发送适当的 `application_type`。[客户端 ID 元数据文档](/docs/plugins/cimd)可以省略该字段；Better Auth 会将该省略存储为 `null`，并根据 web 和 native 形式的安全并集验证重定向。
 
-请注意，以下参数尚不支持：
+一些 native MCP 客户端在动态注册时会省略 `application_type`。例如，Cursor 会在未提供该字段的情况下注册 `cursor://anysphere.cursor-mcp/oauth/callback`、一个 `https` 回调和 `http://localhost:8787/callback`；较早版本的 Claude Code 则会注册单个 `http://127.0.0.1:<port>/callback`，因此默认的 `web` 类型会拒绝这两种注册。当前版本的 Claude Code 会发送 `application_type: "native"`，无需此选项即可注册。`clientRegistrationDefaultApplicationType` 用于设置动态注册省略该字段时采用的类型：
+
+| 值                 | 省略 `application_type` 时采用的类型                                                                                              |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `"web"`（默认）    | 按 OIDC Registration §2 的规定使用 `web`                                                                                       |
+| `"native"`        | `native`                                                                                                                    |
+| `"infer"`         | 任一重定向 URI 使用非 http(s) scheme，或使用指向 `localhost`、`127.0.0.1`、`[::1]` 的 `http` 时使用 `native`，否则使用 `web` |
+
+之后会按照最终类型对应的规则验证每个重定向 URI。在 `"infer"` 模式下，列出自定义 scheme 或 `http` loopback URI 的客户端会被视为 `native`，因此其余 `http` URI 也必须指向 loopback。只列出 `https` URI 的客户端仍为 `web`。客户端自行发送的 `application_type` 不会被覆盖。此选项仅适用于动态注册，不影响托管客户端和 Client ID Metadata Document。
+
+```ts title="auth.ts"
+oauthProvider({
+  allowDynamicClientRegistration: true,
+  allowUnauthenticatedClientRegistration: true,
+  clientRegistrationDefaultApplicationType: "infer",
+  // ... other options
+})
+```
+
+<Callout type="warn">
+  [RFC 8252 §8.4](https://datatracker.ietf.org/doc/html/rfc8252#section-8.4) 指出，授权服务器应拒绝不含句点的私有 scheme。为兼容 native MCP 客户端，Better Auth 接受 `cursor:` 等 scheme。设备上的任何应用都可以注册私有 scheme，因此其他应用可能收到授权码。没有 code verifier 时，PKCE 可使被拦截的授权码无法使用。公开客户端（`token_endpoint_auth_method: "none"`）始终要求使用 PKCE。机密客户端可通过 `require_pkce: false` 或 `clientRegistrationRequirePKCE: false` 关闭 PKCE；使用私有重定向的客户端应始终启用 PKCE。请参阅 [PKCE 配置](#pkce-configuration)。
+</Callout>
+
+Note the following parameters are not yet supported:
 
 * `sector_identifier_uri`
 
@@ -501,7 +544,7 @@ const client = await authClient.oauth2.register({
 * 启用 JWT 插件时（默认），发送 `resource` 会生成一个 JWT 访问令牌，并将所选资源放入 `aud` 声明
 * 设置 `disableJwtPlugin: true` 时，访问令牌仍为不透明令牌。请求的资源仍会绑定到令牌，并通过 `/oauth2/introspect` 和 `customAccessTokenClaims`（通过 `resources`）公开
 
-令牌端点错误遵循 OAuth 错误分类：缺少必需请求字段时返回 `invalid_request`，客户端身份验证失败时返回 `invalid_client`，授权方式无效或不匹配时返回 `invalid_grant`。机密客户端必须使用其注册的 `token_endpoint_auth_method`。`client_secret_post` 身份验证失败时返回 `400`；`client_secret_basic` 身份验证失败时返回带有 Basic `WWW-Authenticate` challenge 的 `401`。
+令牌端点错误遵循 OAuth 错误分类：缺少必需请求字段时返回 `invalid_request`，客户端身份验证失败时返回 `invalid_client`，授权无效或不匹配时返回 `invalid_grant`。机密客户端必须使用其注册时的 `token_endpoint_auth_method`。`client_secret_post` 身份验证失败会返回 `400`；`client_secret_basic` 身份验证失败会返回 `401`，并附带 Basic `WWW-Authenticate` challenge。对于内置的 `authorization_code`、`refresh_token`、`client_credentials` 和 device code 授权类型，会先验证客户端身份，再查找授权；因此未知 `client_id` 会返回 `invalid_client`，而不是 `invalid_grant`。扩展授权处理器（参见[提供商扩展](#provider-extensions)）在查找授权前调用 `provider.authenticateClient()`，也会得到相同结果。
 
 #### DPoP 发送方约束令牌
 
@@ -509,11 +552,12 @@ Better Auth 支持 [RFC 9449](https://datatracker.ietf.org/doc/html/rfc9449) 定
 
 当令牌绑定到 DPoP 时：
 
-* 令牌端点要求有效的 `DPoP` 证明 JWT
-* 令牌响应返回 `token_type: "DPoP"`
-* JWT 访问令牌包含 `cnf.jkt`；不透明访问令牌和刷新令牌会持久化相同的 JWK thumbprint
-* 刷新令牌轮换要求使用相同密钥的 DPoP 证明
-* 资源请求必须使用 `Authorization: DPoP <access_token>`，并发送包含访问令牌哈希（`ath`）的 `DPoP` 证明
+* The token endpoint requires a valid `DPoP` proof JWT.
+* proof 中的 `htu` 必须是端点的公开 URL：`baseURL` 的 origin 和基础路径，加上客户端请求的路径，例如 `https://auth.example.com/api/auth/oauth2/token`。`baseURL` 应设置为客户端实际访问的公开 URL，而不是内部 URL，因为预期的 `htu` 会忽略请求 host，而代理或开发服务器可能会改写该值。
+* The token response returns `token_type: "DPoP"`.
+* JWT access tokens include `cnf.jkt`; opaque access tokens and refresh tokens persist the same JWK thumbprint.
+* Refresh token rotation requires a DPoP proof from the same key.
+* Resource requests must use `Authorization: DPoP <access_token>` and a `DPoP` proof containing the access-token hash (`ath`).
 
 ```ts title="auth.ts"
 oauthProvider({
@@ -591,7 +635,45 @@ grant_type=authorization_code
 
 支持的签名算法：`RS256`、`RS384`、`RS512`、`PS256`、`PS384`、`PS512`、`ES256`、`ES384`、`ES512`、`EdDSA`。
 
-#### 授权码授权方式
+##### 轮换客户端密钥
+
+内联配置 `jwks` 的客户端可以在没有用户会话的情况下替换自己的密钥，服务便可按计划轮换签名密钥。请在提供商中启用此功能：
+
+```ts title="auth.ts"
+oauthProvider({
+  allowClientKeyRotation: true,
+})
+```
+
+客户端生成新的密钥对，然后使用当前密钥之一签署客户端断言并调用此端点：
+
+```
+POST /api/auth/oauth2/client/rotate-keys
+Content-Type: application/json
+
+{
+  "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+  "client_assertion": "eyJhbGciOiJFUzI1NiIs...",
+  "jwks": { "keys": [{ "kty": "EC", "crv": "P-256", "kid": "key-2", "x": "...", "y": "..." }] }
+}
+```
+
+断言应包含上表中的声明，但有一点不同：`aud` 必须包含密钥轮换端点的 URL。此处令牌端点和发行者不计为 audience，因此，仅为这些地址签发的断言无法被转用来接管客户端密钥。
+
+`jwks` 是客户端完整的新密钥集。未包含在其中的密钥会立即停止验证，因此在此次请求中省略已泄露密钥即可将其撤销。响应会返回 `client_id` 和已存储的 `jwks`。
+
+如需替换密钥但又不影响仍使用旧密钥签名的实例，请像发布 `jwks_uri` 的客户端那样分两步轮换：
+
+1. 同时发送新旧密钥，并使用旧密钥签名。
+2. 所有实例都改用新密钥签名后，仅发送新密钥，并使用新密钥签名。
+
+如果轮换过程中密钥发生变化，未能完成的请求会返回 `409`；如果其签名密钥已被移除，则返回 `401`。请使用当前密钥重新签署断言并重试。
+
+<Callout type="info">
+  每个轮换断言必须只能使用一次，因此使用 memory 适配器或 `advanced.database.generateId: "serial"` 时，提供商不会在启用 `allowClientKeyRotation` 的情况下启动。只有内联注册 `jwks` 的客户端才能使用此端点。发布 `jwks_uri` 的客户端应在该 URI 轮换密钥；列在 `cachedTrustedClients` 中的客户端无法通过客户端管理端点修改。`client_secret_*` 客户端应改用 `/oauth2/client/rotate-secret`。
+</Callout>
+
+#### Authorization code grant
 
 授权码授权方式允许客户端获取用户访问令牌，并可选择获取刷新令牌（通过 "offline\_access" scope）。
 
@@ -666,7 +748,7 @@ oauthProvider({
      */
     created?: boolean,
     /**
-     * 确认登录后活动已完成
+     * Resumes after the post login page. `postLogin.shouldRedirect` runs again with `isContinuation: true`.
      */
     postLogin?: boolean,
   }
@@ -688,13 +770,13 @@ oauthProvider({
 * 该客户端签发了令牌，或
 * 该客户端是与令牌资源之一关联的资源服务器
 
-第二种情况很常见：前端客户端获取令牌，而您的 API 对其进行验证。要完成此配置，请将 API 注册为资源，并将客户端与其关联。带有 `resources` 字段的动态客户端注册会自动创建关联；否则，请向 `oauthClientResource` 表添加一行。
+第二种情况更常见：前端客户端获取令牌，由你的 API 验证。为此，请将 API 注册为资源并将客户端关联到该资源。动态注册和仅限服务器调用的 `adminCreateOAuthClient` 可以在注册时关联资源；已有客户端则使用 `adminLinkClientResource`。
 
 任何其他已身份验证的客户端都会获得 `{ active: false }`，这与未知或已过期令牌的响应相同，因此核查不能用来探测有效令牌。刷新令牌的限制更严格：只有请求该刷新令牌的客户端才能核查它。
 
 #### 返回哪些声明
 
-对于同一授权方式，不透明访问令牌和 JWT 访问令牌返回相同的声明：您的 `customAccessTokenClaims` 和任何按资源定义的 `customClaims`。服务器拥有保留声明名称（`iss`、`sub`、`aud`、`scope`、`auth_time` 等）。如果回调返回其中任何名称，该声明会被丢弃，而不会覆盖服务器的值。
+对于同一授权，Opaque 和 JWT 访问令牌会返回相同的声明：扩展的 `claims.accessToken` contributor、你的 `customAccessTokenClaims` 以及各资源的 `customClaims`。`iss`、`sub`、`aud`、`scope`、`auth_time` 等保留声明由服务器管理。如果回调返回这些名称之一，该值会被丢弃，不能覆盖服务器的值。
 
 两种格式有一个区别。不透明令牌会在每次调用时重新计算，因此核查会显示其当前状态：更改资源的声明后，下一次核查会反映该更改。JWT 携带签发时签名的内容，之后不会改变。当您希望声明在签发时固定时，请通过传递 `resource` 请求 JWT；当您希望获取当前状态时，请使用不透明令牌。
 
@@ -1132,20 +1214,25 @@ await client.oauth2.oauth2Continue({
 
 ```ts title="auth.ts"
 oauthProvider({
-  scopes: ["openid", "profile", "email", "read:organization"]
+  scopes: ["openid", "profile", "email", "read:organization"],
   postLogin: {
     page: "/select-organization", // [!code highlight]
-    shouldRedirect: async ({ session, scopes, headers }) => { // [!code highlight]
+    shouldRedirect: async ({ session, scopes, headers, isContinuation }) => { // [!code highlight]
       const userOnlyScopes = ["openid", "profile", "email", "offline_access"];
       if (scopes.every((sc) => userOnlyScopes.includes(sc))) {
         return false;
       }
+      if (!session.activeOrganizationId) {
+        return true;
+      }
       const organizations = await auth.api.listOrganizations({
         headers,
       });
-      return organizations.length > 1 || !(
-        organizations.length === 1 && organizations.at(0)?.id === session.activeOrganizationId
-      )
+      if (!organizations.some((org) => org.id === session.activeOrganizationId)) {
+        return true;
+      }
+      // Ask on every new authorization; accept the selection on continuation
+      return !isContinuation && organizations.length > 1;
     },
     consentReferenceId: ({ session, scopes }) => { // [!code highlight]
       if (scopes.includes("read:organization")) {
@@ -1165,7 +1252,11 @@ oauthProvider({
 })
 ```
 
-插件会将用户重定向至 `postLogin.page` 以完成选择。选择完成后调用 `oauth2Continue`。
+Consent 按 reference 分别存储。授权流程只会复用用户针对相同 `consentReferenceId` 值授予的 consent；返回 `undefined` 或空字符串时，只会使用未指定 reference 时授予的 consent。
+
+插件会将用户重定向到 `postLogin.page`，以提示其选择账户。完成后，调用 `authClient.oauth2.continue`。
+
+继续流程时会再次调用 `shouldRedirect`，此时 `isContinuation: true`。可用此值检查已选组织，避免要求拥有多个组织的用户再次选择。但这并不证明用户已完成选择：返回 `false` 前，请检查当前会话和组织成员身份。每个新的授权请求都会以 `isContinuation: false` 开始。
 
 ```ts title="select-organization.ts"
 import { authClient } from "@/lib/auth-client"
@@ -1173,7 +1264,7 @@ import { authClient } from "@/lib/auth-client"
 await authClient.organization.setActive({
   organizationId,
 });
-await client.oauth2.oauth2Continue({
+await authClient.oauth2.continue({
   postLogin: true,
 });
 ```
@@ -1211,7 +1302,24 @@ oauthProvider({
 
 当资源策略需要在运行时更改时，请使用管理资源端点。
 
-动态注册可以在与客户端记录相同的事务中，将受保护资源附加到新客户端。`clientRegistrationDefaultResources` 会将服务器拥有的默认资源添加到每次注册中。`clientRegistrationAllowedResources` 列出客户端可以请求的其他资源；有效允许列表是默认列表和允许列表的并集。默认资源排在前面，重复项会被移除，并且每个配置值都必须存在于 `resources` 中。
+auth 实例启动时会将已配置资源写入 `oauthResource` 表。`resourceSeedMode` 决定如何处理已存在的记录。如果因数据库不可用或尚未迁移表结构而写入失败，系统会记录错误，并在首次发出需要资源的请求时重试。不使用资源的请求（如登录和会话检查）不受影响。
+
+<Callout type="warn">
+  使用 Prisma 和 PostgreSQL、CockroachDB 或 MongoDB 时，未设置 `allowedScopes` 的资源无法存储，因为 Prisma 无法向列表列写入 `null`。在为资源声明 `allowedScopes`（列出客户端可为其请求的所有 scope）之前，所有使用已配置资源的请求都会失败。这也包括 `mcp()` 添加的资源；请在 `resources` 中用相同标识符声明该资源：
+
+  ```ts title="auth.ts"
+  mcp({
+    loginPage: "/sign-in",
+    consentPage: "/consent",
+    resource: "https://api.example.com/mcp",
+    resources: [
+      { identifier: "https://api.example.com/mcp", allowedScopes: ["openid", "profile", "offline_access"] },
+    ],
+  })
+  ```
+</Callout>
+
+Dynamic registration can attach protected resources to the new client in the same transaction as the client row. `clientRegistrationDefaultResources` adds server-owned defaults to every registration. `clientRegistrationAllowedResources` lists additional resources a client may request; the effective allowlist is the union of the default and allowed lists. Defaults appear first, duplicates are removed, and every configured value must also be present in `resources`.
 
 ```ts title="auth.ts"
 oauthProvider({
@@ -1228,7 +1336,27 @@ oauthProvider({
 })
 ```
 
-显式资源请求默认采用封闭策略：当两个注册资源选项都省略时，不允许请求任何资源。有效允许列表之外的请求资源会因 `invalid_target` 被拒绝；缺失和禁用的资源也会被拒绝。具有已解析资源的注册会返回最终的 `resources` 列表，并以原子方式创建对应的 `oauthClientResource` 关联。
+动态注册默认不允许请求资源：省略两个注册资源选项时，客户端不能请求任何资源。请求的资源不在有效允许列表中时会以 `invalid_target` 拒绝；不存在或已禁用的资源也会被拒绝。成功解析资源的注册会返回最终的 `resources` 列表，并以原子方式创建相应的 `oauthClientResource` 关联。
+
+要将资源关联到服务器注册的客户端，请在仅限服务器调用的 `adminCreateOAuthClient` 中传入 `resources`。此处不使用动态注册允许列表，而是在创建客户端前针对每个请求的资源调用 `resourcePrivileges`，其 action 为 `link`。`clientRegistrationDefaultResources` 仍会添加，且不进行权限检查。
+
+```ts
+await auth.api.adminCreateOAuthClient({
+  headers,
+  body: {
+    redirect_uris: ["https://app.example.com/callback"],
+    resources: ["https://api.example.com/default"],
+  },
+});
+```
+
+资源被拒绝时，此调用不会创建任何内容：
+
+* 资源不是绝对 URI、包含 fragment，或使用 `javascript:`、`data:`、`vbscript:` scheme 时，请求验证会返回 `VALIDATION_ERROR`。
+* 资源不存在或已禁用时，返回 `400` 和 `invalid_target`。
+* `resourcePrivileges` 拒绝请求时，返回 `401`。
+
+数据库适配器支持事务时，客户端及其资源关联会在同一事务中写入。不支持事务的适配器（如独立 MongoDB）在关联失败时，可能会留下已注册但没有资源关联的客户端。要将资源关联到现有客户端，请使用 `adminLinkClientResource`。
 
 ### 范围
 
@@ -1247,7 +1375,56 @@ oauthProvider({
 })
 ```
 
-### 声明（Claims）
+### 自定义重定向 URI 验证
+
+默认情况下，请求的重定向 URI 必须与客户端注册的某个 URI 完全匹配。对于 native 客户端注册的指向 `localhost`、`127.0.0.1` 或 `[::1]` 的 HTTP loopback URI，端口可以不同，其余部分必须匹配。[RFC 8252 建议使用 IP 字面量而非 `localhost`](https://www.rfc-editor.org/rfc/rfc8252.html#section-8.3)。
+
+客户端需要使用无法预先注册的回调 URI 时，可使用 `validateRedirectUri`。回调会接收请求的 URI、该客户端已注册的 URI，以及内置匹配的结果 `defaultResult`。它可以返回布尔值或 Promise。返回 `true` 即接受 URI，即使 `defaultResult` 为 `false`；返回 `false` 或抛出异常则会拒绝 URI。省略此选项时，只应用内置匹配规则。
+
+如需接受某个 web 客户端的预览回调，可先使用 `https://app.example.com/api/auth/callback` 之类的固定 URI[注册客户端](#create-client)。此回调不会更改注册信息，并且会应用于此 OAuth Provider 的所有客户端。下面的示例仅为注册了该 URI 的客户端扩展默认规则：
+
+```ts title="auth.ts"
+oauthProvider({
+  validateRedirectUri: (uri, registeredUris, defaultResult) => {
+    if (defaultResult) return true;
+    if (!registeredUris.includes('https://app.example.com/api/auth/callback')) {
+      return false;
+    }
+    if (uri.includes('#')) return false;
+
+    try {
+      const url = new URL(uri);
+      return (
+        url.protocol === 'https:' &&
+        url.username === '' &&
+        url.password === '' &&
+        url.hostname.endsWith('.preview.example.com') &&
+        url.port === '' &&
+        url.pathname === '/api/auth/callback' &&
+        url.search === ''
+      );
+    } catch {
+      return false;
+    }
+  },
+})
+```
+
+提前返回 `defaultResult` 可以保留已注册 URI 和 native loopback 的处理方式。如需收紧这些默认规则，请结合 `defaultResult` 和额外策略进行检查。如需替换默认规则，请返回自定义验证结果，不要使用 `defaultResult`。
+
+<Callout type="warn">
+  自定义接受规则会放宽 [OAuth 安全指南要求的精确重定向 URI 匹配](https://www.rfc-editor.org/rfc/rfc9700.html#section-2.1)。仅对你控制的回调主机使用此功能，并确保不可信贡献者无法在已接受的主机名下部署回调。此示例假定只有可信客户端可以注册生产回调 URI。如果不可信客户端也能注册任意 URI，`registeredUris` 中包含某 URI 并不能证明客户端拥有该 URI。
+
+  对于新接受的 web 回调，应明确限制 HTTPS scheme、主机名后缀、端口、路径和 query。避免使用 `*` 或 `*.com` 等宽泛规则。除非有意替换，否则应保留 native 回调的内置检查。Provider 会在调用此回调前拒绝格式错误的 URI、fragment、凭据，以及 `javascript:`、`data:` 或 `vbscript:` scheme。
+
+  此回调还决定是否可以将早期授权错误重定向到请求的 `redirect_uri`（[RFC 6749 §4.1.2.1](https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2.1)）。如果 URI 被拒绝或回调抛出异常，错误会显示在服务器错误页面。
+</Callout>
+
+<Callout type="info">
+  如果使用[成对 subject 标识符](/docs/plugins/oauth-provider#pairwise-subject-identifiers)，sector identifier 会取自客户端注册的第一个重定向 URI。因此，该客户端接受的所有预览或租户主机都会使用相同的 `sub`。目前不支持 `sector_identifier_uri`。如果租户需要不同的 subject 标识符，请使用不同重定向 URI 主机分别注册客户端。
+</Callout>
+
+### Claims
 
 内部支持的声明包括 \["sub", "iss", "aud", "exp", "iat", "sid", "scope", "azp"]。
 
@@ -1287,7 +1464,35 @@ oauthProvider({
 })
 ```
 
-#### 自定义令牌响应字段
+#### Client-Specific Access Token Claims
+
+当某个声明取决于令牌所属的客户端时，请使用 `extensions[].claims.accessToken` contributor。`customAccessTokenClaims` 只会接收客户端的 `metadata`，而 contributor 会接收完整的 `client` 记录，包括 `clientId` 和 `referenceId`。
+
+此示例会将客户端所属组织添加到面向某个 API 的令牌中。它假设 [`clientReference`](#organizations) 会为每个客户端分配组织，并且客户端已关联到 API 资源，例如通过 [`adminCreateOAuthClient`](#resources) 的 `resources` 选项建立关联：
+
+```ts title="auth.ts"
+const apiResource = "https://api.example.com";
+
+oauthProvider({
+  resources: [apiResource],
+  extensions: [{
+    claims: {
+      accessToken: ({ client, resources }) => {
+        if (!resources?.includes(apiResource) || !client.referenceId) return {};
+        return { "https://example.com/org": client.referenceId };
+      },
+    },
+  }],
+})
+```
+
+`client.referenceId` 表示客户端的所有者，由注册时的 `clientReference` 或受保护动态注册期间的[初始访问令牌](#dynamic-client-registration)设置。它不同于这两个回调也会收到的顶层 `referenceId`；后者是来自 `postLogin.consentReferenceId` 的 consent reference。
+
+Opaque token 的 introspection 会在没有 `grantType` 或 `sessionId` 的情况下重新派生 contributor 声明，因此 introspection 需要的声明应基于客户端、scope 和资源。`customAccessTokenClaims` 和各资源的 `customClaims` 会覆盖同名 contributor 声明；请参阅[声明优先级](#claim-precedence)。
+
+组织声明不能证明客户端仍处于连接状态。JWT 会一直保留其声明直到过期，因此需要立即响应客户端停用的资源服务器应对令牌执行 introspection；停用客户端的令牌会被报告为非活动状态。
+
+#### Custom Token Response Fields
 
 与上述声明回调（在 JWT 载荷*内部*添加数据）不同，`customTokenResponseFields` 会向**令牌端点 JSON 响应**中添加字段，伴随 `access_token`、`token_type` 等。标准 OAuth 字段无法被覆盖。
 
@@ -1593,11 +1798,73 @@ oauthProvider({
 
 有关设置用户权限和角色的详细信息，请参见 [声明](#claims)。
 
-### 客户端 CRUD 权限
+#### 将客户端关联到组织
+
+组织与客户端之间可以有两种关联方式，分别适用于不同类型的客户端：
+
+* **组织使用客户端。** 多个组织可以共用一个客户端，例如第三方应用、MCP 客户端，或通过 [CIMD](/docs/plugins/cimd) 发现的客户端。此客户端没有所有者。每位用户的 consent 会记录其代表哪个组织授权。
+* **组织拥有客户端。** 客户端是组织自己的集成。组织成员可通过[客户端端点](#oauth-clients)查看和管理客户端，包括更改其重定向 URI 或删除客户端。仅应将客户端所有权授予实际控制该客户端的组织，因为该组织可以代表所有用户管理此客户端。
+
+##### 组织使用客户端
+
+通过 [`postLogin.consentReferenceId`](#post-login-screen) 返回组织。用户的 consent 会按组织存储，因此同意一个组织的授权不会同时授权其他组织，通过[删除 Consent](#delete-consent) 删除时也只会移除该组织的 consent。删除 consent 不会撤销已经签发的令牌。访问令牌回调会将相同的值作为 `referenceId` 接收，因此令牌可以携带组织信息：
+
+```ts title="auth.ts"
+oauthProvider({
+  postLogin: {
+    page: "/select-organization",
+    // The selection outlives membership, so check the user still belongs.
+    shouldRedirect: async ({ session, headers }) => {
+      if (!session.activeOrganizationId) return true
+      const organizations = await auth.api.listOrganizations({ headers })
+      return !organizations.some((org) => org.id === session.activeOrganizationId)
+    },
+    consentReferenceId: ({ session }) =>
+      (session?.activeOrganizationId as string | undefined) ?? undefined,
+  },
+  customAccessTokenClaims: ({ referenceId }) => ({
+    "https://example.com/org": referenceId,
+  }),
+})
+```
+
+对于所有组织，客户端记录保持不变，因此这种方式适用于自行注册的客户端，包括开放式[动态客户端注册](#dynamic-client-registration)和 CIMD。
+
+##### 组织拥有客户端
+
+注册客户端时设置所有者。已有所有者的客户端，其 `referenceId` 固定不变；[客户端专属声明](#客户端专属的访问令牌声明)可读取此值。
+
+* **由成员注册。** 如果 [`clientReference`](#organizations) 返回当前组织，那么已登录成员通过[创建客户端](#create-client)或使用会话身份验证的动态注册创建的客户端就属于该组织。哪些成员可以创建和管理客户端由 [`clientPrivileges`](#client-crud-privileges) 决定。
+* **由机器注册。** 对于自行注册的软件（例如部署流水线），请使用受保护的[动态客户端注册](#dynamic-client-registration)。由组织管理员在应用中签发初始访问令牌，并在 `validateInitialAccessToken` 中返回组织：
+
+```ts title="auth.ts"
+oauthProvider({
+  allowDynamicClientRegistration: true,
+  // Lets the organization's members find and manage the client. The active
+  // organization outlives membership, so check it is still current.
+  clientReference: async ({ user, session }) => {
+    const organizationId = session?.activeOrganizationId as string | undefined
+    if (!user || !organizationId) return undefined
+    return (await isMember(user.id, organizationId)) ? organizationId : undefined
+  },
+  validateInitialAccessToken: async ({ initialAccessToken }) => {
+    // `findRegistrationToken` and `isMember` stand for your own lookups
+    const token = await findRegistrationToken(initialAccessToken)
+    if (!token) return false
+    return { referenceId: token.organizationId }
+  },
+})
+```
+
+未使用会话或初始访问令牌的开放注册没有所有者。这适用于多个组织都要使用的客户端，并通过各自的 consent reference 分别授权。若软件由各组织安装并作为自己的客户端运行（例如自托管连接器），则应使用初始访问令牌注册，使客户端从一开始就归属该组织。
+
+### Client CRUD Privileges
 
 确定登录用户是否具备客户端创建、读取、更新、删除权限，可通过 `clientPrivileges` 配置。默认允许拥有匹配 `userId` 或 `clientReference` 的用户操作。
 
-示例仅允许组织管理员对 OAuth 客户端执行 CRUD 操作，假设普通用户无法创建客户端：
+此回调只能拒绝操作。Client CRUD 仍会在回调之后检查所有权，因此返回 `true` 不能让用户访问其他用户或其他 `clientReference` 所拥有的客户端。唯一例外是通过 `adminUpdateOAuthClient` 配置其他所有者客户端的 scope：如果更新内容仅包含 `client_credentials_scopes`，则回调的 `update` 和 `configure-client-credentials-scopes` 决策可以授权此操作，无需检查所有权。
+
+The following is a basic example that allows all OAuth Client CRUD actions for organization owners assuming ordinary users cannot create clients:
 
 ```ts title="auth.ts"
 oauthProvider({
@@ -1611,7 +1878,29 @@ oauthProvider({
 })
 ```
 
-### 存储
+对于现有客户端的操作（`read`、`update`、`delete`、`rotate` 和 `configure-client-credentials-scopes`），回调还会收到 `clientId`。执行 `create`、`list` 以及创建时的 scope 配置操作时，不会提供此值。`clientId` 是请求中的 `client_id`，客户端可能尚不存在，因此该值不能证明所有权。
+
+可以使用 `clientId` 在共享同一 `clientReference`（例如同一组织成员）的用户之间限制对单个客户端的操作。以下示例允许所有成员创建、列出和读取组织客户端，但只有客户端维护者可以更改客户端或配置其 scope。`getClientMaintainers` 表示你自己的查询逻辑：
+
+```ts title="auth.ts"
+oauthProvider({
+  clientReference: ({ session }) => {
+    return (session?.activeOrganizationId as string | undefined) ?? undefined;
+  },
+  clientPrivileges: async ({ action, user, clientId }) => {
+    if (!user) return false;
+    if (action === "create" || action === "list" || action === "read") {
+      return true;
+    }
+    // Scope configuration during creation has no client ID, so deny it here.
+    if (!clientId) return false;
+    const maintainers = await getClientMaintainers(clientId);
+    return maintainers.includes(user.id);
+  },
+})
+```
+
+### Storage
 
 默认所有密钥在数据库中以 `hashed` 形式存储，防止泄露时暴露 `client_secret`。
 
@@ -1632,26 +1921,28 @@ OAuth 提供者内置所有 OAuth 端点限流，防止滥用和拒绝服务攻�
 
 **默认限制：**
 
-| 端点                   | 窗口  | 最大请求数 |
-| -------------------- | --- | ----- |
-| `/oauth2/token`      | 60s | 20    |
-| `/oauth2/authorize`  | 60s | 30    |
-| `/oauth2/introspect` | 60s | 100   |
-| `/oauth2/revoke`     | 60s | 30    |
-| `/oauth2/register`   | 60s | 5     |
-| `/oauth2/userinfo`   | 60s | 60    |
+| Endpoint                     | Window | Max Requests |
+| ---------------------------- | ------ | ------------ |
+| `/oauth2/token`              | 60s    | 20           |
+| `/oauth2/authorize`          | 60s    | 30           |
+| `/oauth2/introspect`         | 60s    | 100          |
+| `/oauth2/revoke`             | 60s    | 30           |
+| `/oauth2/register`           | 60s    | 5            |
+| `/oauth2/client/rotate-keys` | 60s    | 5            |
+| `/oauth2/userinfo`           | 60s    | 60           |
 
 可自定义各端点的限流参数：
 
 ```ts title="auth.ts"
 oauthProvider({
   rateLimit: {
-    token: { window: 60, max: 20 },        // 每分钟 20 次请求
-    authorize: { window: 60, max: 30 },    // 每分钟 30 次请求
-    introspect: { window: 60, max: 100 },  // 每分钟 100 次请求
-    revoke: { window: 60, max: 30 },       // 每分钟 30 次请求
-    register: { window: 60, max: 5 },      // 每分钟 5 次请求
-    userinfo: { window: 60, max: 60 },     // 每分钟 60 次请求
+    token: { window: 60, max: 20 },        // 20 requests per minute
+    authorize: { window: 60, max: 30 },    // 30 requests per minute
+    introspect: { window: 60, max: 100 },  // 100 requests per minute
+    revoke: { window: 60, max: 30 },       // 30 requests per minute
+    register: { window: 60, max: 5 },      // 5 requests per minute
+    rotateClientKeys: { window: 60, max: 5 }, // 5 requests per minute
+    userinfo: { window: 60, max: 60 },     // 60 requests per minute
   },
 })
 ```
@@ -1833,9 +2124,11 @@ JWT 访问令牌始终使用真实用户 ID 作为 `sub`，因为资源服务器
 <Callout type="warn">
   **限制**：
 
-  * `sector_identifier_uri` 尚未支持。一个客户端的所有重定向 URI 必须共享同一主机。跨主机的重定向 URI 将导致注册被拒绝。
-  * `pairwiseSecret` 必须至少 32 个字符长。
-  * 轮换 `pairwiseSecret` 将更改所有成对 `sub` 值，破坏现有 RP 会话。请将密钥视为永久设置。
+  * `sector_identifier_uri` is not yet supported. All `redirect_uris` for a pairwise client must share the same host. Clients with redirect URIs on different hosts will be rejected at registration.
+  * Pairwise 客户端不能使用包含主机的自定义 scheme 重定向 URI，例如 `app://rp.example.com/callback`。任何应用都可以注册自定义 scheme，因此该主机无法用于标识客户端。
+  * Pairwise clients cannot use custom-scheme redirect URIs that include a host, such as `app://rp.example.com/callback`. Any app can register a custom scheme, so that host does not identify the client.
+  * `pairwiseSecret` must be at least 32 characters long.
+  * Rotating `pairwiseSecret` will change all pairwise `sub` values, breaking existing RP sessions. Treat this secret as permanent once set.
 </Callout>
 
 ### MCP
@@ -2041,6 +2334,20 @@ export const oauthClientTableFields = [
     type: "string",
     description:
       "OIDC application type used to classify redirect URI policy. Supports: ['web', 'native']",
+    isOptional: true,
+  },
+  {
+    name: "jwks",
+    type: "string",
+    description:
+      "The client's public JWK Set as JSON, for `private_key_jwt` authentication. Mutually exclusive with `jwksUri`",
+    isOptional: true,
+  },
+  {
+    name: "jwksUri",
+    type: "string",
+    description:
+      "HTTPS URI of the client's public JWK Set. Mutually exclusive with `jwks`",
     isOptional: true,
   },
   {
@@ -2324,7 +2631,7 @@ export const oauthConsentTableFields = [
 
 表名：`oauthClientAssertion`
 
-记录每个 `private_key_jwt` 客户端断言的 `jti`，使其只能使用一次。行 ID 是每个客户端断言标识符的摘要，因此重放或并发的断言会在主键上发生冲突，数据库会以原子方式拒绝它，即使跨越多个服务器进程也是如此。行会持续阻止其 ID，直到被删除；`expiresAt` 标记了可以安全移除的时间，因为它保护的断言已经过期。没有计划任务清理这些行，因此如果表不断增长，请使用你自己的清理机制移除过期行。
+每条 `private_key_jwt` 客户端断言的 `jti` 都会被记录，确保其只能使用一次。行 ID 是按客户端区分的断言标识符摘要，因此重放或并发断言会与主键冲突，并由数据库原子性拒绝（即使涉及多个服务器进程也是如此）。使用 `advanced.database.generateId: "uuid"` 时，摘要会格式化为 UUID。此检查要求 ID 为字符串：使用 `"serial"` 时，摘要无法作为 ID 存储，Better Auth 会记录警告。记录被删除前会持续阻止重复使用其 ID；`expiresAt` 标记了可安全删除的时间，因为它保护的断言届时已过期。系统不会定期清理这些行；如果表不断增大，请自行清理过期记录。
 
 export const oauthClientAssertionTableFields = [
   {

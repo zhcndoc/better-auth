@@ -95,6 +95,8 @@ description: 将单点登录（SSO）集成到您的应用程序中。
 
 Better Auth 会根据提供者 ID 和经过验证的 `sub` 声明识别 OIDC 账号。`mapping` 选项用于映射电子邮件、名称和图片等资料字段，但不能替代账号主体。
 
+映射的 email 声明包含地址列表时，Better Auth 会使用第一个地址。Azure AD B2C 用户流程只会在 `emails` 列表中发送地址，因此需为其设置 `mapping: { email: "emails" }`。B2C 不会发送 `email_verified`，所以此类用户创建时邮箱不会被标记为已验证。
+
 #### 示例
 
 <Tabs items={["客户端", "服务端"]}>
@@ -1109,7 +1111,9 @@ samlConfig: {
 
 `SAMLConfig.cert` 和 `samlConfig.idpMetadata.cert` 都接受单个 PEM 字符串或数组。当两者同时设置时，以 `idpMetadata.cert` 为准。
 
-如果您的 IdP 发布了元数据 XML 文档，请改为将其传入 `idpMetadata.metadata`，并不要设置 `cert`。证书会从该文档中获取，并在 IdP 重新发布文档时完成轮换。如果配置既未提供 `cert`，也未提供 `idpMetadata.metadata`，注册将失败并返回 `CERT_SOURCE_MISSING`，因为 samlify 没有可用于验证 SAML 响应的内容。
+更改证书不会影响已关联到该提供商的账户。持有所列证书对应私钥的人可以任意这些用户的身份登录；因此，如果组织管理员不应自行更改证书，请在 `guardProviderMutation` 中拒绝会改变认证边界的变更。
+
+如果 IdP 发布元数据 XML 文档，请将其传入 `idpMetadata.metadata`，并不要设置 `cert`。证书会从该文档中获取，并在 IdP 重新发布文档时轮换。如果配置既未提供 `cert` 也未提供 `idpMetadata.metadata`，注册会因 `CERT_SOURCE_MISSING` 失败，因为 samlify 没有可用于验证 SAML 响应的内容。
 
 应用程序可以使用 `guardProviderMutation`，将 SSO 更改与配对的目录同步控制平面协调起来。IdP 实体 ID、端点、签名证书、SP 实体 ID、NameID 格式、POST 断言使用者 URL 以及断言签名策略都属于身份验证边界更改。如果目录已配对时守卫阻止了身份验证边界更改，请取消配对目录，更新 IdP 信任配置，然后重新配对。OIDC 客户端密钥轮换和 SAML SP 私钥轮换不会改变身份验证边界。
 
@@ -1587,9 +1591,13 @@ SAML ACS 端点（`/api/auth/sso/saml2/sp/acs/{providerId}`）同时处理 **SP 
 * **SP 发起**：用户在您的应用中点击“使用 SSO 登录” → 重定向到 IdP → IdP 将 SAMLResponse POST 到回调端点
 * **IdP 发起**：用户在 IdP 仪表板中点击应用图标（Okta、Azure AD 等）→ IdP 将 SAMLResponse POST 到回调端点
 
-Better Auth 会根据您的 `baseURL` 和 `providerId` 自动推导 ACS URL，因此无需进行 SP 端配置。
+升级到带用途前缀的验证标识符或用途专属的 state cookie 密钥时，请重新启动待处理的 SP 发起式 SAML 登录，并同时升级参与的服务器。这些流程会使用 Better Auth 生成的 relay state。未经请求的 IdP 发起式流程不会使用该 state，因此不受其格式变化影响。请参阅[验证存储升级说明](/docs/reference/options#verification)和 [state cookie 升级说明](/docs/reference/options#storestatestrategy)。
 
-您的 IdP 必须为此 SP 包含一个 `AudienceRestriction`。可接受的受众是 SP 实体 ID；如果您需要匹配特定于 IdP 的 SP 标识符，则可以使用 `samlConfig` 中显式设置的 `audience` 值。Better Auth 还会根据该提供者的 ACS 端点检查承载方 `Recipient` 和响应 `Destination` 值。
+Better Auth 会根据 `baseURL` 和 `providerId` 自动推导 ACS URL，因此无需在 SP 端进行配置。
+
+如果 IdP 已经向其他 URL 发送请求（例如现有 AD FS relying-party trust），请在 `spMetadata.metadata` 中将该 URL 列为 HTTP-POST `AssertionConsumerService`，并将其 POST 请求转发到 `/sso/saml2/sp/acs/:providerId`。之后 Better Auth 便会接受发往该 URL 的响应。`samlConfig.callbackUrl` 是登录后的重定向地址，不是 ACS URL；请参阅 [1.7 升级指南](/docs/guides/1-7-upgrade-guide#saml-configuration-is-simplified)。
+
+IdP 必须为此 SP 添加 `AudienceRestriction`。可接受的 audience 为 SP entity ID；如果需要匹配 IdP 专属的 SP 标识符，也可以使用 `samlConfig` 中显式设置的 `audience` 值。Better Auth 还会根据此提供商的 ACS 端点检查 bearer `Recipient` 和响应 `Destination` 的值。
 
 登录后的重定向目标由客户端 `signIn.sso()` 调用中的 `callbackURL` 参数控制：
 

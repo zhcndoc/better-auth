@@ -7,14 +7,18 @@ description: 将 Better Auth 集成到 SvelteKit。
 
 在开始之前，确保你已经配置好了一个 Better Auth 实例。如果还没有，请查看 [安装说明](/docs/installation)。
 
+<Callout>
+  示例使用 SvelteKit 3 的导入方式。使用 SvelteKit 2 时，请从 `$lib/...` 而非 `#lib/...` 导入文件，并从 `$app/environment` 而非 `$app/env` 导入 `building`。
+</Callout>
+
 ### 挂载处理器
 
 我们需要将处理器挂载到 SvelteKit 的服务器钩子中。
 
 ```ts title="hooks.server.ts"
-import { auth } from "$lib/auth";
+import { auth } from "#lib/auth.js";
 import { svelteKitHandler } from "better-auth/svelte-kit";
-import { building } from "$app/environment";
+import { building } from "$app/env";
 
 export async function handle({ event, resolve }) {
   return svelteKitHandler({ event, resolve, auth, building });
@@ -26,9 +30,9 @@ export async function handle({ event, resolve }) {
 `svelteKitHandler` 不会自动填充 `event.locals.user` 或 `event.locals.session`。如果你想在服务器端代码中访问当前会话（例如在 `+layout.server.ts`、actions 或端点中），需要在 `handle` 钩子中手动填充 `event.locals`：
 
 ```ts title="hooks.server.ts"
-import { auth } from "$lib/auth";
+import { auth } from "#lib/auth.js";
 import { svelteKitHandler } from "better-auth/svelte-kit";
-import { building } from "$app/environment";
+import { building } from "$app/env";
 
 export async function handle({ event, resolve }) {
   // 从 Better Auth 获取当前会话
@@ -87,7 +91,7 @@ export const authClient = createAuthClient({
 
 ```svelte
 <script lang="ts">
-  import { authClient } from "$lib/client";
+  import { authClient } from "#lib/client.js";
   const session = authClient.useSession();
 </script>
     <div>

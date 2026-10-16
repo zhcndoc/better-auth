@@ -246,6 +246,8 @@ description: Better Auth 的电子邮件 OTP 插件。
   ```
 </APIMethod>
 
+如果新密码被拒绝（例如被 [Have I Been Pwned](/docs/plugins/have-i-been-pwned) 插件拒绝），OTP 不会被消耗，可以再次使用。如果重置后续步骤失败，例如撤销会话或保存密码，只有在数据库适配器启用了事务且验证值存储在数据库中时，OTP 才仍可使用。未配置二级存储时默认如此；使用[二级存储](/docs/concepts/database#secondary-storage)时，请设置 [`verification.storeInDatabase: true`](/docs/reference/options#verification)。错误的 OTP 仍会计入 [`allowedAttempts`](#options)。
+
 ### 使用 OTP 更改电子邮件
 
 要允许用户使用 OTP 更改电子邮件，需先启用 `changeEmail` 功能，该功能默认关闭。将 `changeEmail.enabled` 设置为 `true`：

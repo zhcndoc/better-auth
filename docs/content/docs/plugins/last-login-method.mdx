@@ -379,6 +379,11 @@ export const authClient = createAuthClient({
 * `/callback/:id` - 带有提供程序 ID 的 OAuth 回调
 * `/sign-in/email` - 电子邮件登录
 * `/sign-up/email` - 电子邮件注册
+* `/one-tap/callback` - Google One Tap 登录，记录为 `"google"`
+* `/siwe/verify` - 以太坊登录（Sign-In with Ethereum），记录为 `"siwe"`
+* `/passkey/verify-authentication` - Passkey 登录，记录为 `"passkey"`
+* `/magic-link/verify` - 魔法链接登录，记录为 `"magic-link"`
+* `/sign-in/email-otp` - 电子邮件 OTP 登录，记录为 `"email-otp"`
 
 ## 跨域支持
 

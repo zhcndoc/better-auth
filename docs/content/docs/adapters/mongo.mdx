@@ -19,23 +19,47 @@ MongoDB 是一种流行的 NoSQL 数据库，广泛用于构建可扩展且灵�
 
 ## 示例用法
 
-您可以使用 MongoDB 适配器连接到数据库，如下所示。
+### 副本集或分片集群
+
+传入 `client`，适配器便会默认使用事务。副本集或分片集群请使用相应的连接字符串：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 import { MongoClient } from "mongodb";
-import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { mongodbAdapter } from "@better-auth/mongo-adapter";
 
 const client = new MongoClient("mongodb://localhost:27017/database");
 const db = client.db();
 
 export const auth = betterAuth({
   database: mongodbAdapter(db, {
-    // 可选：如果不提供 client，将无法启用数据库事务。
-    client
+    client,
   }),
 });
 ```
+
+发生并发写入同一文档时，MongoDB 会因写冲突中止其中一个事务，并要求应用重试。适配器最多重试此类事务 120 秒，因此在竞争激烈时，请求可能耗时更长，而不是直接失败。要缩短此上限，可在 `MongoClient` 上设置 `timeoutMS`；该选项也会影响此客户端上的所有其他操作。
+
+重试会重新执行整个操作，包括 `before` [数据库钩子](/docs/concepts/database#database-hooks)以及接收事务的插件回调。应在 `after` 钩子中发送邮件和调用其他服务；该钩子只会在提交后运行一次。
+
+### 独立服务器
+
+独立 MongoDB 服务器不支持事务。使用 `MongoClient` 创建 `db`，并在不传入 `client` 选项的情况下将其传给适配器：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { MongoClient } from "mongodb";
+import { mongodbAdapter } from "@better-auth/mongo-adapter";
+
+const client = new MongoClient("mongodb://localhost:27017/database");
+const db = client.db();
+
+export const auth = betterAuth({
+  database: mongodbAdapter(db),
+});
+```
+
+不使用事务时，如果后续写入失败，先前的写入可能仍会保留。迁移到副本集或分片集群后，传入 `client` 即可启用事务。请参阅 [MongoDB 的事务要求](https://www.mongodb.com/docs/manual/core/transactions-production-consideration/#availability)。
 
 ## 模式生成与迁移
 

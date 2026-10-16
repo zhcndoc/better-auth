@@ -546,7 +546,7 @@ export const auth = betterAuth({
 用于验证 ID token 的自定义函数。接收 token、可选的 nonce，以及请求端点上下文，因此你可以根据请求头或其他请求数据进行分支处理。
 
 <Callout type="warn">
-  提供 `verifyIdToken` 会**替换**提供商内置的验证逻辑（签名、签发者、受众和过期时间）。你的回调必须自行执行这些检查。来自客户端的请求头（例如 `x-platform`）由攻击者控制——只能用它们来选择要验证的受众（或其他声明），不能把它们当作身份凭证本身。
+  提供 `verifyIdToken` 会**替换**提供商内置的验证逻辑（签名、签发者、受众，以及 `exp`、`nbf` 和 `iat` 时间检查；时间检查允许 30 秒时钟偏差）。你的回调必须自行执行这些检查，包括时钟容差。来自客户端的请求头（例如 `x-platform`）由攻击者控制——只能用它们选择要验证的受众（或其他声明），不能将其本身视为身份凭证。
 </Callout>
 
 ```ts title="auth.ts"
@@ -573,6 +573,7 @@ export const auth = betterAuth({
             issuer: "https://appleid.apple.com",
             audience,
             maxTokenAge: "1h",
+            clockTolerance: 30,
           });
           if (nonce && payload.nonce !== nonce) {
             return false;

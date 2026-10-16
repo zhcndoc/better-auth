@@ -195,6 +195,6 @@ npx auth@latest secret
 
 **错误：无法找到模块 X**
 
-CLI 会为你解析大多数导入：`tsconfig.json` 路径别名（包括 SvelteKit 的 `$lib`）以及框架提供的虚拟模块存根（`$env/*`、`$app/*`、`cloudflare:workers`，以及带有 `?raw` 的 Vite 资源）。对于 SvelteKit，请先运行 `svelte-kit sync`，以确保 `.svelte-kit/tsconfig.json` 存在。
+CLI 会为你解析大多数导入：`tsconfig.json` 路径别名、`package.json` 子路径导入（包括 SvelteKit 3 的 `#lib`），以及框架提供的虚拟模块存根（`$env/*`、`$app/*`、`cloudflare:workers` 和带有 `?raw` 的 Vite 资源）。使用 SvelteKit 2 时，请先运行 `svelte-kit sync`，确保 `.svelte-kit/tsconfig.json` 存在并能解析 `$lib`。
 
 有少数模块类型无法在其打包器环境之外加载（例如 `.svelte` 组件或 `import.meta.glob`）。请不要将这些模块放入配置文件的导入依赖图中。

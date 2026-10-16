@@ -153,11 +153,11 @@ BotID 不支持[原生 HTML 表单提交](https://vercel.com/docs/botid/form-sub
 
 ## 插件选项
 
-* **`provider`（必需）**：您的验证码提供者。
+* **`provider`（必需）**：验证码提供者。
 * **`secretKey`（除 `vercel-botid` 外所有提供者均必需）**：提供者的密钥，用于服务器端验证。
-* `endpoints`（可选）：替换默认的验证码验证路径数组。设置后，只有指定路径会受到保护。除非路径包含通配符，否则必须完全匹配；例如，`/sign-in/*` 匹配一个路径段，`/sign-in/**` 匹配嵌套路由。默认值为 `["/sign-up/email", "/sign-in/email", "/request-password-reset"]`。
-* `minScore`（可选 — 仅适用于 *Google ReCAPTCHA v3*）：最低分数阈值。默认值为 `0.5`。
-* `siteKey`（可选 — 仅适用于 *hCaptcha* 和 *CaptchaFox*）：防止在一个站点密钥上签发的令牌在其他站点上被兑换。
-* `siteVerifyURLOverride`（可选 — 仅适用于基于令牌的提供者）：覆盖验证码验证 URL。
-* `checkBotId`（*Vercel BotID* 必需）：Vercel 的服务器端检查函数，从应用中的 `botid/server` 导入。如果需要传入 SDK 选项，请将其包装在一个函数中。
-* `validateRequest`（可选 — 仅适用于 *Vercel BotID*）：自定义验证逻辑。返回 `true` 以允许请求，返回 `false` 以拒绝请求。默认情况下，只有 `isBot: false` 的结果才会被允许。
+* `endpoints`（可选）：选择需要 CAPTCHA 保护的路径。默认情况下，`/sign-up/email`、`/sign-in/email` 和 `/request-password-reset` 受保护，其他路径不需要 CAPTCHA。设置此项后，它会替换默认值，因此应列出所有需要保护的路径。可使用精确路径或通配符，例如 `/sign-in/*` 匹配一个路径段，`/sign-in/**` 匹配嵌套路由。
+* `minScore`（可选，仅适用于 *Google ReCAPTCHA v3*）：最低分数阈值，默认值为 `0.5`。
+* `siteKey`（可选，仅适用于 *hCaptcha* 和 *CaptchaFox*）：防止在一个站点密钥上签发的令牌在其他站点上被兑换。
+* `siteVerifyURLOverride`（可选，仅适用于基于令牌的提供者）：覆盖 CAPTCHA 验证 URL。
+* `checkBotId`（*Vercel BotID* 必需）：Vercel 服务器端检查函数，从应用中的 `botid/server` 导入。如需传入 SDK 选项，请将其包装在函数中。
+* `validateRequest`（可选，仅适用于 *Vercel BotID*）：自定义验证逻辑。返回 `true` 以允许请求，返回 `false` 以拒绝请求。默认情况下，仅允许 `isBot: false` 的结果。

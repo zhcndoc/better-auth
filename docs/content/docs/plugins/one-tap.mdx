@@ -159,9 +159,13 @@ await authClient.oneTap({
 
 #### 使用指数退避处理提示被关闭
 
-若用户关闭或跳过提示，插件将根据您配置的 promptOptions 使用指数退避重试显示 One Tap 提示。
+如果提示框关闭时用户尚未登录，插件会根据配置的 `promptOptions` 采用指数退避策略重试显示 One Tap 提示。应用通过 `google.accounts.id.cancel()` 关闭的提示框不会重试。
 
-如果达到最大尝试次数仍未成功登录，您可以使用 onPromptNotification 回调得到通知，允许您渲染替代的用户界面（例如传统的 Google 登录按钮），以便用户手动重新开始流程：
+跳过的提示不会重试。Google 不会说明提示被跳过的原因；用户关闭提示后，Google 会进入冷却期，重试无法缩短该冷却时间。
+
+插件会向 Google 的 `prompt()` 传入监听器来跟踪这些状态，因此 Google Identity Services 会记录一条关于提示 UI 状态方法的 FedCM 迁移警告。只要传入任何监听器，Google 都会记录该警告，即使监听器没有调用这些方法。在 FedCM 模式下，插件只会调用 FedCM 支持的方法，因此可以忽略此警告。
+
+提示被跳过，或达到最大尝试次数仍未成功登录时，可通过 `onPromptNotification` 回调接收通知，并渲染备用界面（例如传统的 Google 登录按钮），让用户手动重新开始流程：
 
 ```ts
 import { authClient } from "@/lib/auth-client";
@@ -214,6 +218,16 @@ await authClient.oneTap({
   当 `hd` 设置为某个域时，如果令牌的 `hd` 声明缺失或不匹配，则会被拒绝。将 `hd` 设为 `"*"` 可允许任意 Google Workspace 托管域，同时仍会拒绝没有 `hd` 声明的令牌。
 
   该值从 `socialProviders.google` 中读取，因此只有在您配置了 Google 提供程序时，限制才会生效。如果您只使用 `oneTap({ clientId })` 而不配置 `socialProviders.google`，则不会应用受托管域限制。若要将 One Tap 登录限制为某个 Workspace 域，请在 `socialProviders.google` 中配置 `hd`。
+</Callout>
+
+<Callout type="info">
+  **将 Google 资料映射到用户**
+
+  配置 `socialProviders.google` 时，One Tap 会像标准 Google 登录一样，使用其 `mapProfileToUser` 或 `getUserInfo` 构建用户。你映射的额外字段（例如来自 `given_name` 的名字）只有在 `user.additionalFields` 中声明且未标记为 `input: false` 时才会保存。账户始终以经过验证的令牌 `sub` 为键。
+
+  启用 `overrideUserInfoOnSignIn` 后，已有用户每次通过 One Tap 登录时都会根据映射后的资料更新。
+
+  如果只配置 `oneTap({ clientId })`，而未配置 `socialProviders.google`，One Tap 会使用令牌中的 `name`、`email`、`email_verified` 和 `picture` 声明。
 </Callout>
 
 ### 已授权的 JavaScript 来源

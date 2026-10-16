@@ -520,6 +520,8 @@ const adapter = myAdapter({
 
 适配器是否支持事务。如果为 `false`，操作顺序执行；否则需提供一个函数，用于执行带 `TransactionAdapter` 的回调。
 
+设置为 `false` 时，即使同一请求的后续步骤失败，已执行的写入也会保留。因此，Better Auth 仍会运行该写入的 `after` [数据库钩子](/docs/concepts/database#database-hooks)，并在返回错误前清理二级存储。
+
 <Callout type="warn">
   如果你的数据库不支持事务，错误处理和回滚不会那么健壮。建议使用支持事务的数据库以保证数据完整性。
 </Callout>

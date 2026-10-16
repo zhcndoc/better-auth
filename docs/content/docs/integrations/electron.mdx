@@ -309,8 +309,8 @@ function SignIn({
       onClick={() =>
         authClient.signIn.social({
           provider: "google",
-          fetchOptions: { query }, // 保留 PKCE 和 state
-        });
+          fetchOptions: { query }, // preserve PKCE/state
+        })
       }
     >
       使用 Google 登录
@@ -351,8 +351,8 @@ function Auth() {
       <button
         onClick={() =>
           window.requestAuth({
-            provider: "google", // 通过社交提供商登录，直接重定向
-          });
+            provider: "google", // sign in with social provider, redirecting directly to the provider
+          })
         }
       >
         使用 Google 登录

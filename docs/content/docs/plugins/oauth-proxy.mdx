@@ -1,16 +1,27 @@
 ---
 icon: pluginsOAuthProxy
 title: OAuth Proxy
-description: Better Auth 的 OAuth Proxy 插件
+description: 开发和预览部署中的 OAuth 登录
 ---
 
-一个允许你代理 OAuth 请求的代理插件。在开发环境和预发布部署中非常有用，因为重定向 URL 无法提前确定并添加到 OAuth 提供商。
+OAuth Proxy 适用于本地开发和可信的预览部署，这些环境的回调 URL 会发生变化。它允许这些环境使用在生产服务器上注册了固定回调 URL 的 OAuth 客户端。
+
+生产服务器负责处理提供商回调、交换授权码，并将加密后的用户资料返回给开发或预览部署。该部署会在自己的数据库中创建用户和会话。生产回调服务器以及每个参与此流程的可信开发或预览部署都需要安装此插件。
+
+生产环境中的常规登录应使用正常的 OAuth 提供商流程。当前来源与 `productionURL` 匹配时，插件会跳过登录请求代理。生产服务器仍会处理参与其中的开发和预览部署发来的代理回调。
 
 ## 安装
 
 <Steps>
   <Step>
-    ### 在你的 **auth** 配置中添加此插件
+    ### 在 auth 配置中添加插件
+
+    在生产回调服务器以及每个可信的开发或预览部署中添加以下配置，并使用相同的 `productionURL` 和代理 `secret`。
+
+    <Callout type="warn">
+      仅向你信任其能在所有参与部署（包括生产环境）中验证用户的环境和代码共享代理密钥。持有此密钥的任何人都可以通过代理声明提供商身份。不要将其提供给运行不可信贡献者代码的预览部署。使用不同的 `BETTER_AUTH_SECRET` 可以保护其他加密数据，但不会消除此共享认证权限。
+    </Callout>
+
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth"
     import { oAuthProxy } from "better-auth/plugins" // [!code highlight]
@@ -31,9 +42,9 @@ description: Better Auth 的 OAuth Proxy 插件
     })
     ```
 
-    将 `OAUTH_PROXY_SECRET` 在所有环境（production、preview、localhost）中设置为相同的值。
+    在所有可信的参与环境（production、preview、localhost）中将 `OAUTH_PROXY_SECRET` 设置为相同的值。插件会据此为 OAuth state 传输、代理载荷和提供商资料分别派生加密密钥。
 
-    该插件会自动将 OAuth 请求通过你的生产服务器路由。
+    插件会将参与其中的开发和预览部署所发起的 OAuth 请求路由到生产回调服务器。
   </Step>
 
   <Step>
@@ -68,7 +79,7 @@ description: Better Auth 的 OAuth Proxy 插件
 <Callout type="warn">
   **重要：需要共享密钥**
 
-  所有环境（production、preview、localhost）都必须使用相同的加密密钥进行通信。在插件选项中配置一个专用的 `secret`：
+  所有可信的参与环境（production、preview、localhost）都必须使用相同的代理密钥通信。请在插件选项中配置专用的 `secret`：
 
   ```ts title="auth.ts"
   oAuthProxy({
@@ -77,8 +88,14 @@ description: Better Auth 的 OAuth Proxy 插件
   })
   ```
 
-  如果你没有配置共享的 `secret`，插件会回退到 `BETTER_AUTH_SECRET`。由于生产环境和预览环境通常会使用不同的主密钥（这在安全上是正确的做法），OAuth 流程将会失败，并报出 `state_mismatch` 错误。
+  如果未配置共享的 `secret`，插件会回退到 `BETTER_AUTH_SECRET`。由于生产环境和预览环境通常使用不同的主密钥（这符合安全实践），OAuth 流程会因 `state_mismatch` 错误而失败。即使多个功能使用相同的密钥材料，OAuth 代理载荷和 OAuth state cookie 也会使用分别派生的密钥。
 </Callout>
+
+## Upgrading existing deployments
+
+`oAuthProxy` 配置无需更改。保留现有的 `productionURL` 和共享 `secret`。此次升级不要求轮换密钥；如果另外进行轮换，所有参与环境仍必须使用相同的值。
+
+请在一次协调切换中，将生产环境以及参与同一 OAuth 代理流程的所有预览或开发部署升级到相同的 Better Auth 版本。不同版本无法交换代理 state 载荷或提供商资料。切换前开始的登录和账户关联流程必须重新启动，无论其 OAuth state 存储在数据库还是 cookie 中。使用 cookie 存储 state 时，还需同时升级为同一 auth base 提供服务的所有节点，因为 state cookie 的加密密钥也会改变。插件不会回退到之前的共享加密密钥。
 
 ## 工作原理
 
@@ -101,19 +118,15 @@ await authClient.signIn.social({
 
 加密的用户信息通过 URL 查询参数传递，只有共享相同密钥的服务器能解密。这也允许预览环境使用与生产环境不同的数据库（如果需要）。
 
-<Callout type="info">
-  此插件仅适用于开发和预发布环境。如果 `baseURL` 和 `productionURL` 相同，插件不会代理请求。
-</Callout>
+## Options
 
-## 选项
-
-**productionURL**：你的生产服务器的 URL。如果此值与 auth 配置中的 `baseURL` 相匹配，请求将不会被代理。默认为 `BETTER_AUTH_URL` 环境变量。
+**productionURL**：生产服务器的 URL，由它处理开发和预览环境登录时的提供商回调。当前来源与此 URL 的来源匹配时，登录请求不会经过代理。默认依次使用 `BETTER_AUTH_URL` 环境变量和 auth `baseURL`。
 
 **currentURL**：插件会自动确定应用当前的 URL。它会优先检查请求的 URL、常见托管服务提供商的特定环境变量，最后回退到 auth 配置中的 `baseURL`。只有在环境中无法正确推断 URL 时才需要手动设置。
 
 **maxAge**：加密载荷的最大有效期（秒）。超过此时间的载荷将被拒绝以防止重放攻击。保持较短的值（例如 30-60 秒）可以最大程度减少潜在重放攻击的窗口，同时仍允许正常的 OAuth 流程。默认为 `60` 秒。
 
-**secret**：在 OAuth 代理流程中用于加密和解密数据的专用密钥。设置后，将使用它**而不是**全局的 `BETTER_AUTH_SECRET`，从而在跨环境共享密钥时限制影响范围——泄露的代理密钥无法伪造会话或解密受主密钥保护的其他数据。参与代理流程的所有环境必须共享相同的 `secret` 值。
+**secret**：用于为 OAuth 代理流程派生密钥的专用密钥。设置后会使用此密钥**替代**全局 `BETTER_AUTH_SECRET`，因此泄露代理密钥不会导致仅由主密钥保护的数据被解密。持有代理密钥的人可以向参与部署声明提供商身份，并在身份被接受时获取会话。仅与可信环境和代码共享此密钥。所有参与代理流程的环境都必须使用相同的 `secret` 值。
 
 ## 故障排查
 
@@ -137,10 +150,10 @@ oAuthProxy({
 })
 ```
 
-确保 `OAUTH_PROXY_SECRET` 在 production、preview 和 localhost 上的值相同。
+确保生产环境以及参与此流程的每个可信预览或 localhost 部署中的 `OAUTH_PROXY_SECRET` 值相同。不要将其提供给运行不可信贡献者代码的部署。
 
 <Callout type="info">
-  建议使用专用的代理密钥（而不是共享 `BETTER_AUTH_SECRET`），这样更安全。如果代理密钥泄露，攻击者无法伪造会话或访问其他加密数据——他们最多只能在较短的 `maxAge` 窗口内劫持 OAuth 流程。
+  使用专用代理密钥（而不是共享 `BETTER_AUTH_SECRET`）可以将仅由主密钥保护的数据隔离开来，但无法阻止代理密钥持有者通过代理声明提供商身份。请将代理密钥视为所有参与部署通用的认证凭证。
 </Callout>
 
 ### OAuth 在生产环境正常，但在 preview/localhost 上失败
