@@ -33,12 +33,12 @@ Better Auth 可以轻松集成到 React Router v7。本指南将向您展示如�
 
 ```ts title="app/lib/auth.server.ts"
 import { betterAuth } from "better-auth"
+import { Pool } from "pg"
 
 export const auth = betterAuth({
-    database: {
-        provider: "postgres", // 根据您的数据库提供者更改此处
-        url: process.env.DATABASE_URL, // 数据库路径或连接字符串
-    }
+    database: new Pool({
+        connectionString: process.env.DATABASE_URL,
+    }),
 })
 ```
 
@@ -49,21 +49,32 @@ export const auth = betterAuth({
 ### React Router v7
 
 ```ts title="app/routes/api.auth.$.ts"
-import { auth } from '~/lib/auth.server' // 根据需要调整路径
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router"
+import { auth } from '~/lib/auth.server' // Adjust the path as necessary
+import type { Route } from "./+types/api.auth.$"
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
     return auth.handler(request)
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
     return auth.handler(request)
 }
 ```
 
-### Remix v2（旧版）
+只有在 `app/routes.ts` 中使用 [`flatRoutes()`](https://reactrouter.com/how-to/file-route-conventions) 时，`app/routes/` 下的文件才会成为路由。否则，请在那里注册资源路由：
 
-如果您仍在使用 Remix v2，唯一不同的是导入：
+```ts title="app/routes.ts"
+import { type RouteConfig, index, route } from "@react-router/dev/routes"
+
+export default [
+    index("routes/home.tsx"),
+    route("api/auth/*", "routes/api.auth.$.ts"),
+] satisfies RouteConfig
+```
+
+### Remix v2 (Legacy)
+
+如果仍在使用 Remix v2，请改为从 `@remix-run/node` 导入参数类型：
 
 ```ts title="app/routes/api.auth.$.ts"
 import { auth } from '~/lib/auth.server' // 根据需要调整路径

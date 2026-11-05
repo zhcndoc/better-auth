@@ -1,0 +1,584 @@
+---
+icon: pluginsSSOReference
+sidebarTitle: "参考"
+title: SSO 参考
+description: SSO 插件选项、提供者配置、端点和数据库 schema。
+---
+
+## Plugin options
+
+将以下选项传给 `sso()`。这些选项均为可选项。
+
+### Users and accounts
+
+`resolveUser` <span className="opacity-70">`(input, context) => Awaitable<SSOUserResolution>`</span>
+
+每次 SSO 登录时，将经过验证的提供者身份映射到用户。返回 `continue`、`link` 或 `reject`。此函数在数据库事务中运行，因此 adapter 必须支持原生事务。请参阅[解析 SSO 用户](/docs/plugins/sso/provisioning#resolve-sso-users)。
+
+`provisionUser` <span className="opacity-70">`({ user, userInfo, token, provider }) => Awaitable<void>`</span>
+
+在保存新用户和账户后、分配组织前运行。抛出错误会导致响应失败，但用户仍会创建；除非启用了 `provisionUserOnEveryLogin`，否则不会重试回调。请参阅[用户预配](/docs/plugins/sso/provisioning#user-provisioning)。
+
+`provisionUserOnEveryLogin` <span className="opacity-70">`boolean`</span>
+
+每次 SSO 登录时都运行 `provisionUser`，不只是在创建用户时运行。请确保回调具备幂等性。默认值为 `false`。
+
+`organizationProvisioning` <span className="opacity-70">`object`</span>
+
+将 SSO 用户添加到提供者所关联的组织。请参阅[组织预配](/docs/plugins/sso/provisioning#organization-provisioning)。
+
+`defaultOverrideUserInfo` <span className="opacity-70">`boolean`</span>
+
+启用时，为注册的 OIDC 提供者设置 `overrideUserInfo`，即使请求体传入了 `false` 也是如此。现有提供者保留其存储值。默认值为 `false`。
+
+`disableImplicitSignUp` <span className="opacity-70">`boolean`</span>
+
+阻止 SSO 登录创建新用户。对于 OIDC，任何调用方都可以在登录时传入 `requestSignUp: true` 以允许创建。SAML 会忽略 `requestSignUp`。默认值为 `false`。请参阅[登录](/docs/plugins/sso#sign-in)。
+
+`trustEmailVerified` <span className="opacity-70">`boolean`</span>
+
+**已弃用。** 通过 `mapping.emailVerified` 读取提供者报告的邮箱验证状态。否则，所有 SSO 用户的 `emailVerified` 都为 `false`。默认值为 `false`。
+
+<Callout type="warn">
+  允许用户自行注册提供者时，`trustEmailVerified` 可能导致账户被接管，因为任何提供者都可以断言邮箱已验证。请改用[域名验证](/docs/plugins/sso/domain-verification#enable-domain-verification)或 `resolveUser`。
+</Callout>
+
+<Accordions>
+  <Accordion title="organizationProvisioning 选项">
+    `disabled` <span className="opacity-70">`boolean`</span>
+
+    关闭组织分配。默认值为 `false`。
+
+    `defaultRole` <span className="opacity-70">`"member" | "admin"`</span>
+
+    分配给新成员的角色。默认值为 `"member"`。
+
+    `getRole` <span className="opacity-70">`({ user, userInfo, token, provider }) => Promise<"member" | "admin">`</span>
+
+    为每个用户选择角色。优先级高于 `defaultRole`。
+  </Accordion>
+</Accordions>
+
+### Providers
+
+`defaultSSO` <span className="opacity-70">`array`</span>
+
+在代码中定义的提供者。登录时会先检查这些提供者，再检查数据库中的提供者；可根据 `providerId` 或邮箱域名匹配。启用 `domainVerification.enabled` 时，这些提供者会被视为已验证，无需 DNS 检查。请参阅[在代码中配置提供者](/docs/plugins/sso#configure-providers-in-code)。
+
+`providersLimit` <span className="opacity-70">`number | (user) => Awaitable<number>`</span>
+
+每个用户可注册的提供者数量上限。设为 `0` 时会禁用注册。默认情况下，任何已登录用户都可以注册。默认值为 `10`。请参阅[注册提供者](/docs/plugins/sso#register-a-provider)。
+
+`redirectURI` <span className="opacity-70">`string`</span>
+
+所有提供者共用的 OIDC 回调，可设为路径或完整 URL。请参阅[共享重定向 URI](/docs/plugins/sso/oidc#shared-redirect-uri)。
+
+`resolvePrivateKey` <span className="opacity-70">`({ providerId, keyId, issuer }) => Promise<{ privateKeyJwk?, privateKeyPem?, kid?, algorithm? }>`</span>
+
+返回 `private_key_jwt` 使用的签名密钥，使密钥不会存储在数据库中。未设置时，注册 `private_key_jwt` 提供者会失败。请参阅[token 端点身份验证](/docs/plugins/sso/oidc#token-endpoint-authentication)。
+
+`guardProviderMutation` <span className="opacity-70">`(input, context) => Awaitable<void>`</span>
+
+在更新或删除已存储的提供者前运行。抛出错误会拒绝变更并返回冲突响应。需要支持原生事务。请参阅[管理提供者](/docs/plugins/sso#manage-providers)。
+
+`domainVerification` <span className="opacity-70">`{ enabled?: boolean; tokenPrefix?: string }`</span>
+
+提供者为用户登录前，必须通过 DNS 证明域名所有权。`tokenPrefix` 的默认值为 `"better-auth-token"`。请参阅[域名验证](/docs/plugins/sso/domain-verification#enable-domain-verification)。
+
+<Accordions>
+  <Accordion title="defaultSSO 条目">
+    `providerId` <span className="opacity-70">`string`</span>
+
+    必需。已注册的提供者不能重复使用此 ID。
+
+    `domain` <span className="opacity-70">`string`</span>
+
+    必需。不带其他信息的邮箱域名，例如 `example.com`；多个域名请用逗号分隔。
+
+    `oidcConfig` <span className="opacity-70">`OIDCConfig`</span>
+
+    存储的 OIDC 配置结构。此处必须设置 `issuer`、`discoveryEndpoint` 和 `pkce`。请在此处设置 `allowIdpInitiated`，因为 API 会静默丢弃该字段。
+
+    `samlConfig` <span className="opacity-70">`SAMLConfig`</span>
+
+    存储的 SAML 配置结构。此处必须设置 `issuer`。
+
+    `privateKey` <span className="opacity-70">`{ privateKeyJwk?: JsonWebKey; privateKeyPem?: string }`</span>
+
+    `private_key_jwt` 使用的签名密钥。此密钥不会存储在数据库中。
+  </Accordion>
+</Accordions>
+
+### SAML
+
+在 `saml` 下设置以下选项。
+
+`enableInResponseToValidation` <span className="opacity-70">`boolean`</span>
+
+将每个响应与已存储的 AuthnRequest 匹配。关闭后会接受所有提供者的非请求响应。默认值为 `true`。请参阅 [InResponseTo 验证](/docs/plugins/sso/saml-security#inresponseto-validation)。
+
+`allowIdpInitiated` <span className="opacity-70">`boolean`</span>
+
+接受非请求响应。仅在启用 InResponseTo 验证时生效。默认值为 `false`。请参阅 [IdP 发起的 SSO](/docs/plugins/sso/saml#idp-initiated-sso)。
+
+`requestTTL` <span className="opacity-70">`number`</span>
+
+AuthnRequest 记录的有效期，单位为毫秒。默认值为 `300000`。
+
+`clockSkew` <span className="opacity-70">`number`</span>
+
+断言时间戳的容差，单位为毫秒。默认值为 `300000`。请参阅[时间戳验证](/docs/plugins/sso/saml-security#timestamp-validation)。
+
+`requireTimestamps` <span className="opacity-70">`boolean`</span>
+
+拒绝缺少 `NotBefore` 和 `NotOnOrAfter` 的断言。默认值为 `false`。
+
+`algorithms` <span className="opacity-70">`object`</span>
+
+签名和加密算法规则。请参阅[算法验证](/docs/plugins/sso/saml-security#algorithm-validation)。
+
+`maxResponseSize` <span className="opacity-70">`number`</span>
+
+可接受的 SAML 响应最大大小，单位为字节。默认值为 `262144`。请参阅[大小限制](/docs/plugins/sso/saml-security#size-limits)。
+
+`maxMetadataSize` <span className="opacity-70">`number`</span>
+
+可接受的 IdP 或 SP 元数据 XML 最大大小，单位为字节。保存提供者时也会执行此限制。默认值为 `102400`。
+
+`idpInitiatedCallbackUrl` <span className="opacity-70">`string`</span>
+
+没有适用的提供者回调时，IdP 发起响应使用的回退重定向。可传入绝对 URL 或以 `/` 开头的路径。请参阅 [ACS 和回调 URL](/docs/plugins/sso/saml#acs-and-callback-urls)。
+
+`enableSingleLogout` <span className="opacity-70">`boolean`</span>
+
+添加单点注销端点，并在 SP 元数据中公开。默认值为 `false`。请参阅[单点注销](/docs/plugins/sso/saml#single-logout)。
+
+`logoutRequestTTL` <span className="opacity-70">`number`</span>
+
+LogoutRequest 记录的有效期，单位为毫秒。默认值为 `300000`。
+
+`wantLogoutRequestSigned` <span className="opacity-70">`boolean`</span>
+
+要求 IdP 发送签名后的 LogoutRequest。默认值为 `false`。
+
+`wantLogoutResponseSigned` <span className="opacity-70">`boolean`</span>
+
+要求 IdP 发送签名后的 LogoutResponse。默认值为 `false`。
+
+<Accordions>
+  <Accordion title="algorithms options">
+    `onDeprecated` <span className="opacity-70">`"reject" | "warn" | "allow"`</span>
+
+     响应或已保存的提供者使用 SHA-1、RSA1\_5 或 3DES 时的处理方式。默认值为 `"warn"`。
+
+    `allowedSignatureAlgorithms` <span className="opacity-70">`string[]`</span>
+
+     要接受的签名算法 URI，包括 `samlConfig.signatureAlgorithm` 中的算法。设置后，会取代针对签名算法的弃用检查。
+
+    `allowedDigestAlgorithms` <span className="opacity-70">`string[]`</span>
+
+     要接受的摘要算法 URI，包括 `samlConfig.digestAlgorithm` 中的算法。
+
+    `allowedKeyEncryptionAlgorithms` <span className="opacity-70">`string[]`</span>
+
+     对加密断言仅接受这些密钥加密算法 URI。
+
+    `allowedDataEncryptionAlgorithms` <span className="opacity-70">`string[]`</span>
+
+     对加密断言仅接受这些数据加密算法 URI。
+  </Accordion>
+</Accordions>
+
+### Schema options
+
+`schema.ssoProvider.modelName` <span className="opacity-70">`string`</span>
+
+数据表名称。默认值为 `"ssoProvider"`。
+
+`schema.ssoProvider.fields` <span className="opacity-70">`object`</span>
+
+内置字段的列名称，包括 `domainVerified`。
+
+`schema.ssoProvider.additionalFields` <span className="opacity-70">`object`</span>
+
+附加列。请参阅[提供者附加字段](#additional-provider-fields)。
+
+`modelName` <span className="opacity-70">`string`</span>
+
+与 `schema.ssoProvider.modelName` 相同，并且优先级更高。
+
+`fields` <span className="opacity-70">`object`</span>
+
+与 `schema.ssoProvider.fields` 相同，但不包含 `domainVerified`，且优先级更高。
+
+## Provider configuration
+
+### Registration body
+
+`POST /sso/register` 的请求体。`POST /sso/update-provider` 接受 `providerId`，以及可选的 `issuer`、`domain`、`oidcConfig`、`samlConfig` 和附加字段。请参阅[管理提供者](/docs/plugins/sso#manage-providers)。
+
+`providerId` <span className="opacity-70">`string`</span>
+
+必需且唯一。内置提供者、已配置社交提供者、`account.accountLinking.trustedProviders` 条目以及 `defaultSSO` 条目的 ID 会以 422 拒绝。
+
+`issuer` <span className="opacity-70">`string`</span>
+
+必需 URL。OIDC issuer 或 SAML SP entity ID。
+
+`domain` <span className="opacity-70">`string`</span>
+
+必需。不带其他信息的邮箱域名；多个域名请用逗号分隔。
+
+`organizationId` <span className="opacity-70">`string`</span>
+
+将提供者关联到组织。调用者必须是组织成员；启用组织插件时，还必须是所有者或管理员。请参阅[将提供者关联到组织](/docs/plugins/sso/provisioning#link-a-provider-to-an-organization)。
+
+`overrideUserInfo` <span className="opacity-70">`boolean`</span>
+
+仅适用于 OIDC。每次登录时都会用提供者的值覆盖用户的姓名、邮箱、图片和映射的附加字段。更改后的邮箱采用提供者报告的验证状态；除非启用了 `trustEmailVerified`，否则该值为 `false`。只有当 IdP 能控制用户邮箱地址时才启用。默认值为 `defaultOverrideUserInfo`。
+
+`oidcConfig` <span className="opacity-70">`object`</span>
+
+OIDC 设置。传入此项、`samlConfig` 或两者。
+
+`samlConfig` <span className="opacity-70">`object`</span>
+
+SAML 设置。传入此项、`oidcConfig` 或两者。
+
+**Additional fields**
+
+来自 `schema.ssoProvider.additionalFields` 的字段。
+
+### oidcConfig
+
+请参阅[注册 OIDC 提供者](/docs/plugins/sso/oidc#register-an-oidc-provider)。
+
+`clientId` <span className="opacity-70">`string`</span>
+
+必需。
+
+`clientSecret` <span className="opacity-70">`string`</span>
+
+使用 `client_secret_basic` 和 `client_secret_post` 时必需。
+
+`discoveryEndpoint` <span className="opacity-70">`string`</span>
+
+发现文档 URL。默认值为 `{issuer}/.well-known/openid-configuration`。请参阅 [OIDC 发现机制](/docs/plugins/sso/oidc#oidc-discovery)。
+
+`skipDiscovery` <span className="opacity-70">`boolean`</span>
+
+注册时跳过发现机制。此时请传入 `authorizationEndpoint`、`tokenEndpoint` 和 `jwksEndpoint`。默认值为 `false`。
+
+`authorizationEndpoint` <span className="opacity-70">`string`</span>
+
+授权端点 URL。省略时会由发现机制填充。
+
+`tokenEndpoint` <span className="opacity-70">`string`</span>
+
+token 端点 URL。省略时会由发现机制填充。
+
+`userInfoEndpoint` <span className="opacity-70">`string`</span>
+
+UserInfo 端点 URL。省略时会由发现机制填充。
+
+`jwksEndpoint` <span className="opacity-70">`string`</span>
+
+用于验证 ID 令牌的 JWKS URL。省略时会由发现机制填充。
+
+`tokenEndpointAuthentication` <span className="opacity-70">`"client_secret_basic" | "client_secret_post" | "private_key_jwt"`</span>
+
+token 端点使用的客户端身份验证方式。省略时由发现机制选择；没有可用值时回退到 `client_secret_basic`。请参阅[token 端点身份验证](/docs/plugins/sso/oidc#token-endpoint-authentication)。
+
+`privateKeyId` <span className="opacity-70">`string`</span>
+
+传给 `resolvePrivateKey` 并作为 `kid` 发送的密钥 ID。
+
+`privateKeyAlgorithm` <span className="opacity-70">`string`</span>
+
+`private_key_jwt` 使用的签名算法。默认值为 `"RS256"`。
+
+`scopes` <span className="opacity-70">`string[]`</span>
+
+要申请的 scope。默认值为 `["openid", "email", "profile", "offline_access"]`。
+
+`pkce` <span className="opacity-70">`boolean`</span>
+
+发送 PKCE challenge（[RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)）。默认值为 `true`。
+
+`overrideUserInfo` <span className="opacity-70">`boolean`</span>
+
+顶层 `overrideUserInfo` 的存储位置。注册时会忽略此项，应设置顶层字段；更新时则在此处设置。
+
+`mapping` <span className="opacity-70">`object`</span>
+
+要读取的声明名称。请参阅[映射](/docs/plugins/sso/oidc#mapping)。
+
+`allowIdpInitiated` <span className="opacity-70">`boolean`</span>
+
+接受不含 `state` 的回调。只能在 `defaultSSO` 条目中设置；注册和更新时会静默丢弃此字段。默认值为 `false`。请参阅[IdP 发起的登录](/docs/plugins/sso/oidc#idp-initiated-sign-in)。
+
+<Accordions>
+  <Accordion title="oidcConfig.mapping">
+    `email` <span className="opacity-70">`string`</span>
+
+     用于邮箱的声明。默认值为 `email`。
+
+    `emailVerified` <span className="opacity-70">`string`</span>
+
+     用于邮箱验证标记的声明。默认值为 `email_verified`。只有 `trustEmailVerified` 为 `true` 时才会读取。
+
+    `name` <span className="opacity-70">`string`</span>
+
+     用于姓名的声明。默认值为 `name`。
+
+    `image` <span className="opacity-70">`string`</span>
+
+     用于图片的声明。默认值为 `picture`。
+
+    `extraFields` <span className="opacity-70">`Record<string, string>`</span>
+
+     将用户字段映射到声明名称。
+  </Accordion>
+</Accordions>
+
+### samlConfig
+
+请参阅[注册 SAML 提供者](/docs/plugins/sso/saml#register-a-saml-provider)。在 `defaultSSO` 条目中，`samlConfig.issuer` 也为必需项。
+
+`entryPoint` <span className="opacity-70">`string`</span>
+
+必需 URL。IdP SSO URL。设置了 `idpMetadata.metadata` 时会忽略此字段。
+
+`cert` <span className="opacity-70">`string | string[]`</span>
+
+IdP 签名证书。轮换时可传入数组。未设置 `idpMetadata.metadata` 或 `idpMetadata.cert` 时为必需项。`idpMetadata.cert` 的优先级更高。请参阅[签名证书和轮换](/docs/plugins/sso/saml#signing-certificates-and-rotation)。
+
+`audience` <span className="opacity-70">`string`</span>
+
+预期的断言 audience。默认使用 SP entity ID，依次取自 `spMetadata.metadata`、`spMetadata.entityID`，或 `issuer`。
+
+`callbackUrl` <span className="opacity-70">`string`</span>
+
+IdP 发起或回退登录后用户到达的位置，不是 ACS URL。请参阅 [ACS 和回调 URL](/docs/plugins/sso/saml#acs-and-callback-urls)。
+
+`idpInitiatedCallbackUrl` <span className="opacity-70">`string`</span>
+
+IdP 发起响应的回退地址，可设为绝对 URL 或 `/path`。优先级高于插件选项。更新时传入 `null` 可清除该值。
+
+`idpMetadata` <span className="opacity-70">`object`</span>
+
+必需。IdP 元数据 XML 或其显式设置。
+
+`spMetadata` <span className="opacity-70">`object`</span>
+
+服务提供者设置。省略时会自动生成。请参阅[服务提供者设置](/docs/plugins/sso/saml#service-provider-settings)。
+
+`wantAssertionsSigned` <span className="opacity-70">`boolean`</span>
+
+拒绝未签名断言，并公开 `WantAssertionsSigned`（[SAML Metadata §2.4.4](https://docs.oasis-open.org/security/saml/v2.0/saml-metadata-2.0-os.pdf)）。自定义 SP 元数据不能降低此要求。默认值为 `false`。请参阅[签名断言](/docs/plugins/sso/saml#signed-assertions)。
+
+`authnRequestsSigned` <span className="opacity-70">`boolean`</span>
+
+对 AuthnRequest 签名。未提供私钥时，登录会返回 400。默认值为 `false`。请参阅[签名 AuthnRequest](/docs/plugins/sso/saml#signed-authnrequests)。
+
+`signatureAlgorithm` <span className="opacity-70">`string`</span>
+
+签名算法 URI 或简写形式，例如 `rsa-sha256`。保存提供者时会根据 `saml.algorithms` 检查。
+
+`digestAlgorithm` <span className="opacity-70">`string`</span>
+
+摘要算法 URI 或简写形式，例如 `sha256`。保存提供者时会根据 `saml.algorithms` 检查。
+
+`identifierFormat` <span className="opacity-70">`string`</span>
+
+在生成的 SP 元数据中公开的 NameID 格式。
+
+`privateKey` <span className="opacity-70">`string`</span>
+
+SP 签名密钥。未设置 `spMetadata.privateKey` 时使用。
+
+`mapping` <span className="opacity-70">`object`</span>
+
+要读取的属性名称。请参阅[属性映射](/docs/plugins/sso/saml#attribute-mapping)。
+
+<Accordions>
+  <Accordion title="samlConfig.idpMetadata">
+    `metadata` <span className="opacity-70">`string`</span>
+
+     IdP 元数据 XML。传入此项或 `entityID`。XML 会提供 entity ID、SSO URL 和证书。
+
+    `entityID` <span className="opacity-70">`string`</span>
+
+     IdP entity ID。未设置 `metadata` 时为必需项。
+
+    `cert` <span className="opacity-70">`string | string[]`</span>
+
+     IdP 签名证书，未设置 `metadata` 时使用。优先级高于 `samlConfig.cert`。
+
+    `singleSignOnService` <span className="opacity-70">`{ Binding: string; Location: string }[]`</span>
+
+     SSO 端点。默认使用 HTTP-Redirect 绑定的 `entryPoint`。
+
+    `singleLogoutService` <span className="opacity-70">`{ Binding: string; Location: string }[]`</span>
+
+     SLO 端点，与 `enableSingleLogout` 配合使用。
+
+    `isAssertionEncrypted` <span className="opacity-70">`boolean`</span>
+
+     IdP 加密断言时设为 `true`。启用后会使用 `spMetadata` 中的密钥进行解密。请参阅[加密断言](/docs/plugins/sso/saml#encrypted-assertions)。
+
+    `encPrivateKey`, `encPrivateKeyPass`, `privateKey`, `privateKeyPass` <span className="opacity-70">`string`</span>
+
+     传递给 IdP entity。一般配置不需要这些字段。
+  </Accordion>
+
+  <Accordion title="samlConfig.spMetadata">
+    `metadata` <span className="opacity-70">`string`</span>
+
+     自定义 SP 元数据 XML。省略时，会根据 `issuer`、`wantAssertionsSigned`、`authnRequestsSigned` 和 `identifierFormat` 生成元数据。
+
+    `entityID` <span className="opacity-70">`string`</span>
+
+     SP entity ID。默认值为 `issuer`。
+
+    `binding` <span className="opacity-70">`string`</span>
+
+     为兼容性而接受，但不使用：AuthnRequest 使用 HTTP-Redirect，响应通过 HTTP-POST 返回。
+
+    `privateKey`, `privateKeyPass` <span className="opacity-70">`string`</span>
+
+     用于签署 AuthnRequest 的密钥和密码短语。
+
+    `encPrivateKey`, `encPrivateKeyPass` <span className="opacity-70">`string`</span>
+
+     `idpMetadata.isAssertionEncrypted` 为 `true` 时用于解密断言的密钥和密码短语。请参阅[加密断言](/docs/plugins/sso/saml#encrypted-assertions)。
+
+    `isAssertionEncrypted` <span className="opacity-70">`boolean`</span>
+
+     接受此字段，但不会启用解密。请改为设置 `idpMetadata.isAssertionEncrypted`。
+  </Accordion>
+
+  <Accordion title="samlConfig.mapping">
+    `email` <span className="opacity-70">`string`</span>
+
+     邮箱属性。默认依次使用 `email` 和 NameID。
+
+    `name` <span className="opacity-70">`string`</span>
+
+     姓名属性。只有不存在名字或姓氏属性时才会读取。默认依次使用 `displayName` 和 NameID。
+
+    `firstName` <span className="opacity-70">`string`</span>
+
+     名字属性。默认值为 `givenName`。
+
+    `lastName` <span className="opacity-70">`string`</span>
+
+     姓氏属性。默认值为 `surname`。
+
+    `emailVerified` <span className="opacity-70">`string`</span>
+
+     邮箱验证标记对应的属性。无默认值。只有 `trustEmailVerified` 为 `true` 时才会读取。
+
+    `extraFields` <span className="opacity-70">`Record<string, string>`</span>
+
+     将用户字段映射到属性名称。
+  </Accordion>
+</Accordions>
+
+## Endpoints
+
+路径相对于认证基础路径，默认为 `/api/auth`。
+
+| 方法         | 路径                                 | 身份验证              | 用途                                                         |
+| ------------ | ------------------------------------ | -------------------- | ------------------------------------------------------------ |
+| `POST`       | `/sso/register`                      | 会话                  | 注册提供者。                                                 |
+| `POST`       | `/sign-in/sso`                       | 无                   | 发起 SSO 登录。                                              |
+| `GET`        | `/sso/callback/:providerId`          | 无                   | OIDC 回调。                                                  |
+| `GET`        | `/sso/callback`                      | 无                   | 配合 `redirectURI` 使用的共享 OIDC 回调。                    |
+| `GET` `POST` | `/sso/saml2/sp/acs/:providerId`      | IdP，无来源检查       | SAML 断言使用者服务。                                        |
+| `GET`        | `/sso/saml2/sp/metadata?providerId=` | 无                   | 以 XML 格式返回 SP 元数据。                                  |
+| `GET` `POST` | `/sso/saml2/sp/slo/:providerId`      | IdP，无来源检查       | SAML 单点注销，需启用 `enableSingleLogout`。                  |
+| `POST`       | `/sso/saml2/logout/:providerId`      | 会话                  | 发起 SP 端单点注销，需启用 `enableSingleLogout`。            |
+| `GET`        | `/sso/providers`                     | 会话                  | 列出你可以管理的提供者。                                     |
+| `GET`        | `/sso/get-provider`                  | 会话                  | 根据 `providerId` 获取单个提供者。                           |
+| `POST`       | `/sso/update-provider`               | 会话                  | 更新提供者。                                                 |
+| `POST`       | `/sso/delete-provider`               | 会话                  | 删除提供者及其关联账户。                                     |
+| `POST`       | `/sso/request-domain-verification`   | 会话                  | 启用域名验证时获取 DNS 验证令牌。                            |
+| `POST`       | `/sso/verify-domain`                 | 会话                  | 启用域名验证时检查 DNS 记录。                                |
+
+错误代码请参阅[发现错误](/docs/plugins/sso/oidc#discovery-errors)和 [SAML 安全](/docs/plugins/sso/saml-security)。
+
+## Additional provider fields
+
+使用 `schema.ssoProvider.additionalFields` 为 `ssoProvider` 添加列。
+
+```ts title="auth.ts"
+sso({
+  schema: {
+    ssoProvider: {
+      additionalFields: {
+        displayName: { type: "string", required: true }, // [!code highlight]
+      },
+    },
+  },
+});
+```
+
+注册或更新提供者时传入字段，例如 `displayName: "Acme"`。请求中提交 `input: false` 的字段会被拒绝；`returned: false` 的字段不会包含在客户端类型中。请向 `ssoClient()` 传入相同的 `schema`，以保持客户端类型一致。
+
+<Callout type="warn">
+  字段名称与内置名称（`id`、`issuer`、`oidcConfig`、`samlConfig`、`userId`、`providerId`、`organizationId`、`domain`、`domainVerified`）或响应名称（`type`、`spMetadataUrl`、`redirectURI`、`domainVerificationToken`）重复，或 `fieldName` 映射到内置列时，服务器启动会抛出错误。
+</Callout>
+
+## Schema
+
+插件会添加 `ssoProvider` 表。请运行 `npx auth@latest generate` 获取适用于当前 adapter 的准确 schema。
+
+export const ssoProviderTableFields = [
+  { name: "id", type: "string", description: "提供者的数据库 ID", isPrimaryKey: true },
+  { name: "issuer", type: "string", description: "OIDC issuer 或 SAML SP entity ID" },
+  { name: "domain", type: "string", description: "邮箱域名；多个域名请用逗号分隔" },
+  { name: "oidcConfig", type: "string", description: "JSON 字符串格式的 OIDC 配置，包含未加密的客户端密钥", isOptional: true },
+  { name: "samlConfig", type: "string", description: "JSON 字符串格式的 SAML 配置，包含未加密的私钥", isOptional: true },
+  { name: "userId", type: "string", description: "注册此提供者的用户", isForeignKey: true, references: { model: "user", field: "id" } },
+  { name: "providerId", type: "string", description: "登录和回调 URL 中使用的提供者 ID", isUnique: true },
+  { name: "organizationId", type: "string", description: "关联的组织", isOptional: true },
+  { name: "domainVerified", type: "boolean", description: "域名是否已验证。`domainVerification.enabled` 为 true 时添加。", isOptional: true },
+];
+
+<DatabaseTable name="ssoProvider" fields={ssoProviderTableFields} />
+
+### Verification records
+
+插件还会将短期记录写入 verification 表；配置了二级存储时，也可以写入二级存储。`saml-used-assertion:` 记录始终需要数据库；请参阅[断言重放保护](/docs/plugins/sso/saml-security#assertion-replay-protection)。
+
+| 标识符前缀                    | 存储内容                                    |
+| ----------------------------- | ----------------------------------------- |
+| `saml-authn-request:`         | 用于 InResponseTo 验证的 AuthnRequest ID  |
+| `saml-used-assertion:`        | 已使用的断言 ID，用于防止重放              |
+| `saml-session:`               | 用于单点注销的 NameID 和 SessionIndex      |
+| `saml-session-by-id:`         | 从会话 ID 查询 SAML 会话记录               |
+| `saml-logout-request:`        | 用于 SP 发起的单点注销的 LogoutRequest ID |
+| `_{tokenPrefix}-{providerId}` | 域名验证令牌                              |
+
+过期的记录可以删除。
+
+## Related
+
+<Cards>
+  <Card href="/docs/plugins/sso" title="SSO">
+    安装插件并注册你的第一个提供者。
+  </Card>
+
+  <Card href="/docs/plugins/sso/oidc" title="OIDC">
+    连接 OpenID Connect 身份提供者。
+  </Card>
+
+  <Card href="/docs/plugins/sso/saml" title="SAML">
+    连接 SAML 2.0 身份提供者。
+  </Card>
+
+  <Card href="/docs/plugins/sso/provisioning" title="用户与组织">
+    匹配、预配 SSO 用户并分配组织。
+  </Card>
+</Cards>

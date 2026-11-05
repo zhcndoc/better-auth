@@ -491,7 +491,7 @@ Better Auth 的一大特色是拥有插件生态系统，能够通过少量代�
     }
 
     const verifyTOTP = async() => {
-        const data = await authClient.twoFactor.verifyTOTP({
+        const data = await authClient.twoFactor.verifyTotp({
             code: "123456", // the code entered by the user 
             /**
              * If the device is trusted, the user won't

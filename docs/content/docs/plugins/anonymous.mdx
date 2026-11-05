@@ -106,6 +106,8 @@ export const auth = betterAuth({
 
 然后，当您使用其他方法调用 `signIn` 或 `signUp` 时，`onLinkAccount` 回调将被调用。默认情况下，`anonymousUser` 会被删除。
 
+使用[双重认证插件](/docs/plugins/2fa)时，仍在等待第二认证因素的登录不会关联账户：不会调用 `onLinkAccount`，匿名用户也会保留。
+
 ```ts
 import { authClient } from "@/lib/auth-client";
 

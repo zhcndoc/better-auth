@@ -71,7 +71,20 @@ Better Auth 包含多重防护措施以防止跨站请求伪造（CSRF）攻击�
 5. **GET 请求不执行变更（附带额外防护）**
    `GET` 请求被视为只读操作，不应更改应用状态。在必须执行变更的情况下——例如 OAuth 回调——Better Auth 会应用额外的安全措施，包括验证 `nonce` 和 `state` 参数以确保请求的真实性。
 
-### 禁用安全检查
+6. **自行调用 `auth.api` 的路由**
+   这些检查只会应用于到达 `auth.handler` 的请求。直接调用 `auth.api` 会跳过这些检查，即使传入了浏览器请求头也是如此。它也会跳过针对 `callbackURL`、`errorCallbackURL`、`newUserCallbackURL` 和 `redirectTo` 的 `trustedOrigins` 检查，因此如果路由从请求中接收这些值，必须自行验证。如果自定义路由要为使用 Cookie 身份验证的浏览器请求修改状态，除非其 `Origin` 受信任，否则应拒绝该请求：
+
+   ```ts
+   const origin = request.headers.get("origin");
+   const context = await auth.$context;
+   if (!origin || !context.isTrustedOrigin(origin)) {
+     return new Response(null, { status: 403 });
+   }
+   ```
+
+   `isTrustedOrigin` 会检查启动时解析的来源。如果你的 `trustedOrigins` 函数会根据请求添加来源，请将这些来源也纳入检查；如果该端点有 HTTP 路由，也可以将请求转发给 `auth.handler`。
+
+### Disabling Security Checks
 
 Better Auth 提供了两个独立选项，用于禁用不同方面的安全检查：
 
@@ -151,43 +164,12 @@ Better Auth 内置了速率限制功能，用于防御暴力破解攻击。速�
 
 ## IP 地址头部
 
-Better Auth 使用客户端 IP 地址进行速率限制和安全监控。默认情况下，它从标准的 `X-Forwarded-For` 头部读取 IP 地址。但您可以配置特定的受信任头部，以确保准确的 IP 地址检测并防止 IP 欺骗攻击。
+Better Auth 会使用客户端 IP 地址执行速率限制和安全监控。默认情况下，它会从 `X-Forwarded-For` 请求头读取地址。客户端也可以自行设置此请求头。只有以下配置方式能够按客户端分别限制请求：
 
-您可以在 Better Auth 配置中设置 IP 地址头部：
+* 代理或服务器代码在每个请求中设置地址，并替换客户端发送的任何同名值。
+* 代理向 `X-Forwarded-For` 追加地址，且你在 `trustedProxies` 中列出了这些代理。
 
-```typescript
-{
-  advanced: {
-    ipAddress: {
-      ipAddressHeaders: ['cf-connecting-ip'] // 或其他自定义头部
-    }
-  }
-}
-```
-
-这确保 Better Auth 仅接受来自您可信代理头部中的 IP 地址，使攻击者更难通过伪造头部绕过速率限制或其他基于 IP 的安全措施。
-
-在代理链后面时，请在 `trustedProxies` 中列出您的代理，以便 Better Auth
-解析真实客户端，而不是可被伪造的最左侧 `X-Forwarded-For`
-令牌：
-
-```typescript
-{
-  advanced: {
-    ipAddress: {
-      // 您的代理地址，而不是也涵盖客户端的宽泛私有地址范围
-      trustedProxies: ['192.0.2.10', '10.0.0.0/24']
-    }
-  }
-}
-```
-
-<Callout type="info">
-  **重要**
-
-  * 设置自定义 IP 地址头部时，请确保您的代理或负载均衡器已正确配置以设置此头部，并且它不能被终端用户直接设置。
-  * 在开发/测试环境中，如果无法从头部获取 IP 地址，则会使用 `127.0.0.1` 作为回退。
-</Callout>
+[连接 IP 地址](/docs/concepts/rate-limit#connecting-ip-address)一节说明了这两种配置方式。
 
 ## 受信任代理头部
 

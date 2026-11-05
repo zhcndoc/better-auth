@@ -1,0 +1,150 @@
+---
+icon: pluginsSSOSAMLSecurity
+sidebarTitle: "SAML 安全"
+title: SAML 响应验证
+description: 了解 Better Auth 如何验证 SAML 响应，以及可调整的检查项。
+---
+
+ACS 端点 `{baseURL}/sso/saml2/sp/acs/{providerId}` 会在 SAML 响应使任何用户登录前执行以下检查：
+
+1. **大小限制**：编码后的响应不得超过 `maxResponseSize`。
+2. **单个断言**：响应必须且只能包含一个断言。
+3. **签名**：响应或断言的签名必须通过 IdP 证书验证。如果提供者设置了 `wantAssertionsSigned`，断言也必须包含自己的签名（[Metadata §2.4.4](https://docs.oasis-open.org/security/saml/v2.0/saml-metadata-2.0-os.pdf)）。
+4. **算法**：响应所用算法必须在允许范围内。
+5. **时间戳**：当前时间必须介于 `NotBefore` 和 `NotOnOrAfter` 之间。
+6. **受众、接收方和目标地址**：响应必须指向此服务提供者及其 ACS URL（[Profiles §4.1.4.2](https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf)）。
+7. **InResponseTo**：响应必须对应此服务器发送的 AuthnRequest，除非启用了 IdP 发起的 SSO，或将 `enableInResponseToValidation` 设为 `false`。
+8. **重放**：断言 ID 不得曾被使用。
+
+检查失败时会重定向到[错误 URL](/docs/plugins/sso/saml#acs-and-callback-urls)，其中 `error` 为小写错误代码（错误没有代码时为 `saml_error`），`error_description` 为错误消息。所有选项都位于插件选项的 `saml` 下，并列在[参考文档](/docs/plugins/sso/reference#saml)中。
+
+## InResponseTo validation
+
+InResponseTo 验证可阻止注入的非请求响应、重放响应，以及从其他提供者替换而来的响应。默认启用。设置 `allowIdpInitiated: true` 时，仍会检查所有包含 `InResponseTo` 的响应，但也会接受不含此字段的响应。Better Auth 会将每个 AuthnRequest ID 作为 verification 值保存 `requestTTL` 指定的时长（默认 5 分钟），匹配的响应只能使用一次（[SAML Core §3.2.2](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf)）。配置了二级存储时，verification 值会保存在其中；否则保存在数据库中，因此多实例环境也可进行验证。重放防护始终需要数据库。请参阅[断言重放防护](#assertion-replay-protection)。
+
+不含 `InResponseTo` 的响应由 IdP 发起；启用 [IdP 发起的 SSO](/docs/plugins/sso/saml#idp-initiated-sso)前，Better Auth 会拒绝此类响应。若要接受 IdP 发起的登录，请保持验证开启并设置 `allowIdpInitiated: true`。
+
+请勿为了实现此目的而设置 `enableInResponseToValidation: false`。这会对所有 SAML 提供者关闭请求关联检查：
+
+* 即使 `allowIdpInitiated` 为 `false`，也会接受非请求响应。
+* 会接受引用未知、过期或已使用请求 ID 的响应。
+* 会跳过响应是否属于发起登录的提供者这一检查。
+
+若要给用户更多时间完成 IdP 登录，请增大 `requestTTL`：
+
+```ts title="auth.ts"
+sso({
+  saml: {
+    requestTTL: 10 * 60 * 1000, // 10 minutes, in milliseconds // [!code highlight]
+  },
+})
+```
+
+| `error`                 | `error_description`                         | 原因                                                                                                 | 处理方式                                                                                                                      |
+| ----------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `invalid_saml_response` | `Unknown or expired request ID`             | 响应引用了未知或已使用的请求 ID，或请求时间早于 `requestTTL`。                                      | 让用户从应用重新发起登录。如果用户经常需要比 `requestTTL` 更长的 IdP 登录时间，请增大 `requestTTL`。                         |
+| `invalid_saml_response` | `Provider mismatch`                         | 响应到达了另一个提供者的 ACS，而不是发起登录的提供者。                                              | 将 IdP 配置为向发起登录的提供者的 ACS URL 发送响应。                                                                         |
+| `unsolicited_response`  | `IdP-initiated SSO not allowed`             | 响应不包含 `InResponseTo`，且 `allowIdpInitiated` 为 `false`。                                      | 让用户从应用发起登录，或设置 `allowIdpInitiated: true`。                                                                     |
+| `invalid_state`         | `SSO provider reference missing or invalid` | 已存储的请求没有有效的提供者引用。                                                                   | 让用户从应用重新发起登录。                                                                                                    |
+
+## Assertion replay protection
+
+重放防护可阻止攻击者再次提交已捕获的断言。它**始终启用**（[Profiles §4.1.4.5](https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf)）。每个断言 ID 都会被保留，直到 `NotOnOrAfter` 加上 `clockSkew` 所指定的时间。
+
+<Callout type="warn">
+  保留断言 ID 需要数据库支持的 verification 存储。配置了 `secondaryStorage` 时，请设置 [`verification.storeInDatabase: true`](/docs/reference/options#verification)，否则所有 SAML 登录都会在此步骤失败。
+</Callout>
+
+| `error`           | `error_description`                    | 原因                               | 处理方式                                         |
+| ----------------- | -------------------------------------- | ---------------------------------- | ------------------------------------------------ |
+| `replay_detected` | `SAML assertion has already been used` | 断言 ID 已被使用。                 | 让用户从应用重新发起登录。                       |
+
+## Timestamp validation
+
+时间戳验证可阻止已过期和时间过早的断言。如果当前时间早于 `NotBefore` 减去 `clockSkew`，或晚于 `NotOnOrAfter` 加上 `clockSkew`，响应就会被拒绝。`clockSkew` 用于容忍服务器与 IdP 之间的小幅时间差，默认值为 5 分钟。
+
+除非所依赖的 IdP 不发送 `NotBefore` 和 `NotOnOrAfter`，否则请设置 `requireTimestamps: true`。[SAML2Int](https://kantarainitiative.github.io/SAMLprofiles/saml2int.html) 要求包含这些字段，但 [SAML Core §2.5.1](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf) 将其设为可选。
+
+使用默认值 `false` 时，Better Auth 会接受这两个时间条件都缺失的断言，并记录警告。
+
+```ts title="auth.ts"
+sso({
+  saml: {
+    clockSkew: 60_000, // 1 minute, in milliseconds // [!code highlight]
+    requireTimestamps: true, // [!code highlight]
+  },
+})
+```
+
+| `error`      | `error_description`                                    | 原因                                                       | 处理方式                                                                                              |
+| ------------ | ------------------------------------------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `saml_error` | `SAML assertion is not yet valid`                      | 当前时间早于 `NotBefore` 减去 `clockSkew`。               | 如果服务器时钟与 IdP 时钟不一致，请同步时钟，或增大 `clockSkew` 以涵盖差值。                           |
+| `saml_error` | `SAML assertion has expired`                           | 当前时间晚于 `NotOnOrAfter` 加上 `clockSkew`。            | 如果服务器时钟与 IdP 时钟不一致，请同步时钟，或增大 `clockSkew` 以涵盖差值。                           |
+| `saml_error` | `SAML assertion missing required timestamp conditions` | 已启用 `requireTimestamps`，但断言中两个时间条件都缺失。   | 将 IdP 配置为发送 `NotOnOrAfter`。                                                                     |
+
+## Algorithm validation
+
+算法验证会标记并可拒绝 RSA-SHA1 等弱算法，也会拒绝未知的签名和摘要算法。注册和更新提供者时都会检查配置中的 `signatureAlgorithm` 和 `digestAlgorithm`；不接受的值会使请求以 400 错误失败。
+
+请将每个 IdP 配置为使用 RSA-SHA256 或更强的算法签名；加密断言时，请使用 RSA-OAEP 和 AES-GCM。
+
+| 类型            | 接受的算法                                   | 已弃用     |
+| --------------- | -------------------------------------------- | ---------- |
+| 签名            | RSA 和 ECDSA，使用 SHA-256、SHA-384、SHA-512 | RSA-SHA1   |
+| 摘要            | SHA-256、SHA-384、SHA-512                    | SHA-1      |
+| 密钥加密        | RSA-OAEP                                     | RSA 1.5    |
+| 数据加密        | AES-CBC、AES-GCM                             | 3DES       |
+
+若要控制遇到已弃用算法时的行为，请设置 `algorithms.onDeprecated`：
+
+* `"warn"`（默认值）：记录警告并继续。
+* `"reject"`：使请求失败。
+* `"allow"`：不提示并继续。
+
+当生产环境中的 IdP 都已使用上述受支持算法后，请将 `onDeprecated` 设为 `"reject"`。
+
+若要只接受特定算法，请将 `allowedSignatureAlgorithms`、`allowedDigestAlgorithms`、`allowedKeyEncryptionAlgorithms` 或 `allowedDataEncryptionAlgorithms` 设为算法 URI 列表。`@better-auth/sso` 导出的 `SignatureAlgorithm`、`DigestAlgorithm`、`KeyEncryptionAlgorithm` 和 `DataEncryptionAlgorithm` 常量中包含这些 URI。
+
+```ts title="auth.ts"
+import { sso, SignatureAlgorithm } from "@better-auth/sso";
+
+sso({
+  saml: {
+    algorithms: {
+      onDeprecated: "reject", // [!code highlight]
+      allowedSignatureAlgorithms: [SignatureAlgorithm.RSA_SHA256], // [!code highlight]
+    },
+  },
+})
+```
+
+<Callout type="warn">
+  允许列表会取代对应类型的弃用和未知算法检查。列入列表的已弃用 URI 会被接受，且不会产生警告。
+</Callout>
+
+| 代码                               | 原因                                                                                                | 处理方式                                                                                                   |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `SAML_UNKNOWN_ALGORITHM`           | 未设置允许列表，且签名或摘要算法不在任一列表中。                                                    | 在 IdP 或提供者配置中使用受支持算法，或将对应 URI 加入匹配的允许列表。                                     |
+| `SAML_ALGORITHM_NOT_ALLOWED`       | 此算法未列入对应类型的允许列表。                                                                    | 将其 URI 加入允许列表，或在 IdP 或提供者配置中使用已列出的算法。                                           |
+| `SAML_DEPRECATED_ALGORITHM`        | 在 ACS 处，`onDeprecated` 为 `"reject"`，且响应使用了已弃用算法。                                  | 将 IdP 配置为使用受支持的算法。                                                                            |
+| `SAML_DEPRECATED_CONFIG_ALGORITHM` | 注册或更新时，`onDeprecated` 为 `"reject"`，且配置使用了已弃用算法。                               | 将 `signatureAlgorithm` 或 `digestAlgorithm` 设为受支持的值。                                             |
+
+## Size limits
+
+`maxResponseSize` 会限制 SAML 响应大小（默认 256 KB）。`maxMetadataSize` 会限制 IdP 和 SP 元数据大小（默认 100 KB），注册和更新提供者时也会执行此限制。
+
+若要接受会发送大型群组声明的 IdP，请提高响应大小限制：
+
+```ts title="auth.ts"
+sso({
+  saml: {
+    maxResponseSize: 512 * 1024, // 512 KB, in bytes // [!code highlight]
+  },
+})
+```
+
+这些限制会在应用读取请求体后生效。若要在超大请求体到达应用前拒绝它们，请在反向代理或负载均衡器上设置请求体大小上限。
+
+| `error`      | `error_description`                                      | 原因                                                                        | 处理方式                                                                |
+| ------------ | -------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `saml_error` | `SAML response exceeds maximum allowed size ({n} bytes)` | 编码后的响应大小超过 `maxResponseSize`；`{n}` 表示该限制值。                  | 增大 `maxResponseSize`，或将 IdP 配置为减少发送的属性。                  |

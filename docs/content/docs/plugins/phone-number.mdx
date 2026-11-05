@@ -233,7 +233,7 @@ await authClient.updateUser({
 })
 ```
 
-出于安全原因，通过 `updateUser` 更新非空电话号码仍然被阻止。将电话号码更改为不同号码始终需要通过 `verify` 并设置 `updatePhoneNumber: true` 进行 OTP 验证。
+出于安全考虑，电话号码只能通过验证后设置。通过 `updateUser` 提交非空号码，或在注册、登录路由中提交 `phoneNumber`，都会被拒绝；从社交资料映射的号码也不会被存储，包括关联账户时。更改为其他电话号码时，始终需要通过 `verify` 并设置 `updatePhoneNumber: true` 来完成 OTP 验证。
 
 ### 禁用会话创建
 
@@ -378,7 +378,9 @@ export const auth = betterAuth({
 
 启用后，用户在电话号码验证之前无法登录。如果未验证的电话号码尝试登录，服务器将返回 401 错误（PHONE\_NUMBER\_NOT\_VERIFIED）并自动触发 OTP 发送以开始验证过程。
 
-## 架构
+重置密码也要求电话号码已验证。系统不会向未验证的号码发送重置码；`resetPassword` 会返回 400 错误（PHONE\_NUMBER\_PENDING\_VERIFICATION），且不会新增或更改密码。
+
+## Schema
 
 该插件需要在用户表中添加 2 个字段
 

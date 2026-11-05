@@ -127,7 +127,9 @@ await authClient.passkey.addPasskey({
 
 当 `createSession` 为 `true` 时，成功验证会设置会话 cookie，并返回与已注册 passkey 关联的 `session` 和 `user`。如果您想避免在 WebAuthn 流程成功之前创建用户，请在 `registration.afterVerification` 中创建或加载用户，并返回其 `userId`。
 
-## 用法
+设置 `registration.requireSession: false` 时，有会话的注册流程必须使用同一有效会话完成验证。无会话启动的注册流程则会使用 `resolveUser`。
+
+## Usage
 
 ### 添加/注册 passkey 密钥
 
@@ -445,24 +447,30 @@ export const passkeyTableFields = [
 
 **rpName**：您网站的人类可读名称。
 
-**origin**：您的 better-auth 服务器所在的源 URL，例如 `http://localhost` 或 `http://localhost:PORT`。请勿包含尾部斜杠。
+**origin**：passkey 注册和身份验证所在的来源或来源列表，末尾不要带 `/`。默认值为 `baseURL` 的来源，以及在 `trustedOrigins` 中精确列出的前端来源。当设置了 `rpID` 且 `baseURL.allowedHosts` 中的通配符覆盖此来源时，请显式设置该选项。
+
+```ts title="auth.ts"
+passkey({
+  origin: ["https://app.example.com", "https://admin.example.com"],
+});
+```
 
 **authenticatorSelection**：允许自定义 WebAuthn 认证器选择标准。若不指定则为默认设置。
 
-* `authenticatorAttachment`：指定认证器类型
-  * `platform`：认证器附着于平台（例如指纹读取器）
-  * `cross-platform`：认证器未附着于平台（例如安全密钥）
-  * 默认：`未设置`（允许平台和跨平台，优先使用平台）
-* `residentKey`：决定凭证存储行为。
-  * `required`：用户必须在认证器上存储凭证（最高安全性）
-  * `preferred`：鼓励存储凭证但非强制
-  * `discouraged`：不要求存储凭证（最快体验）
-  * 默认：`preferred`
-* `userVerification`：控制生物识别/PIN 验证：
-  * `required`：用户必须验证身份（最高安全性）
-  * `preferred`：鼓励验证但非强制
-  * `discouraged`：无需验证（最快体验）
-  * 默认：`preferred`
+* `authenticatorAttachment`: Specifies the type of authenticator
+  * `platform`: Authenticator is attached to the platform (e.g., fingerprint reader)
+  * `cross-platform`: Authenticator is not attached to the platform (e.g., security key)
+  * Default: `not set` (both platform and cross-platform allowed, with platform preferred)
+* `residentKey`: Determines credential storage behavior.
+  * `required`: User MUST store credentials on the authenticator (highest security)
+  * `preferred`: Encourages credential storage but not mandatory
+  * `discouraged`: No credential storage required (fastest experience)
+  * Default: `preferred`
+* `userVerification`：控制注册和身份验证期间是否进行生物识别/PIN 验证。设为 `required` 时，不含用户验证信息的响应会被拒绝。
+  * `required`: User MUST verify identity (highest security)
+  * `preferred`: Verification encouraged but not mandatory
+  * `discouraged`: No verification required (fastest experience)
+  * Default: `preferred`
 
 **advanced**：高级选项
 

@@ -1,0 +1,140 @@
+---
+icon: pluginsSSODomainVerification
+sidebarTitle: "域名验证"
+title: 验证 SSO 域名
+description: 用户登录前，使用 DNS TXT 记录证明提供者电子邮件域名的所有权。
+---
+
+## Enable domain verification
+
+若要要求证明域名所有权，请设置 `domainVerification.enabled`。未启用时，提供者可以为注册者填写的任何域名登录用户，即使注册者并不拥有该域名。启用后，每个新提供者都会从未验证状态开始；在其域名通过验证前，登录会返回 `401` 和 "Provider domain has not been verified"。经过验证的域名还可让 SSO 关联邮箱匹配的现有用户，并启用基于域名的[组织分配](/docs/plugins/sso/provisioning#organization-provisioning)。在 `defaultSSO` 中配置的提供者会被视为已验证。
+
+禁用域名验证时，Better Auth 不会根据邮箱域名匹配来创建组织成员关系。已关联到组织的提供者仍然可以预配成员，`signIn.sso` 也仍可根据邮箱或域名查找提供者。
+
+请在服务器和客户端上都启用此选项。客户端启用后，类型中会加入验证端点。
+
+<Tabs items={["server", "client"]}>
+  <Tab value="server">
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
+    import { sso } from "@better-auth/sso";
+
+    export const auth = betterAuth({
+      plugins: [
+        sso({
+          domainVerification: { enabled: true }, // [!code highlight]
+        }),
+      ],
+    });
+    ```
+  </Tab>
+
+  <Tab value="client">
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client";
+    import { ssoClient } from "@better-auth/sso/client";
+
+    export const authClient = createAuthClient({
+      plugins: [
+        ssoClient({
+          domainVerification: { enabled: true }, // [!code highlight]
+        }),
+      ],
+    });
+    ```
+  </Tab>
+</Tabs>
+
+此选项会在 `ssoProvider` 表中添加 `domainVerified` 字段，因此需要再次迁移数据库。
+
+<Tabs items={["migrate", "generate"]}>
+  <Tab value="migrate">
+    ```package-install
+    npx auth migrate
+    ```
+  </Tab>
+
+  <Tab value="generate">
+    ```package-install
+    npx auth generate
+    ```
+  </Tab>
+</Tabs>
+
+手动添加字段时，请参阅 [Schema](/docs/plugins/sso/reference#schema) 一节。
+
+<Callout type="warn">
+  验证通过 `node:dns/promises` 解析 DNS。在不支持该模块的运行时中，`verify-domain` 会以 `DOMAIN_VERIFICATION_FAILED` 失败。
+</Callout>
+
+## Verify your domain
+
+<Steps>
+  <Step>
+    ### 获取验证令牌
+
+    注册响应会包含 `domainVerificationToken`。如果已找不到该令牌，或令牌已过期，请调用 [request-domain-verification](#request-a-verification-token)。
+  </Step>
+
+  <Step>
+    ### 发布 TXT 记录
+
+    在 `_{tokenPrefix}-{providerId}.{domain}` 添加 `TXT` 记录。开头的下划线用于将名称标记为属性叶节点，详见 [RFC 8552](https://datatracker.ietf.org/doc/html/rfc8552)。`tokenPrefix` 的默认值为 `better-auth-token`。例如，`example.com` 上的 `acme` 提供者需要在 `_better-auth-token-acme.example.com` 添加记录。记录值设为令牌，或设为 `{label}={token}`，其中 `{label}` 为 `_{tokenPrefix}-{providerId}`。
+
+    如果提供者设置了 `domain: "example.com,example.org"`，请在两个域名下都添加记录。标签最长为 63 个字符，因此 `tokenPrefix` 和提供者 ID 不宜过长。
+  </Step>
+
+  <Step>
+    ### 提交验证
+
+    记录生效后，调用 `verify-domain`。
+  </Step>
+</Steps>
+
+<APIMethod path="/sso/verify-domain" method="POST" requireSession>
+  ```ts
+  type verifyDomain = {
+    /**
+     * The ID of the provider to verify.
+     */
+    providerId: string = "acme"
+  }
+  ```
+</APIMethod>
+
+只有在所有列出的域名都能返回该记录时，此调用才会返回 `204` 并将提供者标记为已验证。之后，通过该提供者登录时，不再因域名未验证而返回 `401`。除非提供者的 `domain` 发生变化，否则无需再次调用 `verify-domain`。
+
+如果检查期间提供者发生变化，`verify-domain` 会返回 `409` 和 `SSO_PROVIDER_CHANGED`：
+
+* 如果域名已更改，请重新加载提供者并重试。
+* 如果提供者已删除，则无需继续验证。
+
+## Request a verification token
+
+<APIMethod path="/sso/request-domain-verification" method="POST" requireSession>
+  ```ts
+  type requestDomainVerification = {
+    /**
+     * The ID of the provider to issue a token for.
+     */
+    providerId: string = "acme"
+  }
+  ```
+</APIMethod>
+
+当前 `domainVerificationToken` 有效时，此调用会返回该令牌；没有有效令牌时，则会签发新令牌。每次收到新令牌后都要更新 TXT 记录。令牌有效期为一周。
+
+通过 [`update-provider`](/docs/plugins/sso#manage-providers) 更改 `domain` 会将 `domainVerified` 重置。重新验证前，通过该提供者登录会返回 `401`。
+
+## Errors
+
+这两个端点都要求调用者有权访问提供者：已登录用户必须拥有该提供者，或是其所属组织的所有者或管理员。无权访问时返回 `403`；提供者不存在时返回 `404`。
+
+| 代码                         | 状态   | 原因                                                                               | 处理方式                                                                                                                                                                     |
+| ---------------------------- | ------ | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DOMAIN_VERIFIED`            | 409    | 提供者已验证。                                                                     | 无需处理。                                                                                                                                                                   |
+| `NO_PENDING_VERIFICATION`    | 404    | 提供者没有尚未过期的令牌。                                                         | 申请新令牌，并使用它更新 TXT 记录。                                                                                                                                         |
+| `IDENTIFIER_TOO_LONG`        | 400    | `_{tokenPrefix}-{providerId}` 超过 63 个字符。                                     | 缩短 `tokenPrefix` 或提供者 ID。然后为新标签申请令牌，并在该标签下发布记录。                                                                                                  |
+| `INVALID_DOMAIN`             | 400    | 提供者 `domain` 值中的某个条目不是有效域名。                                      | 通过 `update-provider` 更正 `domain` 值。                                                                                                                                   |
+| `DOMAIN_VERIFICATION_FAILED` | 502    | 域名没有匹配的 TXT 记录。若 `node:dns` 不可用，则返回 `500`。                     | 返回 `502` 时，请检查各域名下记录的名称和值，等待 DNS 生效后重试。返回 `500` 时，请在支持 `node:dns/promises` 的运行时中运行服务器。                                          |
+| `SSO_PROVIDER_CHANGED`       | 409    | 验证期间域名发生了变化，或提供者已删除。                                           | 重新加载提供者；如果它仍然存在，请重试。                                                                                                                                     |

@@ -250,7 +250,9 @@ export const auth = betterAuth({
   * 对敏感操作使用 `disableCookieCache: true`
 </Callout>
 
-#### Cookie 缓存策略
+当会话存储在数据库或二级存储中时，passkey 注册、设备授权、双重验证、社交账户关联和电话号码变更都会检查其中的会话。因此，即使 Cookie 缓存仍然有效，已撤销的会话也无法执行这些操作。
+
+#### Cookie Cache Strategies
 
 Better Auth 支持三种不同的 Cookie 缓存编码策略：
 

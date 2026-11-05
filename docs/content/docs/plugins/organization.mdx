@@ -776,7 +776,9 @@ export const auth = betterAuth({
   ```
 </APIMethod>
 
-### 更新组织
+`invitations` 数组遵循[列出邀请](#list-invitations)的相同规则；无权列出邀请的成员会得到空数组。
+
+### Update Organization
 
 要更新组织信息，可以使用 `organization.update`。
 
@@ -802,7 +804,7 @@ export const auth = betterAuth({
           /**
            * 组织的元数据。 
            */
-          metadata?: Record<string, any> | null = { customerId: "test" }
+          metadata?: Record<string, any> = { customerId: "test" }
       }
       /**
        * 要更新的组织 ID。
@@ -1032,7 +1034,9 @@ export const auth = betterAuth({
   ```
 </APIMethod>
 
-响应中包含邀请 ID。请将这些 ID 视为具有操作能力的邀请链接。如果能够列出组织邀请的用户不应使用这些 ID 在未验证的收件人会话中执行操作，请启用 `requireEmailVerificationOnInvitation`，或在应用层为该端点添加权限检查。
+只有其角色具有 `invitation` `create` 权限的成员才能列出邀请。其他成员会收到 `403`。只有持有创建者角色的成员才能列出分配给该角色的邀请。
+
+The response includes invitation IDs. Treat those IDs as action-capable invitation links. If users who can list organization invitations should not be able to use those IDs with unverified recipient sessions, enable `requireEmailVerificationOnInvitation` or add app-level permission checks around this endpoint.
 
 ### 列出用户邀请
 
@@ -1177,9 +1181,9 @@ const invitations = await auth.api.listUserInvitations({
   ```ts
   type addMember = {
       /**
-       * 表示要添加为成员的用户 ID。如果提供 `null`，则需要提供会话头。 
+       * The ID of the user to add as a member.
        */
-      userId?: string | null = "user-id"
+      userId: string = "user-id"
       /**
        * 要分配给新成员的角色。 
        */

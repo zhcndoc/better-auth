@@ -1,0 +1,207 @@
+---
+icon: pluginsSSOProvisioning
+sidebarTitle: "用户与组织"
+title: SSO 用户与组织
+description: 控制 SSO 身份如何映射到用户、运行预配代码，以及将用户加入组织。
+---
+
+每次 SSO 登录最终都会对应一个 Better Auth 用户。
+
+## How SSO users are matched
+
+Better Auth 会将每个 SSO 身份存为一个 `account`，以提供者 ID 和 OIDC `sub` 声明或 SAML `NameID` 作为键。只有这两项的组合可以识别用户，而不是邮箱（[OIDC Core §5.7](https://openid.net/specs/openid-connect-core-1_0.html#ClaimStability)，[SAML Core §2.2.3](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf)）。提供者可以断言任意邮箱地址。只有通过以下检查时，Better Auth 才会按邮箱关联账户。
+
+* **已有账户。** 账户所有者登录。
+* **新账户，邮箱尚无对应用户。** 系统会创建 `emailVerified: false` 的新用户。若要拒绝尚未预配的用户，请在 [`resolveUser`](#resolve-sso-users) 中返回 `{ action: "reject" }`。
+* **新账户，邮箱已有对应用户。** 在以下情况下，Better Auth 会关联账户：
+
+  * [`resolveUser`](#resolve-sso-users) 返回 `link`。账户会关联到其指定的 `userId`。
+  * 以下条件全部满足时，账户会关联到邮箱对应的用户：
+    * 提供者的[域名已验证](/docs/plugins/sso/domain-verification#enable-domain-verification)。只有当 `domainVerification.enabled` 为 `true` 时，[`defaultSSO`](/docs/plugins/sso#configure-providers-in-code) 提供者才会被视为已验证。
+    * 邮箱域名与提供者的某个域名相同，或属于其子域名。例如，`user@eng.acme.com` 会匹配 `acme.com` 的提供者。
+    * 现有用户的邮箱已验证。设置 `account.accountLinking.requireLocalEmailVerified: false` 可跳过此检查。请保留默认设置：否则，攻击者可能先使用他人的邮箱注册账户，之后该用户的 SSO 登录就会被关联到攻击者控制的账户。
+    * 已启用账户关联：`account.accountLinking.enabled` 不为 `false`，且 `account.accountLinking.disableImplicitLinking` 不为 `true`。
+  * 启用了已弃用的 `trustEmailVerified` 选项，且 IdP 报告该邮箱已验证。此时无需验证域名即可将账户关联到该邮箱对应的用户。现有用户的邮箱仍须已验证，并且必须启用账户关联。
+
+  否则登录会失败。OIDC 会带有 `error=account not linked` 重定向，SAML 则会带有 `error=account_not_linked` 重定向。若要允许登录，请满足上述任一条件。例如，其他关联条件已满足时，可验证提供者的域名；也可以让 `resolveUser` 返回 `link`。
+
+`account.accountLinking.trustedProviders` 不适用于 SSO 提供者，注册时若 `providerId` 列在其中也会被拒绝。SSO 提供者的 ID 由注册者选择，因此只有通过域名验证才能建立信任。
+
+<Callout type="warn">
+  已弃用的 `trustEmailVerified` 选项会信任 IdP 的 `email_verified` 声明或映射属性。任何能注册提供者的人都可以声明任意邮箱地址，并接管相应账户。请改用域名验证或 `resolveUser`。
+</Callout>
+
+### Block new users
+
+若要关闭 SSO 的隐式注册，请设置 `disableImplicitSignUp: true`。原本会创建用户的登录请求会以 `error=signup disabled` 失败（SAML 为 `error=signup_disabled`）。若要允许此用户登录，请自行创建用户，并让 [`resolveUser`](#resolve-sso-users) 返回 `link`。
+
+SAML 会忽略 `requestSignUp`，但 OIDC 登录在调用 `signIn.sso` 时若传入 `requestSignUp: true`，仍会创建用户。任何客户端都可以发送此标志。对于 OIDC，`disableImplicitSignUp` 只会更改默认行为。若要拒绝尚未预配的用户，请让 `resolveUser` 返回 `{ action: "reject" }`。
+
+```ts title="auth.ts"
+sso({
+  disableImplicitSignUp: true, // [!code highlight]
+});
+```
+
+### Update profiles on sign-in
+
+Better Auth 只会在创建用户时设置其个人资料。若要在每次登录时刷新个人资料，请在 OIDC 提供者上设置 `overrideUserInfo: true`。之后，每次登录都会用 IdP 的值覆盖用户的 `name`、`email`、`image` 和映射的附加字段。只有当 IdP 能控制用户的邮箱地址时才启用此功能。
+
+* 更改后的邮箱会以未验证状态存储，除非启用了已弃用的 `trustEmailVerified` 选项，且 IdP 报告邮箱已验证。
+* 可在注册请求体中为单个提供者设置此选项。若要将其应用到之后注册的所有提供者，请在插件中设置 `defaultOverrideUserInfo: true`。
+* SAML 登录只有在 `resolveUser` 返回 `profile: "update"` 时才会更新个人资料。
+
+## Resolve SSO users
+
+若要将 OIDC 或 SAML 身份映射到现有 Better Auth 用户，而不是依赖邮箱匹配，请使用 `resolveUser`。Better Auth 验证协议身份后，会在每次 SSO 登录时运行此解析器。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { sso } from "@better-auth/sso";
+import {
+    findProvisionedUserByAccountKey,
+    validateOIDCClaims,
+    validateSAMLAttributes,
+} from "@/lib/provisioning";
+
+const auth = betterAuth({
+    plugins: [
+        sso({
+            resolveUser: async (input, context) => {
+                if (input.providerId !== "workforce") {
+                    return { action: "continue" };
+                }
+
+                if (input.protocol === "oidc") {
+                    await validateOIDCClaims(input.verifiedIdTokenClaims);
+                } else {
+                    await validateSAMLAttributes(input.providerAttributes);
+                }
+
+                const provisionedUser = await findProvisionedUserByAccountKey({
+                    providerId: input.providerId,
+                    issuer: input.accountKey.issuer,
+                    subject: input.accountKey.accountId,
+                    database: context.database,
+                });
+
+                if (!provisionedUser) {
+                    return {
+                        action: "reject",
+                        code: "PROVISIONED_USER_NOT_FOUND",
+                    };
+                }
+
+                return {
+                    action: "link",
+                    userId: provisionedUser.userId,
+                    profile: "preserve",
+                };
+            },
+        }),
+    ],
+});
+```
+
+解析器会收到 `input` 和 `context`。`input.protocol` 为 `"oidc"` 或 `"saml"`，`input.providerId` 为提供者 ID。`input` 还包含：
+
+* `accountKey.issuer`：OIDC 的 ID 令牌 `iss`，或 SAML 的 IdP entity ID。
+* `accountKey.accountId`：OIDC 的 ID 令牌 `sub`，或 SAML 的已签名 `NameID`。`NameID` 匹配区分大小写。
+* `providerUser`：标准化后的个人资料。
+* `verifiedIdTokenClaims`（仅 OIDC）：完整且经过验证的 ID 令牌载荷。
+* `providerClaims`（仅 OIDC）：UserInfo 声明；没有 UserInfo 端点时则为 ID 令牌声明。
+* `providerAttributes`（仅 SAML）：经过验证的断言属性。多值属性仍保留为数组。
+* `providerReference`：不透明的临时引用。切勿将其持久化为租户或用户绑定。
+
+将个人资料字段、声明和属性用于授权前，仍可能需要验证。示例中的 `findProvisionedUserByAccountKey` 是自定义函数。它应通过事务范围内的 `context.database` adapter 查找完全匹配的提供者、issuer 和主体组合。找不到准确的预配主体时，不要退回到邮箱匹配。
+
+解析器返回以下三种决策之一：
+
+* `{ action: "continue" }`：继续执行常规 SSO 登录行为。
+* `{ action: "link", userId, profile }`：将精确匹配的 SSO 账户关联到该用户。使用 `profile: "preserve"` 保留本地个人资料，或使用 `profile: "update"` 通过提供者资料更新。
+* `{ action: "reject", code, message? }`：使用应用自定义错误拒绝登录，不会创建账户或会话。
+
+拒绝登录后，浏览器会前往以下第一个已设置的地址：
+
+1. 传给 `signIn.sso()` 的 `errorCallbackURL`。
+2. `onAPIError.errorURL`。
+3. `{baseURL}/error`。
+
+IdP 发起的 SAML 登录则会前往[登录目标地址](/docs/plugins/sso/saml#acs-and-callback-urls)。重定向会将 `error` 设为 `code`；提供了 `message` 时，也会将其设为 `error_description`。请在目标页面读取这些参数，向用户说明登录失败原因。
+
+解析器抛出异常或返回无效决策时，登录会以 `error=SSO_USER_RESOLUTION_FAILED` 失败。服务器日志会记录具体原因。
+
+<Callout type="warn">
+  `resolveUser` 的使用条件：
+
+  * 数据库 adapter 支持原生事务和 async-context
+  * 每次 OIDC 登录都包含 ID 令牌
+  * 使用二级存储时，设置 `session.storeSessionInDatabase: true`，并保持 `session.preserveSessionInDatabase` 关闭
+</Callout>
+
+新的登录尝试可能会再次调用解析器，因此请确保其具备幂等性。解析、关联和创建会话期间通过 `context.database` 执行的写入会一并提交或回滚，且只有提交后才会设置会话 Cookie。网络调用、其他外部副作用和提交后钩子不会回滚。
+
+## User provisioning
+
+若要在 SSO 登录创建用户时运行自定义代码，请设置 `provisionUser`。它会收到 `{ user, userInfo, token, provider }`，且不返回值。若要在之后每次 SSO 登录时也运行，请在 `provisionUser` 旁设置 `provisionUserOnEveryLogin: true`。该函数会在[组织预配](#organization-provisioning)前运行。
+
+`userInfo` 包含映射后的个人资料，包括 `mapping.extraFields` 中的字段。`token` 包含 OIDC 令牌；SAML 中该值为 `undefined`。
+
+```ts title="auth.ts"
+sso({
+  provisionUser: async ({ user, userInfo }) => {
+    await upsertProfile(user.id, {
+      department: userInfo.department, // from mapping.extraFields
+    });
+  },
+});
+```
+
+如果 `provisionUser` 抛出异常，登录响应会失败，但用户仍会被创建。未设置 `provisionUserOnEveryLogin` 时，该用户不会再次触发此回调。因此，请捕获登录流程不依赖的调用所产生的错误。设置了 `provisionUserOnEveryLogin` 时，请确保回调具备幂等性。
+
+## Link a provider to an organization
+
+若要将通过提供者登录的用户加入组织，请在注册提供者时传入 `organizationId`。如果从浏览器通过会话 Cookie 可访问的路由中调用此方法，请先[检查请求的 `Origin`](/docs/reference/security#csrf-protection)。
+
+```ts title="register-provider.ts"
+await auth.api.registerSSOProvider({
+  body: {
+    providerId: "acme",
+    issuer: "https://idp.acme.com",
+    domain: "acme.com",
+    organizationId: "org_acme", // [!code highlight]
+    samlConfig: { /* ... */ },
+  },
+  headers: request.headers,
+});
+```
+
+调用者必须是该组织的成员，否则调用会返回 `400`。启用组织插件时，调用者还必须是组织的 `owner` 或 `admin`，否则会返回 `403`。之后，所有者和管理员可以列出、更新和删除该提供者。未启用组织插件时只会检查成员身份，且只有注册提供者的用户可以管理它。
+
+## Organization provisioning
+
+组织预配会将 SSO 用户作为成员加入组织。此功能需要[组织插件](/docs/plugins/organization)。
+
+* **通过带有 `organizationId` 的提供者登录。** 用户会以 `defaultRole` 加入该组织（默认值为 `"member"`）。设置了 `getRole({ user, userInfo, token, provider })` 时，用户会获得其返回的角色：`"member"` 或 `"admin"`。
+* **通过社交提供者登录。** 只有同时满足以下条件，用户才会加入组织：
+  * 已启用域名验证。
+  * 已存储用户的邮箱已验证。
+  * 邮箱域名只匹配一个组织中已验证提供者的域名。
+
+用户已经是成员，或持有该组织未过期的待处理邀请时，不会执行任何操作。自动预配既不会接受，也不会取消邀请。若要关闭预配，请设置 `organizationProvisioning.disabled: true`。
+
+在 `getRole` 中，OIDC 的 `userInfo` 是映射后的个人资料，SAML 的 `userInfo` 是原始断言属性；按域名分配时则为空。对于 OIDC，只有通过 `mapping.extraFields` 映射后，`groups` 等声明才会存在。
+
+组织 `admin` 可以列出、更新和删除该组织的 SSO 提供者。因此，从 IdP 群组声明返回 `"admin"`，会将组织 IdP 信任配置的控制权交给 IdP 上有权管理该群组的人。
+
+```ts title="auth.ts"
+sso({
+  organizationProvisioning: {
+    defaultRole: "member",
+    getRole: async ({ userInfo }) => {
+      const groups = [userInfo.groups].flat();
+      return groups.includes("sso-admins") ? "admin" : "member";
+    },
+  },
+});
+```

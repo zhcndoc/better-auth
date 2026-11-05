@@ -238,6 +238,17 @@ export const communityPlugins: CommunityPlugin[] = [
 		},
 	},
 	{
+		name: "@agentaos/better-auth",
+		url: "https://github.com/AgentaOS/agentaos/tree/main/packages/better-auth",
+		description:
+			"为 AgentaOS 接入 Better Auth 的 merchant-of-record 结账、订阅和已验证 webhook。",
+		author: {
+			name: "AgentaOS",
+			github: "AgentaOS",
+			avatar: "https://github.com/AgentaOS.png",
+		},
+	},
+	{
 		name: "better-invite",
 		url: "https://github.com/better-invite/better-invite",
 		description:
@@ -321,6 +332,17 @@ export const communityPlugins: CommunityPlugin[] = [
 			name: "Shivam Gupta",
 			github: "shivamrun",
 			avatar: "https://github.com/shivamrun.png",
+		},
+	},
+	{
+		name: "@amank-root/better-auth-razorpay",
+		url: "https://github.com/Amank-root/better-auth-razorpay",
+		description:
+			"为 Better Auth 提供完整的 Razorpay 集成，包括订阅、一次性付款、发票、退款、客户、附加项、商品和 webhook 处理。",
+		author: {
+			name: "Aman Kushwaha",
+			github: "Amank-root",
+			avatar: "https://github.com/Amank-root.png",
 		},
 	},
 	{
@@ -434,11 +456,88 @@ export const communityPlugins: CommunityPlugin[] = [
 		name: "good-webhooks",
 		url: "https://github.com/pplytas/good-webhooks",
 		description:
-			"Authenticated webhook endpoint management with typed client APIs, scoped permissions, signing-secret rotation, and optional self-hosted delivery. Currently in beta with a frozen public API.",
+			"Authenticated webhook endpoint management with typed client APIs, scoped permissions, signing-secret rotation, and optional self-hosted delivery.",
 		author: {
 			name: "Panagiotis Plytas",
 			github: "pplytas",
 			avatar: "https://github.com/pplytas.png",
+		},
+	},
+	{
+		name: "better-auth-saml-idp",
+		url: "https://github.com/mmcintosh/better-auth-saml-idp",
+		description:
+			"将 Better Auth 转换为 SAML 2.0 身份提供者，供 Microsoft 365、Google Workspace、Okta、Salesforce、AWS 等服务提供者使用。支持 SP 注册表、元数据导入、签名和加密断言、单点注销以及增强式多因素认证。",
+		author: {
+			name: "Mark McIntosh",
+			github: "mmcintosh",
+			avatar: "https://github.com/mmcintosh.png",
+		},
+	},
+	{
+		name: "better-auth-multi-tenant",
+		url: "https://github.com/Weesofficial/better-auth-multi-tenant",
+		description:
+			"通过子域名、自定义域名或路径实现多租户：从请求中解析租户，将每个会话绑定到对应租户，拒绝跨租户请求和未绑定会话，并将组织、管理员、SSO 和 API 密钥插件限制在租户范围内。",
+		author: {
+			name: "Weesofficial",
+			github: "Weesofficial",
+			avatar: "https://github.com/Weesofficial.png",
+		},
+	},
+	{
+		name: "better-auth-captcha",
+		url: "https://github.com/klynglabs/better-auth-captcha",
+		description:
+			"验证码插件的客户端部分。可在后台完成 Cloudflare Turnstile、reCAPTCHA v3、hCaptcha 或 CaptchaFox 挑战，并自动将令牌附加到受保护请求中。需要 better-auth 1.7 或更高版本。",
+		author: {
+			name: "aarmful",
+			github: "aarmful",
+			avatar: "https://github.com/aarmful.png",
+		},
+	},
+	{
+		name: "tauri-plugin-better-auth",
+		url: "https://github.com/laakal/tauri-plugin-better-auth",
+		description:
+			"为 Tauri 桌面应用接入 Better Auth：通过浏览器和 PKCE 登录，再经由深层链接或 loopback 返回；会话保存在 Rust 端（操作系统钥匙串），webview 不会接触令牌。支持 Tauri 2（0.1）和 Tauri 3 alpha（0.2）。",
+		author: {
+			name: "Enes Koç",
+			github: "laakal",
+			avatar: "https://github.com/laakal.png",
+		},
+	},
+	{
+		name: "better-auth-loginllama",
+		url: "https://github.com/joshghent/better-auth-loginllama",
+		description:
+			"使用 LoginLlama 对每次邮箱/密码登录进行账户接管风险评分（Tor、VPN、不可能的旅行、机器人），并在创建会话前阻止高风险登录。API 响应慢或不可用时会允许请求通过。",
+		author: {
+			name: "Josh Ghent",
+			github: "joshghent",
+			avatar: "https://github.com/joshghent.png",
+		},
+	},
+	{
+		name: "better-auth-waitlist",
+		url: "https://github.com/slargat/better-auth-waitlist",
+		description:
+			"完整的候补名单功能：实时队列和排位、状态链接、推荐、一次性邀请、管理工具，以及适用于所有注册方式的邀请制注册。",
+		author: {
+			name: "Seifeddine Largat",
+			github: "slargat",
+			avatar: "https://github.com/slargat.png",
+		},
+	},
+	{
+		name: "better-auth-trustware",
+		url: "https://github.com/danielmerja/better-auth-trustware",
+		description:
+			"通过 Trustware 为 Better Auth 处理加密货币账单：支持带续订发票和宽限期的订阅、一次性购买、按比例计费的套餐变更、试用、组织账单，以及功能和用量限制访问控制。",
+		author: {
+			name: "Daniel Merja",
+			github: "danielmerja",
+			avatar: "https://github.com/danielmerja.png",
 		},
 	},
 ];

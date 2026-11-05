@@ -1,0 +1,165 @@
+---
+icon: pluginsOAuthProviderOpenIDConnect
+sidebarTitle: "OpenID Connect"
+title: OpenID Connect 与注销
+description: 配置发现机制、ID 令牌和 UserInfo 声明、主体标识符及注销。
+---
+
+你的 OAuth 提供者同时也是 [OpenID Connect](https://openid.net/specs/openid-connect-core-1_0.html) 提供者。申请 `openid` scope 的客户端会收到 ID 令牌、可以调用 UserInfo，也可以参与注销流程。
+
+## Discovery metadata
+
+Better Auth 会在 `{issuer}/.well-known/openid-configuration` 提供 [OpenID Provider 元数据](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig)，并在 `{issuer}/.well-known/oauth-authorization-server` 提供[授权服务器元数据](https://datatracker.ietf.org/doc/html/rfc8414#section-3)。如果框架不会将这些路由转发给 `auth.handler`，请参阅[提供 well-known 元数据](/docs/plugins/oauth-provider#expose-the-well-known-metadata)。
+
+若设置的 `scopes` 不包含 `openid`，OpenID 配置端点会返回 404。若要提供此端点，请将 `openid` 添加到 `scopes`。
+
+若要公开少于服务器支持范围的 scope，或公开更多声明，请设置 `advertisedMetadata`：
+
+```ts title="auth.ts"
+oauthProvider({
+  scopes: ["openid", "profile", "email", "offline_access", "read:post"],
+  advertisedMetadata: { // [!code highlight]
+    scopes_supported: ["openid", "profile", "read:post"], // [!code highlight]
+    claims_supported: [ // [!code highlight]
+      "sub", "iss", "aud", "exp", "iat", "sid", "scope", "azp", // [!code highlight]
+      "name", "picture", "given_name", "family_name", // [!code highlight]
+      "locale", "https://example.com/org", // [!code highlight]
+    ], // [!code highlight]
+  }, // [!code highlight]
+})
+```
+
+`scopes_supported` 中的每个值也必须包含在 `scopes` 中，否则插件启动会失败。`claims_supported` 会取代默认列表（`sub`、`iss`、`aud`、`exp`、`iat`、`sid`、`scope`、`azp`，以及配置了 `profile` 和 `email` scope 时对应的声明），因此仍要保留的默认项也必须重新列出。请列出自定义声明函数添加的所有声明，以便客户端知晓。客户端只能通过 `claims.userinfo` 请求此列表中的名称。
+
+## ID token claims
+
+若要向 [ID 令牌](https://openid.net/specs/openid-connect-core-1_0.html#IDToken)添加声明，请设置 `customIdTokenClaims`。它会收到 `user`、已批准的 `scopes` 和客户端的 `metadata`，并返回要添加的声明对象：
+
+```ts title="auth.ts"
+oauthProvider({
+  customIdTokenClaims: ({ user, scopes, metadata }) => ({ // [!code highlight]
+    "https://example.com/org": user.organizationId, // [!code highlight]
+  }), // [!code highlight]
+})
+```
+
+* 在授权码流程中，`profile` 和 `email` 声明会放入 UserInfo，而不是 ID 令牌。若客户端需要在 ID 令牌中获取这些声明，请在 `customIdTokenClaims` 中添加。
+* Better Auth 负责协议声明（`iss`、`sub`、`aud`、`exp`、`nbf`、`iat`、`jti`、`nonce`、`sid`、`at_hash`、`c_hash`、`s_hash`、`auth_time`、`acr`、`amr`、`azp`）。自定义返回这些名称时会被丢弃，并记录警告日志。
+* 按照 [OIDC Core §5.1.2](https://openid.net/specs/openid-connect-core-1_0.html#AdditionalClaims) 的建议，应用声明应使用 URI 命名空间。
+* 若要停止签发令牌（例如用户已离开组织），请在函数中抛出错误。
+
+扩展也会提供声明时，请参阅[声明优先级](/docs/plugins/oauth-provider/reference#claim-precedence)。
+
+Better Auth 会公开 `acr_values_supported: ["0"]`，并且**始终**签发 `acr: "0"`，表示身份验证未达到 ISO/IEC 29115 第 1 级（[OIDC Core §2](https://openid.net/specs/openid-connect-core-1_0.html#IDToken)）。不支持自定义 ACR 策略。请求其他 `acr_values` 仍会成功，但如果必需的 `claims.id_token.acr` 请求不允许 `"0"`，则会失败。
+
+设置 `disableJwtPlugin: true` 时，ID 令牌会使用客户端密钥通过 `HS256` 签名，因此公有客户端不会获得 ID 令牌。请参阅[不使用 JWT 插件](/docs/plugins/oauth-provider/tokens#without-the-jwt-plugin)。
+
+## UserInfo
+
+`/oauth2/userinfo` 接受 GET 和 POST 请求，并为 scope 包含 `openid` 的访问令牌返回声明。不含 `openid` 的令牌会收到 400 `invalid_scope`。过期、已撤销或其会话已结束的令牌会收到 401 `invalid_token`（[RFC 6750 §3.1](https://datatracker.ietf.org/doc/html/rfc6750#section-3.1)）。
+
+```ts
+const response = await fetch("https://auth.example.com/api/auth/oauth2/userinfo", {
+  headers: { Authorization: `Bearer ${accessToken}` },
+});
+```
+
+声明由已批准的 [scope](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims) 决定：
+
+| 范围      | 声明                                            |
+| --------- | ---------------------------------------------- |
+| `openid`  | `sub`                                          |
+| `profile` | `name`、`picture`、`given_name`、`family_name` |
+| `email`   | `email`、`email_verified`                      |
+
+通过 [`claims.userinfo` 参数](https://openid.net/specs/openid-connect-core-1_0.html#IndividualClaimsRequests)请求的声明，只有在 `claims_supported` 中列出且存在对应值时才会添加。缺失的值会被省略，而不会以 `null` 返回。此类逐项声明选择仅适用于不透明访问令牌。使用 JWT 访问令牌时，UserInfo 只会返回其 scope 所涵盖的声明。
+
+若要向 [UserInfo 响应](https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse)添加声明，请设置 `customUserInfoClaims`。它会收到 `user`、访问令牌的 `scopes`、作为 `jwt` 传入的访问令牌载荷，以及 `requestedClaims`。`requestedClaims` 列出了通过 `claims.userinfo` 请求的声明名称。函数会返回要添加的声明对象：
+
+```ts title="auth.ts"
+oauthProvider({
+  customUserInfoClaims: ({ user, scopes, requestedClaims, jwt }) => ({ // [!code highlight]
+    locale: "en-GB", // [!code highlight]
+    ...(requestedClaims.includes("website") ? { website: user.website } : {}), // [!code highlight]
+  }), // [!code highlight]
+})
+```
+
+除 `sub` 外，返回的声明会替换同名的标准声明。
+
+## Pairwise subject identifiers
+
+不同客户端收到相同用户的相同 `sub` 时，就能关联该用户在这些客户端中的活动。默认情况下，`sub` 是用户 ID，对所有客户端都相同（`public` [主体类型](https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes)）。若要让客户端收到无法与其他客户端关联的 `sub`，请设置 `pairwiseSecret`：
+
+```ts title="auth.ts"
+oauthProvider({
+  pairwiseSecret: process.env.PAIRWISE_SECRET, // at least 32 characters // [!code highlight]
+})
+```
+
+之后，发现文档会在 `subject_types_supported` 中列出 `"public"` 和 `"pairwise"`。客户端可通过动态注册或 `adminCreateOAuthClient` 设置 `subject_type: "pairwise"` 以启用此功能。`createOAuthClient` 会忽略该字段。
+
+Better Auth 会使用 HMAC-SHA256 对客户端首个重定向 URI 的主机和用户 ID 进行计算（[OIDC Core §8.1](https://openid.net/specs/openid-connect-core-1_0.html#PairwiseAlg)）。共用重定向主机的客户端也会共用同一个 `sub`。
+
+* 成对 `sub` 会出现在 ID 令牌、UserInfo 和令牌核查结果中。核查结果返回签发该令牌的客户端对应的 `sub`。
+* JWT 访问令牌仍以真实用户 ID 作为 `sub`，方便资源服务器查找用户。客户端可以解码自己的 JWT 访问令牌，因此申请 `resource` 的成对客户端会得知真实用户 ID。若要向成对客户端隐藏用户 ID，请让其省略 `resource` 并申请不透明令牌。
+
+<Callout type="warn">
+  `pairwiseSecret` 至少需要 32 个字符。更改它会改变所有成对 `sub`，并导致现有客户端账户失效。请将其视为永久配置。
+</Callout>
+
+不支持 `sector_identifier_uri`。因此，成对客户端的所有 `redirect_uris` 必须使用同一主机。成对客户端也不能使用包含主机的自定义 scheme 重定向 URI，例如 `app://rp.example.com/callback`。任何应用都可能声明该自定义 scheme，并收到与重定向到 `rp.example.com` 的成对 Web 客户端相同的 `sub`。上述情况都会导致注册以 `invalid_client_metadata` 失败。
+
+## RP-initiated logout
+
+若要允许客户端结束用户会话，请在注册时设置 `enable_end_session: true`。`/oauth2/end-session` 端点随后会为该客户端实现 [RP 发起的注销](https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout)：
+
+```ts title="auth.ts"
+await auth.api.adminCreateOAuthClient({
+  headers,
+  body: {
+    redirect_uris: ["https://app.example.com/callback"],
+    enable_end_session: true, // [!code highlight]
+  },
+});
+```
+
+* 接受 GET 查询参数或表单编码的 POST 请求体。
+* 当前浏览器会话对应的有效 `id_token_hint` 会立即结束会话。若未提供该参数，或提示对应其他会话，则用户必须先确认。在浏览器中，Better Auth 会提供确认页面。
+* 只有当 `post_logout_redirect_uri` 与已注册 URI 完全匹配时，Better Auth 才会[在注销后重定向](https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RedirectionAfterLogout)，并且仅在该重定向中附加 `state`。例如，`https://app.example.com/logout/` 与已注册的 `https://app.example.com/logout` 不匹配。没有匹配 URI 时，浏览器会显示 Better Auth 提供的已注销页面。
+
+仅对受信任的客户端启用此功能。客户端或持有其所获 ID 令牌的任何人都可以在未经确认的情况下结束该令牌对应的会话，原因如下：
+
+* 有效的 `id_token_hint` 不需要用户浏览器即可发起请求。
+* 过期的 ID 令牌仍会被接受为提示。
+
+结束会话还会为所有持有该会话令牌的客户端触发后端通道注销。
+
+## Back-channel logout
+
+若要在用户会话结束时通知客户端，请为其注册 `backchannel_logout_uri`。会话可能通过退出登录、end-session 或管理员撤销等方式结束。随后，Better Auth 会向注册了 URI 且持有该会话令牌的每个客户端发送经过签名的 [Logout Token](https://openid.net/specs/openid-connect-backchannel-1_0.html#LogoutToken)：
+
+```ts title="auth.ts"
+await auth.api.adminCreateOAuthClient({
+  headers,
+  body: {
+    redirect_uris: ["https://app.example.com/callback"],
+    backchannel_logout_uri: "https://app.example.com/logout/backchannel", // [!code highlight]
+    backchannel_logout_session_required: true,
+  },
+});
+```
+
+* 系统会通过为会话存储的不透明访问令牌和刷新令牌查找接收方。若客户端只持有该会话的 JWT 访问令牌（例如申请 `resource` 但不申请 `offline_access`），则不会收到通知。
+* Logout Token 带有 `typ: logout+jwt`，始终包含 `sid`，有效期为 120 秒。它们由 JWT 插件签名，因此客户端可使用你的 JWKS 验证。每个[请求](https://openid.net/specs/openid-connect-backchannel-1_0.html#BCRequest)超时为 5 秒，且不会重试。
+* Better Auth 还会撤销该会话的访问令牌，以及不含 `offline_access` 的刷新令牌。含有 `offline_access` 的刷新令牌会保留，符合 [§2.7](https://openid.net/specs/openid-connect-backchannel-1_0.html#BCActions) 的规定。
+* `backchannel_logout_uri` 必须是公开的 `https` URL，且不能包含凭据或片段。loopback、私有和元数据主机会因 `invalid_client_metadata` 被拒绝。检查不会解析 DNS，因此解析到私有地址的公共主机名仍会通过。如果不可信方可以在你的服务器上注册客户端，请阻止认证服务器向私有网络发起出站请求。
+* 通过 [CIMD](/docs/plugins/cimd) 注册的客户端不能使用后端通道注销。
+
+<Callout type="warn">
+  后端通道注销需要 [JWT 插件](/docs/plugins/jwt)来签署 Logout Token。设置 `disableJwtPlugin: true` 时，注册 `backchannel_logout_uri` 会失败，发现文档也会公开 `backchannel_logout_supported: false`。
+</Callout>
+
+<Callout type="info">
+  设置了 `advanced.backgroundTasks.handler` 时，通知会通过该处理器发送，因此响应较慢的客户端不会延迟退出登录。未设置处理器时，系统会在返回退出登录响应前发送通知；部署到 serverless 运行时的应用应设置此处理器。
+</Callout>

@@ -1,0 +1,304 @@
+---
+icon: pluginsOAuthProviderTokens
+sidebarTitle: "令牌与 scope"
+title: 令牌、scope 与资源
+description: 控制提供者签发哪些令牌、面向哪些 API，以及令牌的有效期。
+---
+
+## Token endpoint
+
+`POST /oauth2/token` 支持 `authorization_code`、`client_credentials` 和 `refresh_token` 授权许可。机密客户端必须使用注册时选择的方式进行身份验证，可选方式见 [RFC 6749 §2.3.1](https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1) 和 [OIDC Core §9](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication)：
+
+| 方法                  | 客户端身份验证方式                                                                                     |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `client_secret_basic` | 在 HTTP Basic `Authorization` 请求头中传入 `client_id` 和 `client_secret`（默认方式）                 |
+| `client_secret_post`  | 在请求体中传入 `client_id` 和 `client_secret`                                                         |
+| `private_key_jwt`     | 已签名的 JWT 断言。请参阅[私钥 JWT](/docs/plugins/oauth-provider/clients#private-key-jwt)。             |
+| `none`                | 公有客户端。必须使用 PKCE。                                                                            |
+
+若要获取 JWT 访问令牌，请在请求中包含 `resource` 并启用 JWT 插件。令牌的 `aud` 即为该资源。如果 scope 还包含 `openid`，则 `aud` 会是一个数组，并额外包含 UserInfo 端点 URL。缺少任一条件时，访问令牌会是不透明令牌。错误代码列表见[令牌错误](/docs/plugins/oauth-provider/reference#token-errors)。
+
+## Scopes
+
+若要控制客户端可以申请哪些 scope，请设置 `scopes`。默认值为 `["openid", "profile", "email", "offline_access"]`。只有该列表包含 `openid` 时，提供者才会作为 OpenID 提供者运行。
+
+| 范围             | 授予内容                                                       |
+| ---------------- | -------------------------------------------------------------- |
+| `openid`         | ID 令牌和 `sub` 声明                                           |
+| `profile`        | UserInfo 中的 `name`、`picture`、`given_name` 和 `family_name`  |
+| `email`          | UserInfo 中的 `email` 和 `email_verified`                      |
+| `offline_access` | 刷新令牌                                                       |
+
+对于会签发访问令牌的流程，按照 [OIDC Core §5.4](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims) 的规定，标准声明会在 UserInfo 中返回，而不在 ID 令牌中返回。
+
+```ts title="auth.ts"
+oauthProvider({
+  scopes: ["openid", "profile", "offline_access", "read:post", "write:post"],
+})
+```
+
+## Resources
+
+资源是由提供者签发访问令牌、受到保护的 API。其 `identifier` 对应 [RFC 8707 §2](https://datatracker.ietf.org/doc/html/rfc8707#section-2) 中的 `resource` 参数值，并会成为 JWT 访问令牌的 `aud`。
+
+<Callout type="warn">
+  客户端只能获取其已关联资源的访问令牌。authorize 和 token 端点会以 `invalid_target` 拒绝其他 `resource`。若要关联客户端，请向 `adminCreateOAuthClient` 传入 `resources`，或调用 `adminLinkClientResource`。设置 `enforcePerClientResources: false` 后，任何客户端都可以申请任意已启用资源，从而移除针对各客户端的 audience 限制。对于动态注册或 CIMD 注册的客户端，这意味着任何人都可能为所有已启用的 API 获取令牌。请保留默认值 `true`，并显式关联客户端或通过 `clientRegistrationDefaultResources` 进行关联。
+</Callout>
+
+```ts title="auth.ts"
+oauthProvider({
+  resources: [
+    "https://api.example.com",
+    {
+      identifier: "https://api.example.com/mcp",
+      allowedScopes: ["mcp:read", "mcp:write"],
+      accessTokenTtl: 300, // 5 minutes, in seconds
+    },
+  ],
+})
+```
+
+字符串值会使用插件默认设置。对象则用于设置每个资源的策略：
+
+| 字段                            | 作用                                                                                               |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `name`                          | 管理界面显示的标签。                                                                                 |
+| `allowedScopes`                 | 申请的 scope 会限制为此列表中的项目。若无 scope 保留，请求会以 `invalid_scope` 失败。                 |
+| `accessTokenTtl`                | 访问令牌有效期，单位为秒。默认使用 `accessTokenExpiresIn`。                                           |
+| `refreshTokenTtl`               | 刷新令牌有效期，单位为秒。默认使用 `refreshTokenExpiresIn`。                                         |
+| `signingAlgorithm`              | 此资源访问令牌所用的 JWS 算法。默认使用 JWT 插件中最新密钥的算法。                                   |
+| `signingKeyId`                  | 用于签署此资源访问令牌的密钥 ID。                                                                    |
+| `customClaims`                  | 添加到此资源所有访问令牌中的声明。JWT 保留声明会被移除。                                             |
+| `dpopBoundAccessTokensRequired` | 此资源只签发[绑定 DPoP](#dpop) 的令牌。                                                              |
+| `disabled`                      | 停止签发此资源的令牌。已签发的令牌仍可验证，直至过期。                                               |
+
+请求包含多个资源时，只要其中一个资源设置了 `signingAlgorithm` 或 `signingKeyId`，该值就会应用到整个令牌；未设置的资源不会与之冲突。只有两个资源设置了不同值时，请求才会以 `invalid_request` 失败，因为一个令牌只能有一个签名。若要修复此问题，请为两个资源设置相同的值，或在其中一个资源上留空。
+
+配置的资源会在启动时写入 `oauthResource` 表。请设置 `resourceSeedMode`，以指定如何处理已存在的记录：
+
+* `insertOnly`（默认值）：只添加缺少的记录，因此通过管理端点所做的编辑会在重启后保留。
+* `merge`：添加缺少的记录，并更新配置中提供的字段。
+* `overwrite`：使用配置值替换现有记录。
+
+### Manage resources at runtime
+
+若要无需重启即可更改资源，请调用以下仅限服务器使用的端点。每个端点都需要会话。`resourcePrivileges` 用于决定哪些用户可以调用这些端点；未设置时，任何已登录用户都可以调用。
+
+| 服务器方法                   | 方法     | 路径                                                     |
+| --------------------------- | -------- | -------------------------------------------------------- |
+| `adminCreateOAuthResource`  | `POST`   | `/admin/oauth2/resources`                                |
+| `adminListOAuthResources`   | `GET`    | `/admin/oauth2/resources`                                |
+| `adminGetOAuthResource`     | `GET`    | `/admin/oauth2/resources/:identifier`                    |
+| `adminUpdateOAuthResource`  | `PATCH`  | `/admin/oauth2/resources/:identifier`                    |
+| `adminDeleteOAuthResource`  | `DELETE` | `/admin/oauth2/resources/:identifier`                    |
+| `adminLinkClientResource`   | `POST`   | `/admin/oauth2/resources/:identifier/clients/:client_id` |
+| `adminUnlinkClientResource` | `DELETE` | `/admin/oauth2/resources/:identifier/clients/:client_id` |
+
+```ts title="link-resource.ts"
+await auth.api.adminLinkClientResource({
+  params: { identifier: "https://api.example.com", client_id: clientId },
+  headers,
+});
+```
+
+删除资源会使令牌核查将该资源的令牌报告为非活跃；`disabled: true` 则只会停止签发新令牌。如果 API 使用 JWKS 在本地验证 JWT，则仍会接受这些令牌，直到它们过期。若需要立即切断访问，请使用[令牌核查](/docs/plugins/oauth-provider/resource-server#introspection)。若要在动态注册期间附加资源，请参阅[注册客户端的资源](/docs/plugins/oauth-provider/clients#resources-for-registered-clients)。
+
+<Callout type="warn">
+  如果在 PostgreSQL、CockroachDB 或 MongoDB 上使用 Prisma，请为每个资源声明 `allowedScopes`。Prisma 无法向列表列写入 `null`，因此未设置 `allowedScopes` 的资源无法存储。在每个资源都声明该字段之前，使用任意已配置资源的请求都会失败。[MCP 插件](/docs/plugins/mcp)添加的资源也应在 `resources` 中以相同标识符声明。
+</Callout>
+
+## Lifetimes
+
+所有值的单位均为秒。
+
+| 选项                      | 默认值              | 适用对象                                 |
+| ------------------------- | ------------------- | --------------------------------------- |
+| `accessTokenExpiresIn`    | `3600`（1 小时）    | 为用户签发的访问令牌                    |
+| `m2mAccessTokenExpiresIn` | `3600`（1 小时）    | `client_credentials` 授权许可的访问令牌 |
+| `idTokenExpiresIn`        | `36000`（10 小时）  | ID 令牌                                  |
+| `refreshTokenExpiresIn`   | `2592000`（30 天）  | 刷新令牌                                 |
+| `codeExpiresIn`           | `600`（10 分钟）    | 授权码                                   |
+| `assertionMaxLifetime`    | `300`（5 分钟）     | `private_key_jwt` 客户端断言             |
+
+每次刷新都会重新计算刷新令牌有效期：替换后的令牌会获得新的 `refreshTokenExpiresIn` 时长。因此，定期刷新令牌的客户端可以无限期保留授权许可。若要结束授权许可，请[撤销](#revocation)刷新令牌。删除用户的[授权同意](/docs/plugins/oauth-provider/sign-in-flow#manage-consents)不会撤销已签发的令牌。
+
+若要缩短携带高权限 scope 的访问令牌有效期，请设置 `scopeExpirations`。资源的 `accessTokenTtl` 和 `refreshTokenTtl` 也可以缩短有效期，但不能延长。当多个限制同时适用时，采用最早的过期时间。例如，使用下方配置时，同时包含 `read:payments` 和 `write:payments` 的令牌会在 5 分钟后过期。
+
+```ts title="auth.ts"
+oauthProvider({
+  scopeExpirations: {
+    "write:payments": "5m", // 5 minutes after issuance
+    "read:payments": "30m", // 30 minutes after issuance
+  },
+})
+```
+
+## Refresh tokens
+
+每次刷新都会签发新的刷新令牌，并使旧令牌失效，符合 [OAuth 2.1 §4.3.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1#section-4.3.1)。重用已轮换的刷新令牌会被视为重放：用户为该客户端持有的所有刷新令牌都会被撤销，其签发的不透明访问令牌也会被删除。JWT 访问令牌仍会在过期前保持有效。发生重放后，刷新请求会以 `invalid_grant` 失败，客户端必须重新发起授权请求以获取令牌。
+
+除非客户端会丢失刷新响应，否则请保留默认值 `0`。若要允许客户端在响应丢失后重试刷新，请将 `refreshTokenReuseInterval` 设为秒数。在此时间窗口内重试会收到相同响应，包括替换后的刷新令牌。只有重试使用的客户端、scope、资源和 DPoP 密钥都与首次刷新相同时，才会返回该响应。其他有效但不一致的重试会收到 `invalid_grant`。
+
+在此时间窗口内，令牌重用不会被视为重放，令牌族也不会被撤销。因此，通过上述检查的被盗轮换令牌可以获得替换后的刷新令牌。请将时间窗口设得尽可能短。
+
+```ts title="auth.ts"
+oauthProvider({
+  refreshTokenReuseInterval: 5, // 5 seconds
+})
+```
+
+若要更改发送给客户端的字符串，请设置 `formatRefreshToken`。`encrypt` 会收到生成的刷新令牌（存储哈希前），以及可选的会话 ID。它会返回发送给客户端的字符串，之后提供者会添加 `prefix.refreshToken`。`decrypt` 会收到客户端发回的字符串，不包含 `prefix.refreshToken` 前缀。它必须返回一个对象，其中包含 `encrypt` 收到的 `token`，以及可选的 `sessionId`。
+
+```ts title="auth.ts"
+oauthProvider({
+  formatRefreshToken: {
+    encrypt: (token, sessionId) => (sessionId ? `1.${token}.${sessionId}` : token),
+    decrypt: (value) => {
+      const [version, token, sessionId] = value.split(".");
+      return version === "1" && token && sessionId ? { token, sessionId } : { token: value };
+    },
+  },
+})
+```
+
+## PKCE
+
+每个授权码流程都**必须**使用 PKCE（[RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636#section-1)），且只接受 `S256` 方式。若要允许管理员创建的机密客户端跳过 PKCE，请为其设置 `require_pkce: false`。此时，除客户端密钥和 `state` 外，不再有其他机制防止授权码被截获或注入（[RFC 9700 §2.1.1](https://datatracker.ietf.org/doc/html/rfc9700#section-2.1.1)）。公有客户端不能选择退出 PKCE。动态注册的机密客户端可通过 `clientRegistrationRequirePKCE` 设置默认值。
+
+```ts title="admin-create-client.ts"
+await auth.api.adminCreateOAuthClient({
+  headers,
+  body: {
+    redirect_uris: ["https://app.example.com/callback"],
+    token_endpoint_auth_method: "client_secret_post",
+    require_pkce: false, // [!code highlight]
+  },
+})
+```
+
+不使用 PKCE 且申请 `offline_access` 的客户端必须同时发送 `openid` 和 `nonce`。除非旧客户端无法发送 PKCE，否则请保持启用，这也是 [OAuth 2.1 §7.5.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1#section-7.5.1) 的建议。
+
+## DPoP
+
+只要 API 验证 proof，DPoP 就能阻止没有客户端私钥的人重放泄露的访问令牌。DPoP 绑定的令牌只能与该密钥签名的 proof 一起使用。
+
+在以下任一情况下，客户端会获得 DPoP 绑定令牌（[RFC 9449](https://datatracker.ietf.org/doc/html/rfc9449#section-4)）：
+
+* 注册时设置了 `dpop_bound_access_tokens: true`（[§5.2](https://datatracker.ietf.org/doc/html/rfc9449#section-5.2)）。
+* 在授权请求中发送了 `dpop_jkt`。
+* 申请的资源设置了 `dpopBoundAccessTokensRequired: true`。
+
+随后，token 端点会要求提供 DPoP proof（[§5](https://datatracker.ietf.org/doc/html/rfc9449#section-5)），并返回 `token_type: "DPoP"`。刷新令牌时必须使用同一密钥的 proof。JWT 访问令牌会在 `cnf.jkt` 中携带该密钥的 thumbprint。客户端调用 API 时，应发送 `Authorization: DPoP <access_token>` 和 `DPoP` proof，其中包含访问令牌哈希 `ath`（[§7](https://datatracker.ietf.org/doc/html/rfc9449#section-7)）。
+
+```ts title="auth.ts"
+oauthProvider({
+  dpop: {
+    proofMaxAgeSeconds: 300, // 5 minutes, in seconds (the default)
+    signingAlgorithms: ["ES256", "EdDSA"],
+  },
+})
+```
+
+<Callout type="warn">
+  请将 `baseURL` 设为客户端访问的公共 URL。否则，在会重写主机的代理后方，proof 会验证失败，因为预期的 `htu` 来自 `baseURL`，而不是请求主机。
+</Callout>
+
+若要在 API 中验证 DPoP 绑定令牌，请参阅[保护你的 API](/docs/plugins/oauth-provider/resource-server#verify-access-tokens)。
+
+## Custom claims
+
+若要向访问令牌添加声明，请设置 `customAccessTokenClaims`。它会收到 `user`、`scopes`、`referenceId`、`resources` 和客户端的 `metadata`，并返回要添加的声明对象。请使用带命名空间的声明名称；提供者已设置的声明见 [RFC 9068 §2.2](https://datatracker.ietf.org/doc/html/rfc9068#section-2.2)。若要阻止签发令牌（例如用户已离开组织），请在回调中抛出错误。
+
+```ts title="auth.ts"
+oauthProvider({
+  customAccessTokenClaims: ({ user, scopes, referenceId, resources }) => ({
+    "https://example.com/org": referenceId,
+    "https://example.com/roles": ["editor"],
+  }),
+})
+```
+
+有关 ID 令牌和 UserInfo 声明，请参阅 [OpenID Connect](/docs/plugins/oauth-provider/openid-connect#id-token-claims)。
+
+### Client-specific access token claims
+
+`customAccessTokenClaims` 只会收到客户端的 `metadata`。若要根据完整客户端记录生成声明，请添加 `extensions[].claims.accessToken` contributor。它会收到完整的 `client` 记录、`user`、`scopes`、`referenceId`、`resources` 和客户端的 `metadata`。签发 JWT 访问令牌时，它还会收到 `grantType`；对于基于会话的授权许可，也会收到 `sessionId`。函数会返回要添加的声明对象：
+
+```ts title="auth.ts"
+oauthProvider({
+  extensions: [{
+    claims: {
+      accessToken: ({ client }) =>
+        client.referenceId ? { "https://example.com/org": client.referenceId } : {},
+    },
+  }],
+})
+```
+
+`client.referenceId` 是由 [`clientReference`](/docs/plugins/oauth-provider/clients#organizations) 设置的客户端所有者。它不同于顶层的 `referenceId`，后者是来自 `postLogin.consentReferenceId` 的授权同意引用。不透明令牌核查时会重新运行 contributors，但不会传入 `grantType` 或 `sessionId`，因此声明应基于客户端、scope 和资源生成。声明名称冲突时，请参阅[声明优先级](/docs/plugins/oauth-provider/reference#claim-precedence)。
+
+JWT 会保留其声明，直到令牌过期。组织声明不能证明客户端仍处于启用状态。若资源服务器需要立即响应已禁用的客户端，应核查令牌。核查会将已禁用客户端的令牌报告为非活跃。
+
+### Custom token response fields
+
+若要向 token 端点的 JSON 响应添加字段，请设置 `customTokenResponseFields`。它会收到 `grantType`、`user`、`scopes` 和客户端的 `metadata`。使用 `authorization_code` 授权许可时，它还会收到 `verificationValue`，其中包含原始授权请求（`query`）、授权同意的 `referenceId` 和 `sessionId`。函数会返回要添加的字段对象。这些字段会加入响应，而不会加入令牌本身。回调不能覆盖 `access_token` 或 `scope` 等标准字段，并且会在创建令牌前运行。
+
+```ts title="auth.ts"
+oauthProvider({
+  customTokenResponseFields: ({ grantType, verificationValue }) =>
+    grantType === "authorization_code" && verificationValue?.referenceId
+      ? { tenant_id: verificationValue.referenceId }
+      : {},
+})
+```
+
+## Revocation
+
+`POST /oauth2/revoke` 实现了 [RFC 7009 §2.1](https://datatracker.ietf.org/doc/html/rfc7009#section-2.1)。具体操作取决于令牌类型：
+
+* **不透明访问令牌**：删除该令牌。同一授权许可中的刷新令牌仍有效。
+* **刷新令牌**：撤销该令牌，并删除其签发的不透明访问令牌。签发的 JWT 访问令牌仍会在过期前有效。
+* **JWT 访问令牌**：由于从未存储，因此无法撤销。有效的 JWT 会返回 400 `unsupported_token_type`（[RFC 7009 §2.2.1](https://datatracker.ietf.org/doc/html/rfc7009#section-2.2.1)）。
+
+若要限制 JWT 访问令牌的有效期，请缩短 `accessTokenExpiresIn`，或结束用户会话。带有 `sid` 的 JWT 会在会话结束后被核查为非活跃，并被 UserInfo 拒绝。`client_credentials` JWT 不关联会话，其唯一限制就是有效期。
+
+## Without the JWT plugin
+
+若要在不使用 [JWT 插件](/docs/plugins/jwt)的情况下运行，请设置 `disableJwtPlugin: true`：
+
+* 访问令牌始终是不透明令牌，即使请求中包含 `resource` 也是如此。申请的资源仍会绑定到令牌，并通过核查返回。
+* ID 令牌使用客户端密钥通过 HS256 签名。公有客户端没有密钥，因此不会获得 ID 令牌，但仍可使用访问令牌调用 UserInfo。
+* 由于签署 ID 令牌需要读取密钥，`storeClientSecret` 默认值为 `"encrypted"`。
+
+```ts title="auth.ts"
+oauthProvider({
+  disableJwtPlugin: true, // [!code highlight]
+})
+```
+
+## Storage
+
+默认情况下，数据库会以哈希形式存储不透明访问令牌和刷新令牌。启用 JWT 插件时，客户端密钥会进行哈希处理；未启用时，则会加密存储。
+
+* `storeClientSecret`：启用 JWT 插件时可设为 `"hashed"` 或 `{ hash, verify? }`；未启用时可设为 `"encrypted"` 或 `{ encrypt, decrypt }`。其他组合会导致提供者启动失败。
+* `storeTokens`：可设为 `"hashed"` 或 `{ hash: (token, type) => string }`。
+
+若要让密钥扫描器能够识别已签发的值，请设置 `prefix`：
+
+```ts title="auth.ts"
+oauthProvider({
+  prefix: {
+    opaqueAccessToken: "myapp_at_",
+    refreshToken: "myapp_rt_",
+    clientSecret: "myapp_cs_",
+  },
+})
+```
+
+<Callout type="warn">
+  请在首次部署到生产环境前设置前缀，之后保持不变。若要为已签发值的提供者添加前缀，请改用 `generateOpaqueAccessToken`、`generateRefreshToken` 或 `generateClientSecret`。
+</Callout>
+
+## Device code grant
+
+若要在 `/oauth2/token` 中启用设备码授权许可（[RFC 8628 §3.4](https://datatracker.ietf.org/doc/html/rfc8628#section-3.4)），请在 `oauthProvider()` 旁添加 `oauthDeviceAuthorization()`。设置方法请参阅[设备授权](/docs/plugins/device-authorization)。

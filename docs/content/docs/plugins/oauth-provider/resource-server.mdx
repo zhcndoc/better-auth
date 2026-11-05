@@ -1,0 +1,185 @@
+---
+icon: pluginsOAuthProviderResourceServer
+sidebarTitle: "保护 API"
+title: 保护你的 API
+description: 在 API 或其他服务中验证提供者签发的访问令牌。
+---
+
+资源服务器是从 OAuth 客户端接收访问令牌的 API。
+
+## Verify access tokens
+
+若要验证访问令牌，请在每个请求中调用 `better-auth/oauth2` 中的 `verifyAccessTokenRequest`。它会验证令牌；如果令牌绑定了 DPoP，还会根据请求方法和 URL 检查 proof（[RFC 9449 §7](https://datatracker.ietf.org/doc/html/rfc9449#section-7)）。
+
+```ts title="api/posts.ts"
+import { isAPIError } from "better-auth/api";
+import {
+  requestToResourceInput,
+  verifyAccessTokenRequest,
+} from "better-auth/oauth2";
+
+export const GET = async (req: Request) => {
+  try {
+    const payload = await verifyAccessTokenRequest(requestToResourceInput(req), {
+      jwksUrl: "https://auth.example.com/api/auth/jwks",
+      verifyOptions: {
+        issuer: "https://auth.example.com/api/auth",
+        audience: "https://api.example.com",
+        typ: "at+jwt",
+        requiredClaims: ["azp"],
+      },
+      requiredScopes: ["read:post"],
+    });
+    return Response.json({ sub: payload.sub });
+  } catch (error) {
+    if (!isAPIError(error)) throw error;
+    return Response.json(error.body, { status: error.statusCode });
+  }
+};
+```
+
+`typ: "at+jwt"` 和 `requiredClaims: ["azp"]` 会拒绝所有非 OAuth 访问令牌的 JWT。提供者会为每个 JWT 访问令牌设置这两项（[RFC 9068 §2.1](https://datatracker.ietf.org/doc/html/rfc9068#section-2.1)）。如果不设置这两项，只要 [JWT 插件](/docs/plugins/jwt#oauth-provider-mode)签发的会话 JWT 使用相同密钥签名，且 `iss` 和 `aud` 匹配，就会通过验证。该令牌是签发给已登录用户的，而非 OAuth 客户端，并且不带授权同意或 scope。
+
+`requestToResourceInput` 会从标准 `Request` 中读取 `Authorization` 和 `DPoP` 请求头、请求方法及 URL。如果框架没有 `Request`，请改为传入 `{ authorizationHeader, dpopProofJwt, method, url }`。令牌缺少所需 scope 时，调用会抛出 403 `insufficient_scope` 错误。其 `body.scope` 会列出所有缺失的 scope（[RFC 6750 §3.1](https://datatracker.ietf.org/doc/html/rfc6750#section-3.1)），客户端据此可在重新授权时申请相应 scope。请捕获抛出的 `APIError` 并返回其 `statusCode`，如上例所示。多数框架会将未捕获的错误转换为 `500`。
+
+如果 API 与认证服务器运行在同一进程中，请改用 resource client。它返回的 401 和 `insufficient_scope` 错误会在 `headers` 中包含 `WWW-Authenticate` challenge。
+
+```ts title="lib/server-client.ts"
+import { createAuthClient } from "better-auth/client";
+import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client";
+import { auth } from "@/lib/auth";
+
+export const serverClient = createAuthClient({
+  plugins: [oauthProviderResourceClient(auth)],
+});
+```
+
+请明确传入 `issuer`、`jwksUrl` 和 `audience`。默认值来自传给 `betterAuth()` 的 `baseURL`，可能未包含 `/api/auth` 等基础路径。
+
+<Callout type="warn">
+  请勿依赖默认 audience。它是认证服务器的 URL，而不是 API 的标识符；同时也是 [JWT 插件](/docs/plugins/jwt#oauth-provider-mode)会话 JWT 的默认 `aud`。使用默认值时，已登录用户的会话 JWT 可能会被当作访问令牌接受。请将 `audience` 设为 API 的资源标识符，并添加 `typ: "at+jwt"` 和 `requiredClaims: ["azp"]`。
+</Callout>
+
+```ts title="api/posts.ts"
+import { isAPIError } from "better-auth/api";
+import { serverClient } from "@/lib/server-client";
+
+export const POST = async (req: Request) => {
+  try {
+    const payload = await serverClient.verifyAccessTokenRequest(req, {
+      verifyOptions: {
+        issuer: "https://auth.example.com/api/auth",
+        audience: "https://api.example.com",
+        typ: "at+jwt",
+        requiredClaims: ["azp"],
+      },
+      jwksUrl: "https://auth.example.com/api/auth/jwks",
+      requiredScopes: ["write:post"],
+    });
+    return Response.json({ sub: payload.sub });
+  } catch (error) {
+    if (!isAPIError(error)) throw error;
+    return Response.json(error.body, {
+      status: error.statusCode,
+      headers: error.headers,
+    });
+  }
+};
+```
+
+如果每个 JWT 访问令牌都因 401 `invalid access token` 错误而失败，请检查 `issuer` 是否与令牌的 `iss` 声明匹配，以及 `audience` 是否与其 `aud` 声明匹配。提供者会将客户端申请的 `resource`（如 `https://api.example.com`）放入 `aud`。
+
+若要让路由只接受 bearer 令牌，请使用 `verifyBearerToken`。它接收原始令牌字符串，并会拒绝绑定了 DPoP 的令牌。
+
+<Callout type="warn">
+  对于绑定了 DPoP 的令牌：
+
+  * proof 会根据 `request.url` 进行检查。API 前面的代理必须转发外部的 scheme、主机和路径。
+  * 重放存储会拒绝已使用过的 proof。默认存储位于内存中，仅适用于单个实例。若 API 运行在多个实例或 serverless 环境中，请像下例一样传入共享存储。共享存储需要由数据库提供 verification 存储；如果只配置了二级存储，则会拒绝 DPoP 请求。
+</Callout>
+
+```ts title="api/posts.ts"
+import { createDpopReplayStore } from "better-auth/oauth2";
+import { auth } from "@/lib/auth";
+
+const replayStore = createDpopReplayStore((await auth.$context).internalAdapter);
+
+// Pass it with the other options, as in the example above:
+// verifyAccessTokenRequest(input, { jwksUrl, verifyOptions, dpop: { replayStore } })
+```
+
+## JWT or opaque tokens
+
+请求指定了 `resource` 且启用了 JWT 插件时，提供者会签发 JWT 访问令牌。缺少任一条件时，则会签发不透明令牌。
+
+|                         | JWT 访问令牌                                    | 不透明访问令牌                                            |
+| ----------------------- | ---------------------------------------------- | ------------------------------------------------------- |
+| API 验证方式            | 在本地使用 JWKS（`jwksUrl`）                    | 通过 `/oauth2/introspect`（`remoteVerify`）远程验证      |
+| 每个请求的开销          | 无网络调用（除非设置 `remoteVerify`）           | 调用一次认证服务器                                        |
+| 声明                    | 签发令牌时固定                                  | 每次核查时重新计算                                        |
+
+最简单的配置是只接受 JWT 访问令牌。速度快，API 也不需要客户端凭据。`verifyAccessTokenRequest` 会检查 JWT 的签名、`iss`、`aud` 和 `exp`。它只会根据你传入的 `requiredScopes` 检查 `scope`，且只有传入 `typ: "at+jwt"` 时才会检查令牌类型。请同时传入这两项，才能获得 [RFC 9068 §4](https://datatracker.ietf.org/doc/html/rfc9068#section-4) 要求的验证。此方式的缺点是本地检查无法发现已经结束的会话；JWT 在过期前都会通过本地检查。
+
+如果 API 还会接收不透明令牌，请让它核查这些令牌：
+
+1. 将 API 注册为机密客户端，并设置 `token_endpoint_auth_method: "client_secret_post"`。`remoteVerify` 会在请求体中发送凭据。若客户端保留默认方式 `client_secret_basic`，核查会因 `invalid_client` 失败，随后验证会抛出 500 `introspection failed` 错误。
+2. 将其[关联到资源](#introspection)。
+3. 将客户端凭据作为 `remoteVerify` 传入。
+
+设置 `remoteVerify` 后，每个令牌都会在本地 JWT 检查后进行核查。核查也会确认会话仍处于活跃状态。`typ` 检查需要读取 JWT 请求头，而核查结果不包含该信息，因此只有本地检查会应用此规则。设置 `force: true` 可跳过本地检查，包括 `typ`。只有包含 `azp` 的 JWT 才会被核查为活跃，因此即使设置 `force: true`，会话 JWT 仍会失败。
+
+```ts title="api/posts.ts"
+const payload = await verifyAccessTokenRequest(requestToResourceInput(req), {
+  verifyOptions: {
+    issuer: "https://auth.example.com/api/auth",
+    audience: "https://api.example.com",
+    typ: "at+jwt",
+    requiredClaims: ["azp"],
+  },
+  jwksUrl: "https://auth.example.com/api/auth/jwks",
+  remoteVerify: {
+    introspectUrl: "https://auth.example.com/api/auth/oauth2/introspect",
+    clientId: process.env.API_CLIENT_ID!,
+    clientSecret: process.env.API_CLIENT_SECRET!,
+  },
+});
+```
+
+<Callout>
+  设置 `audience` 后，受众检查会阻止为同一 issuer 下其他 API 签发的令牌通过验证。如果设置了 `audience`，但核查响应中没有 `aud` 声明，令牌会被拒绝。只有在信任 issuer 会通过其他方式将令牌绑定到 API 时，才设置 `remoteVerify.allowMissingAudience: true`。
+</Callout>
+
+## Introspection
+
+`/oauth2/introspect` 实现了 [RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662)。调用方必须以已注册客户端的身份进行身份验证（[§2.1](https://datatracker.ietf.org/doc/html/rfc7662#section-2.1)），可使用该客户端注册的任意方式，包括 `private_key_jwt`。
+
+经过身份验证的客户端只有在以下情况下才能核查访问令牌：
+
+* 它就是该令牌的签发对象；或
+* 它是与该令牌某个资源关联的资源服务器。
+
+若要配置第二种情况，请[将 API 注册为资源](/docs/plugins/oauth-provider/tokens#resources)，并将客户端关联到该资源。其他调用方会收到 `{ active: false }`，与未知或过期令牌的响应相同。只有申请了刷新令牌的客户端可以核查该令牌。
+
+如果令牌绑定了会话，核查时还会检查会话是否仍处于活跃状态。对于同一授权许可，JWT 和不透明令牌在[核查响应](https://datatracker.ietf.org/doc/html/rfc7662#section-2.2)中会返回相同声明：扩展访问令牌声明、`customAccessTokenClaims`、按资源配置的 `customClaims`，以及服务器保留的声明（`iss`、`sub`、`aud`、`scope` 等）。回调若返回保留声明名称，该声明会被丢弃。请参阅[自定义声明](/docs/plugins/oauth-provider/tokens#custom-claims)。
+
+## Scopes and permissions
+
+Scope 描述客户端可以代表用户申请什么。权限描述用户可以执行哪些操作，并由你的 API 强制执行。
+
+最简单的配置是将每个 scope 精确映射到一项权限，例如 `read:post`。如果需要更细致的控制，可在 API 中将每个 scope 映射到多项权限，并传入 `isScopeSatisfied` 来更改 `requiredScopes` 的匹配方式。
+
+## Protected resource metadata
+
+若要公开保护 API 的授权服务器，请在 `/.well-known/oauth-protected-resource` 提供 [RFC 9728](https://datatracker.ietf.org/doc/html/rfc9728#section-3) 文档。`serverClient.getProtectedResourceMetadata()` 可以为你生成该文档。其默认的 `authorization_servers` 条目与默认 issuer 一样存在 `baseURL` 只包含来源的问题，因此请传入提供者的 issuer。[MCP 插件](/docs/plugins/mcp)会自动提供此文档。
+
+```ts title="app/.well-known/oauth-protected-resource/route.ts"
+import { serverClient } from "@/lib/server-client";
+
+export const GET = async () =>
+  Response.json(
+    await serverClient.getProtectedResourceMetadata({
+      resource: "https://api.example.com",
+      authorization_servers: ["https://auth.example.com/api/auth"],
+    }),
+  );
+```

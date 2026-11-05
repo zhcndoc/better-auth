@@ -156,9 +156,10 @@ export const auth = betterAuth({
 <Callout type="info">
   **注意**
 
-  * 对于 `http://` 和 `https://` URL，模式会匹配完整来源。路径和查询字符串会被忽略。
-  * 对于自定义协议（如 `exp://` 或 `myapp://`），通配符模式会针对包含路径在内的完整 URL 进行匹配。非通配符模式会根据协议和权限进行匹配：不包含主机的条目（如 `myapp://` 或 `exp://`）会信任该协议的所有主机，而包含主机的条目（如 `myapp://callback`）必须精确匹配该主机（因此不会被 `myapp://callback.attacker.tld` 满足）。
-  * 分隔符是 `/`（正斜杠）。这意味着 `http://*.example.com` 同时匹配 `http://api.example.com` 和 `http://api.app.example.com`。
+  * For `http://` and `https://` URLs, patterns match the full origin. Paths and query strings are ignored.
+  * 对于自定义 scheme（如 `exp://` 或 `myapp://`），通配符模式会分别匹配主机和路径，带有 user info 的 URL 则永远不会匹配。`myapp://*` 会信任 `myapp://` 下的所有主机和路径。`*://example.com` 这样的 scheme 通配符不会匹配自定义 scheme。非通配符模式按 scheme 和 authority 匹配：不带主机的条目（如 `myapp://` 或 `exp://`）会信任该 scheme 下的所有主机；带主机的条目（如 `myapp://callback`）必须精确匹配主机，因此不会匹配 `myapp://callback.attacker.tld`。
+  * The separator is `/` (forward slash). This means `http://*.example.com` matches both `http://api.example.com` and `http://api.app.example.com`.
+  * 仅由数字、点和通配符组成的主机模式（如 `192.168.*.*`）只会匹配该范围内的 IPv4 地址。
 </Callout>
 
 ## `secret`
@@ -621,7 +622,7 @@ import { betterAuth } from "better-auth";
 export const auth = betterAuth({
 	advanced: {
 		ipAddress: {
-			ipAddressHeaders: ["x-client-ip", "x-real-ip"],
+			ipAddressHeaders: ["cf-connecting-ip"],
 			disableIpTracking: false
 		},
 		useSecureCookies: true,
@@ -670,21 +671,21 @@ export const auth = betterAuth({
 })
 ```
 
-* `ipAddress`: 用于速率限制和会话跟踪的 IP 地址配置
-  * `disableIpTracking`: 禁用 IP 地址跟踪。
-  * `ipAddressHeaders`: 用于读取客户端 IP 地址的受信任请求头名称。
-  * `trustedProxies`: 反向代理 IP 或 CIDR 范围。转发链会从右向左遍历，跳过受信任的跳点，首个不受信任的地址会被用作客户端 IP。
-* `useSecureCookies`: 默认情况下，生产环境中的 cookie 是安全的。将其设为 `true` 可在所有环境中强制使用 `Secure` cookie 属性。
-* `disableCSRFCheck`: 禁用所有 CSRF 防护，包括来源头验证和 Fetch Metadata 检查（⚠️ 安全风险）
-* `disableOriginCheck`: 禁用 `callbackURL`、`redirectTo` 以及其他重定向 URL 的 URL 验证（⚠️ 安全风险）
-* `crossSubDomainCookies`: 配置可跨子域共享的 cookie
-* `cookies`: 自定义 cookie 名称和属性
-* `defaultCookieAttributes`: 所有 cookie 的默认属性
-* `cookiePrefix`: cookie 前缀
-* `database`: 数据库配置选项
-* `backgroundTasks`: 配置延迟操作的后台任务处理
-* `skipTrailingSlashes`: 在路由匹配中跳过尾随斜杠验证。（默认：`false`）
-* OAuth 状态配置选项（`storeStateStrategy`、`skipStateCookieCheck`）现在属于 `account` 选项
+* `ipAddress`: IP address configuration for rate limiting and session tracking
+  * `disableIpTracking`：禁用 IP 地址追踪。此选项也会关闭 HTTP 请求的内置速率限制器。
+  * `ipAddressHeaders`：用于读取客户端 IP 地址的请求头名称。系统会使用第一个包含有效地址的请求头。默认值为 `["x-forwarded-for"]`。只列出由代理或服务器代码在每个请求中设置的请求头，并确保替换客户端发送的任何同名值。如果代理会向请求头追加地址，请在 `trustedProxies` 中列出代理。请参阅[连接 IP 地址](/docs/concepts/rate-limit#connecting-ip-address)。
+  * `trustedProxies`：反向代理的 IP 地址或 CIDR 网段。Better Auth 会从右向左读取转发地址，跳过这些代理，并将第一个非代理地址作为客户端 IP。
+* `useSecureCookies`: By default, cookies are secure in production environments. Set this to `true` to force the `Secure` cookie attribute in all environments.
+* `disableCSRFCheck`: Disable all CSRF protection including origin header validation and Fetch Metadata checks (⚠️ security risk)
+* `disableOriginCheck`: Disable URL validation for `callbackURL`, `redirectTo`, and other redirect URLs (⚠️ security risk)
+* `crossSubDomainCookies`: Configure cookies to be shared across subdomains
+* `cookies`: Customize cookie names and attributes
+* `defaultCookieAttributes`: Default attributes for all cookies
+* `cookiePrefix`: Prefix for cookies
+* `database`: Database configuration options
+* `backgroundTasks`: Configure background task handling for deferred operations
+* `skipTrailingSlashes`: Skip trailing slash validation in route matching. (default: `false`)
+* OAuth state configuration options (`storeStateStrategy`, `skipStateCookieCheck`) are now part of the `account` option
 
 <h3 id="advanced-database"><code>database</code></h3>
 

@@ -41,7 +41,7 @@ Stripe 插件将 Stripe 的支付与订阅功能集成到 Better Auth 中。由�
     接下来，在服务器上安装 Stripe SDK：
 
     ```package-install
-    stripe@^22.0.0
+    stripe@^23.0.0
     ```
   </Step>
 
@@ -54,7 +54,7 @@ Stripe 插件将 Stripe 的支付与订阅功能集成到 Better Auth 中。由�
     import Stripe from "stripe"
 
     const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-        apiVersion: "2026-06-24.dahlia", // 截至 Stripe SDK v22.0.0 的最新 API 版本
+        apiVersion: "2026-09-30.endive", // Latest API version as of Stripe SDK v23.0.0
     })
 
     export const auth = betterAuth({
@@ -71,6 +71,10 @@ Stripe 插件将 Stripe 的支付与订阅功能集成到 Better Auth 中。由�
 
     <Callout type="info">
       **从 Stripe v18 升级？** 版本 19 使用异步 webhook 签名验证（`constructEventAsync`），由插件内部处理。您端无需进行任何代码更改！
+    </Callout>
+
+    <Callout type="info">
+      **升级到 Stripe v23？** 该版本使用 API 版本 `2026-09-30.endive`，创建 Checkout Session 时不再接受 `payment_method_types`。如果通过 `getCheckoutSessionParams` 传入此参数，请改用 `allowed_payment_method_types` 或 `excluded_payment_method_types`；也可以移除该参数，转而在 Stripe 控制面板中管理支付方式。
     </Callout>
   </Step>
 
@@ -679,7 +683,7 @@ export const stripeUserTableFields = [
 	{
 		name: "stripeCustomerId",
 		type: "string",
-		description: "The Stripe customer ID",
+		description: "Stripe 客户 ID，由服务器设置",
 		isOptional: true,
 	},
 ];
@@ -694,7 +698,7 @@ export const stripeOrganizationTableFields = [
 	{
 		name: "stripeCustomerId",
 		type: "string",
-		description: "The Stripe customer ID for the organization",
+		description: "组织的 Stripe 客户 ID，由服务器设置",
 		isOptional: true,
 	},
 ];

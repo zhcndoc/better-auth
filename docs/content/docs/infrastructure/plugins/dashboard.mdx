@@ -78,109 +78,347 @@ user: {
 </Callout>
 
 ```package-install
-npx auth migrate
+npx auth@latest migrate
 ```
 
-如果您的应用单独管理模式生成，请运行 `npx auth generate`，然后使用您首选的工具应用生成的迁移。
+如果你的应用单独管理 schema 生成，请运行 `npx auth@latest generate`，并使用首选工具应用生成的迁移。
 
 ## 托管目录同步
 
-`managedDirectorySync` 选项是 SCIM 1.7 插件托管运行时流程在仪表盘侧的配套功能。当 `enabled` 为 `true` 时，仪表盘会安装托管目录同步状态所需的预留表和 API。`ssoPairing` 会启用目录关联用户身份与 SSO 提供商配对时所需的 SSO 钩子，而 `membershipProjection` 则允许系统将 SCIM 成员变更投影到组织成员记录中。
+托管目录同步是控制面板侧对 [SCIM 插件托管连接](/docs/plugins/scim/reference#managed-connection-catalog)的配套功能。当每个组织（租户）都应从控制面板获得目录连接，而无需在应用配置中为每个租户硬编码时，可使用此功能。
+
+在 Better Auth 1.7 中，SCIM 支持三种连接模式：
+
+* 在代码中静态定义连接
+* 由应用管理的运行时验证
+* 通过 `managedConnections` 管理的插件运行时连接
+
+托管目录同步专为第三种模式设计，各层职责如下：
+
+| 层                                | 职责                                                                                |
+| -------------------------------- | ----------------------------------------------------------------------------------- |
+| `scim({ managedConnections })`   | SCIM 协议、凭据目录、用户和群组预配                                                |
+| `dash({ managedDirectorySync })` | 各组织连接的生命周期、控制面板 API，以及向应用投影数据                             |
+
+启用控制平面后，还可添加可选功能：将用户投影到组织成员关系中、将目录与 SSO 配对以供登录，以及将 SCIM 属性映射到自定义字段。
+
+### 启用托管目录同步
+
+你需要启用 [organization](/docs/plugins/organization)、[SCIM](/docs/plugins/scim) 和 `dash` 插件。SCIM 必须使用 `managedConnections`，这样 Infrastructure 才能预留并签发每个租户的凭据。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { organization } from "better-auth/plugins";
+import { sso } from "@better-auth/sso";
+import { scim } from "@better-auth/scim";
+import { dash } from "@better-auth/infra";
+
+export const auth = betterAuth({
+  plugins: [
+    organization(),
+    sso({}),
+    scim({
+      connections: [],
+      managedConnections: {
+        credentialHashSecret: process.env.SCIM_CREDENTIAL_HASH_SECRET!,
+      },
+    }),
+    dash({
+      apiKey: process.env.BETTER_AUTH_API_KEY,
+      managedDirectorySync: {
+        enabled: true,
+      },
+    }),
+  ],
+});
+```
+
+<Callout type="warn">
+  启用 `managedDirectorySync` 会添加预留表。请先运行迁移，再从控制面板创建目录。
+</Callout>
+
+```package-install
+npx auth@latest migrate
+```
+
+如果你的应用单独管理 schema 生成，请运行 `npx auth@latest generate`，并使用首选工具应用生成的迁移。
+
+完成设置后，可在 Infrastructure 控制面板中创建和管理目录（或使用[目录同步端点](#目录同步)）。
+
+### 成员关系投影
+
+目录连接后通常会启用成员关系投影：SCIM 预配或停用用户时，dash 会将该用户同步到拥有此目录的组织中。
+
+启用托管目录同步时，此功能默认**开启**。
 
 ```ts
 dash({
   apiKey: process.env.BETTER_AUTH_API_KEY,
   managedDirectorySync: {
     enabled: true,
-    ssoPairing: true,
     membershipProjection: {
       enabled: true,
-      role: "member",
+      role: "member", // role only when projection creates the membership
     },
   },
 })
 ```
 
-此可选控制平面适用于 SCIM 1.7 插件托管运行时流程。在 Better Auth 1.7 中，SCIM 支持三种连接模式：
+| 选项                           | 类型      | 描述                                                                          |
+| ------------------------------ | --------- | ----------------------------------------------------------------------------- |
+| `membershipProjection.enabled` | `boolean` | 安装用于组织成员关系的 SCIM `projection.reconcileUser`。默认值：`true`。       |
+| `membershipProjection.role`    | `string`  | 投影**创建**成员关系时分配的角色。默认值：`"member"`。                       |
 
-* 静态代码定义的连接
-* 应用自行管理的运行时验证
-* 通过 `managedConnections` 管理的插件运行时连接
+行为：
 
-`managedDirectorySync` 选项可在 `dash` 中启用用于目录同步预配的插件托管模式。它会创建管理目录连接和配对 SSO 状态所需的预留模式和 API。
+* 活跃目录用户会被加入组织（如果已经是成员，则关联到组织）。
+* 停用用户的目录所拥有的成员关系会被移除。
+* 系统会记录成员关系是由目录**创建**还是仅被**发现**（已存在）。投影只会更改其拥有的成员关系。
 
-### 托管目录同步选项
+仅当 SCIM 应预配用户但不应更改组织成员关系时，才关闭此功能：
 
-| Option                         | Type      | Description                                                                                                                                                  |
-| ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `enabled`                      | `boolean` | Enables the managed directory-sync control plane and the SCIM reservation tables / APIs. Default: `false`.                                                   |
-| `ssoPairing`                   | `boolean` | Installs the SSO `resolveUser` and provider-mutation hooks required when a paired directory needs to reconcile a user identity through SSO. Default: `true`. |
-| `membershipProjection`         | `object`  | Enables SCIM-to-organization membership projection when a directory should create group or member membership records.                                        |
-| `membershipProjection.enabled` | `boolean` | Enables the projection hook. Default: `true`.                                                                                                                |
-| `membershipProjection.role`    | `string`  | Role assigned to projected organization memberships. Default: `"member"`.                                                                                    |
-
-当应用希望 Better Auth 管理 SCIM 的运行时租户连接生命周期，并将其与基于 SSO 的身份解析配对时，可使用此选项。此选项适用于新的 1.7 流程，并与 `scim({ managedConnections })` 配合使用。
-
-<Callout type="warning">
-  启用 `managedDirectorySync` 需要为相应的托管目录同步表执行数据库迁移。请先运行迁移步骤，再使用托管运行时流程。
-</Callout>
-
-```package-install
-npx auth migrate
+```ts
+membershipProjection: {
+  enabled: false,
+}
 ```
 
-如果您的应用单独管理模式生成，请运行 `npx auth generate`，然后使用您首选的工具应用生成的迁移。
+### SSO 配对
 
-### 数据库模式
+SSO 配对会将托管目录与 SSO 提供者关联，使预配用户能够使用目录管理的同一身份登录。
 
-当 `managedDirectorySync.enabled` 为 `true` 时，dash 插件会添加以下模型。Better Auth 会为每个模型提供主 `id` 字段。
+此功能默认**开启**。仅当目录创建时要与 SSO **配对**，才需要使用此功能。
+
+```ts
+plugins: [
+  sso({}),
+  dash({
+    apiKey: process.env.BETTER_AUTH_API_KEY,
+    managedDirectorySync: {
+      enabled: true,
+      ssoPairing: true,
+    },
+  }),
+]
+```
+
+| 选项         | 类型      | 描述                                    |
+| ------------ | --------- | --------------------------------------- |
+| `ssoPairing` | `boolean` | 安装 SSO 配对钩子。默认值：`true`。     |
+
+说明：
+
+* 配对登录会根据目录中配置的 SCIM 外部 ID 查找 Better Auth 用户。
+* 如果只需要预配且从不创建配对目录，请设置 `ssoPairing: false`。
+
+### 字段投影
+
+字段投影会在目录同步时将 SCIM User 属性映射到 Better Auth 字段。在 Infrastructure 控制面板中按**每个目录连接**配置映射（或使用字段映射端点）。
+
+此功能需**主动启用**，并会添加专用数据表。启用后请运行迁移，再配置映射。
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+import { organization } from "better-auth/plugins";
+import { scim } from "@better-auth/scim";
+import { dash } from "@better-auth/infra";
+
+export const auth = betterAuth({
+  user: {
+    additionalFields: {
+      employeeId: { type: "string", required: false },
+      department: { type: "string", required: false },
+    },
+  },
+  plugins: [
+    organization({
+      schema: {
+        member: {
+          additionalFields: {
+            title: { type: "string", required: false },
+            costCenter: { type: "string", required: false },
+          },
+        },
+      },
+    }),
+    scim({
+      connections: [],
+      managedConnections: {
+        credentialHashSecret: process.env.SCIM_CREDENTIAL_HASH_SECRET!,
+      },
+    }),
+    dash({
+      apiKey: process.env.BETTER_AUTH_API_KEY,
+      managedDirectorySync: {
+        enabled: true,
+        fieldProjection: {
+          enabled: true,
+        },
+      },
+    }),
+  ],
+});
+```
+
+1. 声明要填充的 `user` / `member` 字段（如上所示）。
+2. 运行迁移，创建字段映射表。
+3. 在 Infrastructure 控制面板中打开目录连接，将 SCIM 路径映射到目标字段。
+
+| 选项                      | 类型      | 描述                                                                             |
+| ------------------------- | --------- | ---------------------------------------------------------------------------------- |
+| `fieldProjection.enabled` | `boolean` | 添加字段映射 schema，并在 SCIM 同步时投影字段。默认值：`false`。                 |
+
+#### 可投影字段
+
+| 实体     | 可投影目标                                                            | 不可投影                                                                          |
+| -------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user`   | 可写的 `user.additionalFields`，以及加入允许列表的核心字段 `image`     | SCIM 管理的身份字段（`email`、`name`）；敏感键（`role`、`password`、封禁字段、双重认证密钥）；`input: false` 或引用字段 |
+| `member` | 仅可写的 `organization.schema.member.additionalFields`                | 成员关系拥有的键（`role`、用户/组织 ID）。成员映射需要成员关系投影（默认开启） |
+
+只有**由目录创建**的成员关系（`ownership: "created"`）会接收成员字段投影。已存在的成员关系不会更改。
+
+#### SCIM 属性目录
+
+映射从经过整理的 SCIM **User** 属性目录中读取：
+
+| 路径                                                                                                  | 常见用途                                  |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `userName`                                                                                            | 登录名 / 用户名                            |
+| `primaryEmail` / `emails.primary`                                                                     | 邮箱类附加字段                              |
+| `displayName`                                                                                         | 显示名称                                    |
+| `externalId`                                                                                          | IdP 稳定 ID                                 |
+| `name.formatted` / `name.givenName` / `name.familyName`                                               | 姓名组成部分                                |
+| `title`                                                                                               | 职务                                        |
+| `userType`                                                                                            | 用户分类                                    |
+| `preferredLanguage` / `locale` / `timezone`                                                           | 地区设置                                    |
+| `photos.primary`                                                                                      | 头像 URL → 通常映射到 `user.image`          |
+| `enterprise.employeeNumber`                                                                           | 员工 ID                                     |
+| `enterprise.costCenter` / `enterprise.organization` / `enterprise.division` / `enterprise.department` | 企业扩展属性                                |
+
+系统会从持久化的 SCIM 用户记录中将值解析为字符串，然后转换为 Better Auth 字段类型（`string`、`number`、`boolean` 或 `date`）。
+
+#### 投影模式
+
+每个连接都会为每种实体（`user` 和 `member`）存储一种模式。默认模式为 **`create-only`**。
+
+| 模式          | 行为                                                                                                                                                                                                        |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `create-only` | 首次预配时填充空目标（以及仍与静态 schema 默认值一致的值）。所有有效映射目标都设置后，该行的投影会冻结，以保留之后操作员所做的编辑。在冻结前，延迟到达的 SCIM 属性仍可写入。 |
+| `reconcile`   | 只要目录拥有此个人资料/成员关系，就会在每次 SCIM 同步时重写映射字段。当 IdP 应继续作为这些字段的事实来源时，请使用此模式。 |
+
+### 选项参考
+
+`managedDirectorySync` 的完整结构：
+
+| 选项                           | 类型      | 描述                                                                     |
+| ------------------------------ | --------- | -------------------------------------------------------------------------- |
+| `enabled`                      | `boolean` | 启用控制平面和预留表/API。默认值：`false`。                              |
+| `ssoPairing`                   | `boolean` | 为配对目录启用 SSO 配对钩子。默认值：`true`。                             |
+| `membershipProjection`         | `object`  | SCIM → 组织成员关系投影。                                                  |
+| `membershipProjection.enabled` | `boolean` | 默认值：`true`。                                                          |
+| `membershipProjection.role`    | `string`  | 投影创建成员关系时使用的角色。默认值：`"member"`。                       |
+| `fieldProjection`              | `object`  | 选择性启用 SCIM → 自定义字段投影。                                        |
+| `fieldProjection.enabled`      | `boolean` | 默认值：`false`。                                                         |
+
+### 数据库 schema
+
+当 `managedDirectorySync.enabled` 为 `true` 时，dash 插件会添加以下模型。Better Auth 会为每个模型提供主键字段 `id`。部分数据表仅在启用了选择性功能后才会安装。
 
 #### `directorySyncConnection`
 
-存储托管目录的组织、SCIM 连接、SSO 配对、生命周期和停用状态。
+启用托管目录同步后始终存在。用于保存托管目录所属的组织、SCIM 连接、SSO 配对、生命周期和停用状态。
 
-| Column                  | Type      | Constraints                   | Description                                      |
-| ----------------------- | --------- | ----------------------------- | ------------------------------------------------ |
-| `organizationId`        | `string`  | Required, indexed             | Organization that owns the directory.            |
-| `providerId`            | `string`  | Required                      | SSO provider identifier.                         |
-| `aliasKey`              | `string`  | Required, unique, hidden      | Internal directory alias.                        |
-| `provisioningDomainId`  | `string`  | Required, unique              | SCIM provisioning domain.                        |
-| `activeOrganizationKey` | `string`  | Required, unique, hidden      | Active organization key for reconciliation.      |
-| `connectionId`          | `string`  | Optional, unique              | Managed SCIM connection identifier.              |
-| `creationRequestId`     | `string`  | Required, unique, hidden      | Immutable ownership correlation value.           |
-| `status`                | `string`  | Required                      | Current directory lifecycle status.              |
-| `revision`              | `number`  | Required, default `0`, hidden | Mutation revision used for concurrency control.  |
-| `createdAt`             | `date`    | Required                      | Creation timestamp.                              |
-| `createdByActorId`      | `string`  | Required                      | Actor that created the directory.                |
-| `updatedAt`             | `date`    | Required                      | Last update timestamp.                           |
-| `lastActorId`           | `string`  | Required                      | Actor responsible for the latest mutation.       |
-| `ssoProviderId`         | `string`  | Optional                      | Paired SSO provider ID.                          |
-| `ssoProviderRecordId`   | `string`  | Optional, indexed             | Paired SSO provider record.                      |
-| `activeSsoProviderKey`  | `string`  | Required, unique, hidden      | Active SSO provider key.                         |
-| `serializedSsoPairing`  | `string`  | Optional, hidden              | Serialized SSO pairing metadata.                 |
-| `pairingEnforced`       | `boolean` | Required, default `false`     | Whether the SSO pairing requirement is enforced. |
-| `unpairedAt`            | `date`    | Optional                      | Time at which the directory was unpaired.        |
-| `unpairedBy`            | `string`  | Optional                      | Actor that removed the pairing.                  |
-| `decommissionStartedAt` | `date`    | Optional                      | Time decommissioning started.                    |
-| `decommissionedAt`      | `date`    | Optional                      | Time decommissioning completed.                  |
-| `lastError`             | `string`  | Optional, hidden              | Most recent reconciliation error.                |
+| 字段                     | 类型      | 约束                          | 描述                                           |
+| ----------------------- | --------- | ----------------------------- | ---------------------------------------------- |
+| `organizationId`        | `string`  | 必填，有索引                  | 拥有该目录的组织。                             |
+| `providerId`            | `string`  | 必填                          | SSO 提供者标识符。                             |
+| `aliasKey`              | `string`  | 必填，唯一，隐藏              | 内部目录别名。                                 |
+| `provisioningDomainId`  | `string`  | 必填，唯一                    | SCIM 预配域。                                  |
+| `activeOrganizationKey` | `string`  | 必填，唯一，隐藏              | 用于同步的活跃组织密钥。                       |
+| `connectionId`          | `string`  | 可选，唯一                    | 托管 SCIM 连接标识符。                         |
+| `creationRequestId`     | `string`  | 必填，唯一，隐藏              | 不可变的所有权关联值。                         |
+| `status`                | `string`  | 必填                          | 当前目录生命周期状态。                         |
+| `revision`              | `number`  | 必填，默认值 `0`，隐藏        | 用于并发控制的变更版本号。                     |
+| `createdAt`             | `date`    | 必填                          | 创建时间戳。                                   |
+| `createdByActorId`      | `string`  | 必填                          | 创建该目录的操作者。                           |
+| `updatedAt`             | `date`    | 必填                          | 最后更新时间戳。                               |
+| `lastActorId`           | `string`  | 必填                          | 最近一次变更的操作者。                         |
+| `ssoProviderId`         | `string`  | 可选                          | 配对的 SSO 提供者 ID。                         |
+| `ssoProviderRecordId`   | `string`  | 可选，有索引                  | 配对的 SSO 提供者记录。                        |
+| `activeSsoProviderKey`  | `string`  | 必填，唯一，隐藏              | 活跃 SSO 提供者密钥。                          |
+| `serializedSsoPairing`  | `string`  | 可选，隐藏                    | 序列化后的 SSO 配对元数据。                    |
+| `pairingEnforced`       | `boolean` | 必填，默认值 `false`          | 是否强制执行 SSO 配对要求。                    |
+| `unpairedAt`            | `date`    | 可选                          | 取消目录配对的时间。                           |
+| `unpairedBy`            | `string`  | 可选                          | 移除配对的操作者。                             |
+| `decommissionStartedAt` | `date`    | 可选                          | 开始停用的时间。                               |
+| `decommissionedAt`      | `date`    | 可选                          | 完成停用的时间。                               |
+| `lastError`             | `string`  | 可选，隐藏                    | 最近一次同步错误。                             |
 
 #### `directorySyncMembershipProvenance`
 
-跟踪通过目录同步投影创建或管理的组织成员关系，使插件只能协调其拥有的成员关系。
+启用托管目录同步后始终存在。用于追踪由成员关系投影创建或管理的组织成员关系。
 
-| Column                 | Type     | Constraints              | Description                                |
-| ---------------------- | -------- | ------------------------ | ------------------------------------------ |
-| `membershipKey`        | `string` | Required, unique, hidden | Stable key for the projected membership.   |
-| `organizationId`       | `string` | Required, indexed        | Organization containing the membership.    |
-| `userId`               | `string` | Required, indexed        | Better Auth User receiving the membership. |
-| `memberId`             | `string` | Required, unique         | Organization `member` record identifier.   |
-| `ownership`            | `string` | Required, hidden         | Projection ownership state.                |
-| `provisioningDomainId` | `string` | Required, indexed        | SCIM provisioning domain that produced it. |
-| `createdAt`            | `date`   | Required                 | Creation timestamp.                        |
-| `updatedAt`            | `date`   | Required                 | Last update timestamp.                     |
+| 字段                    | 类型     | 约束               | 描述                              |
+| ---------------------- | -------- | ------------------ | --------------------------------- |
+| `membershipKey`        | `string` | 必填，唯一，隐藏   | 投影成员关系的稳定密钥。          |
+| `organizationId`       | `string` | 必填，有索引       | 包含此成员关系的组织。            |
+| `userId`               | `string` | 必填，有索引       | 获得该成员关系的 Better Auth 用户。 |
+| `memberId`             | `string` | 必填，唯一         | 组织 `member` 记录标识符。        |
+| `ownership`            | `string` | 必填，隐藏         | `created` 或 `observed`。         |
+| `provisioningDomainId` | `string` | 必填，有索引       | 创建该成员关系的 SCIM 预配域。    |
+| `createdAt`            | `date`   | 必填               | 创建时间戳。                      |
+| `updatedAt`            | `date`   | 必填               | 最后更新时间戳。                  |
 
-完整的 SCIM 模型和迁移指南，请参阅 [SCIM 插件参考](/docs/plugins/scim/reference)和 [1.7 升级指南](/docs/guides/1-7-upgrade-guide)。
+#### `directorySyncFieldMapping`
+
+仅在 `fieldProjection.enabled` 为 `true` 时存在。按连接将 SCIM 属性（和/或静态默认值）映射到 Better Auth 字段。
+
+| 字段                    | 类型      | 约束                   | 描述                                           |
+| ---------------------- | --------- | ---------------------- | ---------------------------------------------- |
+| `mappingKey`           | `string`  | 必填，唯一，隐藏       | 映射记录的稳定密钥。                           |
+| `provisioningDomainId` | `string`  | 必填，有索引           | SCIM 预配域。                                  |
+| `organizationId`       | `string`  | 必填，有索引           | 拥有该目录的组织。                             |
+| `entity`               | `string`  | 必填                   | 目标实体（`user` 或 `member`）。               |
+| `targetField`          | `string`  | 必填                   | 该实体上的 Better Auth 字段名称。              |
+| `scimSource`           | `string`  | 可选                   | `scimPath` 对应的 SCIM 资源（默认由实体决定）。 |
+| `scimPath`             | `string`  | 可选                   | 已加入允许列表的 SCIM 属性路径。               |
+| `defaultValue`         | `string`  | 可选                   | SCIM 值为空时使用的回退值。                    |
+| `enabled`              | `boolean` | 必填，默认值 `true`    | 是否在运行时应用此映射。                       |
+| `createdAt`            | `date`    | 必填                   | 创建时间戳。                                   |
+| `updatedAt`            | `date`    | 必填                   | 最后更新时间戳。                               |
+| `createdByActorId`     | `string`  | 必填                   | 创建该映射的操作者。                           |
+| `lastActorId`          | `string`  | 必填                   | 最近一次变更的操作者。                         |
+
+#### `directorySyncFieldProjectionMode`
+
+仅在 `fieldProjection.enabled` 为 `true` 时存在。按连接和实体设置写入频率（`create-only` 或 `reconcile`）。
+
+| 字段                    | 类型     | 约束                            | 描述                       |
+| ---------------------- | -------- | ------------------------------- | -------------------------- |
+| `modeKey`              | `string` | 必填，唯一，隐藏              | 模式记录的稳定密钥。       |
+| `provisioningDomainId` | `string` | 必填，有索引                  | SCIM 预配域。              |
+| `organizationId`       | `string` | 必填，有索引                  | 拥有该目录的组织。         |
+| `entity`               | `string` | 必填                          | 应用此模式的实体。         |
+| `mode`                 | `string` | 必填，默认值 `create-only`    | 投影模式。                 |
+| `createdAt`            | `date`   | 必填                          | 创建时间戳。               |
+| `updatedAt`            | `date`   | 必填                          | 最后更新时间戳。           |
+| `lastActorId`          | `string` | 必填                          | 最近一次变更的操作者。     |
+
+#### `directorySyncFieldProvenance`
+
+仅在 `fieldProjection.enabled` 为 `true` 时存在。标记某个预配域、实体和目标行是否已应用仅创建一次的字段。
+
+| 字段                    | 类型     | 约束                   | 描述                                               |
+| ---------------------- | -------- | ---------------------- | -------------------------------------------------- |
+| `provenanceKey`        | `string` | 必填，唯一，隐藏       | 来源记录的稳定密钥。                               |
+| `provisioningDomainId` | `string` | 必填，有索引           | SCIM 预配域。                                      |
+| `entity`               | `string` | 必填                   | 被投影的实体。                                     |
+| `targetId`             | `string` | 必填，有索引           | 被投影记录的主键（`userId`、`memberId` 等）。      |
+| `appliedAt`            | `date`   | 必填                   | 冻结仅创建一次的字段的时间。                       |
+| `createdAt`            | `date`   | 必填                   | 创建时间戳。                                       |
+| `updatedAt`            | `date`   | 必填                   | 最后更新时间戳。                                   |
+
+完整 SCIM 模型和迁移指南请参阅 [SCIM 插件参考](/docs/plugins/scim/reference)以及 [1.7 升级指南](/docs/guides/1-7-upgrade-guide)。
 
 ## 事件跟踪
 
@@ -188,64 +426,72 @@ dash 插件会自动跟踪以下事件：
 
 ### 用户事件
 
-| Event                        | Trigger                      |
-| ---------------------------- | ---------------------------- |
-| `user_signed_up`             | New user registration        |
-| `user_profile_updated`       | User updates their profile   |
-| `user_profile_image_updated` | User changes their avatar    |
-| `user_email_verified`        | Email verification completed |
-| `user_banned`                | User is banned               |
-| `user_unbanned`              | User is unbanned             |
-| `user_deleted`               | User account deleted         |
+| 事件                       | 触发条件                                      |
+| ------------------------- | --------------------------------------------- |
+| `user_created`             | 新用户注册                                    |
+| `profile_updated`          | 用户更新个人资料                              |
+| `profile_image_updated`    | 用户更改头像                                  |
+| `email_verified`           | 邮箱验证完成                                  |
+| `email_changed`            | 用户邮箱地址已更改                            |
+| `user_banned`              | 用户被封禁                                    |
+| `user_unbanned`            | 用户已解除封禁                                |
+| `user_role_updated`        | 应用级用户角色已更改                          |
+| `user_deleted`             | 用户账户已删除                                |
+| `anonymous_user_converted` | 匿名访客已关联到永久账户                      |
+| `two_factor_enabled`       | 已启用双重认证                                |
+| `two_factor_disabled`      | 已禁用双重认证                                |
+| `two_factor_verified`      | 双重认证验证成功                              |
 
 ### 会话事件
 
-| Event                        | Trigger                         |
-| ---------------------------- | ------------------------------- |
-| `user_signed_in`             | Successful sign-in              |
-| `user_signed_out`            | User signs out                  |
-| `session_created`            | New session created             |
-| `session_revoked`            | Single session revoked          |
-| `sessions_revoked_all`       | All sessions revoked            |
-| `user_impersonated`          | Admin starts impersonating user |
-| `user_impersonation_stopped` | Admin stops impersonating       |
+| 事件                        | 触发条件                        |
+| --------------------------- | ------------------------------- |
+| `user_signed_in`            | 登录成功                        |
+| `user_signed_out`           | 用户退出登录                    |
+| `user_sign_in_failed`       | 登录尝试失败                    |
+| `session_created`           | 创建新会话                      |
+| `session_revoked`            | 撤销单个会话                    |
+| `all_sessions_revoked`      | 撤销所有会话                    |
+| `user_impersonated`         | 管理员开始模拟用户              |
+| `user_impersonated_stopped` | 管理员停止模拟用户              |
 
 ### 账户事件
 
-| Event              | Trigger                 |
-| ------------------ | ----------------------- |
-| `account_linked`   | Social account linked   |
-| `account_unlinked` | Social account unlinked |
-| `password_changed` | Password updated        |
+| 事件               | 触发条件          |
+| ------------------ | ----------------- |
+| `account_linked`   | 已关联社交账户    |
+| `account_unlinked` | 已取消关联社交账户 |
+| `password_changed` | 密码已更新        |
 
 ### 验证事件
 
-| Event                      | Trigger                  |
-| -------------------------- | ------------------------ |
-| `password_reset_requested` | Password reset initiated |
-| `password_reset_completed` | Password reset finished  |
-| `email_verification_sent`  | Verification email sent  |
+| 事件                       | 触发条件          |
+| -------------------------- | ----------------- |
+| `password_reset_requested` | 已发起密码重置    |
+| `password_reset_completed` | 已完成密码重置    |
+| `email_verification_sent`  | 已发送验证邮件    |
 
 ### 组织事件
 
 如果您使用组织插件，也会跟踪以下事件：
 
-| Event                  | Trigger                          |
-| ---------------------- | -------------------------------- |
-| `organization_created` | New organization created         |
-| `organization_updated` | Organization settings changed    |
-| `member_added`         | Member added to organization     |
-| `member_removed`       | Member removed from organization |
-| `member_role_updated`  | Member role changed              |
-| `member_invited`       | Invitation sent                  |
-| `invite_accepted`      | Invitation accepted              |
-| `invite_rejected`      | Invitation rejected              |
-| `invite_cancelled`     | Invitation cancelled             |
-| `team_created`         | Team created                     |
-| `team_updated`         | Team updated                     |
-| `team_deleted`         | Team deleted                     |
-| `team_member_added`    | Member added to team             |
-| `team_member_removed`  | Member removed from team         |
+| 事件                                  | 触发条件                         |
+| ------------------------------------- | -------------------------------- |
+| `organization_created`                | 创建新组织                       |
+| `organization_updated`                | 组织设置已更改                   |
+| `organization_deleted`                | 组织已删除                       |
+| `organization_member_added`           | 成员已加入组织                   |
+| `organization_member_removed`         | 成员已从组织中移除               |
+| `organization_member_role_updated`    | 成员角色已更改                   |
+| `organization_member_invited`         | 已发送邀请                       |
+| `organization_member_invite_accepted` | 已接受邀请                       |
+| `organization_member_invite_rejected` | 已拒绝邀请                       |
+| `organization_member_invite_canceled` | 已取消邀请                       |
+| `organization_team_created`           | 创建团队                         |
+| `organization_team_updated`           | 团队已更新                       |
+| `organization_team_deleted`           | 团队已删除                       |
+| `organization_team_member_added`      | 成员已加入团队                   |
+| `organization_team_member_removed`    | 成员已从团队中移除               |
 
 ## 仪表盘端点
 
@@ -321,12 +567,15 @@ dash 插件会为仪表盘注册大量管理端点：
 
 ### 目录同步
 
-| Endpoint                             | Method | Description      |
-| ------------------------------------ | ------ | ---------------- |
-| `/dash/organization/directories`     | GET    | List directories |
-| `/dash/organization/directory`       | POST   | Create directory |
-| `/dash/organization/directory`       | DELETE | Delete directory |
-| `/dash/organization/directory/token` | POST   | Regenerate token |
+| 端点                                                            | 方法   | 说明                                                  |
+| --------------------------------------------------------------- | ------ | --------------------------------------------------- |
+| `/dash/organization/directories`                                | GET    | 列出目录                                             |
+| `/dash/organization/directory`                                  | POST   | 创建目录（启用字段投影时可选传入 `fieldMappings`）    |
+| `/dash/organization/directory`                                  | DELETE | 删除目录                                             |
+| `/dash/organization/directory/token`                            | POST   | 重新生成令牌                                         |
+| `/dash/organization/:id/directory-field-mapping-options`        | GET    | 字段映射目录（可用字段、SCIM 路径和覆盖范围警告）                        |
+| `/dash/organization/:id/directories/:providerId/field-mappings` | GET    | 获取目录连接的字段映射和模式                                             |
+| `/dash/organization/:id/directories/:providerId/field-mappings` | PUT    | 替换目录连接的字段映射和模式                                             |
 
 ### 日志转发
 

@@ -1,0 +1,646 @@
+---
+icon: pluginsOAuthProviderReference
+sidebarTitle: "参考"
+title: OAuth Provider 参考
+description: OAuth Provider 选项、端点、错误、速率限制、扩展和数据库 schema。
+---
+
+## Plugin options
+
+将以下选项传给 `oauthProvider()`。只有 `loginPage` 和 `consentPage` 是必需的。
+
+### Sign-in flow
+
+`loginPage` <span className="opacity-70">`string`</span>
+
+必需。用户需要登录时，authorize 端点会重定向到此页面。请参阅[登录页](/docs/plugins/oauth-provider/sign-in-flow#login-page)。
+
+`consentPage` <span className="opacity-70">`string`</span>
+
+必需。用户需要授权同意时，authorize 端点会重定向到此页面。请参阅[授权同意页](/docs/plugins/oauth-provider/sign-in-flow#consent-page)。
+
+`signup` <span className="opacity-70">`object`</span>
+
+`prompt=create` 的设置。请参阅[注册账户界面](/docs/plugins/oauth-provider/sign-in-flow#sign-up-account-screen)。
+
+`selectAccount` <span className="opacity-70">`object`</span>
+
+`prompt=select_account` 的设置。请参阅[选择账户界面](/docs/plugins/oauth-provider/sign-in-flow#select-account-screen)。
+
+`postLogin` <span className="opacity-70">`object`</span>
+
+登录和授权同意之间的步骤，例如选择组织。请参阅[登录后界面](/docs/plugins/oauth-provider/sign-in-flow#post-login-screen)。
+
+`allowPublicClientPrelogin` <span className="opacity-70">`boolean`</span>
+
+请求携带有效且经过签名的 `oauth_query` 时，允许 `/oauth2/public-client-prelogin` 在登录前返回信息。签名查询不会限制可读取字段的 `client_id`，因此无需账户即可读取所有启用客户端的公开字段，包括 `contacts`。默认值为 `false`。
+
+<Accordions>
+  <Accordion title="注册选项">
+    `page` <span className="opacity-70">`string`</span>
+
+    注册页面。默认值为 `loginPage`。注册完成后，请使用 `created: true` 调用 `/oauth2/continue`。
+
+    `shouldRedirect` <span className="opacity-70">`(context) => Awaitable<boolean | string>`</span>
+
+    为已登录用户添加注册步骤。返回 `true` 会重定向到 `page`，返回字符串会重定向到该字符串指定的页面，返回 `false` 则继续流程。
+  </Accordion>
+
+  <Accordion title="selectAccount 选项">
+    `page` <span className="opacity-70">`string`</span>
+
+    账户选择页面。未设置时，`prompt=select_account` 会返回错误；`shouldRedirect` 返回 `true` 时会将用户发送到 `loginPage`。选择完成后，请使用 `selected: true` 调用 `/oauth2/continue`。
+
+    `shouldRedirect` <span className="opacity-70">`(context) => Awaitable<boolean>`</span>
+
+    必需。用户仍需选择账户时返回 `true`。
+  </Accordion>
+
+  <Accordion title="postLogin options">
+    `page` <span className="opacity-70">`string`</span>
+
+    必需。`shouldRedirect` 返回 `true` 时所重定向到的页面。
+
+    `shouldRedirect` <span className="opacity-70">`(context) => Awaitable<boolean>`</span>
+
+    必需。仍需选择时返回 `true`。上下文包含 `isContinuation`；用户通过 `postLogin: true` 调用 `/oauth2/continue` 返回时，该值为 `true`。由于客户端可以自行发送此请求，返回 `false` 前请先验证会话。
+
+    `consentReferenceId` <span className="opacity-70">`(context) => Awaitable<string | undefined>`</span>
+
+    必需。授权同意所依据的引用。值为 `undefined` 或 `""` 时，使用不含引用的授权同意。申请的 scope 需要引用但未设置时，请在此处抛出错误。
+  </Accordion>
+</Accordions>
+
+### Scopes and claims
+
+`scopes` <span className="opacity-70">`string[]`</span>
+
+客户端可以申请的 scope。不包含 `openid` 时，提供者仅作为 OAuth 提供者运行。默认值为 `["openid", "profile", "email", "offline_access"]`。请参阅[scope](/docs/plugins/oauth-provider/tokens#scopes)。
+
+`advertisedMetadata` <span className="opacity-70">`{ scopes_supported?, claims_supported? }`</span>
+
+覆盖发现文档中公开的内容。每个 `scopes_supported` 值都必须包含在 `scopes` 中。请参阅[发现元数据](/docs/plugins/oauth-provider/openid-connect#discovery-metadata)。
+
+`customAccessTokenClaims` <span className="opacity-70">`(info) => Awaitable<Record<string, any>>`</span>
+
+添加访问令牌声明，令牌核查时也会返回。请参阅[自定义声明](/docs/plugins/oauth-provider/tokens#custom-claims)。
+
+`customIdTokenClaims` <span className="opacity-70">`(info) => Awaitable<Record<string, any>>`</span>
+
+添加 ID 令牌声明。保留名称会被移除。请参阅[ID 令牌声明](/docs/plugins/oauth-provider/openid-connect#id-token-claims)。
+
+`customUserInfoClaims` <span className="opacity-70">`(info) => Awaitable<Record<string, any>>`</span>
+
+添加 UserInfo 声明。请参阅 [UserInfo](/docs/plugins/oauth-provider/openid-connect#userinfo)。
+
+`customTokenResponseFields` <span className="opacity-70">`(info) => Awaitable<Record<string, unknown>>`</span>
+
+向令牌响应体添加字段。不能覆盖标准字段。请参阅[自定义令牌响应字段](/docs/plugins/oauth-provider/tokens#custom-token-response-fields)。
+
+`pairwiseSecret` <span className="opacity-70">`string`</span>
+
+为 `subject_type: "pairwise"` 的客户端启用成对 `sub` 值。长度至少为 32 个字符。请参阅[成对主体标识符](/docs/plugins/oauth-provider/openid-connect#pairwise-subject-identifiers)。
+
+### Clients and registration
+
+`grantTypes` <span className="opacity-70">`GrantType[]`</span>
+
+token 端点接受的授权许可。`refresh_token` 需要 `authorization_code`。扩展授权许可会叠加在默认值上。默认值为 `["authorization_code", "client_credentials", "refresh_token"]`。
+
+`validateRedirectUri` <span className="opacity-70">`(uri, registeredUris, defaultResult) => Awaitable<boolean>`</span>
+
+替代重定向 URI 精确匹配逻辑。请参阅[自定义重定向 URI 验证](/docs/plugins/oauth-provider/clients#custom-redirect-uri-validation)。
+
+`cachedTrustedClients` <span className="opacity-70">`Set<string>`</span>
+
+要缓存的客户端 ID。无法通过 CRUD 端点更改已缓存的客户端。请参阅[受信任客户端](/docs/plugins/oauth-provider/clients#trusted-clients)。
+
+`clientPrivileges` <span className="opacity-70">`(context) => Awaitable<boolean | undefined>`</span>
+
+授权客户端操作：`create`、`read`、`update`、`delete`、`list`、`rotate` 和 `configure-client-credentials-scopes`。请参阅[客户端 CRUD 权限](/docs/plugins/oauth-provider/clients#client-crud-privileges)。
+
+`clientReference` <span className="opacity-70">`(context) => Awaitable<string | undefined>`</span>
+
+返回新客户端的所有者引用，例如组织 ID。请参阅[组织](/docs/plugins/oauth-provider/clients#organizations)。
+
+`allowDynamicClientRegistration` <span className="opacity-70">`boolean`</span>
+
+启用 `POST /oauth2/register`。默认值为 `false`。请参阅[动态客户端注册](/docs/plugins/oauth-provider/clients#dynamic-client-registration)。
+
+`allowUnauthenticatedClientRegistration` <span className="opacity-70">`boolean`</span>
+
+接受不带会话的注册请求。默认值为 `false`。启用后，互联网上的任何人都可以注册客户端；启用前请阅读[动态客户端注册](/docs/plugins/oauth-provider/clients#dynamic-client-registration)。
+
+`validateInitialAccessToken` <span className="opacity-70">`(context) => Awaitable<{ referenceId? } | false>`</span>
+
+启用初始访问令牌注册（[RFC 7591 §3](https://datatracker.ietf.org/doc/html/rfc7591#section-3)）。
+
+`clientRegistrationDefaultScopes` <span className="opacity-70">`string[]`</span>
+
+存储在每个动态注册客户端上的 scope。默认值为 `scopes`，因此注册客户端会获得服务器定义的所有 scope。启用开放注册时，请缩小此范围。
+
+`clientRegistrationAllowedScopes` <span className="opacity-70">`string[]`</span>
+
+注册时可以额外申请的 scope。每个值都必须包含在 `scopes` 中。默认值为 `[]`。
+
+`clientRegistrationRequirePKCE` <span className="opacity-70">`boolean`</span>
+
+动态注册的机密客户端是否必须使用 PKCE。默认值为 `true`。设为 `false` 会移除所有此类客户端（包括匿名客户端）针对授权码被截获和注入的防护。请参阅 [PKCE](/docs/plugins/oauth-provider/tokens#pkce)。
+
+`clientRegistrationDefaultApplicationType` <span className="opacity-70">`"web" | "native" | "infer"`</span>
+
+注册请求省略 `application_type` 时使用的值。默认值为 `"web"`。
+
+`clientRegistrationClientSecretExpiration` <span className="opacity-70">`number | string | Date`</span>
+
+返回给获得密钥的动态注册客户端的 `client_secret_expires_at` 值。`"30d"` 等字符串表示从注册时开始计算的时长；数字（Unix 秒数）或 `Date` 表示固定时间。超过该时间后，Better Auth 不会拒绝此密钥。默认永不过期。
+
+`clientRegistrationDefaultResources` <span className="opacity-70">`string[]`</span>
+
+关联到所有新客户端的资源，包括 CIMD、匿名注册和管理员创建的客户端。每项资源都必须包含在 `resources` 中。之后，所有可以注册的客户端都能获取这些 API 的令牌。
+
+`clientRegistrationAllowedResources` <span className="opacity-70">`string[]`</span>
+
+注册时可以申请的资源。每项都必须包含在 `resources` 中。两个资源选项都省略时，申请的资源会被拒绝。
+
+`assertionMaxLifetime` <span className="opacity-70">`number`</span>
+
+`private_key_jwt` 断言的最大有效期，单位为秒。默认值为 `300`。请参阅[私钥 JWT](/docs/plugins/oauth-provider/clients#private-key-jwt)。
+
+`allowClientKeyRotation` <span className="opacity-70">`boolean`</span>
+
+启用 `POST /oauth2/client/rotate-keys`。使用 memory adapter 或设置 `advanced.database.generateId: "serial"` 时，服务器启动会失败，因为两者都无法确保断言只能使用一次。默认值为 `false`。请参阅[轮换客户端密钥](/docs/plugins/oauth-provider/clients#rotating-client-keys)。
+
+### Resources
+
+`resources` <span className="opacity-70">`Array<string | OAuthResourceInput>`</span>
+
+启动时写入 `oauthResource` 的受保护资源。请参阅[资源](/docs/plugins/oauth-provider/tokens#resources)。
+
+`resourceSeedMode` <span className="opacity-70">`"insertOnly" | "merge" | "overwrite"`</span>
+
+写入时如何处理现有记录：跳过、仅更新已配置字段，或替换记录。默认值为 `"insertOnly"`。
+
+`enforcePerClientResources` <span className="opacity-70">`boolean`</span>
+
+要求客户端关联其申请的每项 `resource`（[RFC 8707 §2](https://datatracker.ietf.org/doc/html/rfc8707#section-2)）。默认值为 `true`。设为 `false` 后，任何客户端（包括自行注册的客户端）都能获取所有已启用资源的令牌。
+
+`cachedResources` <span className="opacity-70">`Set<string>`</span>
+
+要缓存的资源标识符。通过管理端点进行写入时会使缓存失效。
+
+`identifierValidator` <span className="opacity-70">`(identifier) => Awaitable<boolean>`</span>
+
+验证通过管理端点或注册创建的标识符。默认要求使用不含片段的绝对 URI（[RFC 8707 §2](https://datatracker.ietf.org/doc/html/rfc8707#section-2)）。
+
+`resourcePrivileges` <span className="opacity-70">`(context) => Awaitable<boolean | undefined>`</span>
+
+授权资源操作：`create`、`read`、`update`、`delete`、`list`、`link` 和 `unlink`。
+
+<Callout type="warn">
+  未设置 `resourcePrivileges` 时，任何已登录且请求头能够到达资源管理端点的用户都可以管理资源。从路由调用这些端点前，请先定义此选项。
+</Callout>
+
+### Tokens
+
+`accessTokenExpiresIn` <span className="opacity-70">`number`</span>
+
+访问令牌有效期，单位为秒。默认值为 `3600`。请参阅[有效期](/docs/plugins/oauth-provider/tokens#lifetimes)。
+
+`m2mAccessTokenExpiresIn` <span className="opacity-70">`number`</span>
+
+`client_credentials` 访问令牌的有效期，单位为秒。默认值为 `3600`。
+
+`idTokenExpiresIn` <span className="opacity-70">`number`</span>
+
+ID 令牌有效期，单位为秒。默认值为 `36000`。
+
+`refreshTokenExpiresIn` <span className="opacity-70">`number`</span>
+
+刷新令牌有效期，单位为秒。默认值为 `2592000`。每次刷新都会重新开始计算有效期，因此定期使用的授权许可不会过期。
+
+`codeExpiresIn` <span className="opacity-70">`number`</span>
+
+授权码有效期，单位为秒。默认值为 `600`。
+
+`scopeExpirations` <span className="opacity-70">`Record<scope, number | string | Date>`</span>
+
+按 scope 缩短访问令牌有效期。采用最早的过期时间。
+
+`refreshTokenReuseInterval` <span className="opacity-70">`number`</span>
+
+轮换后的刷新令牌可以重放相同响应的时间，单位为秒。默认值为 `0`。请参阅[刷新令牌](/docs/plugins/oauth-provider/tokens#refresh-tokens)。
+
+`formatRefreshToken` <span className="opacity-70">`{ encrypt, decrypt }`</span>
+
+发送给客户端的自定义刷新令牌编码方式。
+
+`disableJwtPlugin` <span className="opacity-70">`boolean`</span>
+
+签发不透明访问令牌和 HS256 ID 令牌。默认值为 `false`。请参阅[不使用 JWT 插件](/docs/plugins/oauth-provider/tokens#without-the-jwt-plugin)。
+
+`dpop` <span className="opacity-70">`{ proofMaxAgeSeconds?, signingAlgorithms? }`</span>
+
+DPoP proof 验证。`proofMaxAgeSeconds` 默认值为 `300`，`signingAlgorithms` 默认值为 `["EdDSA", "ES256", "ES512", "PS256", "RS256"]`。请参阅 [DPoP](/docs/plugins/oauth-provider/tokens#dpop)。
+
+`requestUriResolver` <span className="opacity-70">`(input) => Promise<Record<string, string> | null>`</span>
+
+为推送授权请求解析 authorize 端点中的 `request_uri`（[RFC 9126 §4](https://datatracker.ietf.org/doc/html/rfc9126#section-4)）。URI 未知或已过期时返回 `null`。
+
+### Storage and generation
+
+`storeClientSecret` <span className="opacity-70">`"hashed" | "encrypted" | { hash, verify? } | { encrypt, decrypt }`</span>
+
+客户端密钥的存储方式。哈希处理需要 JWT 插件；加密存储需要 `disableJwtPlugin`。默认值为 `"hashed"`；启用 `disableJwtPlugin` 时默认为 `"encrypted"`。请参阅[存储](/docs/plugins/oauth-provider/tokens#storage)。
+
+`storeTokens` <span className="opacity-70">`"hashed" | { hash }`</span>
+
+不透明访问令牌和刷新令牌的存储方式。默认值为 `"hashed"`。
+
+`prefix` <span className="opacity-70">`{ opaqueAccessToken?, refreshToken?, clientSecret? }`</span>
+
+添加到返回值中的前缀，不会存储。请在首次部署前设置；部署后若要添加前缀，请改在对应的 `generate*` 函数中设置。
+
+`generateClientId` <span className="opacity-70">`() => string`</span>
+
+生成客户端 ID。默认值为 32 个随机字母。
+
+`generateClientSecret` <span className="opacity-70">`() => string`</span>
+
+生成客户端密钥。默认值为 32 个随机字母。
+
+`generateOpaqueAccessToken` <span className="opacity-70">`() => Awaitable<string>`</span>
+
+生成不透明访问令牌。默认值为 32 个随机字母。
+
+`generateRefreshToken` <span className="opacity-70">`() => Awaitable<string>`</span>
+
+生成刷新令牌。默认值为 32 个随机字母。
+
+### Other
+
+`rateLimit` <span className="opacity-70">`object`</span>
+
+每个端点的速率限制。默认值请参阅[速率限制](#rate-limits)。
+
+`extensions` <span className="opacity-70">`OAuthProviderExtension[]`</span>
+
+配套扩展。插件通常会改为调用 `extendOAuthProvider()`。请参阅[提供者扩展](#provider-extensions)。
+
+`schema` <span className="opacity-70">`object`</span>
+
+自定义插件数据表的模型和字段名称。
+
+## Endpoints
+
+路径相对于认证基础路径。标记为“仅限服务器”的端点只能通过 `auth.api` 调用。
+
+| 方法         | 路径                                                     | 服务器方法                     | 身份验证                                                | 仅限服务器   |
+| ------------ | -------------------------------------------------------- | ------------------------------ | ------------------------------------------------------ | ----------- |
+| `GET`        | `/.well-known/oauth-authorization-server`                | `getOAuthServerConfig`         | 无                                                      | 否           |
+| `GET`        | `/.well-known/openid-configuration`                      | `getOpenIdConfig`              | 无                                                      | 否           |
+| `GET` `POST` | `/oauth2/authorize`                                      | `oauth2Authorize`              | 会话；否则重定向到 `loginPage`                          | 否           |
+| `POST`       | `/oauth2/consent`                                        | `oauth2Consent`                | 会话和签名后的 `oauth_query`                             | 否           |
+| `POST`       | `/oauth2/continue`                                       | `oauth2Continue`               | 会话和签名后的 `oauth_query`                             | 否           |
+| `POST`       | `/oauth2/token`                                          | `oauth2Token`                  | 客户端身份验证                                           | 否           |
+| `POST`       | `/oauth2/introspect`                                     | `oauth2Introspect`             | 客户端身份验证                                           | 否           |
+| `POST`       | `/oauth2/revoke`                                         | `oauth2Revoke`                 | 客户端身份验证                                           | 否           |
+| `GET` `POST` | `/oauth2/userinfo`                                       | `oauth2UserInfo`               | 带有 `openid` 的访问令牌                                | 否           |
+| `GET` `POST` | `/oauth2/end-session`                                    | `oauth2EndSession`             | `id_token_hint` 或用户确认                              | 否           |
+| `POST`       | `/oauth2/end-session/confirm`                            | —                              | 签名确认 Cookie                                         | 仅 HTTP       |
+| `POST`       | `/oauth2/register`                                       | `registerOAuthClient`          | 会话、初始访问令牌或无                                  | 否           |
+| `POST`       | `/admin/oauth2/create-client`                            | `adminCreateOAuthClient`       | 服务器端，需要会话                                       | 是           |
+| `PATCH`      | `/admin/oauth2/update-client`                            | `adminUpdateOAuthClient`       | 服务器端，需要会话                                       | 是           |
+| `POST`       | `/oauth2/create-client`                                  | `createOAuthClient`            | 会话                                                    | 否           |
+| `GET`        | `/oauth2/get-client`                                     | `getOAuthClient`               | 会话                                                    | 否           |
+| `GET`        | `/oauth2/public-client`                                  | `getOAuthClientPublic`         | 会话                                                    | 否           |
+| `POST`       | `/oauth2/public-client-prelogin`                         | `getOAuthClientPublicPrelogin` | 签名后的 `oauth_query`，且启用了 `allowPublicClientPrelogin` | 否      |
+| `GET`        | `/oauth2/get-clients`                                    | `getOAuthClients`              | 会话                                                    | 否           |
+| `POST`       | `/oauth2/update-client`                                  | `updateOAuthClient`            | 会话                                                    | 否           |
+| `POST`       | `/oauth2/client/rotate-secret`                           | `rotateClientSecret`           | 会话                                                    | 否           |
+| `POST`       | `/oauth2/client/rotate-keys`                             | `rotateClientKeys`             | 客户端断言                                               | 否           |
+| `POST`       | `/oauth2/delete-client`                                  | `deleteOAuthClient`            | 会话                                                    | 否           |
+| `GET`        | `/oauth2/get-consent`                                    | `getOAuthConsent`              | 会话                                                    | 否           |
+| `GET`        | `/oauth2/get-consents`                                   | `getOAuthConsents`             | 会话                                                    | 否           |
+| `POST`       | `/oauth2/update-consent`                                 | `updateOAuthConsent`           | 会话                                                    | 否           |
+| `POST`       | `/oauth2/delete-consent`                                 | `deleteOAuthConsent`           | 会话                                                    | 否           |
+| `POST`       | `/admin/oauth2/resources`                                | `adminCreateOAuthResource`     | 会话和 `resourcePrivileges`                              | 是           |
+| `GET`        | `/admin/oauth2/resources`                                | `adminListOAuthResources`      | 会话和 `resourcePrivileges`                              | 是           |
+| `GET`        | `/admin/oauth2/resources/:identifier`                    | `adminGetOAuthResource`        | 会话和 `resourcePrivileges`                              | 是           |
+| `PATCH`      | `/admin/oauth2/resources/:identifier`                    | `adminUpdateOAuthResource`     | 会话和 `resourcePrivileges`                              | 是           |
+| `DELETE`     | `/admin/oauth2/resources/:identifier`                    | `adminDeleteOAuthResource`     | 会话和 `resourcePrivileges`                              | 是           |
+| `POST`       | `/admin/oauth2/resources/:identifier/clients/:client_id` | `adminLinkClientResource`      | 会话和 `resourcePrivileges`                              | 是           |
+| `DELETE`     | `/admin/oauth2/resources/:identifier/clients/:client_id` | `adminUnlinkClientResource`    | 会话和 `resourcePrivileges`                              | 是           |
+
+提供者也会在相对于 issuer 的路径下提供这两种 well-known 文档（[RFC 8414 §3](https://datatracker.ietf.org/doc/html/rfc8414#section-3)）。对应的 `auth.api` 方法只能在服务器端调用。在浏览器中，`oauthProviderClient()` 会将页面 URL 中已签名的 `oauth_query` 添加到 POST 请求。未启用 `allowDynamicClientRegistration` 时，`/oauth2/register` 会拒绝请求；未启用 `allowClientKeyRotation` 时，`/oauth2/client/rotate-keys` 也会拒绝请求。
+
+## Token errors
+
+错误采用 [RFC 6749 §5.2](https://datatracker.ietf.org/doc/html/rfc6749#section-5.2) 格式。内置授权许可会先验证客户端，再查找授权许可，因此未知的 `client_id` 会返回 `invalid_client`，而不是 `invalid_grant`。
+
+| 错误                     | 状态   | 返回条件                                                                                                                                |
+| ------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `invalid_request`        | 400    | 缺少必需请求字段，或字段格式错误。                                                                                                      |
+| `invalid_client`         | 400    | 客户端身份验证失败，或客户端使用的方式与其注册的 `token_endpoint_auth_method` 不同。                                                    |
+| `invalid_client`         | 401    | `client_secret_basic` 身份验证失败。响应中包含 `WWW-Authenticate: Basic` challenge。                                                    |
+| `invalid_grant`          | 400    | 授权码、刷新令牌或 PKCE verifier 无效、已过期，或签发给了其他客户端。                                                                    |
+| `unauthorized_client`    | 400    | 客户端未注册此授权许可、公有客户端使用了 `client_credentials`，或客户端未配置 `client_credentials` scope。                              |
+| `unsupported_grant_type` | 400    | 授权许可未列入 `grantTypes`，且没有扩展处理该许可。                                                                                      |
+| `invalid_scope`          | 400    | 客户端不允许申请该 scope，或指定资源没有允许任何 scope。                                                                                 |
+| `invalid_target`         | 400    | `resource` 未知、已禁用，或启用 `enforcePerClientResources` 时未关联到客户端。                                                            |
+| `invalid_dpop_proof`     | 400    | DPoP 绑定的客户端或资源缺少有效的 DPoP proof。                                                                                           |
+
+`adminCreateOAuthClient` 关联资源时，标识符无效会因 `VALIDATION_ERROR` 验证失败；资源未知或已禁用时会返回 `invalid_target`；`resourcePrivileges` 拒绝时会返回 `401`。这些情况下都不会创建任何内容。
+
+## Rate limits
+
+只有启用了 Better Auth[速率限制](/docs/concepts/rate-limit)时，才会按 IP 和端点应用限制；默认仅在生产环境启用。
+
+| 选项键             | 端点                         | 时间窗 | 上限 |
+| ------------------ | ---------------------------- | ------ | ---- |
+| `token`            | `/oauth2/token`              | 60s    | 20  |
+| `authorize`        | `/oauth2/authorize`          | 60s    | 30  |
+| `introspect`       | `/oauth2/introspect`         | 60s    | 100 |
+| `revoke`           | `/oauth2/revoke`             | 60s    | 30  |
+| `register`         | `/oauth2/register`           | 60s    | 5   |
+| `rotateClientKeys` | `/oauth2/client/rotate-keys` | 60s    | 5   |
+| `userinfo`         | `/oauth2/userinfo`           | 60s    | 60  |
+
+使用 `{ window, max }` 覆盖限制，或将其设为 `false` 以回退到全局限制：
+
+```ts title="auth.ts"
+oauthProvider({
+  rateLimit: {
+    token: { window: 60, max: 50 },
+    introspect: false,
+  },
+})
+```
+
+## Provider extensions
+
+配套插件会在 `init()` 钩子中调用 `extendOAuthProvider()`，以添加令牌授权许可、基于断言的客户端身份验证、发现元数据、声明和客户端 ID 发现。[CIMD 插件](/docs/plugins/cimd)会借此添加基于 URL 的客户端发现。
+
+```ts title="custom-oauth-extension.ts"
+import type { BetterAuthPlugin } from "better-auth";
+import { extendOAuthProvider } from "@better-auth/oauth-provider";
+
+export const customOAuthExtension = () =>
+  ({
+    id: "custom-oauth-extension",
+    init(ctx) {
+      extendOAuthProvider(ctx, {
+        grants: {
+          "urn:example:params:oauth:grant-type:custom": async ({ provider }) => {
+            const { client } = await provider.authenticateClient();
+            return provider.issueTokens({ client, scopes: ["openid"] });
+          },
+        },
+        metadata: () => ({ custom_grant_supported: true }),
+      });
+    },
+  }) satisfies BetterAuthPlugin;
+```
+
+* 不同扩展中的 `grants` 和 `clientAuthentication` 不能重叠。授权许可类型、身份验证方式或断言类型重复时，启动会失败。两者都会在发现文档中公开。
+* `metadata` 和 `claims` 只能添加键。提供者拥有的键会保留；多个扩展贡献同一键时，会使用最先注册的扩展所提供的值。若要公开扩展声明，请设置 `advertisedMetadata.claims_supported`。
+* `clientDiscovery` 条目有一个稳定的 `id`，并作为客户端来源信息存储。更改它需要迁移所属客户端；移除它会使这些客户端默认拒绝。
+
+授权许可处理器会收到 `provider`（包含 `getClient`、`authenticateClient`、`issueTokens`、`hashToken`、`validateAccessToken` 和 `requireActiveAccessToken`）。其他端点可通过 `getOAuthProviderApi(ctx, opts, grantType?)` 获取相同对象。未提供 `grantType` 时，`issueTokens` 会抛出错误。`validateAccessToken` 可能返回非活跃载荷；受保护端点应使用 `requireActiveAccessToken`，它会拒绝非活跃令牌并返回 bearer challenge。
+
+<Callout type="warn">
+  `issueTokens` 不会检查客户端是否有权使用 `scopes`、`user` 或 `resources`。调用前请在处理器中验证这些值。
+</Callout>
+
+若要使用 `cnf` 绑定令牌（[RFC 7800 §3](https://datatracker.ietf.org/doc/html/rfc7800#section-3)），请向 `issueTokens` 传入 `confirmation`，或在 `clientAuthentication` 策略中返回它。声明 contributor 无法设置 `cnf`。
+
+### Client authentication obligations
+
+`clientAuthentication` 策略用于证明哪个客户端发送了断言，并返回其 `clientId`。提供者会自行加载并授权客户端记录。验证签名后，策略必须绑定受众、限制有效期，并拒绝重放的 `jti` 值（[RFC 7523 §3](https://datatracker.ietf.org/doc/html/rfc7523#section-3)）。`consumeClientAssertion` 会执行这三项操作：
+
+```ts
+import { consumeClientAssertion } from "@better-auth/oauth-provider";
+import { APIError } from "better-auth/api";
+
+authenticate: async ({ ctx, opts, assertion, expectedAudience }) => {
+  if (!expectedAudience) throw new APIError("BAD_REQUEST", { error: "invalid_client" });
+  const payload = await verifyAssertionSignature(assertion); // your key source
+  await consumeClientAssertion(ctx, opts, {
+    namespace: `urn:example:attestation:${payload.sub}`,
+    payload,
+    expectedAudience,
+  });
+  return { clientId: payload.sub };
+};
+```
+
+### Claim precedence
+
+扩展只能添加声明名称。你自己的回调可以覆盖个人资料声明。身份、有效期、绑定和身份验证上下文声明始终由提供者控制。
+
+| 令牌         | 优先级顺序（从低到高）                                                                                                                                        | 由提供者控制                                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 访问令牌 | extension `claims.accessToken` \< per-issuance `accessTokenClaims` \< `customAccessTokenClaims` \< per-resource `customClaims` | `iss`, `sub`, `aud`, `exp`, `iat`, `jti`, `client_id`, `scope`, `auth_time`, `acr`, `amr`, `cnf`，签名前剥离 |
+| ID 令牌 | 主体和身份验证声明 \< `customIdTokenClaims`。扩展和每次签发的 `idTokenClaims` 只能添加声明名称，不能设置个人资料或电子邮件声明。 | `iss`, `sub`, `aud`, `exp`, `nbf`, `iat`, `jti`, `nonce`, `sid`, `at_hash`, `c_hash`, `s_hash`, `auth_time`, `acr`, `amr`, `azp` |
+| UserInfo | scope 和 `claims.userinfo` 声明 \< 扩展 `claims.userInfo`（仅添加） \< `customUserInfoClaims` | `sub`，最后应用 |
+
+每次签发时的 `accessTokenClaims` 仅存在于 JWT 访问令牌中。若不透明令牌核查结果必须返回某项声明，请将其放入不依赖授权许可类型的 `claims.accessToken` contributor。
+
+## Schema
+
+插件会添加以下数据表。请运行 `npx auth generate` 获取适用于当前 adapter 的准确 schema。
+
+### OAuth Client
+
+表名：`oauthClient`
+
+export const oauthClientTableFields = [
+  { name: "id", type: "string", description: "客户端的数据库 ID", isPrimaryKey: true },
+  { name: "clientId", type: "string", description: "公开的客户端标识符", isUnique: true },
+  { name: "clientSecret", type: "string", description: "哈希或加密后的密钥。公有客户端不包含此字段。", isOptional: true },
+  { name: "clientDiscoveryId", type: "string", description: "拥有此客户端的客户端发现机制 ID，例如 `cimd`", isOptional: true },
+  { name: "disabled", type: "boolean", description: "客户端是否已禁用。默认值为 `false`。", isOptional: true },
+  { name: "skipConsent", type: "boolean", description: "是否跳过授权同意页面", isOptional: true },
+  { name: "enableEndSession", type: "boolean", description: "客户端是否可以使用 `/oauth2/end-session`", isOptional: true },
+  { name: "subjectType", type: "string", description: "`public` 或 `pairwise`", isOptional: true },
+  { name: "scopes", type: "string[]", description: "客户端可以代表用户申请的 scope", isOptional: true },
+  { name: "clientCredentialsScopes", type: "string[]", description: "`client_credentials` 允许使用的 scope。留空时会拒绝此授权许可。", isOptional: true },
+  { name: "userId", type: "string", description: "所有者用户", isOptional: true, isForeignKey: true, references: { model: "user", field: "id" } },
+  { name: "referenceId", type: "string", description: "所有者不是用户时使用的所有者引用", isOptional: true },
+  { name: "createdAt", type: "Date", description: "创建时间", isOptional: true },
+  { name: "updatedAt", type: "Date", description: "最后更新时间", isOptional: true },
+  { name: "name", type: "string", description: "显示名称", isOptional: true },
+  { name: "uri", type: "string", description: "客户端网站", isOptional: true },
+  { name: "icon", type: "string", description: "标志 URI", isOptional: true },
+  { name: "contacts", type: "string[]", description: "联系地址", isOptional: true },
+  { name: "tos", type: "string", description: "服务条款 URI", isOptional: true },
+  { name: "policy", type: "string", description: "隐私政策 URI", isOptional: true },
+  { name: "softwareId", type: "string", description: "软件标识符，跨版本保持稳定", isOptional: true },
+  { name: "softwareVersion", type: "string", description: "软件版本", isOptional: true },
+  { name: "softwareStatement", type: "string", description: "已签名的软件声明 JWT", isOptional: true },
+  { name: "redirectUris", type: "string[]", description: "已注册的重定向 URI" },
+  { name: "postLogoutRedirectUris", type: "string[]", description: "已注册的注销后重定向 URI", isOptional: true },
+  { name: "backchannelLogoutUri", type: "string", description: "接收注销令牌的 URI", isOptional: true },
+  { name: "backchannelLogoutSessionRequired", type: "boolean", description: "每个注销令牌是否都必须携带 `sid`", isOptional: true },
+  { name: "tokenEndpointAuthMethod", type: "string", description: "`none`、`client_secret_basic`、`client_secret_post`、`private_key_jwt` 或扩展方法", isOptional: true },
+  { name: "applicationType", type: "string", description: "`web` 或 `native`", isOptional: true },
+  { name: "jwks", type: "string", description: "内联的 JSON 公钥 JWK Set。不能与 `jwksUri` 同时使用。", isOptional: true },
+  { name: "jwksUri", type: "string", description: "公开 JWK Set 的 HTTPS URI。不能与 `jwks` 同时使用。", isOptional: true },
+  { name: "grantTypes", type: "string[]", description: "允许的授权许可类型", isOptional: true },
+  { name: "responseTypes", type: "string[]", description: "允许的响应类型。仅支持 `code`。", isOptional: true },
+  { name: "requirePKCE", type: "boolean", description: "是否要求 PKCE", isOptional: true },
+  { name: "dpopBoundAccessTokens", type: "boolean", description: "是否要求令牌绑定 DPoP。默认值为 `false`。", isOptional: true },
+  { name: "metadata", type: "json", description: "附加客户端元数据", isOptional: true },
+];
+
+<DatabaseTable name="oauthClient" fields={oauthClientTableFields} />
+
+### OAuth Resource
+
+表名：`oauthResource`
+
+策略字段为 `null` 时，签发令牌会使用插件默认值。
+
+export const oauthResourceTableFields = [
+  { name: "id", type: "string", description: "资源的数据库 ID", isPrimaryKey: true },
+  { name: "identifier", type: "string", description: "`resource` 参数值和 `aud` 声明", isUnique: true },
+  { name: "name", type: "string", description: "显示名称" },
+  { name: "accessTokenTtl", type: "number", description: "访问令牌有效期，单位为秒", isOptional: true },
+  { name: "refreshTokenTtl", type: "number", description: "刷新令牌有效期，单位为秒", isOptional: true },
+  { name: "signingAlgorithm", type: "string", description: "访问令牌使用的 JWS 算法", isOptional: true },
+  { name: "signingKeyId", type: "string", description: "访问令牌使用的签名密钥 ID", isOptional: true },
+  { name: "allowedScopes", type: "string[]", description: "此资源允许的 scope。申请的 scope 会限制为此集合。", isOptional: true },
+  { name: "customClaims", type: "json", description: "添加到访问令牌的声明。保留名称会被移除。", isOptional: true },
+  { name: "dpopBoundAccessTokensRequired", type: "boolean", description: "是否要求访问令牌绑定 DPoP。默认值为 `false`。", isOptional: true },
+  { name: "disabled", type: "boolean", description: "停止签发新令牌。已签发的令牌仍会通过验证，直到过期。默认值为 `false`。", isOptional: true },
+  { name: "createdAt", type: "Date", description: "创建时间", isOptional: true },
+  { name: "updatedAt", type: "Date", description: "最后更新时间", isOptional: true },
+  { name: "policyVersion", type: "number", description: "策略格式版本。默认值为 `1`。", isOptional: true },
+  { name: "metadata", type: "json", description: "附加资源元数据", isOptional: true },
+];
+
+<DatabaseTable name="oauthResource" fields={oauthResourceTableFields} />
+
+### OAuth Client Resource
+
+表名：`oauthClientResource`
+
+将客户端关联到资源。`(clientId, resourceId)` 组合具有唯一性。`enforcePerClientResources` 用于控制授权和令牌请求是否检查这些记录。[令牌核查](/docs/plugins/oauth-provider/resource-server#introspection)始终会使用这些记录来决定资源服务器能否核查其他客户端的令牌。
+
+export const oauthClientResourceTableFields = [
+  { name: "id", type: "string", description: "关联记录的数据库 ID", isPrimaryKey: true },
+  { name: "clientId", type: "string", description: "已关联的客户端", isForeignKey: true, references: { model: "oauthClient", field: "clientId", onDelete: "cascade" } },
+  { name: "resourceId", type: "string", description: "已关联的资源标识符", isForeignKey: true, references: { model: "oauthResource", field: "identifier", onDelete: "cascade" } },
+  { name: "metadata", type: "json", description: "附加关联元数据", isOptional: true },
+  { name: "createdAt", type: "Date", description: "创建时间", isOptional: true },
+];
+
+<DatabaseTable name="oauthClientResource" fields={oauthClientResourceTableFields} />
+
+### OAuth Refresh Token
+
+表名：`oauthRefreshToken`
+
+export const oauthRefreshTokenTableFields = [
+  { name: "id", type: "string", description: "刷新令牌的数据库 ID", isPrimaryKey: true },
+  { name: "token", type: "string", description: "存储的令牌值", isUnique: true },
+  { name: "clientId", type: "string", description: "此令牌签发给的客户端", isForeignKey: true, references: { model: "oauthClient", field: "clientId" } },
+  { name: "sessionId", type: "string", description: "签发时的会话", isOptional: true, isForeignKey: true, references: { model: "session", field: "id", onDelete: "set null" } },
+  { name: "userId", type: "string", description: "此令牌签发给的用户", isForeignKey: true, references: { model: "user", field: "id" } },
+  { name: "referenceId", type: "string", description: "授权同意引用", isOptional: true },
+  { name: "authorizationCodeId", type: "string", description: "此令牌族对应的起始授权码", isOptional: true },
+  { name: "resources", type: "string[]", description: "令牌可以申请的资源", isOptional: true },
+  { name: "requestedUserInfoClaims", type: "string[]", description: "通过 `claims` 申请的 UserInfo 声明", isOptional: true },
+  { name: "scopes", type: "string[]", description: "已授予的 scope" },
+  { name: "revoked", type: "Date", description: "令牌停止活跃的时间", isOptional: true },
+  { name: "rotatedAt", type: "Date", description: "轮换消耗此令牌的时间", isOptional: true },
+  { name: "rotationReplayResponse", type: "string", description: "在 `refreshTokenReuseInterval` 内重放的加密响应", isOptional: true },
+  { name: "rotationReplayExpiresAt", type: "Date", description: "重放窗口结束时间", isOptional: true },
+  { name: "authTime", type: "Date", description: "原始身份验证时间，供 `auth_time` 使用", isOptional: true },
+  { name: "confirmation", type: "json", description: "`cnf` 绑定，例如 DPoP 密钥 thumbprint", isOptional: true },
+  { name: "createdAt", type: "Date", description: "创建时间" },
+  { name: "expiresAt", type: "Date", description: "过期时间" },
+];
+
+<DatabaseTable name="oauthRefreshToken" fields={oauthRefreshTokenTableFields} />
+
+### OAuth Access Token
+
+表名：`oauthAccessToken`
+
+只存储不透明访问令牌。JWT 访问令牌不会存储。
+
+export const oauthAccessTokenTableFields = [
+  { name: "id", type: "string", description: "访问令牌的数据库 ID", isPrimaryKey: true },
+  { name: "token", type: "string", description: "存储的令牌值", isUnique: true },
+  { name: "clientId", type: "string", description: "此令牌签发给的客户端", isForeignKey: true, references: { model: "oauthClient", field: "clientId" } },
+  { name: "sessionId", type: "string", description: "签发时的会话", isOptional: true, isForeignKey: true, references: { model: "session", field: "id", onDelete: "set null" } },
+  { name: "userId", type: "string", description: "此令牌签发给的用户。`client_credentials` 不包含此字段。", isOptional: true, isForeignKey: true, references: { model: "user", field: "id" } },
+  { name: "referenceId", type: "string", description: "授权同意引用", isOptional: true },
+  { name: "authorizationCodeId", type: "string", description: "此令牌族对应的起始授权码", isOptional: true },
+  { name: "refreshId", type: "string", description: "此访问令牌所属的刷新令牌", isOptional: true, isForeignKey: true, references: { model: "oauthRefreshToken", field: "id" } },
+  { name: "resources", type: "string[]", description: "令牌有效的资源", isOptional: true },
+  { name: "requestedUserInfoClaims", type: "string[]", description: "通过 `claims` 申请的 UserInfo 声明", isOptional: true },
+  { name: "scopes", type: "string[]", description: "已授予的 scope" },
+  { name: "revoked", type: "Date", description: "令牌撤销时间", isOptional: true },
+  { name: "confirmation", type: "json", description: "`cnf` 绑定，核查时返回", isOptional: true },
+  { name: "createdAt", type: "Date", description: "创建时间" },
+  { name: "expiresAt", type: "Date", description: "过期时间" },
+];
+
+<DatabaseTable name="oauthAccessToken" fields={oauthAccessTokenTableFields} />
+
+### OAuth Consent
+
+表名：`oauthConsent`
+
+export const oauthConsentTableFields = [
+  { name: "id", type: "string", description: "授权同意的数据库 ID", isPrimaryKey: true },
+  { name: "clientId", type: "string", description: "获得授权同意的客户端", isForeignKey: true, references: { model: "oauthClient", field: "clientId" } },
+  { name: "userId", type: "string", description: "作出授权同意的用户", isOptional: true, isForeignKey: true, references: { model: "user", field: "id" } },
+  { name: "referenceId", type: "string", description: "授权同意引用", isOptional: true },
+  { name: "resources", type: "string[]", description: "已同意的资源", isOptional: true },
+  { name: "requestedUserInfoClaims", type: "string[]", description: "已同意的 UserInfo 声明", isOptional: true },
+  { name: "scopes", type: "string[]", description: "已同意的 scope" },
+  { name: "createdAt", type: "Date", description: "创建时间" },
+  { name: "updatedAt", type: "Date", description: "最后更新时间" },
+];
+
+<DatabaseTable name="oauthConsent" fields={oauthConsentTableFields} />
+
+### OAuth Client Assertion
+
+表名：`oauthClientAssertion`
+
+记录每个 `private_key_jwt` 断言的 `jti`，以确保其只能使用一次。该检查要求 ID 为字符串，因此设置 `advanced.database.generateId: "serial"` 时，Better Auth 会记录警告。记录不会自动清理；请删除过期记录。
+
+export const oauthClientAssertionTableFields = [
+  { name: "id", type: "string", description: "客户端 ID 和断言 `jti` 的摘要", isPrimaryKey: true },
+  { name: "expiresAt", type: "Date", description: "可安全删除该记录的时间" },
+];
+
+<DatabaseTable name="oauthClientAssertion" fields={oauthClientAssertionTableFields} />
+
+## Optimizations
+
+数据库 adapter 可以将 `oauthClient` 中的 `clientId` 映射到 `id`，以加快查找速度。此时，`id` 列必须能接受 UUID 和 URL 格式的字符串。
+
+## Related
+
+<Cards>
+  <Card href="/docs/plugins/oauth-provider" title="OAuth Provider 设置">
+    安装插件并运行首个授权码流程。
+  </Card>
+
+  <Card href="/docs/plugins/oauth-provider/clients" title="客户端与注册">
+    注册、管理 OAuth 客户端并对其进行身份验证。
+  </Card>
+
+  <Card href="/docs/plugins/oauth-provider/tokens" title="令牌、scope 与资源">
+    控制提供者签发哪些令牌以及令牌的有效期。
+  </Card>
+
+  <Card href="/docs/plugins/cimd" title="Client ID 元数据文档">
+    通过元数据文档 URL 识别客户端。
+  </Card>
+</Cards>

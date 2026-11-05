@@ -222,10 +222,13 @@ const payload = await validateToken(token)
 
 ### OAuth 提供者模式
 
-如果你要使系统符合 OAuth 标准（例如结合使用 OIDC 或 MCP 插件），你**必须**禁用 `/token` 端点（OAuth 等效的 `/oauth2/token`）和禁用设置 JWT 头（OAuth 等效 `/oauth2/userinfo`）。
+使用 [OAuth Provider](/docs/plugins/oauth-provider) 或 [MCP](/docs/plugins/mcp) 插件时，请同时禁用 JWT 插件向浏览器提供会话 JWT 的两种方式：`/token` 端点和 `set-auth-jwt` 请求头。OAuth 客户端从 `/oauth2/token` 获取令牌，并从 `/oauth2/userinfo` 获取声明，因此不需要这两种方式。
+
+会话 JWT 与 OAuth 访问令牌使用相同密钥签名，默认还会将认证服务器 URL 同时设为 `iss` 和 `aud`。因此，如果资源服务器只检查签名、签发者和受众，就可能把已登录用户的会话 JWT 当作访问令牌接受，而不要求客户端、授权同意或 scope。禁用这两种方式可避免该令牌出现在浏览器中。资源服务器还应拒绝非 OAuth 访问令牌；请参阅[保护你的 API](/docs/plugins/oauth-provider/resource-server#verify-access-tokens)。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
+import { jwt } from "better-auth/plugins";
 
 betterAuth({
   disabledPaths: [
@@ -545,6 +548,8 @@ jwt({
 ### 修改颁发者、受众、主题或过期时间
 
 如果未提供，将使用 `BASE_URL` 作为颁发者，并将受众设置为 `BASE_URL`。过期时间设置为 15 分钟。
+
+如果未配置 `baseURL`，直接调用 `auth.api` 时便没有可用的签发者或受众，插件会记录警告。请设置 `baseURL`，或在此处设置 `issuer` 和 `audience`。
 
 ```ts title="auth.ts"
 jwt({

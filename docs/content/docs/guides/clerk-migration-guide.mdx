@@ -167,31 +167,34 @@ description: 从 Clerk 迁移到 Better Auth 的分步指南。
   <Step>
     ### 导出 Clerk 用户
 
-    前往 Clerk 控制台并 [导出用户](https://clerk.com/docs/deployments/exporting-users#export-your-users-data-from-the-clerk-dashboard)。这将下载一个包含用户数据的 CSV 文件。您需要将其保存为 `exported_users.csv` 并放到项目根目录中。
+    Go to the Clerk dashboard and [export the users](https://clerk.com/docs/deployments/exporting-users#export-your-users-data-from-the-clerk-dashboard). It will download a CSV file with the users data. You need to save it as `exported_users.csv` and put it in the root of your project.
+
+    导出文件包含每位用户的 TOTP 密钥，但不包含备用代码，因此迁移脚本会生成新的备用代码。
   </Step>
 
   <Step>
     ### 创建迁移脚本
 
-    在 `scripts` 文件夹中创建一个名为 `migrate-clerk.ts` 的新文件，并添加以下代码：
+    Install a CSV parser to read the export:
+
+    ```package-install
+    npm install csv-parse
+    ```
+
+    Create a new file called `migrate-clerk.ts` in the `scripts` folder and add the following code:
 
     ```ts title="scripts/migrate-clerk.ts"
+    import { parse } from "csv-parse/sync";
     import { generateRandomString, symmetricEncrypt } from "better-auth/crypto";
+    import type { SecretConfig } from "better-auth/crypto";
 
     import { auth } from "@/lib/auth"; // 导入您的认证实例
 
     function getCSVData(csv: string) {
-      const lines = csv.split('\n').filter(line => line.trim());
-      const headers = lines[0]?.split(',').map(header => header.trim()) || [];
-      const jsonData = lines.slice(1).map(line => {
-          const values = line.split(',').map(value => value.trim());
-          return headers.reduce((obj, header, index) => {
-              obj[header] = values[index] || '';
-              return obj;
-          }, {} as Record<string, string>);
-      });
-
-      return jsonData as Array<{
+      return parse(csv, {
+          columns: true,
+          skip_empty_lines: true,
+      }) as Array<{
           id: string;
           first_name: string;
           last_name: string;
@@ -258,9 +261,8 @@ description: 从 Clerk 迁移到 Better Auth 的分步指南。
 
 
     export async function generateBackupCodes(
-      secret: string,
+      key: string | SecretConfig,
     ) {
-      const key = secret;
       const backupCodes = Array.from({ length: 10 })
           .fill(null)
           .map(() => generateRandomString(10, "a-z", "0-9", "A-Z"))
@@ -321,7 +323,7 @@ description: 从 Clerk 迁移到 Better Auth 的分步指南。
                   updatedAt: safeDateConversion(clerkUser?.updated_at),
                   // # 二步验证（如果已启用二步验证插件）
                   ...(isTwoFactorEnabled ? {
-                      twoFactorEnabled: clerkUser?.two_factor_enabled
+                      twoFactorEnabled: Boolean(totp_secret)
                   } : {}),
                   // # 管理员（如果已启用管理员插件）
                   ...(isAdminEnabled ? {
@@ -333,11 +335,13 @@ description: 从 Clerk 迁移到 Better Auth 的分步指南。
                   } : {}),
                   // # 用户名（如果已启用用户名插件）
                   ...(isUsernameEnabled ? {
-                      username: username,
+                      // Empty CSV cells parse as empty strings
+                      username: username || undefined,
                   } : {}),
                   // # 手机号（如果已启用了手机号插件）  
                   ...(isPhoneNumberEnabled ? {
-                      phoneNumber: primary_phone_number,
+                      // Empty CSV cells parse as empty strings
+                      phoneNumber: primary_phone_number || undefined,
                       phoneNumberVerified: verified_phone_numbers.length > 0,
                   } : {}),
               },
@@ -356,51 +360,55 @@ description: 从 Clerk 迁移到 Better Auth 的分步指南。
           if (!createdUser) {
               throw new Error(`Unable to create or find user ${id}`);
           }
+          // create credential account
+          // Clerk's API lists only OAuth accounts, so passwords come from the export
+          if (password_digest) {
+              await ctx.adapter.create({
+                  model: "account",
+                  data: {
+                      providerId: "credential",
+                      accountId: createdUser.id,
+                      userId: createdUser.id,
+                      password: password_digest,
+                      createdAt: safeDateConversion(clerkUser?.created_at),
+                      updatedAt: safeDateConversion(clerkUser?.updated_at),
+                  }
+              })
+          }
           // create external account
           const externalAccounts = clerkUser?.external_accounts;
           if (externalAccounts) {
               for (const externalAccount of externalAccounts) {
                   const { id, provider, identification_id, provider_user_id, approved_scopes, email_address, first_name, last_name, image_url, created_at, updated_at } = externalAccount;
-                  if (externalAccount.provider === "credential") {
-                      await ctx.adapter.create({
-                          model: "account",
-                          data: {
-                              id,
-                              providerId: provider,
-                              accountId: createdUser.id,
-                              scope: approved_scopes,
-                              userId: createdUser.id,
-                              createdAt: safeDateConversion(created_at),
-                              updatedAt: safeDateConversion(updated_at),
-                          }
-                      })
-                  } else {
-                      const providerId = provider.replace("oauth_", "");
-                      await ctx.adapter.create({
-                          model: "account",
-                          data: {
-                              id,
-                              providerId,
-                              accountId: externalAccount.provider_user_id,
-                              scope: approved_scopes,
-                              userId: createdUser.id,
-                              createdAt: safeDateConversion(created_at),
-                              updatedAt: safeDateConversion(updated_at),
-                          },
-                          forceAllowId: true
-                      })
-                  }
+                  const providerId = provider.replace("oauth_", "");
+                  await ctx.adapter.create({
+                      model: "account",
+                      data: {
+                          id,
+                          providerId,
+                          accountId: externalAccount.provider_user_id,
+                          scope: approved_scopes,
+                          userId: createdUser.id,
+                          createdAt: safeDateConversion(created_at),
+                          updatedAt: safeDateConversion(updated_at),
+                      },
+                      forceAllowId: true
+                  })
               }
           }
 
-          // 两步验证
-          if (isTwoFactorEnabled) {
+          //two factor
+          if (isTwoFactorEnabled && totp_secret) {
               await ctx.adapter.create({
                   model: "twoFactor",
                   data: {
                       userId: createdUser.id,
-                      secret: totp_secret,
-                      backupCodes: await generateBackupCodes(totp_secret)
+                      // Clerk exports Base32 secrets, so mark them for decoding
+                      secret: await symmetricEncrypt({
+                          key: ctx.secretConfig,
+                          data: `base32:${totp_secret}`,
+                      }),
+                      backupCodes: await generateBackupCodes(ctx.secretConfig)
                   }
               })
           }
@@ -427,7 +435,7 @@ description: 从 Clerk 迁移到 Better Auth 的分步指南。
     运行迁移命令：
 
     ```sh
-    bun run script/migrate-clerk.ts # 您也可以使用任意方式运行该脚本
+    bun run scripts/migrate-clerk.ts # you can use any thing you like to run the script
     ```
 
     <Callout type="warning">

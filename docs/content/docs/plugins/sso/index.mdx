@@ -1,0 +1,366 @@
+---
+icon: pluginsSSO
+sidebarTitle: "SSO"
+title: 单点登录（SSO）
+description: 为每个组织连接其专属的 OIDC 或 SAML 2.0 身份提供者。
+---
+
+SSO 插件允许用户通过你或客户在运行时注册的身份提供者登录，支持 [OpenID Connect](https://openid.net/specs/openid-connect-core-1_0.html) 和 [SAML 2.0](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf)。每个注册的连接对应 `ssoProvider` 表中的一行。你也可以[在代码中定义连接](#configure-providers-in-code)。
+
+若要在代码中配置一组固定的提供者，请使用[通用 OAuth](/docs/plugins/generic-oauth) 或[社交提供者](/docs/concepts/oauth)。若要允许其他应用通过你的应用登录，请使用 [OAuth Provider](/docs/plugins/oauth-provider)。
+
+<Callout>
+  借助 [Better Auth Infrastructure](https://dash.better-auth.com/sign-in)，客户可通过引导链接自行配置 SSO 连接。其他企业需求请[联系企业版团队](/enterprise)。
+</Callout>
+
+## Features
+
+* 提供者端点的 [OIDC 发现机制](/docs/plugins/sso/oidc#oidc-discovery)
+* 使用 [`private_key_jwt`](/docs/plugins/sso/oidc#token-endpoint-authentication) 对 token 端点进行身份验证
+* SAML 2.0 [SP 发起](/docs/plugins/sso/saml#register-a-saml-provider)和 [IdP 发起](/docs/plugins/sso/saml#idp-initiated-sso)的登录
+* [SAML 响应验证](/docs/plugins/sso/saml-security)：签名、算法、时间戳、受众和重放防护
+* SAML [单点注销](/docs/plugins/sso/saml#single-logout)
+* [用户解析](/docs/plugins/sso/provisioning#resolve-sso-users)和预配
+* [组织预配](/docs/plugins/sso/provisioning#organization-provisioning)
+* DNS [域名验证](/docs/plugins/sso/domain-verification#enable-domain-verification)
+
+## Installation
+
+<Steps>
+  <Step>
+    ### 安装插件
+
+    ```package-install
+    @better-auth/sso
+    ```
+  </Step>
+
+  <Step>
+    ### 将插件添加到服务器
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
+    import { sso } from "@better-auth/sso"; // [!code highlight]
+
+    export const auth = betterAuth({
+      plugins: [
+        sso(), // [!code highlight]
+      ],
+    });
+    ```
+  </Step>
+
+  <Step>
+    ### 迁移数据库
+
+    运行迁移或生成 schema，以便在数据库中添加所需字段和数据表。
+
+    <Tabs items={["migrate", "generate"]}>
+      <Tab value="migrate">
+        ```package-install
+        npx auth migrate
+        ```
+      </Tab>
+
+      <Tab value="generate">
+        ```package-install
+        npx auth generate
+        ```
+      </Tab>
+    </Tabs>
+
+    手动添加字段时，请参阅 [Schema](/docs/plugins/sso/reference#schema) 一节。
+  </Step>
+
+  <Step>
+    ### 添加客户端插件
+
+    `ssoClient()` 接受与服务器插件相同的 `domainVerification` 和 `schema.ssoProvider.additionalFields` 选项，因此客户端类型能够保持一致。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client";
+    import { ssoClient } from "@better-auth/sso/client"; // [!code highlight]
+
+    export const authClient = createAuthClient({
+      plugins: [
+        ssoClient(), // [!code highlight]
+      ],
+    });
+    ```
+  </Step>
+</Steps>
+
+## Register a provider
+
+默认情况下，任何已登录用户最多可以注册 10 个提供者。部署前，请先确定谁可以注册提供者：
+
+| 注册提供者的角色                           | 配置                                                                                                                                                                                                                                                               |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 仅限管理员                                  | 将 `providersLimit` 设为一个会为其他所有人返回 `0` 的函数。组织所有者和管理员仍可更新其关联的提供者，包括提供者的 `domain`；请使用 [`guardProviderMutation`](/docs/plugins/sso/reference#plugin-options) 阻止此操作。 |
+| 客户自行注册各自域名的提供者                | 启用[域名验证](/docs/plugins/sso/domain-verification)。完成 DNS 验证前，提供者无法为任何人登录。 |
+| 禁止运行时注册                              | 设置 `providersLimit: 0`，并在 [`defaultSSO`](#configure-providers-in-code) 中定义提供者。若要按邮箱关联现有用户，也请启用域名验证。 |
+
+`providersLimit` 为函数时，会收到已登录用户，并返回该用户可以注册的提供者数量。限制设为 `0` 时，该用户的注册请求会被 403 拒绝。
+
+```ts title="auth.ts"
+sso({
+  providersLimit: async (user) => ((await isAdmin(user.id)) ? 10 : 0), // your check
+})
+```
+
+若要注册提供者，请调用 `authClient.sso.register`。它会调用 `POST /sso/register`，并创建归已登录用户所有的提供者。在服务器上，请使用请求头调用 `auth.api.registerSSOProvider`。每次注册都需要提供：
+
+* `providerId`：必须唯一。内置提供者、已配置社交提供者、`account.accountLinking.trustedProviders` 条目和 `defaultSSO` 条目的 ID 会以 422 拒绝。
+* `issuer`：OIDC 的 IdP issuer URL，或 SAML 的 SP entity ID。
+* `domain`：不带其他信息的邮箱域名，例如 `example.com`。多个域名请用逗号分隔。
+* `oidcConfig`、`samlConfig` 或两者。
+
+若要注册使用发现机制的 OIDC 提供者，请先将 IdP 的来源添加到 `trustedOrigins`。注册时会获取 IdP 的发现文档；未添加该来源时，会以 `discovery_untrusted_origin` 失败。`trustedOrigins` 适用于整个应用，因此只应列出经过审核的 IdP 来源。如果设置了 `skipDiscovery: true`，并在 `oidcConfig` 中配置了所有端点，注册时就不会获取任何内容。请参阅[受信任来源](/docs/plugins/sso/oidc#trusted-origins)。
+
+响应中包含 `redirectURI`；启用域名验证时还会包含 `domainVerificationToken`。
+
+```ts title="register-provider.ts"
+import { authClient } from "@/lib/auth-client";
+
+const { data, error } = await authClient.sso.register({
+  providerId: "acme",
+  issuer: "https://idp.example.com",
+  domain: "example.com",
+  oidcConfig: {
+    clientId: "CLIENT_ID",
+    clientSecret: "CLIENT_SECRET",
+  },
+});
+
+if (error) {
+  // Show error.message. Discovery failures set error.code, such as discovery_untrusted_origin.
+} else {
+  // Register data.redirectURI as the redirect URI at the IdP.
+}
+```
+
+所有字段的说明请参阅[注册 OIDC 提供者](/docs/plugins/sso/oidc#register-an-oidc-provider)和[注册 SAML 提供者](/docs/plugins/sso/saml#register-a-saml-provider)。
+
+<Callout type="warn">
+  传入 `organizationId` 时，用户必须是该组织的成员。请参阅[将提供者关联到组织](/docs/plugins/sso/provisioning#link-a-provider-to-an-organization)。
+</Callout>
+
+### Configure providers in code
+
+若要将提供者保存在配置中而不是数据库中，请传入 `defaultSSO`，其值为 `{ providerId, domain, oidcConfig?, samlConfig?, privateKey? }` 条目组成的数组。Better Auth 会优先检查这些提供者，再检查数据库中的提供者。只列出 IdP 有权管理的域名。
+
+是否会通过这些提供者的登录将用户关联到现有用户，取决于域名验证：
+
+* 设置 `domainVerification.enabled: true` 时，这些域名会被视为已验证，无需 DNS 检查。当其他[关联条件](/docs/plugins/sso/provisioning#how-sso-users-are-matched)也满足时，登录可以按所列域名关联到现有用户。
+* 未启用时，Better Auth 不会按邮箱关联用户。现有用户首次通过 SSO 登录时会失败，除非 [`resolveUser`](/docs/plugins/sso/provisioning#resolve-sso-users) 建立了关联。
+
+```ts title="auth.ts"
+sso({
+  defaultSSO: [
+    {
+      providerId: "acme-saml",
+      domain: "example.com",
+      samlConfig: {
+        issuer: "https://app.example.com",
+        entryPoint: "https://idp.example.com/sso",
+        idpMetadata: {
+          entityID: "https://idp.example.com",
+          cert: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+        },
+      },
+    },
+  ],
+})
+```
+
+若要使用 [`private_key_jwt`](/docs/plugins/sso/oidc#token-endpoint-authentication) 而不将密钥存储在数据库中，请在条目中设置 `privateKey`（`{ privateKeyJwk?, privateKeyPem? }`）。
+
+## Sign in
+
+若要通过 SSO 提供者登录，请调用 `signIn.sso`。
+
+```ts title="sign-in.ts"
+import { authClient } from "@/lib/auth-client";
+
+await authClient.signIn.sso({
+  email: "user@example.com",
+  callbackURL: "/dashboard",
+});
+```
+
+在浏览器中，认证客户端会自动将用户引导至 IdP。在服务器上，请调用 `auth.api.signInSSO`。它会返回 IdP 的 `url`，你的代码必须将浏览器重定向到该地址。
+
+<Callout type="warn">
+  `auth.api.signInSSO` 不会使用 [`trustedOrigins`](/docs/reference/security#trusted-origins) 检查 `callbackURL`、`errorCallbackURL` 或 `newUserCallbackURL`。只有通过 `auth.handler` 处理的请求才会进行此检查。如果服务器代码传入了请求中的 URL，请先验证，否则可能造成开放重定向。
+</Callout>
+
+请传入你已有的标识符：
+
+* 用户邮箱使用 `email`，邮箱域名使用 `domain`。
+* 组织 slug 使用 `organizationSlug`。
+* 提供者 ID 使用 `providerId`。
+
+Better Auth 会按以下顺序选择提供者：
+
+1. 若传入 `providerId`，则使用该 ID 对应的提供者，不再检查其他字段。
+2. 如果某个 `defaultSSO` 条目的域名包含 `domain`，或包含 `email` 中的域名部分，则使用该条目。
+3. 若传入 `organizationSlug`，则使用关联到该组织的提供者。这需要启用[组织插件](/docs/plugins/organization)。未知 slug 会继续尝试下一步；若组织存在但没有关联提供者，则返回 404。
+4. 其他情况下，使用为该域名注册的提供者。
+
+启用域名验证后，未验证域名对应的提供者会返回 401。
+
+其他登录字段：
+
+* `loginHint` 会以 [`login_hint`](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest) 形式发送给 OIDC 提供者；未设置时会回退使用 `email`。SAML 会忽略此字段。
+* 提供者同时配置两种协议时，可用 `providerType` 选择协议，默认使用 OIDC。请求提供者未配置的协议会返回 400。
+* `additionalParams` 会向 OIDC 授权请求添加参数。`state`、`client_id` 和 `redirect_uri` 等保留参数会被拒绝；SAML 提供者也会以 400 拒绝此字段。
+* 即使启用了 `disableImplicitSignUp`，仍可通过传入 `requestSignUp: true` 创建新用户。任何调用方都可以设置此字段，SAML 会忽略它。若要拒绝尚未预配的用户，请参阅[阻止新用户](/docs/plugins/sso/provisioning#block-new-users)。
+
+<APIMethod path="/sign-in/sso" method="POST">
+  ```ts
+  type signInSSO = {
+      /**
+       * Email address whose domain identifies the provider.
+       */
+      email?: string = "user@example.com"
+      /**
+       * Slug of the organization whose provider to use.
+       */
+      organizationSlug?: string = "example-org"
+      /**
+       * ID of the provider to use.
+       */
+      providerId?: string = "acme"
+      /**
+       * Email domain of the provider.
+       */
+      domain?: string = "example.com"
+      /**
+       * URL to redirect to after a successful sign-in.
+       */
+      callbackURL: string = "/dashboard"
+      /**
+       * URL to redirect to if sign-in fails.
+       */
+      errorCallbackURL?: string = "/sign-in/error"
+      /**
+       * URL to redirect to when the user is new.
+       */
+      newUserCallbackURL?: string = "/welcome"
+      /**
+       * OIDC scopes to request. Defaults to the provider's scopes, then `["openid", "email", "profile", "offline_access"]`.
+       */
+      scopes?: string[] = ["openid", "email", "profile", "offline_access"]
+      /**
+       * Sent to OIDC providers as `login_hint`.
+       */
+      loginHint?: string = "user@example.com"
+      /**
+       * Extra OIDC authorization request parameters. Rejected for SAML.
+       */
+      additionalParams?: Record<string, string>
+      /**
+       * Create a new user even when `disableImplicitSignUp` is on. OIDC only.
+       */
+      requestSignUp?: boolean = true
+      /**
+       * Protocol to use when the provider has both configurations. Defaults to `oidc`.
+       */
+      providerType?: "oidc" | "saml" = "oidc"
+  }
+  ```
+</APIMethod>
+
+## Manage providers
+
+若要列出你可以管理的提供者，请调用 `authClient.sso.providers()`（`GET /sso/providers`）。它会返回已登录用户在组织之外注册的提供者，以及该用户是 `owner` 或 `admin` 的组织所拥有的提供者。若要获取单个提供者，请调用 `authClient.sso.getProvider({ query: { providerId } })`（`GET /sso/get-provider`）。两种方法都会返回经过清理的配置：客户端 ID 会替换为 `clientIdLastFour`，不包含密钥，并包含已解析的 SAML 签名证书。更新或删除提供者也需要相同权限。
+
+<APIMethod path="/sso/update-provider" method="POST" requireSession>
+  ```ts
+  type updateSSOProvider = {
+      /**
+       * ID of the provider to update.
+       */
+      providerId: string = "acme"
+      /**
+       * New issuer URL.
+       */
+      issuer?: string = "https://idp.example.com"
+      /**
+       * New email domain or comma-separated domains.
+       */
+      domain?: string = "example.com"
+      /**
+       * Fields of the OIDC configuration to change.
+       */
+      oidcConfig?: Partial<OIDCConfig> = { clientSecret: "NEW_CLIENT_SECRET" }
+      /**
+       * Fields of the SAML configuration to change. Set `idpInitiatedCallbackUrl` to `null` to clear it.
+       */
+      samlConfig?: Partial<SAMLConfig>
+  }
+  ```
+</APIMethod>
+
+* 传入的 `mapping` 会替换之前的整个映射。
+* 更改 `domain` 会将 `domainVerified` 重置为 `false`。
+* 如果账户仍关联到该提供者，更改身份字段会返回 409。身份字段如下：
+  * 两种协议：`issuer`
+  * OIDC：authorization、token、userinfo、JWKS 和 discovery 端点，以及 `clientId`
+  * SAML：IdP entity ID、IdP SSO URL、SP entity ID、NameID 格式、POST ACS URL、`wantAssertionsSigned` 和 `audience`
+
+<APIMethod path="/sso/delete-provider" method="POST" requireSession>
+  ```ts
+  type deleteSSOProvider = {
+      /**
+       * ID of the provider to delete.
+       */
+      providerId: string = "acme"
+  }
+  ```
+</APIMethod>
+
+<Callout type="warn">
+  删除提供者也会删除所有关联到它的 `account` 记录，但不会结束用户通过该提供者启动的会话，也不会移除它预配的组织成员关系。如果因 IdP 遭到入侵而删除提供者，也请撤销这些用户的会话。
+</Callout>
+
+若要阻止更新或删除已存储的提供者，请在 [`guardProviderMutation`](/docs/plugins/sso/reference#plugin-options) 中抛出错误。变更会以 409 `SSO_PROVIDER_MUTATION_REJECTED` 被拒绝。guard 会在提供者记录锁定后运行，因此需要支持原生事务和 async-context 的数据库 adapter。它会收到：
+
+* `action`：`"update"` 或 `"delete"`。
+* `provider`：已存储记录的 `id`、`providerId` 和 `organizationId`。
+* `providerReference`：指向该记录配置的不透明引用。切勿持久化此值。
+* `isAuthenticationBoundaryChange`：仅在更新时提供。上述身份字段以及 SAML 签名证书变更会设为 `true`；OIDC 客户端密钥和 SAML SP 私钥轮换会设为 `false`。
+
+相关状态请通过 guard 第二个参数中的 `database` 读取，因为它与 guard 在同一事务中运行。例如，可在目录同步处于配对状态时拒绝边界变更。若要更改 IdP 信任配置，请先取消目录配对、更新提供者，再重新配对。
+
+## Next steps
+
+<Cards>
+  <Card href="/docs/plugins/sso/oidc" title="OIDC">
+    注册 OIDC 提供者、使用发现机制并选择 token 端点身份验证方式。
+  </Card>
+
+  <Card href="/docs/plugins/sso/saml" title="SAML">
+    注册 SAML 提供者、配置服务提供者，并启用 IdP 发起的登录和单点注销。
+  </Card>
+
+  <Card href="/docs/plugins/sso/saml-security" title="SAML 安全">
+    查看 SAML 响应的验证方式以及支持的算法。
+  </Card>
+
+  <Card href="/docs/plugins/sso/provisioning" title="用户与组织">
+    解析 SSO 用户、预配账户并分配组织成员关系。
+  </Card>
+
+  <Card href="/docs/plugins/sso/domain-verification" title="域名验证">
+    使用 DNS TXT 记录证明域名所有权。
+  </Card>
+
+  <Card href="/docs/plugins/sso/reference" title="参考">
+    查看选项、端点、错误和 schema。
+  </Card>
+
+  <Card href="/docs/guides/saml-sso-with-okta" title="SAML 设置指南">
+    逐步设置 SAML 连接。
+  </Card>
+</Cards>

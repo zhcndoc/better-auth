@@ -1,0 +1,246 @@
+---
+icon: pluginsOAuthProviderSignInFlow
+sidebarTitle: "登录与授权同意"
+title: 登录与授权同意界面
+description: 构建 authorize 端点用于重定向的登录、授权同意和账户页面。
+---
+
+客户端将用户发送到 `/oauth2/authorize` 时，Better Auth 会按顺序将用户重定向到你托管的页面：登录页、可选账户步骤和授权同意页。
+
+## How the redirect works
+
+为了防止用户在各页面间跳转时有人更改 authorize 参数，每次重定向都会以签名查询的形式携带原始参数。页面会通过 `oauth_query` 将其传回，Better Auth 验证后才会继续流程。查询被修改或过期时会以 `invalid_signature` 错误失败。例如，更改了 `redirect_uri` 的查询会失败。签名涵盖所有 authorize 参数（包括自定义参数），并会在 `codeExpiresIn` 后过期（默认 10 分钟）。
+
+`oauthProviderClient` 插件会在每个 POST 请求中发送当前页面 URL 中的 `oauth_query`。如果通过其他方式调用端点，请自行发送签名查询。你自己的页面参数可以放在同一 URL 中，但不要将其加入 `oauth_query`。
+
+authorize 端点会按顺序执行以下步骤，并在首次需要用户操作时停止：
+
+1. 没有会话、会话时间早于 `max_age`，或设置了 `prompt=login`：重定向到 `loginPage`。设置 `prompt=create` 时则改为重定向到[注册页](#sign-up-account-screen)。
+2. 设置了 `prompt=select_account`，或 `selectAccount.shouldRedirect` 返回 `true`：重定向到[选择账户页](#select-account-screen)。
+3. `signup.shouldRedirect` 返回 `true` 或路径：重定向到[注册页](#sign-up-account-screen)。
+4. `postLogin.shouldRedirect` 返回 `true`：重定向到[登录后页面](#post-login-screen)。
+5. 设置了 `prompt=consent`，或客户端未启用 `skip_consent` 且已存储的授权同意未涵盖申请的 scope、声明和资源：重定向到 `consentPage`。
+6. 携带授权码重定向到客户端的 `redirect_uri`。
+
+设置 `prompt=none` 时，任何需要用户操作的步骤都会向客户端返回 `login_required` 或 `consent_required` 等错误，而不是执行重定向。
+
+Better Auth 也会对 authorize 请求应用以下规则（[OAuth 2.1 §4.1.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-13#section-4.1.1)）：
+
+* `response_type` 必须为 `code`，PKCE 只接受 `S256`（[RFC 7636 §4.2](https://datatracker.ietf.org/doc/html/rfc7636#section-4.2)）。
+* `state` 为可选项；传入时会原样返回。客户端仍应发送该字段（[RFC 6749 §10.12](https://datatracker.ietf.org/doc/html/rfc6749#section-10.12)）。
+* 所有成功和错误响应都包含 `iss`（[RFC 9207 §2](https://datatracker.ietf.org/doc/html/rfc9207#section-2)）。
+* `resource` 会将令牌限制到指定资源服务器（[RFC 8707 §2](https://datatracker.ietf.org/doc/html/rfc8707#section-2)）。请参阅[资源](/docs/plugins/oauth-provider/tokens#resources)。
+
+## Login page
+
+若要将用户引导至登录页面，请设置 `loginPage`。登录请求携带 `oauth_query` 并创建会话后，插件会继续授权流程。使用 `oauthProviderClient` 时，页面无需编写 OAuth 代码。
+
+```ts title="auth.ts"
+oauthProvider({
+  loginPage: "/sign-in", // [!code highlight]
+})
+```
+
+## Consent page
+
+若要请求用户批准客户端，请设置 `consentPage`。客户端设置了 `skip_consent: true` 时会跳过此页面；请求包含 `prompt=consent` 时仍会显示该页面。
+
+```ts title="auth.ts"
+oauthProvider({
+  consentPage: "/consent", // [!code highlight]
+})
+```
+
+若要信任授权同意查询，请在渲染页面前于服务器端验证。查询包含 `client_id`、`scope`，以及在申请时包含的 `claims`。下方辅助函数只保留已签名的参数，因此页面自己的参数不会破坏签名。它会从 `auth.$context` 读取提供者密钥，因此只能在服务器端运行。
+
+```ts title="consent-query.ts"
+import { verifyOAuthQueryParams } from "@better-auth/oauth-provider";
+import { auth } from "@/lib/auth";
+
+export async function getVerifiedConsentQuery(request: Request) {
+  const params = new URL(request.url).searchParams;
+  const signed = new Set(["sig", "ba_param", ...params.getAll("ba_param")]);
+  const query = new URLSearchParams(
+    [...params].filter(([key]) => signed.has(key)),
+  ).toString();
+  const { secret } = await auth.$context;
+  if (!(await verifyOAuthQueryParams(query, secret))) return null;
+  return new URLSearchParams(query);
+}
+```
+
+辅助函数返回 `null` 时，请返回错误响应。此检查只会拒绝已被修改或过期的查询；它不能证明客户端存在、用户已登录或 scope 有效。
+
+若要显示请求授权的客户端，请使用已签名的 `client_id` 加载客户端。没有会话时调用会抛出 401；客户端未知或已禁用时会抛出 404。
+
+```ts title="consent-page.ts"
+const client = await auth.api.getOAuthClientPublic({
+  query: { client_id: query.get("client_id")! },
+  headers: request.headers,
+});
+```
+
+对于非管理员创建的客户端，其名称、标志和链接由注册者提供。动态注册客户端、CIMD 客户端，以及未设置 [`clientPrivileges`](/docs/plugins/oauth-provider/clients#client-crud-privileges) 时由任意已登录用户通过 `createOAuthClient` 创建的客户端都属于此类。因此，也请显示已签名 `redirect_uri` 中的主机。只有在 `logo_uri`、`client_uri`、`tos_uri` 和 `policy_uri` 以 `https:` 开头时才渲染它们。然后显示申请的 `scope` 和 `claims.userinfo` 名称，并根据用户选择调用 `oauth2.consent`。
+
+<APIMethod path="/oauth2/consent" method="POST" requireSession>
+  ```ts
+  type oauth2Consent = {
+      /**
+       * Accept or deny the request.
+       */
+      accept: boolean
+      /**
+       * Space-separated accepted scopes, a subset of the requested ones. Defaults to all requested scopes.
+       */
+      scope?: string
+      /**
+       * Accepted OIDC claims request object. Defaults to all requested claims.
+       */
+      claims?: string | Record<string, unknown>
+      /**
+       * The signed query of the current page. The client plugin sends it for you.
+       */
+      oauth_query?: string
+  }
+  ```
+</APIMethod>
+
+响应为 `{ redirect: true, url }`。默认情况下，认证客户端会将浏览器引导至 `url`。通过其他方式调用端点时，请自行将浏览器重定向到该地址。
+
+设置 `accept: false` 时，用户会带着 `access_denied` 返回客户端，之前授予的授权同意不会更改。若要移除授权同意，请参阅[管理授权同意](#manage-consents)。
+
+## Sign-up account screen
+
+若要将 `prompt=create` 请求（[OpenID Connect Prompt Create](https://openid.net/specs/openid-connect-prompt-create-1_0.html)）发送到单独的注册页，请设置 `signup.page`。未设置时，Better Auth 会重定向到 `loginPage`。
+
+```ts title="auth.ts"
+oauthProvider({
+  signup: {
+    page: "/sign-up", // [!code highlight]
+  },
+})
+```
+
+若要让已登录用户完成额外注册步骤，请添加 `shouldRedirect`。它会收到 `headers`、`user`、`session` 和 `scopes`。返回 `true` 会重定向到 `page`；返回路径字符串会重定向到该路径；返回 `false` 则继续流程。
+
+```ts title="auth.ts"
+oauthProvider({
+  signup: {
+    page: "/sign-up",
+    shouldRedirect: async ({ user }) => { // [!code highlight]
+      return user.onboarded ? false : "/setup";
+    },
+  },
+})
+```
+
+注册完成后，请调用 `authClient.oauth2.continue({ created: true })`。认证客户端随后会将浏览器引导至下一步。请参阅 [Continue 端点](#continue-endpoint)。
+
+## Select account screen
+
+若要支持 `prompt=select_account`（[OIDC Core §3.1.2.1](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest)，请设置 `selectAccount`。`shouldRedirect` 会收到 `headers`、`user`、`session` 和 `scopes`。返回 `true` 时会重定向到 `page`。未设置 `selectAccount.page` 时，该 prompt 会返回错误。以下示例使用[多会话插件](/docs/plugins/multi-session)，并在存在多个已登录会话时要求用户选择：
+
+```ts title="auth.ts"
+oauthProvider({
+  selectAccount: {
+    page: "/select-account", // [!code highlight]
+    shouldRedirect: async ({ headers }) => { // [!code highlight]
+      const sessions = await auth.api.listDeviceSessions({ headers });
+      return sessions.length > 1;
+    },
+  },
+})
+```
+
+用户选择账户后，继续流程：
+
+```ts title="select-account.ts"
+await authClient.multiSession.setActive({ sessionToken });
+await authClient.oauth2.continue({ selected: true });
+```
+
+## Post-login screen
+
+若要在登录后、授权同意前添加步骤（例如选择组织），请为 `postLogin` 设置 `page` 和以下回调：
+
+* `shouldRedirect` 会收到 `headers`、`user`、`session`、`scopes` 和 `isContinuation`。返回 `true` 时会重定向到 `page`。
+* `consentReferenceId` 会收到 `user`、`session` 和 `scopes`，并返回用户的选择，例如组织 ID。Better Auth 会按每个引用分别存储授权同意。`consentReferenceId` 返回 `undefined` 或空字符串时，会使用不含引用的授权同意。
+
+```ts title="auth.ts"
+oauthProvider({
+  postLogin: {
+    page: "/select-organization", // [!code highlight]
+    shouldRedirect: async ({ session, headers, isContinuation }) => { // [!code highlight]
+      const orgs = await auth.api.listOrganizations({ headers });
+      if (!orgs.some((org) => org.id === session.activeOrganizationId)) {
+        return true;
+      }
+      return !isContinuation && orgs.length > 1;
+    },
+    consentReferenceId: ({ session }) => // [!code highlight]
+      session.activeOrganizationId as string | undefined,
+  },
+})
+```
+
+用户从页面返回时，`shouldRedirect` 会再次运行，此时 `isContinuation: true`。用户属于多个组织时，请在新授权请求中要求其选择。继续流程时，只要当前活跃组织是用户所属组织之一，就返回 `false`。`isContinuation` 不能证明用户完成了选择，因此始终要检查会话。
+
+```ts title="select-organization.ts"
+await authClient.organization.setActive({ organizationId });
+await authClient.oauth2.continue({ postLogin: true });
+```
+
+如果某些 scope 需要引用，但没有设置引用，请从 `consentReferenceId` 抛出 `APIError`。Better Auth 不会代为检查。引用如何进入令牌声明，请参阅[组织](/docs/plugins/oauth-provider/clients#organizations)。
+
+## Continue endpoint
+
+若要从账户页面继续授权，请调用此端点并传入与该页面对应的标志。Better Auth 会重新执行 authorize 步骤，并返回 `{ redirect: true, url }`。`url` 可能是另一个账户页面、授权同意页或客户端的 `redirect_uri`。默认情况下，认证客户端会将浏览器引导至该地址。
+
+未传入标志或签名查询时，调用会返回 400 `invalid_request` 错误。请从 Better Auth 重定向到的页面调用，此时 URL 中仍带有签名查询。未使用 `oauthProviderClient` 时，请将该查询作为 `oauth_query` 发送。
+
+<APIMethod path="/oauth2/continue" method="POST" requireSession>
+  ```ts
+  type oauth2Continue = {
+      /**
+       * Confirms an account was selected on the select account page.
+       */
+      selected?: boolean
+      /**
+       * Confirms an account was registered on the sign-up page.
+       */
+      created?: boolean
+      /**
+       * Resumes after the post login page. `postLogin.shouldRedirect` runs again with `isContinuation: true`.
+       */
+      postLogin?: boolean
+      /**
+       * The signed query of the current page. The client plugin sends it for you.
+       */
+      oauth_query?: string
+  }
+  ```
+</APIMethod>
+
+## Manage consents
+
+若要允许用户列出和修改其授权同意，请使用以下端点。每个端点都需要会话，且只会返回或更改已登录用户的授权同意。
+
+| 服务器方法           | 路径                     | 方法   | 输入                                |
+| -------------------- | ------------------------ | ------ | --------------------------------- |
+| `getOAuthConsent`    | `/oauth2/get-consent`    | `GET`  | query `id`                        |
+| `getOAuthConsents`   | `/oauth2/get-consents`   | `GET`  | 无                                |
+| `updateOAuthConsent` | `/oauth2/update-consent` | `POST` | body `{ id, update: { scopes } }` |
+| `deleteOAuthConsent` | `/oauth2/delete-consent` | `POST` | body `{ id }`                     |
+
+更新后的 scope 必须为客户端允许的 scope。删除授权同意后，下次授权时会再次询问用户。
+
+```ts title="consents.ts"
+const { error } = await authClient.oauth2.updateConsent({
+  id: consentId,
+  update: { scopes: ["openid", "profile"] },
+});
+
+if (error) {
+  // A scope the client is not allowed to use returns a 400 invalid_request error.
+}
+```

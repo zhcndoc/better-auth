@@ -8,7 +8,11 @@ Better Auth 内置支持 OAuth 2.0 和 OpenID Connect。这使你可以通过流
 
 如果你想使用的提供商没有直接支持，可以使用 [Generic OAuth 插件](/docs/plugins/generic-oauth) 来实现自定义集成。
 
-## 配置社交提供商
+<Callout>
+  本页介绍如何使用其他提供者为用户登录。若要为各组织连接自己的 OIDC 或 SAML 身份提供者，请使用 [SSO](/docs/plugins/sso)。若要允许其他应用通过你的应用登录，请使用 [OAuth Provider](/docs/plugins/oauth-provider) 插件。
+</Callout>
+
+## Configuring Social Providers
 
 要启用社交提供商，需要为该提供商提供 `clientId` 和 `clientSecret`。
 

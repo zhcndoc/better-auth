@@ -28,7 +28,7 @@ description: 将您的 Better Auth 服务器变成 MCP 客户端的 OAuth 提供
   <Step>
     ### 配置授权
 
-    将 MCP 插件与 [JWT 插件](/docs/plugins/jwt) 一起添加到您的身份验证配置中。JWT 插件是必需的：它提供用于 ID 令牌和访问令牌的稳定签名密钥，并暴露资源服务器用来验证令牌的 `/jwks` 端点。
+    在认证配置中与 [JWT 插件](/docs/plugins/jwt)一起添加 MCP 插件。JWT 插件为必需项：它提供用于签署 ID 令牌和访问令牌的稳定密钥，并公开资源服务器用于验证令牌的 `/jwks` 端点。请禁用 JWT 插件的 `/token` 路由和 `set-auth-jwt` 请求头。会话 JWT 与访问令牌共用签名密钥，因此只检查签发者和受众的资源服务器可能会接受会话 JWT；请参阅 [OAuth Provider 模式](/docs/plugins/jwt#oauth-provider-mode)。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";
@@ -38,8 +38,9 @@ description: 将您的 Better Auth 服务器变成 MCP 客户端的 OAuth 提供
     import { fetchClientMetadataResource } from "@better-auth/cimd/node"; // [!code highlight]
 
     export const auth = betterAuth({
+        disabledPaths: ["/token"], // [!code highlight]
         plugins: [
-            jwt(), // [!code highlight]
+            jwt({ disableSettingJwtHeader: true }), // [!code highlight]
             mcp({ // [!code highlight]
                 loginPage: "/sign-in", // path to your login page // [!code highlight]
                 consentPage: "/consent", // path to your consent page // [!code highlight]
@@ -79,7 +80,7 @@ description: 将您的 Better Auth 服务器变成 MCP 客户端的 OAuth 提供
       </Tab>
     </Tabs>
 
-    MCP 插件使用与 OAuth Provider 插件相同的架构（`oauthClient`、`oauthAccessToken`、`oauthRefreshToken`、`oauthConsent`、`oauthClientAssertion`）。详情请参阅 [OAuth Provider Schema](/docs/plugins/oauth-provider#表结构) 部分。
+    MCP 插件与 OAuth Provider 插件使用相同的 schema（`oauthClient`、`oauthAccessToken`、`oauthRefreshToken`、`oauthConsent`、`oauthClientAssertion`、`oauthResource`、`oauthClientResource`）。详情请参阅 [OAuth Provider schema](/docs/plugins/oauth-provider/reference#schema)。
   </Step>
 </Steps>
 
@@ -148,9 +149,9 @@ mcp({
 
 `resource` 必须是没有查询参数、片段或凭据的 HTTPS URL；仅在本地开发的回环主机上接受 HTTP。URL 需要查询组件的资源不能使用 `mcp()`、`requireMcpAuth` 或 `createMcpProtectedRequestHandler`。请使用 `better-auth/oauth2` 中的 `verifyAccessTokenRequest` 验证其令牌，并使用 `@better-auth/oauth-provider` 中的 `createResourceServerChallenge` 构建质询。
 
-使用 Prisma 和 PostgreSQL、CockroachDB 或 MongoDB 时，还需在 `resources` 中为此资源声明明确的 `allowedScopes`；请参阅[资源](/docs/plugins/oauth-provider#resources)。
+若在 PostgreSQL、CockroachDB 或 MongoDB 上使用 Prisma，还需在 `resources` 中声明此资源并明确设置 `allowedScopes`；请参阅[资源](/docs/plugins/oauth-provider/tokens#resources)。
 
-`mcp()` also registers this identifier as a default client-registration resource. A dynamically registered client is linked to the MCP resource even when its registration request omits the non-standard `resources` field. Any `clientRegistrationDefaultResources` you provide are preserved, and the MCP resource is appended once.
+`mcp()` 还会将此标识符注册为默认客户端注册资源。即使动态注册请求省略了非标准的 `resources` 字段，注册客户端仍会关联到 MCP 资源。你配置的 `clientRegistrationDefaultResources` 会保留，且 MCP 资源只会追加一次。
 
 ### 可选的 DCR 回退
 
@@ -167,9 +168,13 @@ mcp({
 })
 ```
 
-一些 MCP 客户端（例如 Cursor 和较早版本的 Claude Code）会省略 `application_type`，并注册自定义 scheme 回调，或注册指向 `localhost`、`127.0.0.1`、`[::1]` 的 `http` 回调；默认的 `web` 类型会拒绝这些回调。设置 `clientRegistrationDefaultApplicationType: "infer"` 可将这些客户端注册为 `native`；请参阅[应用类型](/docs/plugins/oauth-provider#dynamic-registration-endpoint)。
+<Callout type="warn">
+  `allowUnauthenticatedClientRegistration: true` 会允许互联网上的任何人使用自选名称和标志注册客户端。每个此类客户端都会关联到 MCP 资源以及所有 `clientRegistrationDefaultResources` 条目。启用前请阅读[动态客户端注册](/docs/plugins/oauth-provider/clients#dynamic-client-registration)，并设置 `clientRegistrationDefaultScopes`，确保匿名客户端只能获得所需的 scope。
+</Callout>
 
-The registration endpoint is absent from discovery unless DCR is enabled. A DCR request does not need Better Auth's `resources` extension: `mcp()` adds its canonical resource as a server-owned default.
+部分 MCP 客户端会省略 `application_type`，并注册自定义 scheme 回调或指向 `localhost`、`127.0.0.1` 或 `[::1]` 的 `http` 回调；默认的 `web` 类型会拒绝这些回调。设置 `clientRegistrationDefaultApplicationType: "infer"` 可将这类客户端注册为 `native`；请参阅[动态客户端注册](/docs/plugins/oauth-provider/clients#dynamic-client-registration)。
+
+除非启用了 DCR，否则发现文档中不会包含注册端点。DCR 请求不需要 Better Auth 的 `resources` 扩展：`mcp()` 会将其标准资源作为服务器拥有的默认资源添加。
 
 ### 保护 MCP 路由
 
@@ -268,9 +273,13 @@ requireMcpAuth(auth, async (request, accessTokenClaims) => {
 
 ## 配置
 
-`mcp()` 扩展了 [OAuth Provider](/docs/plugins/oauth-provider#配置-1) 选项。所有 OAuth provider 选项都会以扁平形式传递（不存在嵌套的 `oidcConfig`）。必需的 MCP 专属选项是 `resource`。
+`mcp()` 扩展了 [OAuth Provider](/docs/plugins/oauth-provider/reference#plugin-options) 选项。所有 OAuth Provider 选项均以扁平形式传入（不使用嵌套的 `oidcConfig`）。MCP 专用的必填选项为 `resource`。
 
 对于通过 `mcp()` 配置的每个客户端，插件会将 `refreshTokenReuseInterval` 默认设置为 30 秒。这样，当另一个请求已经使用了某个刷新令牌时，客户端可以使用旧令牌重试，并收到相同的轮换令牌响应。OAuth Provider 本身默认仍然严格；在 `mcp()` 上设置 `refreshTokenReuseInterval: 0` 可禁用重叠时间窗口。
+
+<Callout type="warn">
+  在此时间窗口内，重复使用已轮换的刷新令牌不会被视为重放，因此令牌族不会被撤销。攻击者若在合法刷新后的 30 秒内重放窃取的 bearer 刷新令牌，只要重试请求的 scope 和资源相同，就能获得替换后的刷新令牌。DPoP 绑定的刷新令牌还要求提供来自其绑定密钥的有效 DPoP proof。大多数 MCP 客户端是没有密钥的公有客户端，因此没有其他机制会阻止 bearer 令牌重试。除非客户端会丢失刷新响应，否则请设置 `refreshTokenReuseInterval: 0`；请参阅[刷新令牌](/docs/plugins/oauth-provider/tokens#refresh-tokens)。
+</Callout>
 
 export const mcpPluginOptionsType = {
   loginPage: {
@@ -292,7 +301,7 @@ export const mcpPluginOptionsType = {
 
 <TypeTable type={mcpPluginOptionsType} />
 
-以下是最常调整的 OAuth 提供方选项。完整列表请参阅 [OAuth Provider Configuration](/docs/plugins/oauth-provider#配置-1)。
+以下列出最常调整的 OAuth Provider 选项。完整列表请参阅 [OAuth Provider 配置](/docs/plugins/oauth-provider/reference#plugin-options)。
 
 export const mcpOauthOptionsType = {
   scopes: {
@@ -320,7 +329,7 @@ export const mcpOauthOptionsType = {
     default: 2592000,
   },
   refreshTokenReuseInterval: {
-    description: "Seconds that a rotated refresh token can be reused to receive the same token response. OAuth Provider defaults to strict handling at 0; MCP defaults to 30 for every client configured through the plugin. Set 0 on MCP to disable the overlap window.",
+    description: "轮换后的刷新令牌可重用并获得相同令牌响应的时间，单位为秒。OAuth Provider 默认采用严格处理（0 秒）；通过此插件配置的所有客户端在 MCP 中默认使用 30 秒。将 MCP 中的值设为 0 可关闭重叠时间窗口。",
     type: "number",
     default: 30,
   },
@@ -342,9 +351,10 @@ import { createMcpProtectedRequestHandler } from "@better-auth/mcp"; // [!code h
 
 const handler = createMcpProtectedRequestHandler( // [!code highlight]
     {
-        issuer: "https://auth.example.com",
+        issuer: "https://auth.example.com/api/auth",
         audience: "https://api.example.com/mcp",
         jwksUrl: "https://auth.example.com/api/auth/jwks",
+        jwtVerifyOptions: { typ: "at+jwt", requiredClaims: ["azp"] }, // [!code highlight]
     },
     async (request, accessTokenClaims) => { // [!code highlight]
         // accessTokenClaims holds the verified access-token claims // [!code highlight]

@@ -97,7 +97,7 @@ export const auth = betterAuth({
 
 ### 令牌身份验证方法
 
-对于常规的服务端 Better Auth 应用程序，请使用 `client_secret_basic`。配置了 `clientSecret` 时，这是 Cloudflare 提供商默认使用的方法。
+使用 `tokenEndpointAuth` 配置身份验证方式。当设置了 `clientSecret` 时，默认方式为 `client_secret_basic`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -107,13 +107,13 @@ export const auth = betterAuth({
         cloudflare: {
             clientId: process.env.CLOUDFLARE_CLIENT_ID as string,
             clientSecret: process.env.CLOUDFLARE_CLIENT_SECRET as string,
-            // tokenEndpointAuthMethod: "client_secret_basic", // default // [!code highlight]
+            // tokenEndpointAuth: { method: "client_secret_basic" }, // default // [!code highlight]
         },
     },
 })
 ```
 
-如果你的 Cloudflare OAuth 客户端配置为使用 `client_secret_post`，请将 `tokenEndpointAuthMethod` 设为 `client_secret_post`：
+如果你的 Cloudflare OAuth 客户端配置为使用 `client_secret_post`，请将 `tokenEndpointAuth` 设为 `{ method: "client_secret_post" }`：
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -123,7 +123,7 @@ export const auth = betterAuth({
         cloudflare: {
             clientId: process.env.CLOUDFLARE_CLIENT_ID as string,
             clientSecret: process.env.CLOUDFLARE_CLIENT_SECRET as string,
-            tokenEndpointAuthMethod: "client_secret_post", // [!code highlight]
+            tokenEndpointAuth: { method: "client_secret_post" }, // [!code highlight]
         },
     },
 })
@@ -131,7 +131,7 @@ export const auth = betterAuth({
 
 ### 不使用密钥的客户端
 
-Cloudflare 的 [OAuth 流程指南](https://developers.cloudflare.com/fundamentals/oauth/create-an-oauth-client/#choose-a-flow)要求无法安全存储密钥的客户端（例如基于浏览器、移动设备、桌面或 CLI 的应用程序）使用带 PKCE（`S256`）的 Authorization Code 流程，并将 `token_endpoint_auth_method` 设为 `none`。对于这类客户端，请省略 `clientSecret` 并将 `tokenEndpointAuthMethod` 设为 `none`。Better Auth 会在授权流程中提供 PKCE 挑战和验证器。
+Cloudflare 的 [OAuth 流程指南](https://developers.cloudflare.com/fundamentals/oauth/create-an-oauth-client/#choose-a-flow)要求无法安全保存密钥的客户端（例如浏览器、移动端、桌面端或 CLI 应用）使用授权码流程与 PKCE（`S256`），并将 `token_endpoint_auth_method` 设为 `none`。对于这类客户端，请省略 `clientSecret`，并将 `tokenEndpointAuth` 设为 `{ method: "none" }`。Better Auth 会在授权流程中提供 PKCE challenge 和 verifier。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth"
@@ -140,13 +140,17 @@ export const auth = betterAuth({
     socialProviders: {
         cloudflare: {
             clientId: process.env.CLOUDFLARE_CLIENT_ID as string,
-            tokenEndpointAuthMethod: "none", // [!code highlight]
+            tokenEndpointAuth: { method: "none" }, // [!code highlight]
         },
     },
 })
 ```
 
-### 客户端可见性
+<Callout type="info">
+  如果使用了 `tokenEndpointAuthMethod: "..."`，请将其替换为 `tokenEndpointAuth: { method: "..." }`。
+</Callout>
+
+### Client visibility
 
 Cloudflare 的[客户端可见性](https://developers.cloudflare.com/fundamentals/oauth/create-an-oauth-client/#private-and-public-clients)与令牌端点身份验证是相互独立的。新建的 OAuth 客户端默认为私有，因此只有父级 Cloudflare 账户的成员才能授权这些客户端。若要允许任何 Cloudflare 用户授权你的应用程序，请将客户端升级为公开客户端。
 

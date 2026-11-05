@@ -8,7 +8,7 @@ description: Vercel 提供者的设置与使用。
   <Step>
     ### 获取 Vercel 凭据
 
-    要使用 Vercel 登录，你需要一个客户端 ID 和客户端密钥。你可以通过 [创建 Vercel 应用](https://vercel.com/docs/sign-in-with-vercel/manage-from-dashboard) 从 [Vercel 仪表板](https://vercel.com/dashboard) 获取它们。
+    若要使用 Vercel 登录，请[创建 Vercel App](https://vercel.com/docs/sign-in-with-vercel/manage-from-dashboard)以获取客户端 ID。默认配置还需要客户端密钥。部署在 Vercel 上的应用也可以改用 [OIDC 客户端身份验证](#oidc-client-authentication)，无需客户端密钥。
 
     请确保将重定向 URL 设置为 `http://localhost:3000/api/auth/callback/vercel` 用于本地开发。对于生产环境，应将其设置为应用程序的 URL。如果更改了认证路由的基本路径，需要相应地更新重定向 URL。
 
@@ -58,9 +58,130 @@ const signIn = async () => {
 
 ## 选项
 
-有关所有社交提供者支持的完整选项列表，请查看 [提供者选项](/docs/concepts/oauth#提供商选项)。
+使用 Vercel 登录的默认配置需要客户端 ID 和客户端密钥。你可以在 [Vercel 控制面板](https://vercel.com/dashboard)中[创建 Vercel App](https://vercel.com/docs/sign-in-with-vercel/manage-from-dashboard)获取它们。部署在 Vercel 上的应用也可以改用 [OIDC 客户端身份验证](#oidc-client-authentication)，无需客户端密钥。
 
-### 可用作用域
+所有社交提供者支持的完整选项列表请参阅[提供者选项](/docs/concepts/oauth#provider-options)。
+
+### Token endpoint authentication
+
+设置 `tokenEndpointAuth`，以选择应用交换授权码时使用的身份验证方式。此选项接受通用 OAuth 身份验证策略：`client_secret_basic`、`client_secret_post`、`none`、`private_key_jwt` 和 `custom`。请在 Vercel App 中启用对应方式。省略此项时，如果已配置 `clientSecret`，Better Auth 会将其放入请求体中发送。
+
+`custom` 策略会接管客户端身份验证：必须设置 `client_id` 以及所需的凭据参数或请求头。Better Auth 仍会处理授权码、重定向 URI、PKCE、令牌响应和用户资料。每次交换时，该钩子都会在服务器端运行；它不会更改浏览器回调 URL。
+
+#### OIDC client authentication
+
+部署在 Vercel 上的应用可以使用 workload OIDC 令牌，而不是长期有效的客户端密钥：
+
+1. 在 Vercel App 的 **Authentication** 设置中启用 **OpenID Connect (`oidc_token`)**，并配置受信任的 issuer 和声明。issuer 和 audience 必须与部署令牌匹配，并将访问范围限制为指定的团队、项目和环境。请参阅 [Vercel OIDC 客户端身份验证指南](https://vercel.com/docs/sign-in-with-vercel/authorization-server-api#authenticate-with-an-oidc-token)和 [OIDC 声明参考](https://vercel.com/docs/oidc/reference)。
+2. 在应用中安装 `@vercel/oidc`。
+3. 配置异步令牌请求钩子：
+
+```ts title="auth.ts"
+import { getVercelOidcToken } from "@vercel/oidc"
+import { betterAuth } from "better-auth"
+
+const clientId = process.env.VERCEL_CLIENT_ID as string
+
+export const auth = betterAuth({
+    socialProviders: {
+        vercel: {
+            clientId,
+            tokenEndpointAuth: {
+                method: "custom",
+                async customizeRequest({ body }) {
+                    const token = await getVercelOidcToken()
+                    body.set("client_id", clientId)
+                    body.set("client_assertion", token)
+                    body.set(
+                        "client_assertion_type",
+                        "urn:vercel:params:oauth:client-assertion-type:oidc-bearer",
+                    )
+                },
+            },
+        },
+    },
+})
+```
+
+请在钩子内部获取 OIDC 令牌，确保每次交换都使用当前令牌。不要在模块初始化时存储令牌，也不要将其作为 `clientSecret` 传入。钩子抛出错误时，Better Auth 会停止交换。本地开发也需要有效的 workload 令牌和匹配的信任配置才能使用此方式。
+
+<Callout type="info">
+  将 [OAuth Proxy](/docs/plugins/oauth-proxy) 与 `productionURL` 一起使用时，预览环境的登录会在生产部署上交换授权码。因此，OIDC 令牌标识的是该生产部署。请为其团队、项目和 `production` 环境配置信任；只信任 `preview` 会导致这些交换被拒绝。
+</Callout>
+
+此方式用于验证应用 workload。登录用户仍使用标准的 Vercel 登录流程，Better Auth 仍需要会话密钥。
+
+#### Private key JWT client authentication
+
+在 Vercel App 中启用 `private_key_jwt` 并配置其 **JWKS URL**。每次交换令牌时，Better Auth 都会将客户端 ID、token 端点和授权许可类型传给 `getClientAssertion`。使用此策略时请省略 `clientSecret`。请参阅 [Vercel 私钥 JWT 指南](https://vercel.com/docs/sign-in-with-vercel/authorization-server-api#authenticate-with-a-jwt-assertion)。
+
+运行在 Vercel 上的应用可以使用 [Vercel KMS](https://vercel.com/docs/kms) 签署断言，而无需在部署环境中存储私钥：
+
+1. 在团队的 **Key Management** 设置中创建 KMS issuer。
+2. 为指定项目和环境添加 [project grant](https://vercel.com/docs/kms/concepts/project-grants)。
+3. 将 Vercel App 的 JWKS URL 设为 `https://kms.vercel.com/<issuerId>/jwks.json`，并安装 `@vercel/kms`。
+4. 在 `getClientAssertion` 中签署新的断言：
+
+```ts title="auth.ts"
+import { signJWT } from "@vercel/kms"
+import { betterAuth } from "better-auth"
+
+export const auth = betterAuth({
+    socialProviders: {
+        vercel: {
+            clientId: process.env.VERCEL_CLIENT_ID as string,
+            tokenEndpointAuth: {
+                method: "private_key_jwt",
+                async getClientAssertion({ clientId, tokenEndpoint }) {
+                    const { token } = await signJWT({
+                        issuerId: process.env.VERCEL_KMS_ISSUER_ID as string,
+                        claims: {
+                            iss: clientId,
+                            sub: clientId,
+                            aud: tokenEndpoint,
+                            jti: crypto.randomUUID(),
+                        },
+                        ttl: 60,
+                    })
+                    return token
+                },
+            },
+        },
+    },
+})
+```
+
+[KMS](https://vercel.com/docs/kms/ts-sdk-reference#signjwt) 会使用部署当前的 OIDC 令牌授权签名，并设置 JWT 的 `kid`、`iat`、`nbf` 和 `exp`。请在可用请求上下文的回调中调用它。`iss` 和 `sub` 声明必须是 OAuth 客户端 ID，而不是 KMS issuer URL。有效期最多设为 60 秒。请参阅 [Vercel KMS 断言示例](https://vercel.com/docs/sign-in-with-vercel/authorization-server-api#sign-the-assertion-with-vercel-kms)。
+
+若要自行管理签名密钥，请改用 Better Auth 的 `createPrivateKeyJwtClientAssertionGetter`。此辅助函数接受本地密钥材料，不会调用 KMS。设置 `expiresIn: 60` 可覆盖其 120 秒的默认值；`kid` 应设为 JWKS 中匹配公钥的 ID：
+
+```ts
+import { betterAuth } from "better-auth"
+import { createPrivateKeyJwtClientAssertionGetter } from "better-auth/oauth2"
+
+const getClientAssertion = createPrivateKeyJwtClientAssertionGetter({
+    privateKeyPem: process.env.VERCEL_APP_PRIVATE_KEY as string,
+    algorithm: "RS256",
+    kid: process.env.VERCEL_APP_KEY_ID as string,
+    expiresIn: 60,
+})
+
+export const auth = betterAuth({
+    socialProviders: {
+        vercel: {
+            clientId: process.env.VERCEL_CLIENT_ID as string,
+            tokenEndpointAuth: {
+                method: "private_key_jwt",
+                getClientAssertion,
+            },
+        },
+    },
+})
+```
+
+请始终包含匹配的 `kid`；JWKS 中有多把密钥时，Vercel 会要求此项。私钥应保留在服务器端，JWKS 中只公开公钥。
+
+### Available Scopes
 
 Vercel 支持以下 OpenID Connect 作用域：
 

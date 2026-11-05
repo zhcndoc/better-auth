@@ -61,7 +61,9 @@ export const auth = betterAuth({
 默认情况下，当用户请求更改邮箱时，验证邮件会发送到**新的**邮箱地址。
 用户验证新邮箱后，邮箱才会被更新。
 
-#### 使用当前邮箱确认
+更改邮箱链接仅对发起请求的账户有效，也不会为用户创建登录状态。只有当前邮箱已验证时，新邮箱才会被标记为已验证。
+
+#### Confirming with Current Email
 
 为了增加安全性，你可以在验证邮件发送到新地址之前，要求用户通过**当前**邮箱确认更改。为此，请提供 `sendChangeEmailConfirmation` 函数。
 
@@ -528,7 +530,9 @@ export const auth = betterAuth({
   });
   ```
 
-  你也可以在关联社交账户时请求特定权限范围，与初次认证时的权限不同：
+  会话存储在服务器端时，开始关联时以及提供者重定向返回时，会话都必须仍处于有效状态。
+
+  You can also request specific scopes when linking a social account, which can be different from the scopes used during the initial authentication:
 
   ```ts
   import { authClient } from "@/lib/auth-client"

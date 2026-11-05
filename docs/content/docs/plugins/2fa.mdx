@@ -317,6 +317,22 @@ export default function UserCard({ password }: { password: string }){
   ```
 </APIMethod>
 
+#### 导入已有 TOTP 密钥
+
+若要从其他提供者导入 TOTP 密钥，请在每个 Base32 密钥前加上 `base32:`，使用认证密钥将其加密，并存储在 `twoFactor` 表中。然后为用户设置 `twoFactorEnabled: true`。
+
+```ts
+import { symmetricEncrypt } from "better-auth/crypto";
+
+const ctx = await auth.$context;
+const secret = await symmetricEncrypt({
+    key: ctx.secretConfig,
+    data: `base32:${importedSecret}`,
+});
+```
+
+存储前请移除密钥中的空格。导入的密钥必须使用 SHA-1，并且 `digits` 和 `period` 必须与 TOTP 选项一致。
+
 ### OTP
 
 OTP（一次性密码）与 TOTP 类似，但生成的随机码会通过邮件或短信发送给用户。
@@ -440,9 +456,9 @@ export const auth = betterAuth({
   ```ts
   type viewBackupCodes = {
       /**
-       * 要查看所有备用代码的用户 ID。
+       * The ID of the user whose backup codes to return.
        */
-      userId?: string | null = "user-id"
+      userId: string = "user-id"
   }
   ```
 </APIMethod>

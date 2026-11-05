@@ -1,0 +1,167 @@
+---
+icon: pluginsSSOOIDC
+sidebarTitle: "OIDC"
+title: OIDC 提供者
+description: 注册 OpenID Connect 身份提供者，并配置发现机制、客户端身份验证和回调。
+---
+
+OIDC 提供者使用授权码流程为用户登录，默认启用 PKCE（[RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)）。如果令牌响应包含 ID 令牌，Better Auth 会对其进行验证（[OIDC Core §3.1.3.7](https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation)），并要求 UserInfo 中的 `sub` 与之匹配。账户由提供者 ID 和 `sub` 共同标识。
+
+## Register an OIDC provider
+
+若要注册 OIDC 提供者，请向 `sso.register` 传入 `oidcConfig`。[发现机制](#oidc-discovery)会补全未设置的端点。
+
+```ts title="register-oidc-provider.ts"
+import { authClient } from "@/lib/auth-client";
+
+const { data, error } = await authClient.sso.register({
+	providerId: "acme",
+	issuer: "https://idp.example.com",
+	domain: "example.com",
+	oidcConfig: {
+		clientId: "client-id",
+		clientSecret: "client-secret",
+		scopes: ["openid", "email", "profile"],
+		mapping: {
+			extraFields: {
+				department: "department",
+			},
+		},
+	},
+});
+
+if (error) {
+	// Discovery failures set error.code, such as discovery_untrusted_origin.
+} else {
+	// Register data.redirectURI as the redirect URI at the IdP.
+}
+```
+
+服务器端也可以使用相同请求体，通过 `auth.api.registerSSOProvider({ body, headers })` 注册，并传入已登录请求的请求头。
+
+在 IdP 中，请将 `{baseURL}/sso/callback/{providerId}` 注册为重定向 URI。使用默认基础路径时，该地址为 `/api/auth/sso/callback/acme`。如果设置了[共享重定向 URI](#shared-redirect-uri)，请改为注册该地址。响应中的 `redirectURI` 会返回需要注册的 URI。
+
+`pkce` 默认值为 `true`。请保持启用：设为 `pkce: false` 后，回调只能依靠 `state` 防止授权码注入（[RFC 9700 §4.5](https://datatracker.ietf.org/doc/html/rfc9700#section-4.5)）。此字段由注册者设置，因此自行注册的提供者可以将其关闭。`scopes` 的默认值为 `["openid", "email", "profile", "offline_access"]`。所有字段请参阅 [`oidcConfig`](/docs/plugins/sso/reference#oidcconfig)。
+
+### Mapping
+
+若要选择用于填充用户资料的声明，请设置 `mapping`。提供者有 UserInfo 端点时，声明会从 UserInfo 响应中读取；否则从 ID 令牌中读取。默认情况下，`email` 读取 `email`，`name` 读取 `name`，`image` 读取 `picture`。每个 `extraFields` 条目会将用户字段映射到声明。Better Auth 会将指向[用户附加字段](/docs/concepts/database#extending-core-schema)的条目保存到用户记录中，并将所有条目通过 `userInfo` 传给 `provisionUser`。映射无法替换账户主体，该值始终是 `sub`。
+
+邮箱声明是列表时，Better Auth 会使用第一个地址。如果 IdP 只通过 `emails` 等列表声明发送地址，请设置 `mapping: { email: "emails" }`。
+
+<Callout type="warn">
+  SSO 用户会以 `emailVerified: false` 创建。只有启用了已弃用的 `trustEmailVerified` 选项时，才会读取 `mapping.emailVerified`。若要按邮箱匹配现有用户，请[验证提供者的域名](/docs/plugins/sso/domain-verification#enable-domain-verification)，或使用 [`resolveUser`](/docs/plugins/sso/provisioning#resolve-sso-users)。
+</Callout>
+
+## OIDC discovery
+
+注册时，Better Auth 会获取 `{issuer}/.well-known/openid-configuration`；若设置了 `oidcConfig.discoveryEndpoint`，则会获取该地址（[OIDC Discovery §4](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig)）。文档中的 `issuer` 必须与提供者的 `issuer` 匹配（[§4.3](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationValidation)）。注册时执行发现机制后，如果文档缺失或格式错误，注册会立即失败，而不是等到首次登录时才失败。
+
+发现机制会补全 `authorizationEndpoint`、`tokenEndpoint`、`jwksEndpoint`、`userInfoEndpoint` 和 `tokenEndpointAuthentication`。如果你自行设置其中某项，则使用你提供的值。相对端点 URL 会根据 issuer 解析，并保留其路径。例如，issuer 为 `https://idp.example.com/tenant` 时，端点 `/token` 会解析为 `https://idp.example.com/tenant/token`。
+
+文档必须包含 `issuer`、`authorization_endpoint`、`token_endpoint` 和 `jwks_uri`。不支持只提供隐式流程的提供者，因为它们可能省略 `token_endpoint`。
+
+若要存储自己的端点而不获取发现文档，请设置 `skipDiscovery: true`，并提供 `authorizationEndpoint`、`tokenEndpoint` 和 `jwksEndpoint`。三者中任何一项未提供时，Better Auth 会在登录时执行发现机制。
+
+### Trusted origins
+
+若要防止注册者让服务器访问内部服务或云元数据地址，注册时会使用 [`trustedOrigins`](/docs/reference/security#trusted-origins) 检查以下 URL：
+
+* 注册时执行发现机制的情况下，发现 URL 以及从中发现的所有 URL。缺少对应来源时，注册会以 `discovery_untrusted_origin` 失败。
+* 指向私有或不可路由主机的所有端点，包括解析到此类主机的域名；即使设置了 `skipDiscovery: true` 也会检查。缺少对应条目时，注册会以 `discovery_private_host` 失败。只有运行时支持 `node:dns` 时才会解析主机名。不支持该模块的运行时仍会阻止 URL 中直接写出的私有和保留 IP 地址、`localhost` 和 `*.localhost` 名称，以及 `metadata.google.internal` 等已知云元数据主机名。其他主机名不会解析，因此指向私有地址的域名不会被阻止。之后的请求也不会固定使用已解析的地址。
+
+`trustedOrigins` 是全局配置。列入其中的 IdP 来源也会被接受为请求的 `Origin` 和重定向目标；列入其中的私有主机可被任何提供者访问。只列出经过审核的 IdP 来源，切勿使用注册者提供的值。
+
+```ts title="auth.ts"
+export const auth = betterAuth({
+	trustedOrigins: ["https://idp.example.com"], // [!code highlight]
+	plugins: [sso()],
+});
+```
+
+若要支持使用自有 IdP 的客户，请传入一个函数，为 SSO 注册、提供者更新、登录和回调路由添加你已批准的 IdP 来源。该函数会收到请求，并返回要信任的来源。对于返回了 IdP 来源的路由，该来源也会被接受为请求的 `Origin`、`callbackURL`、`errorCallbackURL` 或 `newUserCallbackURL`。只返回团队已审核的来源，例如维护中的允许列表。切勿返回从提供者记录或注册请求中读取的值，否则注册者可能添加自己的网站作为重定向目标，或让服务器访问内部主机。
+
+```ts title="auth.ts"
+export const auth = betterAuth({
+	trustedOrigins: async (request) => {
+		const app = ["https://app.example.com"];
+		// request is undefined during initialization and auth.api calls
+		if (!request) return app;
+		const { pathname } = new URL(request.url);
+		// Match exact routes, not any path that contains "/sso"
+		const isSSORoute =
+			pathname === "/api/auth/sso/register" ||
+			pathname === "/api/auth/sso/update-provider" ||
+			pathname === "/api/auth/sign-in/sso" ||
+			pathname === "/api/auth/sso/callback" ||
+			pathname.startsWith("/api/auth/sso/callback/");
+		return isSSORoute
+			? [...app, ...(await getApprovedIdpOrigins())]
+			: app;
+	},
+	plugins: [sso()],
+});
+```
+
+如果直接调用 `auth.api.registerSSOProvider`，此函数无法获取端点 URL，因此路径检查不会匹配。请通过 HTTP 注册这些提供者，或在每个请求返回的来源列表中添加其 IdP 来源。
+
+### Discovery errors
+
+服务器端 OIDC 请求（发现机制、令牌、UserInfo 和 JWKS）绝不会跟随重定向，因为重定向可能指向私有主机。请配置每个端点的最终 URL。注册和 `signIn.sso` 会返回以下错误代码：
+
+| 代码                         | 状态   | 原因                                                                                  | 处理方式                                                                                                                                                                                  |
+| ---------------------------- | ------ | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `issuer_mismatch`            | 400    | 文档中的 `issuer` 与提供者的 `issuer` 不同。                                         | 将提供者的 `issuer` 精确设为文档中的值，包括末尾的斜杠。                                                                                                                                  |
+| `discovery_incomplete`       | 400    | 文档缺少必需字段，例如 `token_endpoint` 或 `jwks_uri`。                              | 设置 `skipDiscovery: true`，并提供 `authorizationEndpoint`、`tokenEndpoint` 和 `jwksEndpoint`。IdP 有需要时，也请设置 `userInfoEndpoint` 和 `tokenEndpointAuthentication`。 |
+| `discovery_not_found`        | 400    | 发现 URL 返回了 404。                                                                | 检查 `issuer`，或将 `oidcConfig.discoveryEndpoint` 设为文档 URL。                                                                                                                         |
+| `discovery_timeout`          | 502    | IdP 在 10 秒内未响应，或返回了 408。                                                 | 检查服务器是否可以访问 IdP，然后重试。                                                                                                                                                    |
+| `discovery_invalid_url`      | 400    | issuer、发现 URL 或端点 URL 格式错误，或未使用 `http` 或 `https`。                  | 更正 URL，确保其格式正确并使用 `http` 或 `https`。                                                                                                                                       |
+| `discovery_untrusted_origin` | 400    | 发现 URL 或从中发现的 URL 与 `trustedOrigins` 不匹配。                              | 审核 IdP 后，将错误消息中 URL 的来源添加到 `trustedOrigins`。                                                                                                                             |
+| `discovery_private_host`     | 400    | 端点主机为私有或不可路由主机，且未列入 `trustedOrigins`。                           | 如果 IdP 为内部且已审核，请将其来源添加到 `trustedOrigins`。                                                                                                                             |
+| `discovery_invalid_json`     | 400    | 响应为空或不是有效 JSON。                                                           | 将发现 URL 指向 JSON 文档。                                                                                                                                                               |
+| `oidc_endpoint_redirect`     | 400    | 端点返回了 `3xx` 响应。                                                              | 配置为重定向指向的 URL。                                                                                                                                                                  |
+| `discovery_unexpected_error` | 502    | 获取文档时发生其他 HTTP 错误或失败。                                                 | 根据错误消息检查 HTTP 状态或失败原因。                                                                                                                                                    |
+
+## Token endpoint authentication
+
+若要选择 Better Auth 在 token 端点使用的身份验证方式，请将 `tokenEndpointAuthentication` 设为 `client_secret_basic`、`client_secret_post` 或 `private_key_jwt`（[OIDC Core §9](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication)，[RFC 7523 §2.2](https://datatracker.ietf.org/doc/html/rfc7523#section-2.2)）。未设置时，发现机制会按照此顺序选择 IdP 公告的第一种方式；若均未公告，则回退到默认方式 `client_secret_basic`。两种 secret 方式都需要 `clientSecret`。
+
+使用 `private_key_jwt` 时，可通过插件选项 `resolvePrivateKey` 提供密钥，这样密钥不会写入数据库；也可通过 `defaultSSO[].privateKey` 提供密钥，两者都设置时以后者为准。两者都未设置时，注册会返回 400。在 `oidcConfig` 中还可以设置 `privateKeyId`（作为 `keyId` 传给 `resolvePrivateKey`，并作为断言的 `kid` 发送）和 `privateKeyAlgorithm`（默认值为 `RS256`）。
+
+```ts title="auth.ts"
+export const auth = betterAuth({
+	plugins: [
+		sso({
+			resolvePrivateKey: async ({ providerId }) => ({ // [!code highlight]
+				privateKeyPem: await secrets.get(`sso/${providerId}`), // [!code highlight]
+			}), // [!code highlight]
+		}),
+	],
+});
+```
+
+`resolvePrivateKey` 会收到 `{ providerId, keyId, issuer }`，并返回 `{ privateKeyJwk?, privateKeyPem?, kid?, algorithm? }`。`keyId` 和 `issuer` 来自注册者设置并存储的提供者配置。请通过 `providerId` 查找密钥，并确认提供者属于密钥所签发给的租户。只根据 `keyId` 查找会允许一个注册者指定其他租户的密钥。
+
+## Shared redirect URI
+
+若要让所有 OIDC 提供者共用一个回调，请将 `redirectURI` 设为追加到 `baseURL` 的路径，或路由到此服务器的完整 URL。未设置时，每个提供者都有自己的 `/sso/callback/{providerId}` 回调地址。
+
+```ts title="auth.ts"
+sso({
+	redirectURI: "/sso/callback", // [!code highlight]
+});
+```
+
+提供者 ID 会随 OAuth state 传递。此后登录请求会将共享 URI 作为 `redirect_uri` 发送，因此请将其添加到每个 IdP 的允许重定向 URI 列表中。`/sso/callback` 和 `/sso/callback/{providerId}` 都会继续注册。SAML 提供者不受影响。
+
+如果用户可以自行注册提供者，请保留每个提供者单独的回调地址。这可以限制混淆攻击，避免将一个提供者的授权响应当作另一个提供者的响应处理（[RFC 9700 §4.4](https://datatracker.ietf.org/doc/html/rfc9700#section-4.4)）。单独回调会检查授权码是否到达发起登录的提供者对应的回调；共享回调则只依赖 state。
+
+## IdP-initiated sign-in
+
+若要接受到达 `/sso/callback/{providerId}` 且不含 `state` 的回调，请设置 `oidcConfig.allowIdpInitiated: true`。Better Auth 会丢弃 IdP 提供的授权码，并使用新的 `state` 和 PKCE verifier 发起新授权请求。
+
+请在 [`defaultSSO`](/docs/plugins/sso#configure-providers-in-code) 中的提供者上设置此选项，因为 `/sso/register` 和 `/sso/update-provider` 会静默丢弃它。
+
+<Callout type="warn">
+  启用 `allowIdpInitiated` 时，请设置 `baseURL` 选项。重启后的流程会使用 `baseURL` 作为登录后的目标地址；未设置时会以 `CALLBACK_URL_REQUIRED` 失败。
+</Callout>

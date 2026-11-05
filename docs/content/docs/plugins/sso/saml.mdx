@@ -1,0 +1,257 @@
+---
+icon: pluginsSSOSAML
+sidebarTitle: "SAML"
+title: SAML 提供者
+description: 注册 SAML 2.0 身份提供者，并配置签名、证书、属性和回调。
+---
+
+SAML 登录连接两个系统：
+
+* **服务提供者（SP）**：你的应用。它会向 IdP 发送登录请求（AuthnRequest），并将用户引导至 IdP。
+* **身份提供者（IdP）**：负责验证用户身份，并将签名后的响应提交回断言使用者服务（ACS），即应用上的一个端点。
+
+Better Auth 实现了 [Web Browser SSO 配置文件](https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf)（§4.1）中的 SP 端。请求使用 HTTP-Redirect 绑定，响应使用 HTTP-POST（[Bindings §3.4、§3.5](https://docs.oasis-open.org/security/saml/v2.0/saml-bindings-2.0-os.pdf)）。每个响应都会经过 [SAML 安全检查](/docs/plugins/sso/saml-security)。
+
+## Configure the IdP application
+
+请在 IdP 中创建 SAML 应用，并填写以下值：
+
+* **ACS URL**：`{baseURL}/sso/saml2/sp/acs/{providerId}`。使用默认基础路径时，该地址为 `https://app.example.com/api/auth/sso/saml2/sp/acs/acme-saml`。
+* **SP entity ID**（audience）：稍后注册的 `issuer`。
+
+然后复制 IdP 元数据 XML，或其 entity ID、SSO URL 和签名证书。注册后，也可以改为向 IdP 提供 [SP 元数据](#service-provider-metadata) URL。
+
+## Register a SAML provider
+
+<Callout type="warn">
+  SAML 登录会在数据库中保留每个断言 ID，以阻止重放。配置了 `secondaryStorage` 时，还需设置 [`verification.storeInDatabase: true`](/docs/reference/options#verification)，否则所有 SAML 登录都会失败。
+</Callout>
+
+双方都使用 entity ID 标识自身，该 URI 会出现在各自的元数据和消息中。顶层 `issuer` 是 SP entity ID。IdP entity ID 来自 `idpMetadata.metadata`；手动配置 IdP 时，则来自 `idpMetadata.entityID`。
+
+注册 SAML 提供者需要：
+
+* `samlConfig.entryPoint`：IdP 登录 URL。即使传入了元数据 XML，此字段仍然**必填**。
+* `idpMetadata`：包含 `metadata`（IdP 元数据 XML）或 `entityID`。
+* 签名证书来源：`cert`、`idpMetadata.cert` 或 `idpMetadata.metadata`。未提供时，注册会以 `CERT_SOURCE_MISSING` 失败。
+
+<Tabs items={["metadata XML", "manual"]}>
+  <Tab value="metadata XML">
+    ```ts title="register-saml-provider.ts"
+    const { error } = await authClient.sso.register({
+        providerId: "acme-saml",
+        issuer: "https://app.example.com",
+        domain: "example.com",
+        samlConfig: {
+            entryPoint: "https://idp.example.com/sso",
+            idpMetadata: {
+                metadata: idpMetadataXml,
+            },
+        },
+    });
+
+    if (error) {
+        // Show error.message. error.code holds the reason, such as CERT_SOURCE_MISSING.
+    }
+    ```
+  </Tab>
+
+  <Tab value="manual">
+    ```ts title="register-saml-provider.ts"
+    const { error } = await authClient.sso.register({
+        providerId: "acme-saml",
+        issuer: "https://app.example.com",
+        domain: "example.com",
+        samlConfig: {
+            entryPoint: "https://idp.example.com/sso",
+            idpMetadata: {
+                entityID: "https://idp.example.com",
+                cert: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+            },
+        },
+    });
+
+    if (error) {
+        // Show error.message. error.code holds the reason, such as CERT_SOURCE_MISSING.
+    }
+    ```
+  </Tab>
+</Tabs>
+
+服务器端请使用相同请求体调用 `auth.api.registerSSOProvider({ body, headers })`。所有 `samlConfig` 字段都列在[参考文档](/docs/plugins/sso/reference#samlconfig)中。
+
+若要自行存储 IdP authority（例如与连接信息一同固定保存），请使用 SAML 登录流程中的同一元数据解析器进行提取：
+
+```ts title="saml-authority.ts"
+import { deriveSAMLIdentityProviderEntityID } from "@better-auth/sso";
+
+const identityProviderEntityID =
+    deriveSAMLIdentityProviderEntityID(samlConfig);
+```
+
+## Service provider settings
+
+Better Auth 会根据 `issuer`（或 `spMetadata.entityID`）、ACS URL、`wantAssertionsSigned`、`authnRequestsSigned` 和 `identifierFormat` 生成 SP 元数据。若要使用自定义元数据，请设置 `spMetadata.metadata`。它会替换生成的文档，其 `WantAssertionsSigned` 值会成为签名策略。
+
+注册时会拒绝以下 SP 元数据：削弱 `wantAssertionsSigned: true` 要求、缺少 HTTP-POST `AssertionConsumerService`，或 ACS URL 含有片段。
+
+### Signed assertions
+
+若要求 IdP 为每个断言单独签名，而不只是签署承载断言的响应，请设置 `wantAssertionsSigned: true`。默认值为 `false`。IdP 支持时请设为 `true`，这是 [SAML2Int](https://kantarainitiative.github.io/SAMLprofiles/saml2int.html) 的要求。此设置还会在 SP 元数据中公开 `WantAssertionsSigned="true"`（[Metadata §2.4.4](https://docs.oasis-open.org/security/saml/v2.0/saml-metadata-2.0-os.pdf)）。
+
+启用此设置后，未带自身签名的断言会使登录重定向，并带有 `error=invalid_saml_response` 和 `error_description=SAML assertion signature is required`。请将 IdP 配置为对断言进行签名以修复此问题。
+
+### Signed AuthnRequests
+
+对 AuthnRequest 签名可让 IdP 拒绝第三方冒用 SP 名义发送的登录请求。若要签署 AuthnRequest，请设置 `authnRequestsSigned: true`，并在 `spMetadata.privateKey` 或 `samlConfig.privateKey` 中提供签名密钥。默认值为 `false`。此设置还会在 SP 元数据中公开 `AuthnRequestsSigned="true"`。未提供密钥时，登录会返回 400。密钥只能在服务器代码中设置，例如 `defaultSSO` 或 `auth.api.registerSSOProvider`。切勿通过 `authClient.sso.register` 传递密钥，否则密钥会进入客户端 bundle。
+
+```ts
+samlConfig: {
+    authnRequestsSigned: true,
+    spMetadata: {
+        privateKey: process.env.SAML_SP_PRIVATE_KEY,
+    },
+}
+```
+
+生成的 SP 元数据不包含签名证书。请向 IdP 提供与签名密钥匹配的证书，或在自定义 `spMetadata.metadata` 中添加签名 `KeyDescriptor`。
+
+### Encrypted assertions
+
+加密断言可防止在浏览器传输过程中看到响应的人读取用户属性。若要解密加密断言，请设置 `idpMetadata.isAssertionEncrypted: true`，并在 `spMetadata.encPrivateKey` 中传入解密密钥；密钥已加密时，还需传入 `encPrivateKeyPass`。默认值为 `false`。生成的 SP 元数据不包含加密证书。请直接向 IdP 提供与 `encPrivateKey` 匹配的证书，或在自定义 `spMetadata.metadata` 中添加加密 `KeyDescriptor`。
+
+已注册的 `samlConfig` 中的签名密钥和解密密钥会以未加密形式存储在 `ssoProvider.samlConfig` 列中。任何能读取该列的人都可以冒充 SP 签署请求并解密断言。若要避免将密钥存入数据库，请在 [`defaultSSO`](/docs/plugins/sso#configure-providers-in-code) 中定义提供者。
+
+## Signing certificates and rotation
+
+若要在 IdP 轮换签名证书期间保持用户可以登录，请在 `idpMetadata.cert` 中同时列出旧 PEM 和新 PEM。Better Auth 会接受任一证书签名的响应，因此轮换期间用户仍可登录。这适用于在签名 `KeyInfo` 中嵌入签名证书的 IdP，大多数 IdP 都会这样做。没有 `KeyInfo` 时，只会尝试列表中的第一张证书。
+
+```ts
+samlConfig: {
+    entryPoint: "https://idp.example.com/sso",
+    idpMetadata: {
+        entityID: "https://idp.example.com",
+        cert: [
+            "-----BEGIN CERTIFICATE-----\n<current>\n-----END CERTIFICATE-----",
+            "-----BEGIN CERTIFICATE-----\n<next>\n-----END CERTIFICATE-----",
+        ],
+    },
+}
+```
+
+`samlConfig.cert` 和 `samlConfig.idpMetadata.cert` 都可以接受单个 PEM 字符串或数组。两者都设置时，以 `idpMetadata.cert` 为准。
+
+<Callout type="warn">
+  更换证书不会解除已关联到提供者的账户；持有列表中任一证书对应私钥的人都可以冒充这些用户登录。若要阻止组织管理员自行更改证书，请通过 [`guardProviderMutation`](/docs/plugins/sso#manage-providers) 拒绝此类变更。
+</Callout>
+
+设置 `idpMetadata.metadata` 时，Better Auth 会从该文档读取证书，并忽略 `cert` 和 `idpMetadata.cert`。它不会重新获取该文档。IdP 使用新证书重新发布元数据后，请使用新的 XML 更新提供者。
+
+## Attribute mapping
+
+若要选择填充用户个人资料的 SAML 属性，请设置 `mapping`：
+
+| 字段          | 默认属性                                                                                       |
+| ------------- | ---------------------------------------------------------------------------------------------- |
+| `email`       | `email`，其次为 `NameID`                                                                        |
+| `name`        | `displayName`；仅在 `firstName` 和 `lastName` 均不存在时读取，否则根据 `NameID` 生成             |
+| `firstName`   | `givenName`，与 `lastName` 拼接后生成 `name`                                                     |
+| `lastName`    | `surname`，与 `firstName` 拼接后生成 `name`                                                     |
+| `extraFields` | 每个条目中指定的属性                                                                            |
+
+```ts
+samlConfig: {
+    mapping: {
+        email: "mail",
+        firstName: "given_name",
+        lastName: "family_name",
+        extraFields: { department: "department" },
+    },
+}
+```
+
+映射会填充用户资料，但有一个例外：对于已验证域名的提供者，`email` 会用于选择新账户应关联的现有用户。`email` 只能映射到 IdP 管理员可控制、用户无法编辑的属性。如[SSO 用户匹配方式](/docs/plugins/sso/provisioning#how-sso-users-are-matched)所述，账户以提供者 ID 和已签名的 `NameID` 为键。多值属性中的 `email` 和 `name` 会使用第一个值。`extraFields` 和 [`resolveUser`](/docs/plugins/sso/provisioning#resolve-sso-users) 会以数组接收多值属性。只有启用了已弃用的 `trustEmailVerified` 选项时，才会读取 `mapping.emailVerified`（参阅[预配文档](/docs/plugins/sso/provisioning)）。
+
+## ACS and callback URLs
+
+ACS URL `{baseURL}/sso/saml2/sp/acs/{providerId}` 接受 GET 和 POST 请求。由于 IdP 会从其他站点发送 POST 请求，Better Auth 会跳过此端点的来源检查。
+
+若要保留 IdP 已在使用的 ACS URL，请将其作为 HTTP-POST `AssertionConsumerService` 列入 `spMetadata.metadata`，并将其 POST 请求转发到 ACS 路由。
+
+IdP 必须发送包含 SP entity ID 的 `AudienceRestriction`；如果设置了 `samlConfig.audience`，则应包含该值（[Core §2.5.1.4](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf)）。bearer `Recipient` 以及响应中存在的 `Destination`，都必须与提供者某个 ACS URL 匹配（[Profiles §4.1.4.2](https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf)）。
+
+登录后，Better Auth 会将用户重定向到以下第一个已设置的地址：
+
+1. `signIn.sso()` 中的 `callbackURL`。
+2. `samlConfig.idpInitiatedCallbackUrl`。
+3. 插件选项 `saml.idpInitiatedCallbackUrl`。
+4. `samlConfig.callbackUrl`。
+5. base URL 的来源。
+
+为避免开放重定向，Better Auth 会跳过非相对路径且与 `trustedOrigins` 不匹配的 URL，然后尝试下一个地址。例如，设置 `trustedOrigins: ["https://web.example.com"]` 时，Better Auth 会使用 `https://web.example.com/dashboard`，并跳过 `https://other.example/dashboard`。
+
+SP 发起的登录出错时，会依次重定向到传给 `signIn.sso()` 的 `errorCallbackURL`、`onAPIError.errorURL`，或 `{baseURL}/error`。IdP 发起的登录出错时则使用上方的地址列表。
+
+Better Auth 在匹配或创建用户时产生的错误会重定向到上方的登录目标地址，即使设置了 `errorCallbackURL` 也是如此。此类错误包括 `account_not_linked`、`signup_disabled` 和 `unable_to_create_user`，因此该页面也应检查 `error`。[`resolveUser`](/docs/plugins/sso/provisioning#resolve-sso-users) 返回 `reject`，或发生 `SSO_USER_RESOLUTION_FAILED` 时，则使用上一段所述的错误重定向地址。
+
+`samlConfig.callbackUrl` 设置用户登录后到达的位置，而不是 ACS URL。在 1.7 之前，它用于设置 ACS URL。请参阅 [1.7 升级指南](/docs/guides/1-7-upgrade-guide#saml-configuration-is-simplified)。
+
+## IdP-initiated SSO
+
+用户从应用发起登录时，IdP 响应会通过 `InResponseTo` 标记对应请求。用户从 IdP 发起登录（例如在其控制面板中点击登录）时，响应不含 `InResponseTo`，因此属于非请求响应（[Profiles §4.1.5](https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf)）。Better Auth 默认会拒绝此类响应，并以 `error=unsolicited_response` 重定向。若要接受此类响应，请设置 `saml.allowIdpInitiated`：
+
+```ts title="auth.ts"
+sso({
+    saml: {
+        allowIdpInitiated: true, // [!code highlight]
+    },
+})
+```
+
+<Callout type="warn">
+  非请求响应无法关联到应用发起的请求。因此，任何拥有 IdP 账户的人都可能从受害者的浏览器提交自己的签名响应，让受害者登录到攻击者的账户。此选项适用于所有 SAML 提供者，而不仅是需要它的提供者。[SAML2Int](https://kantarainitiative.github.io/SAMLprofiles/saml2int.html) 不建议启用此功能；仅在 IdP 要求时才启用。
+</Callout>
+
+IdP 发起的登录没有 `callbackURL`。前端位于其他来源时，请设置 `idpInitiatedCallbackUrl`，否则用户会停留在认证服务器的来源。
+
+## Service provider metadata
+
+若要向 IdP 提供 SP 元数据，请发送 URL `{baseURL}/sso/saml2/sp/metadata?providerId=…`，或提供下载的文件。此 URL 是公开的 `GET` 端点，会以 XML 格式返回提供者的 SP 元数据。
+
+```ts
+const response = await auth.api.spMetadata({
+    query: { providerId: "acme-saml" },
+});
+const metadataXml = await response.text();
+```
+
+## Single Logout
+
+若要同时让用户退出 IdP 和应用，请设置 `saml.enableSingleLogout: true`。此选项会启用 SAML 单点注销（[Profiles §4.4](https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf)）：
+
+* `{baseURL}/sso/saml2/sp/slo/{providerId}` 接受 GET 和 POST 请求，用于 IdP 发起的注销。Better Auth 生成 SP 元数据时会公布此端点。
+* `POST /sso/saml2/logout/{providerId}` 会为当前会话发起 SP 端注销。它会结束 Better Auth 会话并重定向到 IdP；可选的 `callbackURL` 会作为 RelayState 传递。
+
+IdP 必须在其元数据 XML 或 `idpMetadata.singleLogoutService` 中公布 `SingleLogoutService`。通过 `/sign-out` 让用户退出登录时，Better Auth 也会移除已存储的 SAML 会话。以下插件选项用于调整注销行为：
+
+* `saml.wantLogoutRequestSigned` 要求 IdP 发送签名后的 LogoutRequest；`saml.wantLogoutResponseSigned` 要求签名后的 LogoutResponse。两者默认值都是 `false`。IdP 会对对应消息类型签名时，请启用相应选项。
+* `saml.logoutRequestTTL`（默认 5 分钟）用于限制注销请求的有效期。
+
+客户端插件不提供 SP 发起的注销，且该端点只接受 JSON。若要从浏览器发起注销，请添加一个由表单 POST 调用的服务器路由，并将请求以 JSON 格式转发给 `auth.handler`。之后 Better Auth 会执行[来源和 CSRF 检查](/docs/reference/security#csrf-protection)，浏览器再跟随重定向前往 IdP。请勿在该路由中调用 `auth.api.initiateSLO`，因为直接调用会跳过这些检查。示例使用默认的 `/api/auth` 基础路径；若设置了 `basePath`，请相应调整。
+
+```ts title="app/sign-out/saml/route.ts"
+import { auth } from "@/lib/auth";
+
+export async function POST(request: Request) {
+  const headers = new Headers(request.headers);
+  headers.set("content-type", "application/json");
+  headers.delete("content-length");
+  return auth.handler(
+    new Request(new URL("/api/auth/sso/saml2/logout/acme-saml", request.url), {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ callbackURL: "/" }),
+    }),
+  );
+}
+```

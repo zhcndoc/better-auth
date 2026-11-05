@@ -53,56 +53,77 @@ export const auth = betterAuth({
 
 ### 连接 IP 地址
 
-速率限制通过连接的 IP 地址来跟踪用户发起的请求数量。默认检查的请求头为 `x-forwarded-for`，这在生产环境中常用。如果您使用其他请求头来跟踪用户的 IP 地址，则需要指定它。
+Better Auth 会按客户端 IP 地址统计请求次数。默认情况下，它会从 `X-Forwarded-For` 请求头读取地址。客户端也可以自行发送此请求头，因此应根据请求到达服务器的方式配置 Better Auth：
+
+| 请求到达服务器的方式                              | 配置项                                                           |
+| ------------------------------------------------- | -------------------------------------------------------------- |
+| 代理在自有请求头中写入客户端地址                  | `ipAddressHeaders` 仅包含该请求头                               |
+| 代理向 `X-Forwarded-For` 添加地址                 | 在 `trustedProxies` 中配置代理地址                              |
+| 客户端直接连接                                      | 设置 `ipAddressHeaders: []`，或使用服务器代码设置的请求头        |
+
+<Callout type="warning">
+  使用代理时，请确保客户端只能通过该代理访问服务器。
+</Callout>
+
+#### 代理设置客户端地址
+
+这里只列出由代理设置的请求头。代理必须替换客户端发送的同名值。列表中的其他请求头仍可能由客户端自行设置。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";
 
 export const auth = betterAuth({
-    //...其他选项
     advanced: {
         ipAddress: {
-          ipAddressHeaders: ["cf-connecting-ip"], // Cloudflare 特定请求头示例
-      },
-    },
-    rateLimit: {
-        enabled: true,
-        window: 60, // 时间窗口，单位秒
-        max: 100, // 窗口内最大请求数
-    },
-})
-```
-
-默认情况下，Better Auth 不信任以逗号分隔的转发 IP 链，因为在追加型代理后，最左侧的 `X-Forwarded-For` 标记由客户端控制。位于反向代理或负载均衡器之后时，请执行以下任一操作。
-
-将 `ipAddressHeaders` 指向您的代理设置的单个可信请求头（例如 `x-real-ip` 或 `cf-connecting-ip`）：
-
-```ts title="auth.ts"
-export const auth = betterAuth({
-    advanced: {
-        ipAddress: {
-            ipAddressHeaders: ["x-real-ip"],
+            // Replace this with the header your proxy sets.
+            ipAddressHeaders: ["cf-connecting-ip"],
         },
     },
 })
 ```
 
-或者在 `trustedProxies` 中列出您的代理。Better Auth 会从右到左遍历链路，跳过受信任的跳数，并将第一个不受信任的地址视为客户端：
+#### 代理向 `X-Forwarded-For` 添加地址
+
+请准确列出代理的地址。Better Auth 会跳过请求头中的这些地址，并使用客户端地址。不要使用同时涵盖客户端地址的宽泛网段。
 
 ```ts title="auth.ts"
 export const auth = betterAuth({
     advanced: {
         ipAddress: {
-            // 您的代理地址，不要使用会同时覆盖客户端的大范围私有网段
             trustedProxies: ["192.0.2.10", "10.0.0.0/24"],
         },
     },
 })
 ```
 
-<Callout type="warning">
-  `trustedProxies` 仅会解析转发请求头链，无法验证直接发送方。请确保您的源站只能通过这些代理访问，并让每个代理覆盖或清理转发的 IP 请求头。否则，客户端可以直接设置 `X-Forwarded-For` 并伪造其地址。
-</Callout>
+#### 客户端直接连接
+
+Better Auth 无法读取连接地址。如果将 `ipAddressHeaders` 设为 `[]`，则每个路径下的所有客户端会共用一个计数器。
+
+若要分别统计每个客户端，请在服务器代码中设置请求头，并将其列入 `ipAddressHeaders`。由于服务器代码会替换客户端发送的任何同名值，这种做法是安全的：
+
+```ts title="server.ts"
+import express from "express";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./auth";
+
+const app = express();
+const authHandler = toNodeHandler(auth);
+
+// Express v4 route. For Express v5, use "/api/auth/*splat" instead.
+app.all("/api/auth/*", (req, res) => {
+    // Replace any value that the client sent.
+    // Also set ipAddressHeaders: ["x-client-ip"] in your auth config.
+    req.headers["x-client-ip"] = req.socket.remoteAddress ?? "";
+    return authHandler(req, res);
+});
+```
+
+#### 未找到地址时
+
+某些请求没有有效地址。例如，未设置 `trustedProxies` 时，`X-Forwarded-For` 可能包含多个地址。这些请求会共用每个路径下的一个计数器；首次发生这种情况时，Better Auth 会记录一条警告。
+
+在开发和测试环境中，Better Auth 会改用 `127.0.0.1`。如需为 HTTP 请求关闭此速率限制器，请设置 `disableIpTracking: true`。
 
 #### IPv6 地址支持
 

@@ -6,7 +6,11 @@ description: 使用任何 OAuth 提供商对用户进行身份验证
 
 Generic OAuth 插件可让你将任何 OAuth 2.0 或 OpenID Connect（OIDC）提供商添加到应用程序中。提供商会注册为一等社交提供商，并使用标准的 `signIn.social` 流程，默认启用 PKCE 和发行者验证。
 
-## 何时使用此插件
+<Callout>
+  如果每个组织使用各自的身份提供者或需要 SAML，请改用 [SSO](/docs/plugins/sso)。若要允许其他应用通过你的应用登录，请使用 [OAuth Provider](/docs/plugins/oauth-provider) 插件。
+</Callout>
+
+## When to Use This Plugin
 
 在以下情况下使用 Generic OAuth 插件：
 
@@ -87,7 +91,9 @@ await authClient.signIn.social({
 })
 ```
 
-使用显式端点而非 `discoveryUrl` 配置的提供商不支持此路径，并会返回 `ID_TOKEN_NOT_SUPPORTED`。
+除非自定义 `getUserInfo` 提供了邮箱，否则 ID 令牌必须包含 `email`。随令牌发送的 `accessToken` 或 `refreshToken` 会被忽略。
+
+Providers configured with explicit endpoints instead of `discoveryUrl` do not support this path and return `ID_TOKEN_NOT_SUPPORTED`.
 
 ### 关联账户
 
@@ -299,7 +305,7 @@ Better Auth 会构建标准授权参数，而 `customizeRequest` 会添加提供
 
 **getToken**：（可选）一个自定义函数，用于将授权码兑换为令牌。如果提供，将使用该函数替代默认的令牌交换逻辑。适用于使用 GET 请求或自定义参数的非标准令牌端点提供商。
 
-**mapProfileToUser**：（可选）函数，用于将提供商的用户资料映射到应用程序的用户对象。适用于自定义字段映射或转换。
+**getUserInfo**：（可选）根据 OAuth 令牌从提供者获取用户信息的自定义函数。未提供时会使用默认获取逻辑。如果发现文档中包含 `jwks_uri`，默认逻辑要求 UserInfo 中的 `sub` 与 `id_token` 的 `sub` 一致，否则登录会失败。自定义 `getUserInfo` 返回的用户资料若包含 `sub`，也必须与之匹配。通过客户端提交的 `idToken` 登录或关联时，该函数只会收到此 `idToken`；默认逻辑会从其声明中读取用户资料，且其中必须包含 `email`。
 
 **mapProfileToUser**：（可选）一个将提供商资料映射到应用程序用户可变字段的函数。它无法设置提供商身份；对于非标准的不可变标识符，请使用 `accountSubject`。
 

@@ -4,7 +4,7 @@ title: 使用 Okta 实现 SAML SSO
 description: 使用 Okta 将 SAML 单点登录（SSO）集成到 Better Auth 的指南
 ---
 
-本指南将引导你使用身份提供商（IdP）设置 SAML 单点登录（SSO），以 Okta 为示例。有关高级配置细节及完整 API 参考，请查阅 [SSO 插件文档](/docs/plugins/sso)。
+本指南将以 Okta 为例，介绍如何通过身份提供者（IdP）设置 SAML 单点登录（SSO）。所有 SAML 选项请参阅 [SAML 提供者](/docs/plugins/sso/saml)和 [SSO 参考](/docs/plugins/sso/reference)。
 
 ## 什么是 SAML？
 
@@ -33,8 +33,8 @@ SAML（安全断言标记语言）是一种基于 XML 的标准，用于在身�
 
 6. 下载 IdP 元数据 XML 文件和证书
 
-<Callout type="info">
-  **IdP 发起的 SSO**：如果你希望用户从 Okta 仪表板访问你的应用，请确保 **Single Sign-on URL** 指向回调端点（`/api/auth/sso/saml2/sp/acs/{providerId}`）。Better Auth 会自动处理 SP 发起和 IdP 发起的流程。
+<Callout type="warn">
+  **由 IdP 发起的 SSO**：若要让用户从 IdP 控制面板发起登录，请将 **Single Sign-on URL** 指向 `/api/auth/sso/saml2/sp/acs/{providerId}`，并在 `sso()` 选项中设置 `saml: { allowIdpInitiated: true }`。此选项默认关闭，因为开启后，任何拥有 IdP 账户的人都可能让受害者登录攻击者的账户。该设置适用于所有 SAML 提供者。仅在 IdP 要求时启用；请参阅[由 IdP 发起的 SSO](/docs/plugins/sso/saml#idp-initiated-sso)。
 </Callout>
 
 ### 第二步：配置 Better Auth
@@ -64,16 +64,8 @@ MIIDqjCCApKgAwIBAgIGAZhVGMeUMA0GCSqGSIb3DQEBCwUAMIGVMQswCQYDVQQGEwJVUzETMBEG
 [你的 Okta 证书]
 ...
 -----END CERTIFICATE-----`,
-      
-      // 服务提供商元数据
-      spMetadata: {
-        metadata: `<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" 
-          entityID="http://localhost:3000/api/sso/saml2/sp/metadata">
-          ...
-          [你的 SP 元数据 XML]
-          ...
-        </md:EntityDescriptor>`
-      }
+      // Better Auth generates the SP metadata from `issuer` and the ACS URL.
+      // If you supply your own `spMetadata.metadata`, its entityID becomes the SP entity ID and the default audience.
     }
   }]
 }
@@ -150,15 +142,13 @@ await authClient.signIn.sso({
 
 **重要注意事项**：
 
-* DummyIDP 只能用于开发和测试
-* 切勿在生产环境中使用这些证书
-* 示例使用 `localhost:3000`，请根据你的环境调整 URL
-* 对于生产环境，始终使用 Okta、Azure AD 或 OneLogin 等适当的 IdP 提供商
-* ACS URL 会根据 `{baseURL}/sso/saml2/sp/acs/{providerId}` 自动派生。登录后的目标位置由 `signIn.sso()` 中的 `callbackURL` 控制
+* The example uses `localhost:3000` - adjust URLs for your environment
+* For production, always use proper IdP providers like Okta, Azure AD, or OneLogin
+* The ACS URL is derived automatically from `{baseURL}/sso/saml2/sp/acs/{providerId}`. The post-login destination is controlled by `callbackURL` in `signIn.sso()`
 
 ### 第五步：动态注册 SAML 提供商
 
-要实现动态注册，请通过 API 注册 SAML 提供商。详细注册说明请参阅 [SSO 插件文档](/docs/plugins/sso#注册-saml-提供者)。
+若要动态注册，请使用 API 注册 SAML 提供者。详细步骤请参阅 [SSO 插件文档](/docs/plugins/sso/saml#register-a-saml-provider)。
 
 注册示例：
 
@@ -175,6 +165,8 @@ await authClient.sso.register({
 
 ## 额外资源
 
-* [SSO 插件文档](/docs/plugins/sso)
-* [Okta SAML 文档](https://developer.okta.com/docs/concepts/saml/)
-* [SAML 2.0 规范](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf)。
+* [SSO Plugin Documentation](/docs/plugins/sso)
+* [SAML providers](/docs/plugins/sso/saml)
+* [SSO reference](/docs/plugins/sso/reference)
+* [Okta SAML Documentation](https://developer.okta.com/docs/concepts/saml/)
+* [SAML 2.0 Specification](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf)

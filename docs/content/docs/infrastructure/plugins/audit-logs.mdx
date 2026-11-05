@@ -27,27 +27,34 @@ export const auth = betterAuth({
 
 <Tabs items={["User", "Session", "Account", "Verification", "Organization", "Security"]}>
   <Tab value="User">
-    | 事件                        | 触发条件                      |
-    | ---------------------------- | ---------------------------- |
-    | `user_signed_up`             | 新用户注册                      |
-    | `user_profile_updated`       | 用户更新个人资料                 |
-    | `user_profile_image_updated` | 用户更改头像                    |
-    | `user_email_verified`        | 邮箱验证完成                   |
-    | `user_banned`                | 用户被封禁                    |
-    | `user_unbanned`              | 用户解封                      |
-    | `user_deleted`               | 用户账户删除                   |
+    | 事件                       | 触发条件                                      |
+    | -------------------------- | --------------------------------------------- |
+    | `user_created`             | 新用户注册                                    |
+    | `profile_updated`          | 用户更新个人资料                              |
+    | `profile_image_updated`    | 用户更改头像                                  |
+    | `email_verified`           | 邮箱验证完成                                  |
+    | `email_changed`            | 用户邮箱地址已更改                            |
+    | `user_banned`              | 用户被封禁                                    |
+    | `user_unbanned`            | 用户已解除封禁                                |
+    | `user_role_updated`        | 应用级用户角色已更改                          |
+    | `user_deleted`             | 用户账户已删除                                |
+    | `anonymous_user_converted` | 匿名访客已关联到永久账户                      |
+    | `two_factor_enabled`       | 已启用双重认证                                |
+    | `two_factor_disabled`      | 已禁用双重认证                                |
+    | `two_factor_verified`      | 双重认证验证成功                              |
   </Tab>
 
   <Tab value="Session">
-    | 事件                        | 触发条件                         |
-    | ---------------------------- | ------------------------------- |
-    | `user_signed_in`             | 登录成功                        |
-    | `user_signed_out`            | 用户登出                        |
-    | `session_created`            | 新会话创建                      |
-    | `session_revoked`            | 单个会话被吊销                  |
-    | `sessions_revoked_all`       | 所有会话被吊销                  |
-    | `user_impersonated`          | 管理员开始模拟用户              |
-    | `user_impersonation_stopped` | 管理员停止模拟                  |
+    | 事件                        | 触发条件                        |
+    | --------------------------- | ------------------------------- |
+    | `user_signed_in`            | 登录成功                        |
+    | `user_signed_out`           | 用户退出登录                    |
+    | `user_sign_in_failed`       | 登录尝试失败                    |
+    | `session_created`           | 创建新会话                      |
+    | `session_revoked`           | 撤销单个会话                    |
+    | `all_sessions_revoked`      | 撤销所有会话                    |
+    | `user_impersonated`         | 管理员开始模拟用户              |
+    | `user_impersonated_stopped` | 管理员停止模拟用户              |
   </Tab>
 
   <Tab value="Account">
@@ -69,40 +76,32 @@ export const auth = betterAuth({
   <Tab value="Organization">
     在使用 [组织插件](/docs/plugins/organization) 时追踪。
 
-    | 事件                  | 触发条件                          |
-    | ---------------------- | -------------------------------- |
-    | `organization_created` | 新组织创建                        |
-    | `organization_updated` | 组织设置已更改                    |
-    | `member_added`         | 成员已添加到组织                  |
-    | `member_removed`       | 成员已从组织移除                  |
-    | `member_role_updated`  | 成员角色已更改                    |
-    | `member_invited`       | 邀请已发送                        |
-    | `invite_accepted`      | 邀请已接受                        |
-    | `invite_rejected`      | 邀请已拒绝                        |
-    | `invite_cancelled`     | 邀请已取消                        |
-    | `team_created`         | 团队已创建                        |
-    | `team_updated`         | 团队已更新                        |
-    | `team_deleted`         | 团队已删除                        |
-    | `team_member_added`    | 成员已添加到团队                  |
-    | `team_member_removed`  | 成员已从团队移除                  |
+    | 事件                                  | 触发条件                         |
+    | ------------------------------------- | -------------------------------- |
+    | `organization_created`                | 创建新组织                       |
+    | `organization_updated`                | 组织设置已更改                   |
+    | `organization_deleted`                | 组织已删除                       |
+    | `organization_member_added`           | 成员已加入组织                   |
+    | `organization_member_removed`         | 成员已从组织中移除               |
+    | `organization_member_role_updated`    | 成员角色已更改                   |
+    | `organization_member_invited`         | 已发送邀请                       |
+    | `organization_member_invite_accepted` | 已接受邀请                       |
+    | `organization_member_invite_rejected` | 已拒绝邀请                       |
+    | `organization_member_invite_canceled` | 已取消邀请                       |
+    | `organization_team_created`           | 创建团队                         |
+    | `organization_team_updated`           | 团队已更新                       |
+    | `organization_team_deleted`           | 团队已删除                       |
+    | `organization_team_member_added`      | 成员已加入团队                   |
+    | `organization_team_member_removed`    | 成员已从团队中移除               |
   </Tab>
 
   <Tab value="Security">
     在使用 [Sentinel](/docs/infrastructure/plugins/sentinel) 插件时追踪。
 
-    | 事件                           | 触发条件                             |
-    | ------------------------------- | ----------------------------------- |
-    | `security_blocked`              | 请求已被阻止                         |
-    | `security_allowed`              | 请求在挑战后被允许                   |
-    | `security_credential_stuffing`  | 检测到凭证填充                       |
-    | `security_impossible_travel`    | 检测到不可能存在的旅行               |
-    | `security_geo_blocked`          | 触发地理屏蔽                         |
-    | `security_bot_blocked`          | 检测到机器人并已阻止                 |
-    | `security_suspicious_ip`        | 检测到可疑 IP                        |
-    | `security_velocity_exceeded`    | 超出速率限制                         |
-    | `security_free_trial_abuse`     | 检测到免费试用滥用                   |
-    | `security_compromised_password` | 检测到泄露的密码                     |
-    | `security_stale_account`        | 陈旧账户重新激活                     |
+    | 事件              | 触发条件                                                                                                                                                   |
+    | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | `security_check`  | 每个受保护的用户操作记录一个事件。`eventData.outcome` 为 `passed`、`challenged` 或 `blocked`。包含 `evaluatedChecks`、`triggeredBy` 和 `reason`。             |
+    | `security_signal` | 为安全仪表盘提供检测详情，不计入安全用量。                                                                                                                  |
   </Tab>
 </Tabs>
 
@@ -292,7 +291,7 @@ const userActivity = await authClient.dash.getAllAuditLogs({
 ```ts
 const events = await authClient.dash.getAllAuditLogs({
   session: session.data,
-  eventType: "member_invited",
+  eventType: "organization_member_invited",
 });
 ```
 
@@ -304,7 +303,7 @@ const events = await authClient.dash.getAllAuditLogs({
 const orgEvents = await authClient.dash.getAllAuditLogs({
   session: session.data,
   organizationId: "org_123",
-  eventType: "member_invited",
+  eventType: "organization_member_invited",
 });
 ```
 

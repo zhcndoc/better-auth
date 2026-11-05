@@ -1,0 +1,284 @@
+---
+icon: pluginsOAuthProvider
+sidebarTitle: "OAuth Provider"
+title: OAuth 2.1 Provider
+description: 让你的应用成为 OAuth 2.1 和 OpenID Connect 提供者，供其他应用通过它登录。
+---
+
+OAuth Provider 插件会将 Better Auth 服务器转换为授权服务器，支持 [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1)、[OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html)，并提供 [RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414) 元数据。其他应用可将用户引导至你的应用登录，并获取用于访问 API 的令牌。
+
+<Callout type="info">
+  若要使用其他提供者为用户登录，请改用[社交提供者](/docs/concepts/oauth)、[通用 OAuth](/docs/plugins/generic-oauth) 或 [SSO](/docs/plugins/sso)。
+</Callout>
+
+## What the provider supports
+
+| OAuth 概念                   | 支持                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 授权许可                     | 授权码、[客户端凭据](/docs/plugins/oauth-provider/clients#client-credentials-scopes)，以及使用 `offline_access` 的[轮换刷新令牌](/docs/plugins/oauth-provider/tokens#refresh-tokens)。可通过 `oauthDeviceAuthorization()` 支持[设备码](/docs/plugins/device-authorization)。其他授权许可可通过[扩展](/docs/plugins/oauth-provider/reference#provider-extensions)添加。 |
+| 授权请求                     | [`response_type=code`](/docs/plugins/oauth-provider/sign-in-flow#how-the-redirect-works) 和 `query` 响应模式。`prompt` 接受 `none`、`login`、`consent`、`select_account` 和 `create`。 |
+| PKCE                         | 默认必需，且仅支持 `S256`（RFC 7636）。管理员可为[机密客户端豁免](/docs/plugins/oauth-provider/tokens#pkce)。 |
+| 重定向 URI                   | 默认要求[精确匹配](/docs/plugins/oauth-provider/clients#redirect-uri-forms)。原生客户端可使用不同的 loopback 端口。 |
+| 客户端身份验证               | 支持 `client_secret_basic`、`client_secret_post`、[`private_key_jwt`](/docs/plugins/oauth-provider/clients#private-key-jwt)（RFC 7523），以及公有客户端使用的 `none`。其他基于断言的方式可通过[扩展](/docs/plugins/oauth-provider/reference#provider-extensions)添加。 |
+| 客户端注册                   | 管理员和用户[客户端 API](/docs/plugins/oauth-provider/clients#manage-clients)、[动态注册](/docs/plugins/oauth-provider/clients#dynamic-client-registration)（RFC 7591），以及 [Client ID Metadata Documents](/docs/plugins/cimd)。 |
+| 资源指示符                   | [资源](/docs/plugins/oauth-provider/tokens#resources)（RFC 8707）。默认情况下，客户端只能获取其已关联资源的令牌。 |
+| 访问令牌                     | 当请求指定了资源且启用了 JWT 插件时，使用 [JWT](/docs/plugins/oauth-provider/resource-server#jwt-or-opaque-tokens)（RFC 9068）；否则使用不透明令牌。 |
+| 发送方约束令牌               | [DPoP](/docs/plugins/oauth-provider/tokens#dpop)（RFC 9449）。 |
+| 令牌核查与撤销               | [令牌核查](/docs/plugins/oauth-provider/resource-server#introspection)（RFC 7662）和[撤销](/docs/plugins/oauth-provider/tokens#revocation)（RFC 7009）。 |
+| 发现                         | [授权服务器元数据](#expose-the-well-known-metadata)（RFC 8414）和 OpenID Connect 发现。每个授权响应都包含 `iss`（RFC 9207）。API 可提供[受保护资源元数据](/docs/plugins/oauth-provider/resource-server#protected-resource-metadata)（RFC 9728）。 |
+| 授权同意                     | 按用户、客户端和可选的[引用对象](/docs/plugins/oauth-provider/sign-in-flow#post-login-screen)（例如组织）存储。用户可以[列出、更新和删除](/docs/plugins/oauth-provider/sign-in-flow#manage-consents)自己的授权同意。 |
+| OpenID Connect               | [ID 令牌和 UserInfo](/docs/plugins/oauth-provider/openid-connect)、`claims` 参数以及[成对主体标识符](/docs/plugins/oauth-provider/openid-connect#pairwise-subject-identifiers)。 |
+| 注销                         | 支持 [RP 发起](/docs/plugins/oauth-provider/openid-connect#rp-initiated-logout)和[后端通道](/docs/plugins/oauth-provider/openid-connect#back-channel-logout)注销。 |
+
+未内置支持：
+
+* 隐式授权和密码授权。OAuth 2.1 已移除这两种授权方式。
+* `id_token` 和混合响应类型，以及 `form_post` 响应模式。
+* 请求对象（JAR）。
+* 推送授权请求端点。可通过 [`requestUriResolver`](/docs/plugins/oauth-provider/reference#tokens) 从自有端点解析 `request_uri` 值。
+* `client_secret_jwt` 和双向 TLS 客户端身份验证。
+* 令牌交换（RFC 8693）。可通过[扩展授权许可](/docs/plugins/oauth-provider/reference#provider-extensions)添加。
+* 前端通道注销和 OpenID Connect 会话管理。
+* RFC 7592 客户端配置端点。请改用[客户端 API](/docs/plugins/oauth-provider/clients#manage-clients)。
+
+## Installation
+
+<Steps>
+  <Step>
+    ### 安装插件
+
+    ```package-install
+    @better-auth/oauth-provider
+    ```
+  </Step>
+
+  <Step>
+    ### 将插件添加到服务器
+
+    提供者使用 [JWT 插件](/docs/plugins/jwt)签署令牌。请禁用 JWT 插件的 `/token` 路由，因为客户端会改为调用 `/oauth2/token`。
+
+    ```ts title="auth.ts"
+    import { betterAuth } from "better-auth";
+    import { jwt } from "better-auth/plugins";
+    import { oauthProvider } from "@better-auth/oauth-provider"; // [!code highlight]
+
+    export const auth = betterAuth({
+      disabledPaths: ["/token"], // [!code highlight]
+      plugins: [
+        jwt(),
+        oauthProvider({ // [!code highlight]
+          loginPage: "/sign-in", // [!code highlight]
+          consentPage: "/consent", // [!code highlight]
+        }), // [!code highlight]
+      ],
+    });
+    ```
+
+    <Callout type="warn">
+      如果使用[二级存储](/docs/concepts/database#secondary-storage)，还需设置 `session.storeSessionInDatabase: true`。提供者会从数据库查找会话。未设置 `storeSessionInDatabase` 时，服务器启动会失败。
+    </Callout>
+  </Step>
+
+  <Step>
+    ### 迁移数据库
+
+    要在数据库中添加插件所需的字段和表，请运行迁移或生成 schema。
+
+    <Tabs items={["migrate", "generate"]}>
+      <Tab value="migrate">
+        ```package-install
+        npx auth migrate
+        ```
+      </Tab>
+
+      <Tab value="generate">
+        ```package-install
+        npx auth generate
+        ```
+      </Tab>
+    </Tabs>
+
+    手动添加字段时，请参阅 [Schema](/docs/plugins/oauth-provider/reference#schema) 一节。
+  </Step>
+
+  <Step>
+    ### Expose the well-known metadata
+
+    客户端会从下表所列路径获取提供者元数据；请求到达认证处理器时，由它提供这些元数据。多数框架只会将认证基础路径（如 `/api/auth/*`）转发给 `auth.handler`。对于其路径范围之外的端点（例如域名根目录下的 RFC 8414 路径），请另行添加路由。
+
+    | 元数据                                                                                                 | 路径                                                                                                          | 辅助函数                             |
+    | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+    | [RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414#section-3) 授权服务器                     | `{issuer}/.well-known/oauth-authorization-server` 和 `/.well-known/oauth-authorization-server/{issuer-path}` | `oauthProviderAuthServerMetadata`   |
+    | [OpenID Connect 发现](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig)    | `{issuer}/.well-known/openid-configuration`                                                                   | `oauthProviderOpenIdConfigMetadata` |
+
+    仅当 `scopes` 包含 `openid` 时才会提供 OpenID 配置；默认值已包含该 scope。未自定义 issuer 时，issuer 路径就是 `basePath`，例如 `/api/auth`。
+
+    ```ts title="app/.well-known/oauth-authorization-server/api/auth/route.ts"
+    import { oauthProviderAuthServerMetadata } from "@better-auth/oauth-provider";
+    import { auth } from "@/lib/auth";
+
+    export const GET = oauthProviderAuthServerMetadata(auth);
+    ```
+
+    <Callout type="info">
+      如果基于浏览器的客户端从其他来源获取元数据，请为这些路由启用 CORS。元数据是公开的，因此可以使用 `oauthProviderAuthServerMetadata(auth, { headers: { "Access-Control-Allow-Origin": "*" } })`。请勿允许凭据。
+    </Callout>
+  </Step>
+
+  <Step>
+    ### 添加客户端插件
+
+    若要在每个步骤后继续流程，请将 `oauthProviderClient` 添加到负责呈现登录页和授权同意页的应用中。它会在登录和授权同意过程中保留授权请求。
+
+    ```ts title="auth-client.ts"
+    import { createAuthClient } from "better-auth/client";
+    import { oauthProviderClient } from "@better-auth/oauth-provider/client"; // [!code highlight]
+
+    export const authClient = createAuthClient({
+      plugins: [oauthProviderClient()], // [!code highlight]
+    });
+    ```
+
+    若要在 API 中验证访问令牌，请使用 `oauthProviderResourceClient`；请参阅[保护你的 API](/docs/plugins/oauth-provider/resource-server#verify-access-tokens)。
+  </Step>
+</Steps>
+
+## Login and consent pages
+
+用户没有会话时，authorize 端点会重定向到 `loginPage`；客户端需要用户批准时，则会重定向到 `consentPage`。两个页面都会收到经过签名的授权请求副本。
+
+在登录页中按常规流程为用户登录。会话创建后，插件会继续处理授权请求。在授权同意页中调用 `authClient.oauth2.consent`。在这两个页面中，认证客户端都会将浏览器引导至下一步，因此页面无需编写重定向代码。页面实现方式请参阅[登录与授权同意界面](/docs/plugins/oauth-provider/sign-in-flow)。
+
+## Run your first flow
+
+请按以下流程端到端试用提供者。此流程会为一个 API `https://api.example.com` 签发访问令牌。请先实现登录页和授权同意页，因为第 3 步会重定向到这两个页面。
+
+<Steps>
+  <Step>
+    ### 注册 API 和客户端
+
+    将 API 添加到 `resources`，然后创建与其关联的客户端。authorize 和 token 端点会拒绝客户端未关联的 `resource`；请参阅[资源](/docs/plugins/oauth-provider/tokens#resources)。
+
+    若要创建客户端，请调用 `adminCreateOAuthClient`。它只能在服务器上运行，并且需要已登录用户的会话，因此应从符合以下条件的路由中调用：
+
+    * 只有管理员可以访问
+    * [检查请求的 `Origin`](/docs/reference/security#csrf-protection)
+    * 传入请求的请求头
+
+    ```ts title="auth.ts"
+    oauthProvider({
+      loginPage: "/sign-in",
+      consentPage: "/consent",
+      resources: ["https://api.example.com"], // [!code highlight]
+    })
+    ```
+
+    ```ts title="admin-route.ts"
+    // Inside an admin-only server route that receives `request`; check its Origin first
+    const client = await auth.api.adminCreateOAuthClient({
+      headers: request.headers,
+      body: {
+        client_name: "Example App",
+        redirect_uris: ["https://app.example.com/callback"],
+        resources: ["https://api.example.com"],
+      },
+    });
+    // Store client.client_id and client.client_secret in the client app.
+    ```
+
+    注册单页应用或原生应用等公有客户端时，请添加 `token_endpoint_auth_method: "none"`。该客户端不会获得密钥，只通过 PKCE 完成身份验证。
+  </Step>
+
+  <Step>
+    ### 将用户引导至 authorize 端点
+
+    客户端应用会生成 PKCE verifier，然后按照 [RFC 7636 §4.2](https://datatracker.ietf.org/doc/html/rfc7636#section-4.2) 的说明，携带 S256 challenge 进行重定向。
+
+    ```txt
+    https://auth.example.com/api/auth/oauth2/authorize
+      ?response_type=code
+      &client_id=CLIENT_ID
+      &redirect_uri=https://app.example.com/callback
+      &scope=openid profile offline_access
+      &state=STATE
+      &code_challenge=CODE_CHALLENGE
+      &code_challenge_method=S256
+      &resource=https://api.example.com
+    ```
+  </Step>
+
+  <Step>
+    ### 登录并授权
+
+    用户在 `loginPage` 登录，并在 `consentPage` 批准授权。随后，提供者会携带 `code`、`state` 和 `iss` 重定向到 `redirect_uri`。
+  </Step>
+
+  <Step>
+    ### 交换授权码以获取令牌
+
+    客户端应用会将授权码和 PKCE verifier 发送到 token 端点。
+
+    ```bash
+    curl -X POST https://auth.example.com/api/auth/oauth2/token \
+      -u "CLIENT_ID:CLIENT_SECRET" \
+      -d grant_type=authorization_code \
+      -d code=CODE \
+      -d redirect_uri=https://app.example.com/callback \
+      -d code_verifier=CODE_VERIFIER \
+      -d resource=https://api.example.com
+    ```
+
+    响应中包含 `https://api.example.com` 的访问令牌、ID 令牌和刷新令牌。
+  </Step>
+
+  <Step>
+    ### 检查令牌
+
+    使用访问令牌调用 UserInfo。如果收到包含用户 `sub` 和 `name` 的 200 响应，就表示流程正常。
+
+    ```bash
+    curl https://auth.example.com/api/auth/oauth2/userinfo \
+      -H "Authorization: Bearer ACCESS_TOKEN"
+    ```
+  </Step>
+</Steps>
+
+## Next steps
+
+<Cards>
+  <Card href="/docs/plugins/oauth-provider/sign-in-flow" title="登录与授权同意">
+    构建登录、授权同意、账户选择和登录后界面。
+  </Card>
+
+  <Card href="/docs/plugins/oauth-provider/clients" title="客户端">
+    创建和管理客户端、启用动态注册，并使用 `private_key_jwt`。
+  </Card>
+
+  <Card href="/docs/plugins/oauth-provider/tokens" title="令牌与 scope">
+    配置 scope、资源、有效期、刷新令牌、PKCE 和 DPoP。
+  </Card>
+
+  <Card href="/docs/plugins/oauth-provider/resource-server" title="保护你的 API">
+    在 API 或其他服务中验证访问令牌。
+  </Card>
+
+  <Card href="/docs/plugins/oauth-provider/openid-connect" title="OpenID Connect">
+    配置发现机制、ID 令牌和 UserInfo 声明以及注销。
+  </Card>
+
+  <Card href="/docs/plugins/oauth-provider/reference" title="参考">
+    查看选项、端点、错误、速率限制和 schema。
+  </Card>
+
+  <Card href="/docs/plugins/mcp" title="MCP">
+    使用此提供者保护 MCP 服务器。`mcp()` 会取代 `oauthProvider()`，因此不要同时注册两者。
+  </Card>
+
+  <Card href="/docs/plugins/device-authorization" title="设备授权">
+    为 CLI 和输入受限设备提供登录。
+  </Card>
+
+  <Card href="/docs/plugins/cimd" title="Client ID 元数据文档">
+    通过元数据文档 URL 识别客户端。
+  </Card>
+</Cards>

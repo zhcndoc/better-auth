@@ -190,6 +190,8 @@ Expo 是一个使用 React Native 构建跨平台应用的流行框架。Better 
     <Callout type="warn">
       开发环境中 `exp://` 的通配符模式仅应用于开发环境。在生产环境中，请使用应用特定的 Scheme（如 `myapp://`）。
     </Callout>
+
+    授权代理只会重定向到已配置的社交或通用 OAuth 提供者的授权端点，或受信任来源上的 SSO 提供者授权端点。若要通过 SSO 身份提供者登录，请将其来源添加到 `trustedOrigins`。
   </Step>
 
   <Step>

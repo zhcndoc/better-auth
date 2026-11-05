@@ -1,0 +1,100 @@
+---
+title: "2026 年 11 月 3 日星期二安全更新"
+description: "Better Auth v1.7.16 和 v1.8.0-beta.5 修复了 12 个安全问题。请升级到对应版本线的最新版本。"
+date: 2026-10-30
+author:
+  name: "Taesu Kim"
+  avatar: ""
+tags: ["security", "advisories", "release"]
+---
+
+# 2026 年 11 月 3 日星期二安全更新
+
+Better Auth v1.7.16 和 v1.8.0-beta.5 现已在 npm 发布。这两个版本修复了今天发布在 [GitHub 安全公告](https://github.com/better-auth/better-auth/security/advisories)中的 12 个安全问题。请升级到对应发布版本线的修复版本。
+
+<Callout type="info">
+  如果你的应用部署在 Vercel 上，我们已针对所有可合理识别的问题应用 WAF 防护。无论如何，我们仍建议更新到 Better Auth 的最新版本。
+</Callout>
+
+## 发布版本
+
+* v1.7.x: 1.7.16
+* v1.8.0-beta.x: 1.8.0-beta.5
+
+单独发布的软件包（例如 `@better-auth/expo`、`@better-auth/electron`、`@better-auth/passkey`、`@better-auth/stripe` 和 `@better-auth/kysely-adapter`）也使用相同版本号。请同时更新所有 Better Auth 软件包。
+
+## 安全公告
+
+### 严重
+
+#### Expo
+
+* **[授权代理可能会对其未签发的值进行签名](https://github.com/better-auth/better-auth/security/advisories/GHSA-4wq4-2ppv-q3hg)**
+  * 修复版本：1.7.16、1.8.0-beta.5
+
+### 高危
+
+#### Phone number
+
+* **[电话号码可能在验证前被他人认领](https://github.com/better-auth/better-auth/security/advisories/GHSA-q747-mqgr-4gh7)**
+  * 修复版本：1.7.16、1.8.0-beta.5
+
+#### Electron
+
+* **[桌面端登录可能泄露服务器密钥并绕过双重认证](https://github.com/better-auth/better-auth/security/advisories/GHSA-9p5w-h4pr-fcrc)**
+  * 修复版本：1.7.16、1.8.0-beta.5
+
+### 中危
+
+#### Core
+
+* **[邮箱易主后，邮箱变更链接仍然有效](https://github.com/better-auth/better-auth/security/advisories/GHSA-hwq2-v29r-p69r)**
+  * 修复版本：1.7.16、1.8.0-beta.5
+* **[OAuth 登录可能将未验证的提供者邮箱视为已验证](https://github.com/better-auth/better-auth/security/advisories/GHSA-9hm7-xhfp-cx58)**
+  * 修复版本：1.7.16、1.8.0-beta.5
+* **[MySQL serial ID 可能返回其他请求的记录](https://github.com/better-auth/better-auth/security/advisories/GHSA-48c2-w96j-mv3m)**（`@better-auth/kysely-adapter`）
+  * 修复版本：1.7.16、1.8.0-beta.5
+* **[使用二级存储或 Cookie 缓存时，已撤销的会话可能仍然有效](https://github.com/better-auth/better-auth/security/advisories/GHSA-fvxx-76fc-893x)**
+  * 修复版本：1.7.16、1.8.0-beta.5
+
+#### Email OTP
+
+* **[邮箱 OTP 尝试次数限制可能被并发绕过，且验证码与邮箱绑定不严](https://github.com/better-auth/better-auth/security/advisories/GHSA-2f9c-7xj7-gh55)**
+  * 修复版本：1.7.16、1.8.0-beta.5
+
+#### Admin
+
+* **[Admin 角色的 user:update 权限可以更改其他用户的电话号码](https://github.com/better-auth/better-auth/security/advisories/GHSA-g95c-wqvr-8c3j)**
+  * 修复版本：1.7.16、1.8.0-beta.5
+
+#### Organization
+
+* **[组织管理员可以使用带空白填充的角色名称邀请 owner](https://github.com/better-auth/better-auth/security/advisories/GHSA-c85h-5mrr-mgx4)**
+  * 修复版本：1.7.16、1.8.0-beta.5
+
+#### Stripe
+
+* **[账单操作可能针对其他客户的 Stripe 账户](https://github.com/better-auth/better-auth/security/advisories/GHSA-x8j7-xh58-rv6x)**
+  * 修复版本：1.7.16、1.8.0-beta.5
+
+### 低危
+
+#### Passkey
+
+* **[通行密钥验证未强制检查来源或用户验证](https://github.com/better-auth/better-auth/security/advisories/GHSA-gv75-j3v8-3crm)**
+  * 修复版本：1.7.16、1.8.0-beta.5
+
+每份公告都列出了受影响的版本，以及判断你是否受影响的条件。
+
+## 如何升级
+
+* 将 `better-auth` 和所有 `@better-auth/*` 软件包更新到 1.7.16；若使用 beta 版本线，则更新到 1.8.0-beta.5。
+* 阅读所用插件对应的安全公告。部分修复需要增加配置步骤，例如列出受信任的来源。
+
+## 致谢
+
+感谢所有私下向我们报告这些问题的人。我们持续开展安全审查，其中包括使用开源安全计划提供的前沿 AI 模型进行的工作。
+
+## 联系我们
+
+如果你认为发现了 Better Auth 的漏洞，请先阅读我们的[安全政策](https://github.com/better-auth/better-auth/security/policy)，然后在 [GitHub 上提交私密报告](https://github.com/better-auth/better-auth/security/advisories/new)，或发送邮件至 [security@better-auth.com](mailto:security@better-auth.com)。
