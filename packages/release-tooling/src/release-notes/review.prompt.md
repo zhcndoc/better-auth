@@ -10,7 +10,9 @@ Approve it only when it:
 - has migration guidance exactly when the entry rules call for it
 - is clear, grammatical, and concise
 
-Do not reject copy merely because it omits internal implementation details, or
-for style alone.
+Do not reject copy merely because it omits internal implementation details,
+secondary details, exceptions, or version ranges, or for style alone. Reject a
+title that misstates which users are affected, but do not ask for additions
+that would push it past about 150 characters.
 
 为每个输入 ID 返回一条审阅结果。当改写已准备就绪时，将 `approved` 设置为 `true`，并将 `feedback` 设置为 `null`。否则，将 `approved` 设置为 `false`，并在 `feedback` 中给出一条不超过 500 个字符的具体修改意见。不要自行改写发布说明。

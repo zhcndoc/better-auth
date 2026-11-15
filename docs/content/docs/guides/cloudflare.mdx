@@ -1,0 +1,64 @@
+---
+icon: guidesCloudflare
+title: Cloudflare 指南
+description: 为 Cloudflare 配置 Better Auth。
+---
+
+本指南介绍 Better Auth 在 Cloudflare 上所需的配置。请先按照[安装指南](/docs/installation)设置 Better Auth。
+
+## Node.js 兼容性
+
+Better Auth 使用 `node:crypto` 和 `AsyncLocalStorage` 等 Node.js API。Cloudflare Workers 从兼容性日期 `2026-08-04` 起默认启用 [Node.js 兼容性](https://developers.cloudflare.com/workers/runtime-apis/nodejs/)。若使用更早的日期，请在 Wrangler 配置中添加 `nodejs_compat` 标志：
+
+```jsonc title="wrangler.jsonc"
+{
+  "compatibility_flags": ["nodejs_compat"]
+}
+```
+
+## 环境变量
+
+Better Auth 会从 `process.env` 读取环境变量。启用 Node.js 兼容性后，Workers 从兼容性日期 `2025-04-01` 起会将[变量和密钥](https://developers.cloudflare.com/workers/configuration/secrets/)添加到 `process.env`。使用 Wrangler 设置密钥，并将本地值放在 `.dev.vars` 或 `.env` 中：
+
+```bash
+npx wrangler secret put BETTER_AUTH_SECRET
+```
+
+若使用更早的兼容性日期，请改为从 `env` 传入这些值：
+
+```ts title="auth.ts"
+import { env } from "cloudflare:workers";
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+  secret: env.BETTER_AUTH_SECRET,
+});
+```
+
+## 客户端 IP
+
+发往 Worker 的请求不会在 Better Auth 默认读取的 `X-Forwarded-For` 中携带客户端地址。缺少该地址时，[速率限制](/docs/concepts/rate-limit)会退回到每个路径共用一个计数桶。请改为从 `CF-Connecting-IP` 读取地址：
+
+```ts title="auth.ts"
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+  advanced: {
+    ipAddress: {
+      ipAddressHeaders: ["cf-connecting-ip"],
+    },
+  },
+});
+```
+
+## 后台任务
+
+若要在发送响应后运行非关键任务，请将 `cloudflare:workers` 提供的 `waitUntil` 作为 [`advanced.backgroundTasks.handler`](/docs/reference/options#backgroundtasks) 传入。
+
+## 数据库连接
+
+Workers 不允许在请求之间进行 I/O，因此模块作用域中的 auth 实例无法持有会保持连接的客户端，例如 `pg` 或 `mysql2` 连接池，即使通过 Hyperdrive 也不行。请改用通过 HTTP 查询的驱动。详情请参阅 Cloudflare 的[连接指南](https://developers.cloudflare.com/hyperdrive/concepts/connection-lifecycle/)。
+
+## Cloudflare Workers KV
+
+[Cloudflare Workers KV](https://developers.cloudflare.com/kv/) 采用最终一致性，密钥过期时间无法短于 60 秒，也不支持原子操作，因此不符合 [`secondaryStorage`](/docs/concepts/database#secondary-storage) 的要求。请改用符合要求的存储，例如 Redis。

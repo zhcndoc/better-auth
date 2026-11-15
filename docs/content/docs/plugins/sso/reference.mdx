@@ -307,7 +307,7 @@ token 端点使用的客户端身份验证方式。省略时由发现机制选�
 
 `overrideUserInfo` <span className="opacity-70">`boolean`</span>
 
-顶层 `overrideUserInfo` 的存储位置。注册时会忽略此项，应设置顶层字段；更新时则在此处设置。
+登录流程读取的存储值。注册时会忽略此处传入的值，而是在顶层 `overrideUserInfo` 或 `defaultOverrideUserInfo` 为 `true` 时存储 `true`，否则存储 `false`。之后若要更改，请在更新时设置此项。
 
 `mapping` <span className="opacity-70">`object`</span>
 

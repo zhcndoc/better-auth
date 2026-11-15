@@ -33,7 +33,7 @@ description: OAuth Provider 选项、端点、错误、速率限制、扩展和�
 
 `allowPublicClientPrelogin` <span className="opacity-70">`boolean`</span>
 
-请求携带有效且经过签名的 `oauth_query` 时，允许 `/oauth2/public-client-prelogin` 在登录前返回信息。签名查询不会限制可读取字段的 `client_id`，因此无需账户即可读取所有启用客户端的公开字段，包括 `contacts`。默认值为 `false`。
+请求携带有效且经过签名的 `oauth_query` 时，允许 `/oauth2/public-client-prelogin` 在登录前返回信息。请求中的 `client_id` 必须与签名查询中的客户端一致。默认值为 `false`。
 
 <Accordions>
   <Accordion title="注册选项">
@@ -110,6 +110,10 @@ token 端点接受的授权许可。`refresh_token` 需要 `authorization_code`�
 `validateRedirectUri` <span className="opacity-70">`(uri, registeredUris, defaultResult) => Awaitable<boolean>`</span>
 
 替代重定向 URI 精确匹配逻辑。请参阅[自定义重定向 URI 验证](/docs/plugins/oauth-provider/clients#custom-redirect-uri-validation)。
+
+`allowInsecureRedirectUri` <span className="opacity-70">`(url: URL) => boolean`</span>
+
+接受默认策略拒绝的 `http` 重定向 URI 和注销后重定向 URI。请参阅 [HTTP 重定向 URI](/docs/plugins/oauth-provider/clients#http-redirect-uris)。
 
 `cachedTrustedClients` <span className="opacity-70">`Set<string>`</span>
 
@@ -297,8 +301,8 @@ DPoP proof 验证。`proofMaxAgeSeconds` 默认值为 `300`，`signingAlgorithms
 
 | 方法         | 路径                                                     | 服务器方法                     | 身份验证                                                | 仅限服务器   |
 | ------------ | -------------------------------------------------------- | ------------------------------ | ------------------------------------------------------ | ----------- |
-| `GET`        | `/.well-known/oauth-authorization-server`                | `getOAuthServerConfig`         | 无                                                      | 否           |
-| `GET`        | `/.well-known/openid-configuration`                      | `getOpenIdConfig`              | 无                                                      | 否           |
+| `GET`        | `/.well-known/oauth-authorization-server`                | `getOAuthServerConfig`         | 无                                                      | 是           |
+| `GET`        | `/.well-known/openid-configuration`                      | `getOpenIdConfig`              | 无                                                      | 是           |
 | `GET` `POST` | `/oauth2/authorize`                                      | `oauth2Authorize`              | 会话；否则重定向到 `loginPage`                          | 否           |
 | `POST`       | `/oauth2/consent`                                        | `oauth2Consent`                | 会话和签名后的 `oauth_query`                             | 否           |
 | `POST`       | `/oauth2/continue`                                       | `oauth2Continue`               | 会话和签名后的 `oauth_query`                             | 否           |
@@ -338,17 +342,28 @@ DPoP proof 验证。`proofMaxAgeSeconds` 默认值为 `300`，`signingAlgorithms
 
 错误采用 [RFC 6749 §5.2](https://datatracker.ietf.org/doc/html/rfc6749#section-5.2) 格式。内置授权许可会先验证客户端，再查找授权许可，因此未知的 `client_id` 会返回 `invalid_client`，而不是 `invalid_grant`。
 
-| 错误                     | 状态   | 返回条件                                                                                                                                |
-| ------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `invalid_request`        | 400    | 缺少必需请求字段，或字段格式错误。                                                                                                      |
-| `invalid_client`         | 400    | 客户端身份验证失败，或客户端使用的方式与其注册的 `token_endpoint_auth_method` 不同。                                                    |
-| `invalid_client`         | 401    | `client_secret_basic` 身份验证失败。响应中包含 `WWW-Authenticate: Basic` challenge。                                                    |
-| `invalid_grant`          | 400    | 授权码、刷新令牌或 PKCE verifier 无效、已过期，或签发给了其他客户端。                                                                    |
-| `unauthorized_client`    | 400    | 客户端未注册此授权许可、公有客户端使用了 `client_credentials`，或客户端未配置 `client_credentials` scope。                              |
-| `unsupported_grant_type` | 400    | 授权许可未列入 `grantTypes`，且没有扩展处理该许可。                                                                                      |
-| `invalid_scope`          | 400    | 客户端不允许申请该 scope，或指定资源没有允许任何 scope。                                                                                 |
-| `invalid_target`         | 400    | `resource` 未知、已禁用，或启用 `enforcePerClientResources` 时未关联到客户端。                                                            |
-| `invalid_dpop_proof`     | 400    | DPoP 绑定的客户端或资源缺少有效的 DPoP proof。                                                                                           |
+每个用于验证客户端或访问令牌的端点在返回 401 时，都会携带 `WWW-Authenticate` 质询，符合 [RFC 9110 §15.5.2](https://www.rfc-editor.org/rfc/rfc9110#section-15.5.2) 的要求。端点以 401 返回的客户端身份验证失败会携带 `Basic` 质询。如果客户端发送了使用其他 scheme 的 `Authorization` 请求头，质询会改为指定该 scheme。关闭 `allowUnauthenticatedClientRegistration` 时，不带会话或初始访问令牌的客户端注册请求会返回带有裸 `Bearer` 质询的 401。
+
+按照 [RFC 6749 §5.2](https://datatracker.ietf.org/doc/html/rfc6749#section-5.2)，token 端点的大多数客户端身份验证失败会返回不带质询的 400。如果客户端通过 `Authorization` 请求头进行身份验证，端点会返回带质询的 401；签名或声明验证失败的 `private_key_jwt` 断言等其他部分错误也会返回此响应。
+
+响应还会在 `Access-Control-Expose-Headers` 中列出 `WWW-Authenticate`，以便来自其他来源的浏览器客户端读取质询。hook 已公开的其他名称仍会保留在列表中。
+
+| 错误                     | 状态 | 返回条件                                                                                                                                |
+| ------------------------ | ---- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `invalid_request`        | 400  | 缺少必需请求字段，或字段格式错误。                                                                                                      |
+| `invalid_client`         | 400  | 客户端身份验证失败，或客户端使用的方式与其注册的 `token_endpoint_auth_method` 不同。                                                    |
+| `invalid_client`         | 401  | `client_secret_basic` 身份验证失败。响应中包含 `WWW-Authenticate: Basic` 质询。                                                         |
+| `invalid_grant`          | 400  | 授权码、刷新令牌或 PKCE verifier 无效、已过期，或签发给了其他客户端。                                                                    |
+| `invalid_user`           | 400  | 授权码兑换前，批准该授权码的用户已被删除。                                                                                              |
+| `unauthorized_client`    | 400  | 客户端未注册此授权许可、公有客户端使用了 `client_credentials`，或客户端未配置 `client_credentials` scope。                              |
+| `unsupported_grant_type` | 400  | 授权许可未列入 `grantTypes`，且没有扩展处理该许可。                                                                                      |
+| `invalid_scope`          | 400  | 客户端不允许申请该 scope，或指定资源不允许任何 scope。                                                                                  |
+| `invalid_target`         | 400  | `resource` 未知、已禁用，或启用 `enforcePerClientResources` 时未关联到客户端。                                                            |
+| `invalid_dpop_proof`     | 400  | DPoP 绑定的客户端或资源缺少有效的 DPoP proof。                                                                                           |
+
+授权码和设备码只能使用一次；只有请求通过验证后，token 端点才会消费代码。请求因 `code_verifier`、`redirect_uri`、`resource`、客户端或无效 DPoP proof 被拒绝时，代码在过期前仍可兑换，因此客户端可以修正请求后重试。唯一例外是 `jti` 已使用过的 DPoP proof：服务器会在消费代码后记录 proof 的 `jti`，因此该请求会用掉代码并返回 `invalid_dpop_proof`。
+
+再次提交已兑换的授权码会返回 `invalid_grant`，并撤销从该代码签发的令牌。两个请求同时兑换同一授权码时也会采用相同处理：一个请求收到令牌，另一个收到 `invalid_grant`，失败的请求可能撤销第一个请求刚收到的令牌。
 
 `adminCreateOAuthClient` 关联资源时，标识符无效会因 `VALIDATION_ERROR` 验证失败；资源未知或已禁用时会返回 `invalid_target`；`resourcePrivileges` 拒绝时会返回 `401`。这些情况下都不会创建任何内容。
 
@@ -403,13 +418,37 @@ export const customOAuthExtension = () =>
 ```
 
 * 不同扩展中的 `grants` 和 `clientAuthentication` 不能重叠。授权许可类型、身份验证方式或断言类型重复时，启动会失败。两者都会在发现文档中公开。
-* `metadata` 和 `claims` 只能添加键。提供者拥有的键会保留；多个扩展贡献同一键时，会使用最先注册的扩展所提供的值。若要公开扩展声明，请设置 `advertisedMetadata.claims_supported`。
+* `metadata` 和 `claims` 只能添加键。提供者拥有的键会保留；多个扩展贡献同一键时，会使用最先注册的扩展所提供的值，并记录警告。若要公开扩展声明，请设置 `advertisedMetadata.claims_supported`。
 * `clientDiscovery` 条目有一个稳定的 `id`，并作为客户端来源信息存储。更改它需要迁移所属客户端；移除它会使这些客户端默认拒绝。
 
 授权许可处理器会收到 `provider`（包含 `getClient`、`authenticateClient`、`issueTokens`、`hashToken`、`validateAccessToken` 和 `requireActiveAccessToken`）。其他端点可通过 `getOAuthProviderApi(ctx, opts, grantType?)` 获取相同对象。未提供 `grantType` 时，`issueTokens` 会抛出错误。`validateAccessToken` 可能返回非活跃载荷；受保护端点应使用 `requireActiveAccessToken`，它会拒绝非活跃令牌并返回 bearer challenge。
 
+`requireActiveAccessToken` 只检查令牌，不检查请求。对于 DPoP 绑定令牌，它会返回载荷，并在 `cnf.jkt` 中包含密钥 thumbprint，但不会检查 DPoP proof（[RFC 9449 §6.2](https://datatracker.ietf.org/doc/html/rfc9449#section-6.2)）。如果端点只执行此检查，任何持有令牌的人都能使用令牌，无需客户端密钥。`requireActiveAccessToken` 返回后，应像 UserInfo 端点一样，在每个请求中调用 `better-auth/oauth2` 提供的 `enforceDpopBinding`。对于 DPoP 绑定令牌，它要求使用 `DPoP` scheme，并提供由绑定密钥签署的有效 proof（[RFC 9449 §7.1](https://datatracker.ietf.org/doc/html/rfc9449#section-7.1)）。
+
+传入载荷、请求方法、`DPoP` 请求头，以及以下参数：
+
+* `authorization`：使用 `parseAccessTokenAuthorization` 解析后的 `Authorization` 请求头。如果请求头缺失，或其 `scheme` 既不是 `Bearer` 也不是 `DPoP`，请在验证令牌前拒绝请求。将其中的 `token` 传给 `requireActiveAccessToken`，因为 proof 的 `ath` 会根据此令牌检查。
+* `url`：使用你的 `baseURL`，并拼接请求路径中位于其 base path 后面的部分。不要从 `request.url` 或转发请求头中读取主机。请参阅 [DPoP](/docs/plugins/oauth-provider/tokens#dpop)。
+* `replayStore`：每个请求都创建一个 `createDpopReplayStore(ctx.context)`。它会按照[验证访问令牌](/docs/plugins/oauth-provider/resource-server#verify-access-tokens)中的说明，将 proof 记录到 auth 实例保存验证值的位置。如果未提供 replay store，捕获到的 proof 可在 `proofMaxAgeSeconds` 时间内再次发送。
+* `proofMaxAgeSeconds` 和 `signingAlgorithms`：取自 `dpop` 选项的值。
+
+`auth.api` 调用没有可用于检查 proof 的 HTTP 请求。当 `ctx.request` 缺失且 `getDpopJktFromPayload(payload)` 返回值时，请以 `invalid_token` 拒绝调用。
+
+`enforceDpopBinding` 抛出错误时，请使用 `isDpopBindingError` 检查；其他错误应重新抛出。将绑定错误包装为 `new APIError("UNAUTHORIZED", { error: error.code, error_description: error.message })`，使用资源标识符和 `{ dpopSigningAlgorithms, request: { authorizationHeader: ctx.headers?.get("authorization") } }` 将其传给 [`createResourceServerChallenge`](/docs/plugins/oauth-provider/resource-server#verify-access-tokens)，然后抛出返回结果。请求头形式也适用于没有 `ctx.request` 的 `auth.api` 调用。也要将 `requireActiveAccessToken` 的错误传给它，以便使用 `DPoP` scheme 的客户端能收到 `DPoP` 质询。
+
+同时传入载荷、请求方法、`DPoP` 请求头，以及以下参数：
+
+* `authorization`: the `Authorization` header parsed with `parseAccessTokenAuthorization`. When the header is missing or its `scheme` is neither `Bearer` nor `DPoP`, reject the request before you validate the token. Pass its `token` to `requireActiveAccessToken`, because the proof's `ath` is checked against it.
+* `url`: your `baseURL` plus the part of the request path below its base path. Do not take the host from `request.url` or from forwarded headers. See [DPoP](/docs/plugins/oauth-provider/tokens#dpop).
+* `replayStore`: `createDpopReplayStore(ctx.context)`, created on each request. It records each proof where your auth instance keeps verification values, as [Verify access tokens](/docs/plugins/oauth-provider/resource-server#verify-access-tokens) describes. Without a replay store, a captured proof can be sent again within its `proofMaxAgeSeconds`.
+* `proofMaxAgeSeconds` and `signingAlgorithms`: the values from your `dpop` options.
+
+An `auth.api` call has no HTTP request to check a proof against. When `ctx.request` is missing and `getDpopJktFromPayload(payload)` returns a value, reject the call with `invalid_token`.
+
+`enforceDpopBinding` 抛出错误时，请使用 `isDpopBindingError` 检查；其他错误应重新抛出。将绑定错误包装为 `new APIError("UNAUTHORIZED", { error: error.code, error_description: error.message })`，使用资源标识符和 `{ dpopSigningAlgorithms, request: { authorizationHeader: ctx.headers?.get("authorization") } }` 将其传给 [`createResourceServerChallenge`](/docs/plugins/oauth-provider/resource-server#verify-access-tokens)，然后抛出返回结果。请求头形式也适用于没有 `ctx.request` 的 `auth.api` 调用。也要将 `requireActiveAccessToken` 的错误传给它，以便使用 `DPoP` scheme 的客户端能收到 `DPoP` 质询。
+
 <Callout type="warn">
-  `issueTokens` 不会检查客户端是否有权使用 `scopes`、`user` 或 `resources`。调用前请在处理器中验证这些值。
+  `issueTokens` 会应用提供者的资源策略。每项资源都必须已注册并启用；默认启用 `enforcePerClientResources` 时，还必须关联到客户端。每项资源的 `allowedScopes` 也会生效。除此之外，它不会重新检查传入的任何值。调用前，请在处理器中验证用户、客户端已注册的 scope 和授权许可特定策略。将 `scopes` 传给 `authenticateClient`，以免客户端获得未注册的 scope。
 </Callout>
 
 若要使用 `cnf` 绑定令牌（[RFC 7800 §3](https://datatracker.ietf.org/doc/html/rfc7800#section-3)），请向 `issueTokens` 传入 `confirmation`，或在 `clientAuthentication` 策略中返回它。声明 contributor 无法设置 `cnf`。

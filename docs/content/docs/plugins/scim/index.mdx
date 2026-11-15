@@ -63,7 +63,15 @@ SCIM 在 [RFC 7643](https://www.rfc-editor.org/rfc/rfc7643) 中定义身份资�
     </Tabs>
 
     <Callout type="warn">
-      Cloudflare D1 不支持 SCIM 插件所需的交互式事务。
+      Cloudflare D1 不支持交互式事务，因此 SCIM 无法在 D1 上配置用户或群组。
+
+      适配器不支持原生事务时，Better Auth 仍会启动并记录错误。之后，SCIM 会拒绝所有需要事务的请求：
+
+      * 所有 `/scim/v2` 请求（包括读取请求）都会返回 501 Not Implemented。目录连接测试会在设置阶段失败，而不是先通过测试、到首次更改时才失败。
+      * 创建、轮换、撤销、协调或停用 SCIM 连接的服务器调用会返回 501，错误代码为 `SCIM_REQUIRES_NATIVE_TRANSACTIONS`。
+      * 列出或读取 SCIM 连接的服务器调用仍可正常使用。
+
+      请勿在 D1 数据库上设置 `transaction: true`，否则 D1 会在每个 SCIM 请求中拒绝事务并返回服务器错误。
     </Callout>
   </Step>
 

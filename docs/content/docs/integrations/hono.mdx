@@ -58,14 +58,7 @@ export default app;
 
 #### Cloudflare Workers
 
-Better Auth 使用 `AsyncLocalStorage`。请将 [`nodejs_compat` 兼容性标志](https://developers.cloudflare.com/workers/configuration/compatibility-flags/#nodejs-compatibility-flag)添加到你的 Wrangler 配置中：
-
-```jsonc title="wrangler.jsonc"
-{
-  // Use "nodejs_als" instead if you only need AsyncLocalStorage.
-  "compatibility_flags": ["nodejs_compat"],
-}
-```
+Better Auth 在 Workers 中所需的配置请参阅 [Cloudflare 指南](/docs/guides/cloudflare)。
 
 ## CORS
 

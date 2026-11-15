@@ -447,13 +447,40 @@ export const passkeyTableFields = [
 
 **rpName**：您网站的人类可读名称。
 
-**origin**：passkey 注册和身份验证所在的来源或来源列表，末尾不要带 `/`。默认值为 `baseURL` 的来源，以及在 `trustedOrigins` 中精确列出的前端来源。当设置了 `rpID` 且 `baseURL.allowedHosts` 中的通配符覆盖此来源时，请显式设置该选项。
+**origin**：passkey 注册和身份验证所在的来源或来源列表，末尾不要带 `/`。默认值为 `baseURL` 的来源，以及在 `trustedOrigins` 中精确列出的前端来源。
 
 ```ts title="auth.ts"
 passkey({
   origin: ["https://app.example.com", "https://admin.example.com"],
 });
 ```
+
+当设置了 `rpID` 且 `baseURL.allowedHosts` 中的通配符覆盖该 RP ID 时，默认行为会改变。该通配符下的所有主机都可以为共享的 `rpID` 创建 passkey 响应，并由客户端选择发送请求的主机。因此插件会忽略请求主机。只有 passkey 报告的来源与以下受信任来源完全匹配时，插件才会接受：
+
+* `baseURL.allowedHosts` 中的精确条目，例如 `example.com`
+* `baseURL.fallback` 的来源
+* `trustedOrigins` 中的精确来源
+
+任一列表中的通配符条目均不算精确匹配。
+
+对于运行时创建的租户，请将 `trustedOrigins` 设为函数，并且只对应用已知的租户返回其来源：
+
+```ts title="auth.ts"
+betterAuth({
+  baseURL: { allowedHosts: ["example.com", "*.example.com"] },
+  trustedOrigins: async (request) => {
+    const origin = request?.headers.get("origin");
+    if (!origin) return [];
+    // Look the origin up in your own tenant records.
+    return (await isKnownTenantOrigin(origin)) ? [origin] : [];
+  },
+  plugins: [passkey({ rpID: "example.com" })],
+});
+```
+
+`trustedOrigins` 返回的来源不仅会用于 passkey，还会被信任用于 CSRF 检查和重定向 URL 等场景。只返回应用实际提供服务的来源；不得未经查询就直接返回从请求中复制的来源。请比较完整来源（包括 scheme 和端口），而不只是主机名。
+
+Better Auth 会在每个请求中调用此函数，因此请缓存查询结果。若通过 `auth.api` 调用 passkey 验证端点，请传入浏览器请求的请求头，包括 `Host` 和 `Origin`。否则 `request` 为 `undefined`，租户来源不会被信任。
 
 **authenticatorSelection**：允许自定义 WebAuthn 认证器选择标准。若不指定则为默认设置。
 

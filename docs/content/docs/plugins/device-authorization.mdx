@@ -225,6 +225,8 @@ const tokens = await response.json();
 
 <Callout type="info">
   两种令牌路径可以共存。第一方设备登录继续使用 `/device/token`。已注册的 OAuth 客户端使用 `/oauth2/token`；`oauthDeviceAuthorization()` 会阻止它们将设备码兑换为 Better Auth 会话令牌。
+
+  未在 OAuth Provider 中注册的客户端 ID，只有在 `validateClient` 明确接受时，才能不使用 OAuth 客户端凭据而采用第一方流程。
 </Callout>
 
 ## 第一方会话流程
@@ -457,78 +459,81 @@ export default function DeviceAuthorizationPage() {
 
 #### 批准页面示例
 
+此页面符合[批准界面要求](#production-security-requirements)。`client_id` 是设备发送的标识符，不是经过验证的名称。请改为显示自有客户端注册表中的名称，并在 [`validateClient`](#client-validation) 中只接受已注册的 ID。在 `GET /device` 返回客户端和 scope 前，应禁用批准按钮。只有当该 `client_id` 也存在于自己的已知客户端列表中时，页面才会启用批准按钮。
+
 ```tsx title="app/device/approve/page.tsx"
+// Client IDs you accept in `validateClient`, mapped to names your users recognize.
+const knownClients = new Map([
+  ["my-cli", "My CLI"],
+  ["my-tv-app", "My TV App"],
+]);
+
+type DeviceRequest = {
+  user_code: string;
+  client_id?: string;
+  scope?: string;
+  resource?: string | string[];
+};
+
 export default function DeviceApprovalPage() {
-  const { user } = useAuth(); // 必须已登录
-  const searchParams = useSearchParams();
-  const userCode = searchParams.get("user_code");
+  const { user } = useAuth(); // Must be authenticated
+  const userCode = useSearchParams().get("user_code") ?? "";
+  const [request, setRequest] = useState<DeviceRequest | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [request, setRequest] = useState<{
-    client_id?: string;
-    scope?: string;
-    resource?: string | string[];
-  } | null>(null);
 
   useEffect(() => {
     if (!user || !userCode) return;
     authClient.device({ query: { user_code: userCode } }).then(({ data }) => {
-      setRequest(data);
+      // Client details are missing when another session claimed the code.
+      if (data?.client_id) setRequest(data);
     });
   }, [user, userCode]);
-  
-  const handleApprove = async () => {
+
+  // Ignore details that belong to an earlier code.
+  const details = request?.user_code === userCode ? request : null;
+  const clientName = details?.client_id
+    ? knownClients.get(details.client_id)
+    : undefined;
+
+  const decide = async (action: "approve" | "deny") => {
     setIsProcessing(true);
-    try {
-      await authClient.device.approve({
-        userCode: userCode,
-      });
-      // 显示成功消息
-      alert("设备授权成功！");
-      window.location.href = "/";
-    } catch (error) {
-      alert("批准设备失败");
-    }
+    const { error } = await authClient.device[action]({ userCode });
     setIsProcessing(false);
-  };
-  
-  const handleDeny = async () => {
-    setIsProcessing(true);
-    try {
-      await authClient.device.deny({
-        userCode: userCode,
-      });
-      alert("已拒绝设备");
-      window.location.href = "/";
-    } catch (error) {
-      alert("拒绝设备失败");
+    if (error) {
+      alert(`Failed to ${action} device`);
+      return;
     }
-    setIsProcessing(false);
+    window.location.href = "/";
   };
 
   if (!user) {
-    // 如果未通过身份验证，则重定向到登录页
-    const verificationPath = `/device?user_code=${encodeURIComponent(userCode || "")}`;
+    const verificationPath = `/device?user_code=${encodeURIComponent(userCode)}`;
     window.location.href = `/login?redirect=${encodeURIComponent(verificationPath)}`;
     return null;
   }
-  
+
   return (
     <div>
-      <h2>设备授权请求</h2>
-      <p>客户端：{request?.client_id}</p>
-      <p>作用域：{request?.scope || "None"}</p>
+      <h2>Device Authorization Request</h2>
       <p>
-        资源：{Array.isArray(request?.resource)
-          ? request.resource.join(", ")
-          : request?.resource || "None"}
+        Client: {details?.client_id
+          ? clientName ?? `Unrecognized client (${details.client_id})`
+          : "Loading..."}
       </p>
-      <p>代码：{userCode}</p>
-      
-      <button onClick={handleApprove} disabled={isProcessing}>
-        批准
+      <p>Scopes: {details?.scope || "None"}</p>
+      <p>
+        Resources: {Array.isArray(details?.resource)
+          ? details.resource.join(", ")
+          : details?.resource || "None"}
+      </p>
+      <p>Code: {userCode}</p>
+      <p>Approve only if this code is showing right now on a device you have.</p>
+
+      <button onClick={() => decide("approve")} disabled={isProcessing || !clientName}>
+        Approve
       </button>
-      <button onClick={handleDeny} disabled={isProcessing}>
-        拒绝
+      <button onClick={() => decide("deny")} disabled={isProcessing}>
+        Deny
       </button>
     </div>
   );
@@ -539,24 +544,19 @@ export default function DeviceApprovalPage() {
 
 ### 客户端验证
 
-您可以验证客户端 ID，确保只有授权的应用可以使用设备流：
+可通过 `validateClient` 在独立会话流程中对客户端 ID 应用自定义验证规则。例如，检查 ID 是否位于已知客户端列表中：
 
-启用 OAuth Provider 集成后，只有在 `validateClient` 明确接受未知 OAuth 客户端 ID 时，该 ID 才会进入独立流程。否则，请求会返回 `invalid_client`。
+```ts title="auth.ts"
+import { deviceAuthorization } from "better-auth/plugins";
 
-```ts
+const knownClientIds = new Set(["my-cli", "my-tv-app"]);
+
 deviceAuthorization({
-  validateClient: async (clientId) => {
-    // 检查客户端是否有权限
-    const client = await db.oauth_clients.findOne({ id: clientId });
-    return client && client.allowDeviceFlow;
-  },
-  
-  onDeviceAuthRequest: async (clientId, scope) => {
-    // 记录设备授权请求
-    await logDeviceAuthRequest(clientId, scope);
-  },
-})
+  validateClient: (clientId) => knownClientIds.has(clientId),
+});
 ```
+
+该回调会在 `/device/code` 和 `/device/token` 上运行。返回 `true` 可接受此客户端 ID，返回 `false` 则以 `invalid_client` 拒绝请求。省略 `validateClient` 时，独立流程会跳过此自定义验证。
 
 ### 自定义代码生成
 
@@ -589,15 +589,16 @@ deviceAuthorization({
 
 ## 错误处理
 
-设备流程定义了具体的错误代码：
+独立设备流程会返回以下常见错误：
 
-| 错误代码                    | 说明             |
-| ----------------------- | -------------- |
-| `authorization_pending` | 用户尚未批准（继续轮询）   |
-| `slow_down`             | 轮询过于频繁（增加间隔）   |
-| `expired_token`         | 设备代码已过期        |
-| `access_denied`         | 用户拒绝了授权        |
-| `invalid_grant`         | 无效的设备代码或客户端 ID |
+| 错误代码                | 说明                                   |
+| ----------------------- | -------------------------------------- |
+| `authorization_pending` | 用户尚未批准（继续轮询）                 |
+| `slow_down`             | 轮询过于频繁（增加间隔）                 |
+| `expired_token`         | 设备代码已过期                           |
+| `access_denied`         | 用户拒绝了授权                           |
+| `invalid_client`        | 不接受此客户端 ID                        |
+| `invalid_grant`         | 设备代码无效或属于其他客户端               |
 
 ## 示例：CLI 应用
 
@@ -759,7 +760,7 @@ authenticateCLI().catch((err) => {
 
 **generateUserCode**：用于生成用户代码的自定义函数。返回最多包含 191 个字符的字符串或 `Promise<string>`。
 
-**validateClient**：客户端 ID 验证函数，接收 clientId，返回布尔值或 `Promise<boolean>`。
+**validateClient**：可选的 `(clientId: string) => boolean | Promise<boolean>` 回调，用于在第一方会话流程中自定义客户端 ID 验证。
 
 **onDeviceAuthRequest**：设备授权请求时调用的钩子，接收 clientId 和可选 scope。
 

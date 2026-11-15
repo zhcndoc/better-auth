@@ -52,7 +52,7 @@ export async function handle({ event, resolve }) {
 
 ### 服务器 Action 的 Cookies
 
-为了确保在服务器 Action 中调用诸如 `signInEmail` 或 `signUpEmail` 等函数时能正确设置 Cookies，你需要使用 `sveltekitCookies` 插件。该插件会自动帮你在 SvelteKit 中设置 Cookies。
+若要确保在服务器操作中调用 `signOut` 等函数时正确设置 Cookie，请使用 `sveltekitCookies` 插件。该插件会在 SvelteKit 中自动处理 Cookie 设置。
 
 你需要将它作为插件添加到你的 Better Auth 实例中。
 

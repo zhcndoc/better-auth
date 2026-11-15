@@ -55,7 +55,7 @@ OAuth Provider 插件会将 Better Auth 服务器转换为授权服务器，支�
   <Step>
     ### 将插件添加到服务器
 
-    提供者使用 [JWT 插件](/docs/plugins/jwt)签署令牌。请禁用 JWT 插件的 `/token` 路由，因为客户端会改为调用 `/oauth2/token`。
+    提供者使用 [JWT 插件](/docs/plugins/jwt)签署令牌。请禁用 JWT 插件的 `/token` 路由和 `set-auth-jwt` 请求头。两者都会让浏览器会话 JWT 使用与访问令牌相同的密钥签名。客户端应改为从 `/oauth2/token` 获取令牌。请参阅 [OAuth Provider 模式](/docs/plugins/jwt#oauth-provider-mode)。
 
     ```ts title="auth.ts"
     import { betterAuth } from "better-auth";
@@ -65,7 +65,7 @@ OAuth Provider 插件会将 Better Auth 服务器转换为授权服务器，支�
     export const auth = betterAuth({
       disabledPaths: ["/token"], // [!code highlight]
       plugins: [
-        jwt(),
+        jwt({ disableSettingJwtHeader: true }), // [!code highlight]
         oauthProvider({ // [!code highlight]
           loginPage: "/sign-in", // [!code highlight]
           consentPage: "/consent", // [!code highlight]

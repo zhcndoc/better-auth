@@ -107,7 +107,7 @@ const client = await auth.api.getOAuthClientPublic({
 
 响应为 `{ redirect: true, url }`。默认情况下，认证客户端会将浏览器引导至 `url`。通过其他方式调用端点时，请自行将浏览器重定向到该地址。
 
-设置 `accept: false` 时，用户会带着 `access_denied` 返回客户端，之前授予的授权同意不会更改。若要移除授权同意，请参阅[管理授权同意](#manage-consents)。
+设置 `accept: false` 时，用户会带着 `access_denied` 返回客户端，之前授予的授权同意不会更改。只有客户端处于启用状态且 `redirect_uri` 仍有效时，才会重定向回客户端。如果客户端已停用或删除，或者 `redirect_uri` 不再通过验证，`url` 会指向服务器错误页面。默认策略下，若该 URI 已从客户端注册信息中移除，或 `allowInsecureRedirectUri`、`validateRedirectUri` 不再接受它，验证就会失败。若要移除授权同意，请参阅[管理授权同意](#manage-consents)。
 
 ## Sign-up account screen
 
@@ -164,7 +164,7 @@ await authClient.oauth2.continue({ selected: true });
 若要在登录后、授权同意前添加步骤（例如选择组织），请为 `postLogin` 设置 `page` 和以下回调：
 
 * `shouldRedirect` 会收到 `headers`、`user`、`session`、`scopes` 和 `isContinuation`。返回 `true` 时会重定向到 `page`。
-* `consentReferenceId` 会收到 `user`、`session` 和 `scopes`，并返回用户的选择，例如组织 ID。Better Auth 会按每个引用分别存储授权同意。`consentReferenceId` 返回 `undefined` 或空字符串时，会使用不含引用的授权同意。
+* `consentReferenceId` 会收到 `user`、`session` 和 `scopes`。用户接受前，`scopes` 包含请求的 scope；接受后，则包含用户接受的 scope。此函数返回用户的选择，例如组织 ID。Better Auth 会按每个引用分别存储授权同意。返回 `undefined` 或空字符串时，会使用不含引用的授权同意。
 
 ```ts title="auth.ts"
 oauthProvider({
@@ -194,7 +194,7 @@ await authClient.oauth2.continue({ postLogin: true });
 
 ## Continue endpoint
 
-若要从账户页面继续授权，请调用此端点并传入与该页面对应的标志。Better Auth 会重新执行 authorize 步骤，并返回 `{ redirect: true, url }`。`url` 可能是另一个账户页面、授权同意页或客户端的 `redirect_uri`。默认情况下，认证客户端会将浏览器引导至该地址。
+若要从账户页面继续授权，请调用此端点并传入与该页面对应的标志。Better Auth 会重新执行 authorize 步骤，并返回 `{ redirect: true, url }`。`url` 可能是另一个账户页面、授权同意页或客户端的 `redirect_uri`。默认情况下，认证客户端会将浏览器引导至该地址。账户选择不会再次执行：它只会在 `/oauth2/authorize` 请求本身中运行。
 
 未传入标志或签名查询时，调用会返回 400 `invalid_request` 错误。请从 Better Auth 重定向到的页面调用，此时 URL 中仍带有签名查询。未使用 `oauthProviderClient` 时，请将该查询作为 `oauth_query` 发送。
 

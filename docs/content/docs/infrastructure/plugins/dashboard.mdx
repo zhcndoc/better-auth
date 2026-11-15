@@ -29,6 +29,21 @@ export const auth = betterAuth({
 });
 ```
 
+## 兼容性
+
+`@better-auth/infra` 要求 [Better Auth](/docs/installation) **1.4 或更高版本**。当前受支持的 `@better-auth/infra` 版本从 **0.3** 开始。
+
+| `@better-auth/infra` | Better Auth 1.4 | 1.5 | 1.6 | 1.7 |
+| -------------------- | --------------- | --- | --- | --- |
+| **0.3.x**            | ✓               | ✓   | ✓   | ✓   |
+| **0.4.x**            | ✓               | ✓   | ✓   | ✓   |
+
+Better Auth **1.7.x** 最新稳定版本请搭配最新的 **0.4.x** 版本使用。
+
+<Callout>
+  托管目录同步（Better Auth 1.7+）需要使用 **0.4.x** 版本的 `@better-auth/infra`。
+</Callout>
+
 ## 配置选项
 
 ### DashOptions
@@ -497,122 +512,149 @@ dash 插件会自动跟踪以下事件：
 
 dash 插件会为仪表盘注册大量管理端点：
 
+### 配置
+
+| 端点             | 方法 | 说明                 |
+| ---------------- | ---- | -------------------- |
+| `/dash/config`   | GET  | 获取 auth 配置和插件信息 |
+| `/dash/validate` | GET  | 验证仪表盘连接       |
+
 ### 用户管理
 
-| Endpoint                   | Method | Description                |
-| -------------------------- | ------ | -------------------------- |
-| `/dash/users`              | GET    | List users with pagination |
-| `/dash/users/online-count` | GET    | Get online users count     |
-| `/dash/user`               | GET    | Get user details           |
-| `/dash/user`               | POST   | Create a new user          |
-| `/dash/user`               | PATCH  | Update user                |
-| `/dash/user`               | DELETE | Delete user                |
-| `/dash/user/ban`           | POST   | Ban user                   |
-| `/dash/user/unban`         | POST   | Unban user                 |
-| `/dash/user/password`      | POST   | Set user password          |
-| `/dash/user/impersonate`   | POST   | Impersonate user           |
+| 端点                                   | 方法 | 说明                    |
+| -------------------------------------- | ---- | ----------------------- |
+| `/dash/list-users`                     | GET  | 分页列出用户            |
+| `/dash/export-users`                   | GET  | 导出用户                |
+| `/dash/user`                           | GET  | 获取用户详情            |
+| `/dash/user-organizations`             | GET  | 列出用户所属组织        |
+| `/dash/create-user`                    | POST | 创建用户                |
+| `/dash/update-user`                    | POST | 更新用户                |
+| `/dash/delete-user`                    | POST | 删除用户                |
+| `/dash/delete-many-users`              | POST | 批量删除用户            |
+| `/dash/ban-user`                       | POST | 封禁用户                |
+| `/dash/ban-many-users`                 | POST | 批量封禁用户            |
+| `/dash/unban-user`                     | POST | 解除用户封禁            |
+| `/dash/set-user-role`                  | POST | 设置应用级 `user.role`  |
+| `/dash/set-password`                   | POST | 设置用户密码            |
+| `/dash/unlink-account`                 | POST | 取消关联账户            |
+| `/dash/impersonate-user`               | GET  | 模拟用户                |
+| `/dash/send-verification-email`        | POST | 发送验证邮件            |
+| `/dash/send-many-verification-emails`  | POST | 批量发送验证邮件        |
+| `/dash/send-reset-password-email`      | POST | 发送密码重置邮件        |
 
 ### 会话管理
 
-| Endpoint                    | Method | Description              |
-| --------------------------- | ------ | ------------------------ |
-| `/dash/sessions`            | GET    | List all sessions        |
-| `/dash/sessions`            | DELETE | Delete sessions          |
-| `/dash/session/revoke`      | POST   | Revoke single session    |
-| `/dash/sessions/revoke-all` | POST   | Revoke all user sessions |
+| 端点                         | 方法 | 说明             |
+| ---------------------------- | ---- | ---------------- |
+| `/dash/sessions/revoke`      | POST | 撤销单个会话     |
+| `/dash/sessions/revoke-all`  | POST | 撤销用户的所有会话 |
+| `/dash/sessions/revoke-many` | POST | 批量撤销会话     |
 
 ### 组织管理
 
-| Endpoint                         | Method | Description              |
-| -------------------------------- | ------ | ------------------------ |
-| `/dash/organizations`            | GET    | List organizations       |
-| `/dash/organization`             | GET    | Get organization details |
-| `/dash/organization`             | POST   | Create organization      |
-| `/dash/organization`             | PATCH  | Update organization      |
-| `/dash/organization`             | DELETE | Delete organization      |
-| `/dash/organization/members`     | GET    | List members             |
-| `/dash/organization/member`      | POST   | Add member               |
-| `/dash/organization/member`      | DELETE | Remove member            |
-| `/dash/organization/member/role` | PATCH  | Update member role       |
+| 端点                                    | 方法 | 说明                 |
+| --------------------------------------- | ---- | -------------------- |
+| `/dash/list-organizations`              | GET  | 列出组织             |
+| `/dash/export-organizations`            | GET  | 导出组织             |
+| `/dash/organization/options`             | GET  | 组织插件选项         |
+| `/dash/organization/:id`                 | GET  | 获取组织详情         |
+| `/dash/organization/create`              | POST | 创建组织             |
+| `/dash/organization/update`              | POST | 更新组织             |
+| `/dash/organization/delete`              | POST | 删除组织             |
+| `/dash/organization/delete-many`         | POST | 批量删除组织         |
+| `/dash/organization/:id/members`         | GET  | 列出成员             |
+| `/dash/organization/add-member`          | POST | 添加成员             |
+| `/dash/organization/remove-member`       | POST | 移除成员             |
+| `/dash/organization/update-member-role`  | POST | 仅更新成员角色       |
+| `/dash/organization/update-member`       | POST | 更新成员角色和其他字段 |
 
 ### 团队管理
 
-| Endpoint                         | Method | Description        |
-| -------------------------------- | ------ | ------------------ |
-| `/dash/organization/teams`       | GET    | List teams         |
-| `/dash/organization/team`        | POST   | Create team        |
-| `/dash/organization/team`        | PATCH  | Update team        |
-| `/dash/organization/team`        | DELETE | Delete team        |
-| `/dash/organization/team/member` | POST   | Add team member    |
-| `/dash/organization/team/member` | DELETE | Remove team member |
+| 端点                                              | 方法 | 说明         |
+| ------------------------------------------------- | ---- | ------------ |
+| `/dash/organization/:id/teams`                    | GET  | 列出团队     |
+| `/dash/organization/create-team`                  | POST | 创建团队     |
+| `/dash/organization/update-team`                  | POST | 更新团队     |
+| `/dash/organization/delete-team`                  | POST | 删除团队     |
+| `/dash/organization/:orgId/teams/:teamId/members` | GET  | 列出团队成员 |
+| `/dash/organization/add-team-member`              | POST | 添加团队成员 |
+| `/dash/organization/remove-team-member`           | POST | 移除团队成员 |
 
 ### 邀请管理
 
-| Endpoint                           | Method | Description       |
-| ---------------------------------- | ------ | ----------------- |
-| `/dash/organization/invitations`   | GET    | List invitations  |
-| `/dash/organization/invite`        | POST   | Send invitation   |
-| `/dash/organization/invite/cancel` | POST   | Cancel invitation |
-| `/dash/organization/invite/resend` | POST   | Resend invitation |
+| 端点                                      | 方法 | 说明                 |
+| ----------------------------------------- | ---- | -------------------- |
+| `/dash/organization/:id/invitations`      | GET  | 列出邀请             |
+| `/dash/organization/invite-member`        | POST | 发送邀请             |
+| `/dash/organization/cancel-invitation`    | POST | 取消邀请             |
+| `/dash/organization/resend-invitation`    | POST | 重新发送邀请         |
+| `/dash/organization/check-user-by-email`  | POST | 按邮箱检查用户       |
+| `/dash/accept-invitation`                 | GET  | 接受邀请             |
+| `/dash/complete-invitation`               | POST | 完成邀请             |
+| `/dash/complete-invitation-handoff`       | GET  | 邀请交接             |
+| `/dash/complete-invitation-social`        | GET  | 社交账户邀请         |
+| `/dash/check-user-exists`                 | POST | 检查用户是否存在     |
 
 ### SSO 管理
 
-| Endpoint                                        | Method | Description         |
-| ----------------------------------------------- | ------ | ------------------- |
-| `/dash/organization/sso-providers`              | GET    | List SSO providers  |
-| `/dash/organization/sso-provider`               | POST   | Create SSO provider |
-| `/dash/organization/sso-provider`               | PATCH  | Update SSO provider |
-| `/dash/organization/sso-provider`               | DELETE | Delete SSO provider |
-| `/dash/organization/sso-provider/verify-domain` | POST   | Verify domain       |
+| 端点                                                              | 方法 | 说明                       |
+| ----------------------------------------------------------------- | ---- | -------------------------- |
+| `/dash/sso/connection-count`                                      | GET  | 项目级 SSO 连接数量        |
+| `/dash/organization/:id/sso-providers`                            | GET  | 列出 SSO 提供者            |
+| `/dash/organization/:id/sso-provider/create`                      | POST | 创建 SSO 提供者            |
+| `/dash/organization/:id/sso-provider/update`                      | POST | 更新 SSO 提供者            |
+| `/dash/organization/:id/sso-provider/delete`                      | POST | 删除 SSO 提供者            |
+| `/dash/organization/:id/sso-provider/request-verification-token`  | POST | 请求域名验证令牌           |
+| `/dash/organization/:id/sso-provider/verify-domain`               | POST | 验证域名                   |
+| `/dash/organization/:id/sso-provider/mark-domain-verified`        | POST | 标记域名已验证             |
 
 ### 目录同步
 
-| 端点                                                            | 方法   | 说明                                                  |
-| --------------------------------------------------------------- | ------ | --------------------------------------------------- |
-| `/dash/organization/directories`                                | GET    | 列出目录                                             |
-| `/dash/organization/directory`                                  | POST   | 创建目录（启用字段投影时可选传入 `fieldMappings`）    |
-| `/dash/organization/directory`                                  | DELETE | 删除目录                                             |
-| `/dash/organization/directory/token`                            | POST   | 重新生成令牌                                         |
-| `/dash/organization/:id/directory-field-mapping-options`        | GET    | 字段映射目录（可用字段、SCIM 路径和覆盖范围警告）                        |
-| `/dash/organization/:id/directories/:providerId/field-mappings` | GET    | 获取目录连接的字段映射和模式                                             |
-| `/dash/organization/:id/directories/:providerId/field-mappings` | PUT    | 替换目录连接的字段映射和模式                                             |
-
-### 日志转发
-
-| Endpoint                            | Method | Description      |
-| ----------------------------------- | ------ | ---------------- |
-| `/dash/organization/log-drains`     | GET    | List log drains  |
-| `/dash/organization/log-drain`      | POST   | Create log drain |
-| `/dash/organization/log-drain`      | PATCH  | Update log drain |
-| `/dash/organization/log-drain`      | DELETE | Delete log drain |
-| `/dash/organization/log-drain/test` | POST   | Test log drain   |
+| 端点                                                                              | 方法 | 说明                     |
+| --------------------------------------------------------------------------------- | ---- | ------------------------ |
+| `/dash/directory-sync/connection-count`                                           | GET  | 项目级目录连接数量       |
+| `/dash/organization/:id/directories`                                              | GET  | 列出目录                 |
+| `/dash/organization/directory/create`                                             | POST | 创建旧版目录             |
+| `/dash/organization/directory/delete`                                             | POST | 删除旧版目录             |
+| `/dash/organization/directory/regenerate-token`                                   | POST | 重新生成旧版 SCIM 令牌   |
+| `/dash/organization/:id/directories`                                              | POST | 创建托管目录             |
+| `/dash/organization/:id/directories/:providerId`                                  | GET  | 获取托管目录             |
+| `/dash/organization/:id/directories/:providerId/credentials/rotate`               | POST | 轮换托管目录凭据         |
+| `/dash/organization/:id/directories/:providerId/credentials/:credentialId/revoke` | POST | 撤销托管目录凭据         |
+| `/dash/organization/:id/directories/:providerId/events`                           | GET  | 列出托管目录事件         |
+| `/dash/organization/:id/directories/:providerId/decommission`                     | POST | 停用托管目录             |
+| `/dash/organization/:id/directories/:providerId/unpair`                           | POST | 取消托管目录与 SSO 的配对 |
+| `/dash/organization/:id/directory-field-mapping-options`                          | GET  | 字段映射目录             |
+| `/dash/organization/:id/directories/:providerId/field-mappings`                   | GET  | 获取字段映射和模式       |
+| `/dash/organization/:id/directories/:providerId/field-mappings`                   | PUT  | 替换字段映射和模式       |
 
 ### 事件与审计日志
 
-| Endpoint             | Method | Description     |
-| -------------------- | ------ | --------------- |
-| `/events/list`       | GET    | Get user events |
-| `/events/audit-logs` | GET    | Get audit logs  |
-| `/events/types`      | GET    | Get event types |
+| 端点                     | 方法 | 说明                                         |
+| ------------------------ | ---- | -------------------------------------------- |
+| `/events/list`           | GET  | 当前用户的事件                               |
+| `/events/audit-logs`     | GET  | 当前用户的审计日志（`getAuditLogs`）         |
+| `/events/all-audit-logs` | GET  | 组织管理员的审计日志（`getAllAuditLogs`）    |
+| `/events/types`          | GET  | 列出已知事件类型                             |
 
 ### 分析
 
-| Endpoint          | Method | Description         |
-| ----------------- | ------ | ------------------- |
-| `/dash/stats`     | GET    | Get user statistics |
-| `/dash/graph`     | GET    | Get graph data      |
-| `/dash/retention` | GET    | Get retention data  |
-| `/dash/map`       | GET    | Get geographic data |
+| 端点                        | 方法 | 说明             |
+| --------------------------- | ---- | ---------------- |
+| `/dash/user-stats`          | GET  | 获取用户统计信息 |
+| `/dash/user-graph-data`     | GET  | 获取图表数据     |
+| `/dash/user-retention-data` | GET  | 获取留存数据     |
 
 ### 双重验证管理
 
-| Endpoint                               | Method | Description          |
-| -------------------------------------- | ------ | -------------------- |
-| `/dash/user/2fa/enable`                | POST   | Enable 2FA for user  |
-| `/dash/user/2fa/disable`               | POST   | Disable 2FA for user |
-| `/dash/user/2fa/totp-uri`              | GET    | Get TOTP URI         |
-| `/dash/user/2fa/backup-codes`          | GET    | View backup codes    |
-| `/dash/user/2fa/backup-codes/generate` | POST   | Generate new codes   |
+| 端点                              | 方法 | 说明               |
+| --------------------------------- | ---- | ------------------ |
+| `/dash/enable-two-factor`         | POST | 为用户启用双重认证 |
+| `/dash/complete-two-factor-setup` | POST | 完成双重认证设置   |
+| `/dash/disable-two-factor`        | POST | 为用户停用双重认证 |
+| `/dash/view-two-factor-totp-uri`  | POST | 获取 TOTP URI      |
+| `/dash/view-backup-codes`         | POST | 查看备用代码       |
+| `/dash/generate-backup-codes`     | POST | 生成新的备用代码   |
 
 ## 客户端集成
 

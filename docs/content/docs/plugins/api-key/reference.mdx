@@ -95,8 +95,8 @@ API 密钥的前缀。
   <Accordion title="keyExpiration 选项">
     `defaultExpiresIn` <span className="opacity-70">`number | null`</span>
 
-    默认的过期时间（毫秒）。
-    若为 `null`，则无过期时间。
+    默认过期时间，单位为秒。
+    若为 `null`，则永不过期。
     默认值为 `null`。
 
     `disableCustomExpiresTime` <span className="opacity-70">`boolean`</span>
@@ -224,55 +224,26 @@ export const auth = betterAuth({
 
 将非关键的更新（如速率限制计数器、时间戳、剩余请求数）推迟到响应发送后，通过全局的 `backgroundTasks` 处理器异步执行。此设置在无服务器架构中显著提升响应速度。默认值为 `false`。
 
-需要在主认证配置中设置 `backgroundTasks.handler`。
+需要设置 [`backgroundTasks` 处理器](/docs/reference/options#backgroundtasks)，例如平台提供的 `waitUntil`。
 
 <Callout type="warn">
   启用该选项会引入最终一致性，即响应先返回乐观数据，数据库更新稍后完成。只在应用能容忍该延迟情况下启用，以提升性能。
 </Callout>
 
-<Tabs items={["Vercel", "Cloudflare Workers"]}>
-  <Tab value="Vercel">
-    ```ts
-    import { waitUntil } from "@vercel/functions";
-
-    export const auth = betterAuth({
-      advanced: { 
-          backgroundTasks: {
-             handler: waitUntil,
-          },
-      }
-      plugins: [
-        apiKey({
-          deferUpdates: true,
-        }),
-      ],
-    });
-    ```
-  </Tab>
-
-  <Tab value="Cloudflare Workers">
-    ```ts
-    import { AsyncLocalStorage } from "node:async_hooks";
-
-    const execCtxStorage = new AsyncLocalStorage<ExecutionContext>();
-
-    export const auth = betterAuth({
-      advanced: { 
-          backgroundTasks: {
-             handler: waitUntil,
-          },
-      }
-      plugins: [
-        apiKey({
-          deferUpdates: true,
-        }),
-      ],
-    });
-
-    // 在请求处理器中，使用 execCtxStorage.run(ctx, ...) 包裹
-    ```
-  </Tab>
-</Tabs>
+```ts
+export const auth = betterAuth({
+  advanced: {
+    backgroundTasks: {
+      handler: waitUntil,
+    },
+  },
+  plugins: [
+    apiKey({
+      deferUpdates: true,
+    }),
+  ],
+});
+```
 
 `permissions` <span className="opacity-70">`{ defaultPermissions?: Statements | ((referenceId: string, ctx: GenericEndpointContext) => Statements | Promise<Statements>) }`</span>
 

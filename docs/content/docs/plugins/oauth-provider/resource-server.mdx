@@ -12,6 +12,7 @@ description: 在 API 或其他服务中验证提供者签发的访问令牌。
 若要验证访问令牌，请在每个请求中调用 `better-auth/oauth2` 中的 `verifyAccessTokenRequest`。它会验证令牌；如果令牌绑定了 DPoP，还会根据请求方法和 URL 检查 proof（[RFC 9449 §7](https://datatracker.ietf.org/doc/html/rfc9449#section-7)）。
 
 ```ts title="api/posts.ts"
+import { createResourceServerChallenge } from "@better-auth/oauth-provider";
 import { isAPIError } from "better-auth/api";
 import {
   requestToResourceInput,
@@ -33,7 +34,13 @@ export const GET = async (req: Request) => {
     return Response.json({ sub: payload.sub });
   } catch (error) {
     if (!isAPIError(error)) throw error;
-    return Response.json(error.body, { status: error.statusCode });
+    const challenge = createResourceServerChallenge(error, "https://api.example.com", {
+      request: req,
+    });
+    return Response.json(error.body, {
+      status: error.statusCode,
+      headers: challenge?.headers,
+    });
   }
 };
 ```
@@ -42,7 +49,19 @@ export const GET = async (req: Request) => {
 
 `requestToResourceInput` 会从标准 `Request` 中读取 `Authorization` 和 `DPoP` 请求头、请求方法及 URL。如果框架没有 `Request`，请改为传入 `{ authorizationHeader, dpopProofJwt, method, url }`。令牌缺少所需 scope 时，调用会抛出 403 `insufficient_scope` 错误。其 `body.scope` 会列出所有缺失的 scope（[RFC 6750 §3.1](https://datatracker.ietf.org/doc/html/rfc6750#section-3.1)），客户端据此可在重新授权时申请相应 scope。请捕获抛出的 `APIError` 并返回其 `statusCode`，如上例所示。多数框架会将未捕获的错误转换为 `500`。
 
-如果 API 与认证服务器运行在同一进程中，请改用 resource client。它返回的 401 和 `insufficient_scope` 错误会在 `headers` 中包含 `WWW-Authenticate` challenge。
+抛出的错误不含 `WWW-Authenticate` 请求头；而当请求没有可用令牌时，[RFC 6750 §3](https://datatracker.ietf.org/doc/html/rfc6750#section-3) 要求提供该请求头。若要添加此请求头，请将错误和 API 的资源标识符传给 `@better-auth/oauth-provider` 中的 `createResourceServerChallenge`，并发送其返回的 `headers`。对于 401 和 `insufficient_scope` 错误，该函数会返回质询；其他错误则返回 `undefined`。包括 `insufficient_scope` 在内的 Bearer 质询会附带指向[受保护资源元数据](#protected-resource-metadata)的 `resource_metadata` 链接。
+
+质询内容取决于请求是否携带令牌。请求携带的令牌未通过验证（例如令牌已过期或撤销）时，Bearer 质询会包含 `error="invalid_token"` 和 `error_description`（[RFC 6750 §3.1](https://datatracker.ietf.org/doc/html/rfc6750#section-3.1)），让客户端知道需要替换令牌。请求完全没有凭据时，质询不含错误代码，让客户端知道需要先进行授权。如果你的代码拒绝了请求携带的令牌，请抛出状态为 `UNAUTHORIZED` 且带有 `error: "invalid_token"` 的 `APIError`，即可返回相同质询。
+
+如上例所示，将失败的请求作为 `request` 传入。客户端使用 `DPoP` scheme 发送令牌时，每个 401 都会返回 `DPoP` 质询，包括令牌过期或已撤销的情况（[RFC 9449 §7.2](https://datatracker.ietf.org/doc/html/rfc9449#section-7.2)）。只支持 DPoP 的客户端可能不会处理 `Bearer` 质询。使用 `Basic` 等其他 scheme，或未指定 scheme 发送令牌的请求，会收到 `Bearer` 质询，因此客户端仍能找到你的受保护资源元数据。未提供 `request` 时，只有无效 proof 等 DPoP 特定错误会返回 `DPoP` 质询。`DPoP` 质询会在 `algs` 中列出可接受的 proof 算法，并且不包含 `resource_metadata`。如果框架没有 `Request`，请改为传入 `{ authorizationHeader }`。
+
+提供 `request` 时，使用 `DPoP` scheme 的请求若因 scope 不足而返回 403，也会收到 `DPoP` 质询，例如 `DPoP error="insufficient_scope", scope="files:write", algs="ES256"`（[RFC 9449 §7.1](https://datatracker.ietf.org/doc/html/rfc9449#section-7.1)）。其中的 `scope` 与 Bearer 质询一样会列出缺失的 scope，让客户端知道重新授权时需要申请哪些 scope。
+
+由于 `WWW-Authenticate` 不是 [CORS 安全列表响应头](https://fetch.spec.whatwg.org/#cors-safelisted-response-header-name)，浏览器会对跨源脚本隐藏它，除非响应在 `Access-Control-Expose-Headers` 中列出该请求头。返回的 `headers` 会包含 `Access-Control-Expose-Headers: WWW-Authenticate`，以便其他来源的浏览器客户端读取 `resource_metadata`、`scope` 和 `algs`。你的 CORS 层还必须为 401 和 403 响应设置 `Access-Control-Allow-Origin`。如果 CORS 层自行设置了 `Access-Control-Expose-Headers`，请将 `WWW-Authenticate` 加入列表，因为 CORS 层可能会覆盖质询中的值。
+
+RFC 6750 要求 `error_description` 仅包含可打印 ASCII 字符，且不能含有 `"` 或 `\`。为了符合要求，`createResourceServerChallenge` 会将每个 `"` 替换为 `'`，并将其他不符合要求的字符替换为空格。若替换后没有内容，则省略 `error_description`。返回错误的 `body` 会保留原始的 `error` 和 `error_description`。
+
+如果 API 与 auth 服务器运行在同一进程中，也可以改用 resource client。其 401 和 `insufficient_scope` 错误已在 `headers` 中包含质询。
 
 ```ts title="lib/server-client.ts"
 import { createAuthClient } from "better-auth/client";
@@ -54,7 +73,13 @@ export const serverClient = createAuthClient({
 });
 ```
 
-请明确传入 `issuer`、`jwksUrl` 和 `audience`。默认值来自传给 `betterAuth()` 的 `baseURL`，可能未包含 `/api/auth` 等基础路径。
+默认值来自 auth 服务器解析后的 base URL。该 URL 包含 `basePath`，例如 `https://auth.example.com/api/auth`：
+
+* JWT 插件设置了 `jwt.issuer` 时，`issuer` 默认使用该值；否则默认使用 base URL，与提供者签名的 issuer 一致。
+* 未设置 `jwksUrl` 时，签名密钥会直接从进程内的 auth 实例读取，不会请求其自身的 `/jwks` 端点。JWT 插件设置了 `jwks.remoteUrl` 时，则会改为从该 URL 获取密钥。设置 `jwksUrl` 可从其他 URL 获取密钥。设置 `disableJwtPlugin` 时，提供者只会签发不透明访问令牌，没有可读取的签名密钥，因此请使用 `remoteVerify` 验证，如[JWT 或不透明令牌](#jwt-or-opaque-tokens)所示。
+* `audience` 默认使用 base URL。请参阅下方的警告。
+
+使用动态 `baseURL` 时，只有每个请求到达后才能确定 base URL，因此依赖它的默认值为空。请显式传入 `issuer`、`jwksUrl` 和 `audience`。
 
 <Callout type="warn">
   请勿依赖默认 audience。它是认证服务器的 URL，而不是 API 的标识符；同时也是 [JWT 插件](/docs/plugins/jwt#oauth-provider-mode)会话 JWT 的默认 `aud`。使用默认值时，已登录用户的会话 JWT 可能会被当作访问令牌接受。请将 `audience` 设为 API 的资源标识符，并添加 `typ: "at+jwt"` 和 `requiredClaims: ["azp"]`。
@@ -95,14 +120,14 @@ export const POST = async (req: Request) => {
   对于绑定了 DPoP 的令牌：
 
   * proof 会根据 `request.url` 进行检查。API 前面的代理必须转发外部的 scheme、主机和路径。
-  * 重放存储会拒绝已使用过的 proof。默认存储位于内存中，仅适用于单个实例。若 API 运行在多个实例或 serverless 环境中，请像下例一样传入共享存储。共享存储需要由数据库提供 verification 存储；如果只配置了二级存储，则会拒绝 DPoP 请求。
+  * 重放存储会拒绝已使用过的 proof。默认存储位于内存中，仅适用于单个实例。若 API 运行在多个实例或 serverless 环境中，请像下例一样传入共享存储。共享存储会将每个 proof 记录到 auth 实例保存验证值的位置：未设置 `verification.storeInDatabase` 时，记录在[二级存储](/docs/concepts/database#secondary-storage)中；否则记录在数据库中。
 </Callout>
 
 ```ts title="api/posts.ts"
 import { createDpopReplayStore } from "better-auth/oauth2";
 import { auth } from "@/lib/auth";
 
-const replayStore = createDpopReplayStore((await auth.$context).internalAdapter);
+const replayStore = createDpopReplayStore(await auth.$context);
 
 // Pass it with the other options, as in the example above:
 // verifyAccessTokenRequest(input, { jwksUrl, verifyOptions, dpop: { replayStore } })
@@ -160,7 +185,11 @@ const payload = await verifyAccessTokenRequest(requestToResourceInput(req), {
 
 若要配置第二种情况，请[将 API 注册为资源](/docs/plugins/oauth-provider/tokens#resources)，并将客户端关联到该资源。其他调用方会收到 `{ active: false }`，与未知或过期令牌的响应相同。只有申请了刷新令牌的客户端可以核查该令牌。
 
-如果令牌绑定了会话，核查时还会检查会话是否仍处于活跃状态。对于同一授权许可，JWT 和不透明令牌在[核查响应](https://datatracker.ietf.org/doc/html/rfc7662#section-2.2)中会返回相同声明：扩展访问令牌声明、`customAccessTokenClaims`、按资源配置的 `customClaims`，以及服务器保留的声明（`iss`、`sub`、`aud`、`scope` 等）。回调若返回保留声明名称，该声明会被丢弃。请参阅[自定义声明](/docs/plugins/oauth-provider/tokens#custom-claims)。
+会话结束后，绑定到该会话的访问令牌会被核查为非活跃状态。会话被删除时（例如退出登录），Better Auth 也会撤销其中不含 `offline_access` 的刷新令牌。刷新令牌在刷新操作缩减 scope 后也可能失去 `offline_access`。其他刷新令牌在会话结束后仍保持活跃，直到过期或撤销；其响应不会包含 `sid`。
+
+对于访问令牌，[核查响应](https://datatracker.ietf.org/doc/html/rfc7662#section-2.2)包含扩展访问令牌声明、`customAccessTokenClaims`、按资源配置的 `customClaims`，以及服务器保留的声明（如 `iss`、`sub`、`aud`、`scope`）。JWT 访问令牌会返回签发时签名的声明；不透明访问令牌会在核查时重新计算声明。因此，仅 JWT 访问令牌会包含逐次签发的声明和依赖授权许可类型的声明。刷新令牌响应不会包含 `aud`、扩展声明、`customAccessTokenClaims` 或按资源配置的 `customClaims`。请参阅[声明优先级](/docs/plugins/oauth-provider/reference#claim-precedence)。
+
+回调返回保留的声明名称时，该声明会被丢弃。请参阅[自定义声明](/docs/plugins/oauth-provider/tokens#custom-claims)。
 
 ## Scopes and permissions
 
@@ -170,7 +199,7 @@ Scope 描述客户端可以代表用户申请什么。权限描述用户可以�
 
 ## Protected resource metadata
 
-若要公开保护 API 的授权服务器，请在 `/.well-known/oauth-protected-resource` 提供 [RFC 9728](https://datatracker.ietf.org/doc/html/rfc9728#section-3) 文档。`serverClient.getProtectedResourceMetadata()` 可以为你生成该文档。其默认的 `authorization_servers` 条目与默认 issuer 一样存在 `baseURL` 只包含来源的问题，因此请传入提供者的 issuer。[MCP 插件](/docs/plugins/mcp)会自动提供此文档。
+若要公开保护 API 的授权服务器，请在 `/.well-known/oauth-protected-resource` 提供 [RFC 9728](https://datatracker.ietf.org/doc/html/rfc9728#section-3) 文档。`serverClient.getProtectedResourceMetadata()` 可以为你生成该文档。其默认的 `authorization_servers` 条目与 resource client 默认用于验证的 issuer 相同。使用动态 `baseURL` 且未设置 `jwt.issuer` 时，没有默认条目，因此请传入 `authorization_servers`。[MCP 插件](/docs/plugins/mcp)会自动提供此文档。
 
 ```ts title="app/.well-known/oauth-protected-resource/route.ts"
 import { serverClient } from "@/lib/server-client";

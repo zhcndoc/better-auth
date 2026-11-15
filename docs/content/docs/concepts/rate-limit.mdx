@@ -123,7 +123,7 @@ app.all("/api/auth/*", (req, res) => {
 
 某些请求没有有效地址。例如，未设置 `trustedProxies` 时，`X-Forwarded-For` 可能包含多个地址。这些请求会共用每个路径下的一个计数器；首次发生这种情况时，Better Auth 会记录一条警告。
 
-在开发和测试环境中，Better Auth 会改用 `127.0.0.1`。如需为 HTTP 请求关闭此速率限制器，请设置 `disableIpTracking: true`。
+在开发和测试环境中，Better Auth 会改用 `127.0.0.1`。将 `advanced.ipAddress.disableIpTracking: true` 设为 `true` 后，会关闭所有 HTTP 请求的速率限制器，而不只是没有地址的请求。Better Auth 也会停止在新会话中记录客户端地址。
 
 #### IPv6 地址支持
 

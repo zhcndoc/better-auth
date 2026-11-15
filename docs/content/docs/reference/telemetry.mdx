@@ -78,7 +78,7 @@ Better Auth 会收集匿名使用数据，以帮助我们改进项目。这是�
 
 ### 何时发送远程测量数据？
 
-* 在 `betterAuth` 初始化时（`type: "init"`）。
-* 在 CLI 操作中：如上所述的 `generate` 和 `migrate`。
+* 在 `betterAuth` 初始化时（`type: "init"`）。如果此时无法生成匿名项目 ID（例如在 Cloudflare Workers 中于模块作用域创建实例），该实例不会发送 `init` 事件。
+* 在 CLI 操作中发送：如上所述的 `generate` 和 `migrate`。
 
 除非被内部工具显式覆盖，否则在测试（`NODE_ENV=test`）中会自动禁用遥测。

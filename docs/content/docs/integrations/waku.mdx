@@ -5,447 +5,310 @@ title: Waku 集成
 description: 将 Better Auth 集成到 Waku。
 ---
 
-Better Auth 可以轻松地与 Waku 集成。在开始之前，请确保您已经配置了 Better Auth 实例。如果还没有，请查看 [安装指南](/docs/installation)。
+开始前，请确保已配置 Better Auth 实例。如果还没有，请参阅[安装指南](/docs/installation)。本页示例使用 Waku `1.0.0-rc.4` 的 API。
 
-## 创建 auth 实例
+## 安装
 
-在您的应用程序中创建一个名为 `auth.ts` 的文件。导入 Better Auth 并创建您的实例。
+<Steps>
+  <Step>
+    ## 挂载处理器
 
-<Callout type="warn">
-  确保使用变量名 `auth` 或作为 `default` 导出实例。
-</Callout>
+    在 `src/pages/_api/api/auth/[...route].ts` 创建一个捕获所有请求的 API 路由：
 
-```ts title="src/auth.ts"
-import { betterAuth } from "better-auth"
+    ```ts title="src/pages/_api/api/auth/[...route].ts"
+    import { auth } from "../../../../auth" // Adjust the path as necessary
 
-export const auth = betterAuth({
-    database: {
-        provider: "postgres", //根据您的数据库提供者修改
-        url: process.env.DATABASE_URL, // 数据库路径或连接字符串
+    export default function handler(request: Request): Promise<Response> {
+      return auth.handler(request)
     }
-})
-```
+    ```
 
-## 创建 API 路由
+    <Callout type="info">
+      如果更改了 `basePath`，请相应地移动此路由，并更新下方会话拦截器中的 `/api/` 检查。
+    </Callout>
+  </Step>
 
-我们需要将处理器挂载到 API 路由。为 Waku 的文件系统路由在 `src/pages/api/auth` 创建一个目录。在 `src/pages/api/auth` 目录中创建一个捕获所有路由文件 `[...route].ts`，并添加以下代码：
+  <Step>
+    ## 创建客户端
 
-```ts title="src/pages/_api/api/auth/[...route].ts"
-import { auth } from "../../../../auth" // 根据需要调整路径
+    使用 `better-auth/react` 创建客户端：
 
-export const GET = async (request: Request): Promise<Response> => {
-  return auth.handler(request)
-}
+    ```ts title="src/lib/auth-client.ts"
+    import { createAuthClient } from "better-auth/react"
 
-export const POST = async (request: Request): Promise<Response> => {
-  return auth.handler(request)
-}
-```
+    export const authClient = createAuthClient()
+    ```
+  </Step>
 
-<Callout type="info">
-  您可以在 better-auth 配置中更改路径，但建议保持为 `src/pages/_api/api/auth/[...route].ts`
-</Callout>
+  <Step>
+    ## 收集服务端代码设置的 Cookie
 
-## 创建客户端
+    服务器操作和服务器组件无法在 Waku 的响应中设置 Cookie。请添加一个插件来收集 Better Auth 设置的 Cookie，并创建 `getSession()` 辅助函数来读取这些 Cookie，这样同一请求中稍后渲染的页面就能看到更改：
 
-创建客户端实例。这里我们在 `lib/` 目录下创建 `auth-client.ts` 文件。
+    ```ts title="src/auth.ts"
+    import { betterAuth, type BetterAuthPlugin } from "better-auth"
+    import { createAuthMiddleware } from "better-auth/api"
+    import { applySetCookies } from "better-auth/cookies"
+    import { getContext } from "hono/context-storage"
 
-```ts title="src/lib/auth-client.ts"
-import { createAuthClient } from "better-auth/react" // 确保从 better-auth/react 导入
+    export const auth = betterAuth({
+      //...your config
+      plugins: [wakuCookies()] // make sure this is the last plugin in the array // [!code highlight]
+    })
 
-export const authClient = createAuthClient({
-    // 可在这里传入客户端配置
-})
+    type Session = typeof auth.$Infer.Session
 
-export type Session = typeof authClient.$Infer.Session // 可以从 authClient 推断 Typescript 类型
-```
+    export type AuthEnv = {
+      Variables: {
+        betterAuthSetCookie: string[]
+        sessionPromise?: Promise<Session | null>
+      }
+    }
 
-创建客户端后，您可以用它来注册、登录和执行其他操作。
-部分操作是响应式的。客户端使用 [nano-store](https://github.com/nanostores/nanostores) 存储状态，并在状态变化时重新渲染组件。
+    function wakuCookies() {
+      return {
+        id: "waku-cookies",
+        hooks: {
+          after: [
+            {
+              matcher: () => true,
+              handler: createAuthMiddleware(async (ctx) => {
+                // Requests to the auth handler set cookies on their own response
+                if ("_flag" in ctx && ctx._flag === "router") return
+                const setCookies = ctx.context.responseHeaders?.getSetCookie() ?? []
+                if (!setCookies.length) return
+                const c = getContext<AuthEnv>()
+                // A single request can make several auth calls
+                c.set("betterAuthSetCookie", [...c.var.betterAuthSetCookie, ...setCookies])
+                // The cookies changed, so the next read fetches the session again
+                c.set("sessionPromise", undefined)
+              }),
+            },
+          ],
+        },
+      } satisfies BetterAuthPlugin
+    }
 
-客户端还使用 [better-fetch](https://github.com/bekacru/better-fetch) 来发起请求，您可以将 fetch 配置传给客户端。
+    /**
+     * Returns the current session, fetched once per request until cookies change.
+     * Cookies set earlier in the request take precedence over the incoming ones.
+     */
+    export function getSession() {
+      const c = getContext<AuthEnv>()
+      if (c.var.sessionPromise) return c.var.sessionPromise
+      const headers = new Headers(c.req.raw.headers)
+      applySetCookies(headers, c.var.betterAuthSetCookie)
+      const sessionPromise = auth.api.getSession({ headers })
+      c.set("sessionPromise", sessionPromise)
+      return sessionPromise
+    }
+    ```
+  </Step>
 
-## RSC 和服务器操作
+  <Step>
+    ## 将 Cookie 写入响应
 
-从 auth 实例导出的 `api` 对象包含了所有可在服务器端执行的操作。Better Auth 内部创建的每个端点都可以作为函数被调用，包括插件端点。
+    Waku 会自动加载 `src/middleware` 中的文件。此中间件为插件提供请求上下文，并在 Waku 的 `Response` 可用后将收集到的 Cookie 添加到响应中：
 
-**示例：在服务器操作中获取 Session**
+    ```ts title="src/middleware/auth.ts"
+    import { every } from "hono/combine"
+    import { contextStorage } from "hono/context-storage"
+    import { createMiddleware } from "hono/factory"
+    import type { AuthEnv } from "../auth"
 
-```tsx title="server.ts"
-"use server" // Waku 当前仅支持文件级 "use server"
+    const authMiddleware = () =>
+      every(
+        contextStorage(),
+        createMiddleware<AuthEnv>(async (c, next) => {
+          c.set("betterAuthSetCookie", [])
+          await next()
+          for (const cookie of c.var.betterAuthSetCookie) {
+            c.header("set-cookie", cookie, { append: true })
+          }
+        }),
+      )
 
-import { auth } from "./auth"
-import { unstable_getHeaders as getHeaders } from "waku/server"
+    export default authMiddleware
+    ```
+  </Step>
 
-export const someAuthenticatedAction = async () => {
-  "use server"
-  const headers = getHeaders()
-  const session = await auth.api.getSession({
-      headers,
-  })
-};
-```
+  <Step>
+    ## 在渲染前解析会话
 
-**示例：在 RSC 中获取 Session**
+    Waku 会以流的形式发送服务器组件响应，因此组件完成渲染前响应头就已发送。在布局或页面中使用 [Cookie 缓存](/docs/concepts/session-management#cookie-cache)或刷新过期时间时，Cookie 会丢失。请在渲染开始前，通过处理器拦截器解析会话：
 
-```tsx
-import { auth } from "../auth"
-import { unstable_getHeaders as getHeaders } from "waku/server"
+    ```ts title="src/pages/_interceptors/session.ts"
+    import { tryGetContext } from "hono/context-storage"
+    import { getRequest, type HandlerInterceptor } from "waku/router/server"
+    import { getSession } from "../../auth"
 
-export async function ServerComponent() {
-  const headers = getHeaders()
-  const session = await auth.api.getSession({
-      headers,
-  })
-  if(!session) {
-      return <div>未认证</div>
-  }
+    const sessionInterceptor: HandlerInterceptor = async (next) => {
+      // Static renders at build time have no Hono context, and no session.
+      if (!tryGetContext()) return next()
+      // API routes are not streamed. Under `/api/auth`, a refreshed session
+      // cookie would also override the one sign-out expires.
+      const { pathname } = new URL(getRequest().url)
+      if (pathname.startsWith("/api/")) return next()
+      await getSession()
+      return next()
+    }
+
+    export default sessionInterceptor
+    ```
+  </Step>
+
+  <Step>
+    ## 读取会话
+
+    在页面、服务器操作和 API 路由中调用 `getSession()`。读取会话的页面必须使用 `render: "dynamic"`：
+
+    ```tsx title="src/pages/dashboard.tsx"
+    import { unstable_redirect as redirect } from "waku/router/server"
+    import { getSession } from "../auth"
+
+    export default async function DashboardPage() {
+      const session = await getSession()
+
+      if (!session) {
+        redirect("/sign-in")
+      }
+
+      return (
+        <div>
+          <h1>Welcome {session.user.name}</h1>
+        </div>
+      )
+    }
+
+    export const getConfig = async () => {
+      return { render: "dynamic" } as const
+    }
+    ```
+
+    <Callout type="warn">
+      Waku 会分别渲染路由的布局和页面，因此布局中的重定向不会阻止其下方页面继续渲染。每个返回受保护数据的页面、服务器操作和 API 路由都应检查会话。
+    </Callout>
+  </Step>
+</Steps>
+
+## 使用
+
+### 在客户端登录
+
+使用 `authClient` 为用户登录，使请求经过 auth 处理器及其[速率限制](/docs/concepts/rate-limit)：
+
+```tsx title="src/components/sign-in-form.tsx"
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "waku"
+import { authClient } from "../lib/auth-client"
+
+export function SignInForm() {
+  const router = useRouter()
+  const [error, setError] = useState<string>()
   return (
-      <div>
-          <h1>欢迎 {session.user.name}</h1>
-      </div>
+    <form
+      onSubmit={async (event) => {
+        event.preventDefault()
+        const form = new FormData(event.currentTarget)
+        const { error } = await authClient.signIn.email({
+          email: String(form.get("email")),
+          password: String(form.get("password")),
+        })
+        if (error) return setError(error.message)
+        router.push("/dashboard")
+      }}
+    >
+      <input name="email" type="email" />
+      <input name="password" type="password" />
+      <button type="submit">Sign in</button>
+      {error && <p>{error}</p>}
+    </form>
   )
 }
 ```
 
-<Callout type="warn">响应开始流式传输后运行的 RSC 无法设置 Cookie。[Cookie 缓存](/docs/concepts/session-management#cookie-缓存) 直到通过客户端的服务器操作或路由处理器与服务器互动后才会刷新。</Callout>
+### 在服务器操作中退出登录
 
-### 服务器操作中的 Cookie
+通过 `auth.api` 调用端点时传入请求头。中间件会将这些端点设置的 Cookie 添加到响应中，因此同一请求中稍后渲染的页面可以看到更改：
 
-当您在服务器操作中调用需要设置 Cookie 的函数（如 `signInEmail` 或 `signUpEmail`）时，Cookie 不会被设置。
+```ts title="src/actions.ts"
+"use server"
 
-我们可以创建一个插件，与中间件配合以设置 Cookie。
+import { getRequest, unstable_redirect as redirect } from "waku/router/server"
+import { auth } from "./auth"
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { createAuthMiddleware } from "better-auth/api";
-import { unstable_getContextData as getContextData } from "waku/server"
-
-export const auth = betterAuth({
-    //...您的配置
-    plugins: [wakuCookies()] // 确保这是数组中的最后一个插件 // [!code highlight]
-})
-
-function wakuCookies() {
-  return {
-    id: "waku-cookies",
-    hooks: {
-      after: [
-        {
-          matcher(ctx) {
-            return true;
-          },
-          handler: createAuthMiddleware(async (ctx) => {
-            const returned = ctx.context.responseHeaders;
-            if ("_flag" in ctx && ctx._flag === "router") {
-              return;
-            }
-            if (returned instanceof Headers) {
-              const setCookieHeader = returned?.get("set-cookie");
-              if (!setCookieHeader) return;
-              const contextData = getContextData();
-              contextData.betterAuthSetCookie = setCookieHeader;
-            }
-          }),
-        },
-      ],
-    },
-  } satisfies BetterAuthPlugin;
+export async function signOut() {
+  await auth.api.signOut({ headers: getRequest().headers })
+  redirect("/sign-in")
 }
 ```
 
-下面展示了用于将 `contextData.betterAuthSetCookie` 添加到响应的中间件。
-现在，当您调用设置 Cookie 的函数时，它们会被自动设置。
+可将其用作表单操作，例如 `<form action={signOut}>`。通过 `auth.api` 发起的调用会跳过速率限制，因此登录和注册操作应保留在客户端。
 
-```ts
-"use server";
-import { auth } from "../auth"
+### 在中间件中执行乐观重定向
 
-const signIn = async () => {
-    await auth.api.signInEmail({
-        body: {
-            email: "user@email.com",
-            password: "password",
-        }
-    })
-}
-```
+若要在渲染前重定向，请在中间件中检查会话 Cookie。客户端导航请求的是 `/RSC/R/dashboard.txt`，而非 `/dashboard`，因此请使用 Waku 路由辅助函数匹配路由并构造重定向：
 
-### 中间件
-
-在 Waku 中间件中，建议只检查会话 Cookie 是否存在以处理重定向。这避免了通过 API 或数据库调用阻塞请求。
-
-您可以使用 Better Auth 的 `getSessionCookie` 辅助函数：
-
-<Callout type="warn">
-  <code>getSessionCookie()</code> 函数不会自动引用在 <code>auth.ts</code> 中指定的 auth 配置。因此，如果您自定义了 Cookie 名称或前缀，需要确保 <code>getSessionCookie()</code> 中的配置与 <code>auth.ts</code> 中定义的配置匹配。
-</Callout>
-
-```ts title="src/middleware/auth.ts"
+```ts title="src/middleware/redirect.ts"
 import type { MiddlewareHandler } from "hono"
-import { getSession } from "../auth"
 import { getSessionCookie } from "better-auth/cookies"
-import type { MiddlewareHandler } from "hono";
-import { unstable_getContextData as getContextData } from "waku/server";
+import {
+  unstable_formatRouterRequest as formatRouterRequest,
+  unstable_parseRouterRequest as parseRouterRequest,
+} from "waku/router/server"
 
-const authMiddleware: () => MiddlewareHandler = () => {
+const redirectMiddleware = (): MiddlewareHandler => {
   return async (c, next) => {
-    const reqUrl = new URL(c.req.url);
-    const sessionCookie = getSessionCookie(c.req.raw);
-    // 这不是安全的！
-    // 这是建议的乐观重定向用户的方法
-    // 推荐在每个页面/路由中处理认证检查
-    if (
-      !sessionCookie &&
-      reqUrl.pathname !== "/" &&
-      !reqUrl.pathname.startsWith("/api")
-    ) {
-      if (!reqUrl.pathname.endsWith(".txt")) {
-        // 当前 RSC 请求以 .txt 结尾，且不处理重定向响应
-        // 需要在 React Flight 流里编码重定向
-        // Waku 中有部分功能可在服务器组件中实现
-        // 但不能在中间件中实现。
-        return c.redirect("/", 302);
+    const route = parseRouterRequest(c.req.raw)
+    const isProtected =
+      route?.type === "route" &&
+      (route.path === "/dashboard" || route.path.startsWith("/dashboard/"))
+    // Only checks that the cookie exists. Pages still verify the session.
+    if (isProtected && !getSessionCookie(c.req.raw)) {
+      const location = formatRouterRequest(c.req.raw, "/sign-in")
+      if (location) {
+        // 303, so a form posted without JavaScript is not resent
+        return c.redirect(location.pathname + location.search, 303)
       }
     }
+    await next()
+  }
+}
 
-    // TODO 可根据 c.req.url 优化，避免每次请求都执行
-    // 或跳过此处启动 Promise，只在服务器组件与函数调用时执行
-    getSession();
-    await next();
-    const contextData = getContextData();
-    const betterAuthSetCookie = contextData.betterAuthSetCookie as
-      | string
-      | undefined;
-    if (betterAuthSetCookie) {
-      c.header("set-cookie", betterAuthSetCookie, { append: true });
-    }
-  };
-};
-
-export default authMiddleware;
+export default redirectMiddleware
 ```
 
-<Callout type="warn">
-  **安全警告：** <code>getSessionCookie</code> 函数只检查
-  会话 Cookie 是否存在；它不会对其进行**验证**。仅依赖此检查来保证安全是危险的，因为任何人都可以手动创建
-  Cookie 来绕过它。对于任何受保护的操作或页面，您都必须在服务器端验证会话。
-</Callout>
+在生产环境中，按 `static` 渲染的页面会在中间件运行前提供，因此受保护的页面必须使用 `render: "dynamic"`。
 
 <Callout type="info">
-  如果您有自定义 Cookie 名称或前缀，可以将其传递给 <code>getSessionCookie</code> 函数。
+  `getSessionCookie` 不会读取 auth 配置。如果自定义了 Cookie 名称或前缀，请传入相同的值：
 
   ```ts
   const sessionCookie = getSessionCookie(request, {
-      cookieName: "my_session_cookie",
-      cookiePrefix: "my_prefix"
+    cookieName: "my_session_cookie",
+    cookiePrefix: "my_prefix",
   })
   ```
 </Callout>
 
-或者，您也可以使用 `getCookieCache` 辅助函数从 Cookie 缓存获取会话对象。
+### 在静态页面中显示会话信息
 
-```ts
-import { getCookieCache } from "better-auth/cookies"
+若要保持页面为静态，请将依赖会话的 UI 移入延迟加载的动态 [slice](https://waku.gg/#slices)，并使用 `<Slice id="account-menu" lazy fallback={<span />} />` 渲染。页面只会构建一次，而 slice 会针对每个请求单独渲染：
 
-const authMiddleware: () => MiddlewareHandler = () => {
-    return async (c, next) => {
-        const reqUrl = new URL(c.req.url);
-        const session = await getCookieCache(c.req.raw)
-        if (!session && reqUrl.pathname !== "/") {
-            if (!reqUrl.pathname.endsWith(".txt")) {
-                ctx.res.status = 302
-                ctx.res.headers = {
-                    Location: new URL("/", reqUrl).toString(),
-                }
-            }
-        }
-    }
-    await next();
+```tsx title="src/pages/_slices/account-menu.tsx"
+import { getSession } from "../../auth"
+
+export default async function AccountMenu() {
+  const session = await getSession()
+  if (!session) {
+    return <a href="/sign-in">Sign in</a>
   }
+  return <a href="/dashboard">{session.user.name}</a>
 }
 
-export default authMiddleware;
-```
-
-如果您将中间件文件放在 `./src/middleware`，它会被 Waku 默认服务器适配器自动加载。
-
-### 如何在每个页面/路由处理中进行认证检查
-
-本示例中，我们在服务器组件中使用 `auth.api.getSession` 函数获取会话对象，
-然后检查会话是否有效。如果无效，则重定向用户到登录页。
-Waku 提供了 `getContext` 获取请求头，和 `getContextData()` 用于每次请求存储数据。我们可以利用它避免同一请求中多次获取会话。
-
-```ts title="auth.ts"
-import { unstable_getContext as getContext, unstable_getContextData as getContextData } from "waku/server";
-
-// 以上用于创建服务器端 auth 配置的代码
-// export const auth = ...
-
-export function getSession(): Promise<Session | null> {
-  const contextData = getContextData();
-  const ctx = getContext();
-  const existingSessionPromise = contextData.sessionPromise as
-    | Promise<Session | null>
-    | undefined;
-  if (existingSessionPromise) {
-    return existingSessionPromise;
-  }
-  const sessionPromise = auth.api.getSession({
-    headers: new Headers(ctx.req.headers),
-  });
-  contextData.sessionPromise = sessionPromise;
-  return sessionPromise;
-}
-```
-
-```tsx title="src/pages/dashboard.tsx"
-import { getSession } from "../auth";
-import { unstable_redirect as redirect } from 'waku/router/server';
-
-export default async function DashboardPage() {
-    const session = await getSession()
-
-    if (!session) {
-        redirect("/sign-in")
-    }
-
-    return (
-        <div>
-            <h1>欢迎 {session.user.name}</h1>
-        </div>
-    )
-}
-```
-
-### 示例用法
-
-#### 注册
-
-```tsx title="src/components/signup.tsx"
-"use client"
-
-import { useState } from "react"
-import { authClient } from "../lib/auth-client"
-
-export default function SignUp() {
-  const [email, setEmail] = useState("")
-  const [name, setName] = useState("")
-  const [password, setPassword] = useState("")
-
-  const signUp = async () => {
-    await authClient.signUp.email(
-      {
-        email,
-        password,
-        name,
-      },
-      {
-        onRequest: (ctx) => {
-          // 显示加载状态
-        },
-        onSuccess: (ctx) => {
-          // 重定向到首页
-        },
-        onError: (ctx) => {
-          alert(ctx.error)
-        },
-      },
-    )
-  }
-
-  return (
-    <div>
-      <h2>
-        注册
-      </h2>
-      <form
-        onSubmit={signUp}
-      >
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="姓名"
-        />
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="邮箱"
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="密码"
-        />
-        <button
-          type="submit"
-        >
-          注册
-        </button>
-      </form>
-    </div>
-  )
-}
-```
-
-#### 登录
-
-```tsx title="src/components/signin.tsx"
-"use client"
-
-import { useState } from "react"
-import { authClient } from "../lib/auth-client"
-
-export default function SignIn() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-
-  const signIn = async () => {
-    await authClient.signIn.email(
-      {
-        email,
-        password,
-      },
-      {
-        onRequest: (ctx) => {
-          // 显示加载状态
-        },
-        onSuccess: (ctx) => {
-          // 重定向到首页
-        },
-        onError: (ctx) => {
-          alert(ctx.error)
-        },
-      },
-    )
-  }
-
-  return (
-    <div>
-      <h2>
-        登录
-      </h2>
-      <form onSubmit={signIn}>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button
-          type="submit"
-        >
-          登录
-        </button>
-      </form>
-    </div>
-  )
+export const getConfig = async () => {
+  return { render: "dynamic" } as const
 }
 ```

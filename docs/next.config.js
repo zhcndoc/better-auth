@@ -4,6 +4,9 @@ import { createMDX } from "fumadocs-mdx/next";
 const nextConfig = {
 	output: "standalone",
 	experimental: {
+		cpus: 2,
+		staticGenerationMaxConcurrency: 2,
+		staticGenerationMinPagesPerWorker: 2048,
 		optimizePackageImports: [
 			"lucide-react",
 			"framer-motion",

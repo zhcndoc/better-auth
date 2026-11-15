@@ -36,6 +36,8 @@ Better Auth 可与任何事务性电子邮件服务商配合使用，让您完�
 
 以及作为第二个参数传入的 `request` 对象。
 
+注册时，Better Auth 会在新账户保存后调用 `sendVerificationEmail`，因此回滚的注册不会发送邮件。如果账户已保存，即使邮件已发送，请求仍可能失败，例如适配器不支持事务，或 `session` 的 `after` hook 抛出错误。如果此函数抛出错误，注册仍会成功，错误会被记录。若要拒绝注册，请使用 `user.create.before` [数据库钩子](/docs/concepts/database#database-hooks)。
+
 ```ts title="auth.ts"
 import { betterAuth } from 'better-auth';
 import { sendEmail } from './email'; // 你的邮件发送函数
@@ -209,6 +211,8 @@ export const auth = betterAuth({
 ### 重复注册尝试回调
 
 当有人尝试使用已经存在的邮箱注册时，会触发 `onExistingUserSignUp` 回调。这对于通知现有用户有人尝试使用他们的邮箱地址注册非常有用。
+
+它会在注册请求的数据库操作完成后运行。如果抛出错误，系统会记录该错误，但请求仍会返回通用响应。
 
 <Callout>
   仅当 `emailAndPassword.requireEmailVerification` 设置为 `true` 时，才会调用此回调。此设置会启用通用重复响应（合成用户），而不是抛出邮箱重复错误。

@@ -104,11 +104,11 @@ const response = await auth.api.signInEmail({
 
 ### 错误处理
 
-当你在服务器上调用 API 端点时，如果请求失败，它会抛出错误。你可以捕获该错误并按需处理。错误实例是 `APIError` 的一个实例。
+在服务器上调用 API 端点时，如果请求失败，会抛出 `APIError`。请使用 `isAPIError` 检查错误，而不要使用 `instanceof APIError`：如果应用解析到多个 `better-call` 副本，其中一个副本抛出的 `APIError` 无法通过另一个副本的 `instanceof` 检查。
 
 ```ts title="server.ts"
 import { auth } from "@/lib/auth"
-import { APIError, isAPIError } from "better-auth/api";
+import { isAPIError } from "better-auth/api";
 
 try {
     await auth.api.signInEmail({

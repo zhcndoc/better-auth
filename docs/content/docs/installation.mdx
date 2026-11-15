@@ -341,20 +341,7 @@ description: 了解如何在项目中配置 Better Auth。
         ```
 
         <Callout type="info">
-          **Node.js AsyncLocalStorage 支持**：Better Auth 使用 AsyncLocalStorage 进行异步上下文跟踪。要在 Cloudflare Workers 中启用此功能，请在 `wrangler.toml` 中添加 `nodejs_compat` 标志：
-
-          ```toml title="wrangler.toml"
-          compatibility_flags = ["nodejs_compat"]
-          compatibility_date = "2024-09-23"
-          ```
-
-          或者，如果只需要 AsyncLocalStorage 支持：
-
-          ```toml title="wrangler.toml"
-          compatibility_flags = ["nodejs_als"]
-          ```
-
-          在下一个主要版本中，我们将默认假设支持 AsyncLocalStorage，因此此配置将成为必需。
+          Cloudflare 特定配置请参阅 [Cloudflare 指南](/docs/guides/cloudflare)。
         </Callout>
       </Tab>
 

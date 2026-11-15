@@ -108,7 +108,7 @@ export const auth = betterAuth({
 ```ts
 export const auth = betterAuth({
 	trustedOrigins: async (request) => {
-		// 在初始化和调用 auth.api 时，request 为 undefined
+		// request is undefined at initialization and on some auth.api calls
 		if (!request) {
 			return ["https://my-frontend.com"];
 		}
@@ -119,7 +119,17 @@ export const auth = betterAuth({
 ```
 
 <Callout type="info">
-  `request` 参数在初始化和直接调用 `auth.api` 时为 `undefined`。请确保处理此情况并返回默认可信来源。
+  当 `request` 为 `undefined` 时，请返回默认可信来源。以下情况中，Better Auth 调用此函数时不会传入 request：
+
+  * **初始化时。** Better Auth 启动时会调用一次。
+  * **使用静态 `baseURL`（字符串或未设置）直接调用 `auth.api` 时。** 这些调用会使用初始化时解析出的来源。
+  * **使用动态 `baseURL` 直接调用 `auth.api`，且没有传入 `request`，也没有传入含 `Host` 或 `X-Forwarded-Host` 的 `headers` 时。** 此时会使用 `fallback` URL。若未设置 `fallback`，调用会报错。
+
+其他情况下，函数会收到一个 `Request`：
+
+  * **请求 auth 处理器时。** 函数会收到传入的 `Request`。
+  * **使用动态 `baseURL` 直接调用 `auth.api` 时。** 函数会收到传入的 `request`。如果改为传入 `headers`，Better Auth 会根据这些请求头创建 `Request`。请求头必须包含 `Host`；启用 `advanced.trustedProxyHeaders` 时，也可以包含 `X-Forwarded-Host`。
+  * **使用静态 `baseURL` 直接调用带有独立 CSRF 检查的端点时**，例如邮箱登录和注册。该检查可能会再次调用此函数，并传入你提供的 `request`。
 </Callout>
 
 ### 通配符支持
@@ -569,11 +579,11 @@ export const auth = betterAuth({
 })
 ```
 
-* `modelName`: 验证表的模型名称
-* `fields`: 将字段映射到不同的列名
-* `disableCleanup`: 当获取某个验证值时，禁用清理过期值
-* `storeIdentifier`: 如何存储诸如 token 和 OTP key 之类的验证标识符。支持 `"plain"`、`"hashed"` 或自定义哈希器。你也可以使用 `{ default, overrides }` 来对每个标识符前缀应用不同策略。
-* `storeInDatabase`: 即使配置了 `secondaryStorage`，也将验证记录存入数据库。默认值：`false`。
+* `modelName`：验证表的模型名称
+* `fields`：将字段映射到不同列名
+* `disableCleanup`：禁用从数据库删除过期验证行。未设置时，查询验证值若发现对应行已过期，会删除该行。每个服务器实例每分钟还会在查询时删除所有过期行。
+* `storeIdentifier`：验证标识符（如 token 和 OTP key）的存储方式。支持 `"plain"`、`"hashed"` 或自定义哈希器。也可以使用 `{ default, overrides }`，按标识符前缀应用不同策略。
+* `storeInDatabase`：即使已配置 `secondaryStorage`，也将验证记录存入数据库。默认值为 `false`。
 
 使用 `storeIdentifier.overrides` 时，Magic Link 标识符以 `magic-link:` 开头，数据库存储的 OAuth 和 SAML relay state 标识符以 `auth-state:` 开头。覆盖规则会在标识符存储或哈希前匹配这些前缀。此前缀仅用于验证存储；Magic Link 中发送的令牌，以及发送给 OAuth 提供商或 SAML 身份提供商的 state 均保持不变。
 

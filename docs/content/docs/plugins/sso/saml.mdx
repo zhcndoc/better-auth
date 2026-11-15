@@ -154,7 +154,7 @@ samlConfig: {
 | 字段          | 默认属性                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------- |
 | `email`       | `email`，其次为 `NameID`                                                                        |
-| `name`        | `displayName`；仅在 `firstName` 和 `lastName` 均不存在时读取，否则根据 `NameID` 生成             |
+| `name`        | 有值时拼接 `firstName` 和 `lastName`；两者均无值时，依次读取 `displayName` 和 `NameID`          |
 | `firstName`   | `givenName`，与 `lastName` 拼接后生成 `name`                                                     |
 | `lastName`    | `surname`，与 `firstName` 拼接后生成 `name`                                                     |
 | `extraFields` | 每个条目中指定的属性                                                                            |

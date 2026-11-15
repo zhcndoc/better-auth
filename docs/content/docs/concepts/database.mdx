@@ -123,13 +123,11 @@ await runMigrations();
 
 ## 架构验证
 
-初始化期间，Better Auth 会将架构与其写入数据的表进行比较，并报告缺失的表、缺失的列，以及它从未填充的必需列，同时提供相应的修复方法。错误会通过你配置的日志记录器显示，无需等待身份验证请求。请求会等待同一项检查；如果架构不匹配，请求将失败。验证不会自动停止服务器或构建。每当你想显式检查架构而不发出身份验证请求时，都可以运行 [`npx auth@latest check schema`](/docs/concepts/cli#架构)。
+首次使用 auth 实例时，Better Auth 会检查数据库是否包含所需的表和列。如果不匹配，请求会失败，并显示如何修复的说明。若要提前检查，请运行 [`npx auth@latest check schema`](/docs/concepts/cli#schema)。
 
-默认情况下会启用验证，包括在生产环境中；每个适配器实例都会缓存通过检查的结果或不匹配情况。编程式迁移会使同一数据库实例的缓存检查失效。等待检查结果的请求会等待新的检查结果。使用其他工具应用架构更改后，请重启。Kysely 会读取实时数据库元数据，因此初始化期间需要访问数据库。Drizzle 会检查配置的架构对象，Prisma 会检查生成的客户端数据模型，两者都不会查询数据库。这些本地检查无法检测尚未应用到数据库的迁移。精简的 `prisma-client` 模型不包含可空性信息，因此 `auth generate` 会报告未写入的必需列。没有已注册检查的自定义适配器不会进行验证。
+Drizzle 和 Prisma 会根据架构定义进行检查，因此无法判断迁移是否已经应用。
 
-对于不支持架构验证的适配器，如果你显式设置 `validateSchema: true`，初始化时会记录一条警告；如果省略此选项，则会记录一条调试消息。数据库操作会照常进行。
-
-将 `advanced.database.validateSchema` 设置为 `false`，即可禁用运行时验证及其跳过提示。`auth migrate` 和 `auth generate` 仍会保留各自的架构诊断功能。
+若要禁用运行时验证，请将 `advanced.database.validateSchema` 设为 `false`。
 
 ```ts title="auth.ts"
 import { betterAuth } from "better-auth";

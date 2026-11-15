@@ -22,12 +22,12 @@ description: 控制提供者签发哪些令牌、面向哪些 API，以及令牌
 
 若要控制客户端可以申请哪些 scope，请设置 `scopes`。默认值为 `["openid", "profile", "email", "offline_access"]`。只有该列表包含 `openid` 时，提供者才会作为 OpenID 提供者运行。
 
-| 范围             | 授予内容                                                       |
-| ---------------- | -------------------------------------------------------------- |
-| `openid`         | ID 令牌和 `sub` 声明                                           |
-| `profile`        | UserInfo 中的 `name`、`picture`、`given_name` 和 `family_name`  |
-| `email`          | UserInfo 中的 `email` 和 `email_verified`                      |
-| `offline_access` | 刷新令牌                                                       |
+| 范围             | 授予内容                                                                    |
+| ---------------- | --------------------------------------------------------------------------- |
+| `openid`         | ID 令牌和 `sub` 声明                                                         |
+| `profile`        | UserInfo 中的 `name`、`picture`、`given_name` 和 `family_name`               |
+| `email`          | UserInfo 中的 `email` 和 `email_verified`                                   |
+| `offline_access` | 刷新令牌（客户端已注册 `refresh_token` 或 `authorization_code` 授权许可时） |
 
 对于会签发访问令牌的流程，按照 [OIDC Core §5.4](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims) 的规定，标准声明会在 UserInfo 中返回，而不在 ID 令牌中返回。
 
@@ -187,6 +187,7 @@ await auth.api.adminCreateOAuthClient({
 * 注册时设置了 `dpop_bound_access_tokens: true`（[§5.2](https://datatracker.ietf.org/doc/html/rfc9449#section-5.2)）。
 * 在授权请求中发送了 `dpop_jkt`。
 * 申请的资源设置了 `dpopBoundAccessTokensRequired: true`。
+* 在令牌请求中发送了 `DPoP` proof。
 
 随后，token 端点会要求提供 DPoP proof（[§5](https://datatracker.ietf.org/doc/html/rfc9449#section-5)），并返回 `token_type: "DPoP"`。刷新令牌时必须使用同一密钥的 proof。JWT 访问令牌会在 `cnf.jkt` 中携带该密钥的 thumbprint。客户端调用 API 时，应发送 `Authorization: DPoP <access_token>` 和 `DPoP` proof，其中包含访问令牌哈希 `ath`（[§7](https://datatracker.ietf.org/doc/html/rfc9449#section-7)）。
 
@@ -258,7 +259,7 @@ oauthProvider({
 
 * **不透明访问令牌**：删除该令牌。同一授权许可中的刷新令牌仍有效。
 * **刷新令牌**：撤销该令牌，并删除其签发的不透明访问令牌。签发的 JWT 访问令牌仍会在过期前有效。
-* **JWT 访问令牌**：由于从未存储，因此无法撤销。有效的 JWT 会返回 400 `unsupported_token_type`（[RFC 7009 §2.2.1](https://datatracker.ietf.org/doc/html/rfc7009#section-2.2.1)）。
+* **JWT 访问令牌**：由于从未存储，因此无法撤销。仍可通过验证的 JWT 会返回 400 `unsupported_token_type`（[RFC 7009 §2.2.1](https://datatracker.ietf.org/doc/html/rfc7009#section-2.2.1)）。已过期的 JWT，或其受众指向未注册资源的 JWT，会被视为未知令牌并返回 200。
 
 若要限制 JWT 访问令牌的有效期，请缩短 `accessTokenExpiresIn`，或结束用户会话。带有 `sid` 的 JWT 会在会话结束后被核查为非活跃，并被 UserInfo 拒绝。`client_credentials` JWT 不关联会话，其唯一限制就是有效期。
 

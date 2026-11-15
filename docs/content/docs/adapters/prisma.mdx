@@ -7,10 +7,10 @@ description: 将 Better Auth 与 Prisma 集成。
 Prisma ORM 是一个开源的数据库工具包，通过提供类型安全的查询构建器和直观的数据建模界面，简化了应用程序中的数据库访问和管理。
 
 有关 Prisma ORM 的介绍，请参阅
-[Prisma 入门](https://www.prisma.io/docs/getting-started)。
+[Prisma 入门](https://www.prisma.io/docs/v7/getting-started)。
 
 <Callout type="info">
-  本指南使用 Prisma 7 和 PostgreSQL。如果您使用的是 Prisma 6 或更早版本，驱动适配器是可选的，您现有的 Prisma Client 设置可以保持不变。
+  本指南使用 Prisma 7 和 PostgreSQL。如果您使用的是 Prisma 6 或更早版本，驱动适配器是可选的，现有的 Prisma Client 设置可以保持不变。适配器尚不支持 API 不同的 Prisma ORM 8，相关问题见 [#9636](https://github.com/better-auth/better-auth/issues/9636)。由于 npm 上的 `prisma` 和 `@prisma/client` 现在会解析到 Prisma 8 候选版本，请按下文所示显式安装 Prisma 7。
 </Callout>
 
 ## 安装
@@ -22,7 +22,7 @@ Prisma ORM 是一个开源的数据库工具包，通过提供类型安全的查
 ```
 
 以下示例使用 Prisma 7 和 PostgreSQL。如果尚未配置 Prisma，请先按照
-[Prisma 的 PostgreSQL 快速入门](https://www.prisma.io/docs/prisma-orm/quickstart/postgresql)
+[Prisma 7 的 PostgreSQL 快速入门](https://www.prisma.io/docs/v7/prisma-orm/quickstart/postgresql)
 进行操作，然后再继续。
 
 ## 设置
@@ -32,7 +32,7 @@ Prisma ORM 是一个开源的数据库工具包，通过提供类型安全的查
 <Files>
   <File name=".env" />
 
-  <File name="prisma.config.ts" />
+  <File name="prisma7.config.ts" />
 
   <Folder name="prisma" defaultOpen>
     <File name="schema.prisma" />
@@ -55,14 +55,23 @@ Prisma ORM 是一个开源的数据库工具包，通过提供类型安全的查
 
 ### 配置 Prisma
 
-如果您要开始一个新的 Prisma 项目，请使用 PostgreSQL 和显式的 Prisma Client 输出路径进行初始化：
+如果您要开始一个新的 Prisma 项目，请先安装 Prisma 7 CLI、Prisma Client 和 PostgreSQL 驱动适配器：
+
+```package-install title="Install Prisma 7"
+-D prisma@7
+```
+
+```package-install title="Install Prisma Client and the PostgreSQL adapter"
+@prisma/client@7 @prisma/adapter-pg@7
+```
+
+然后使用 PostgreSQL 和显式的 Prisma Client 输出路径初始化 Prisma：
 
 ```package-install title="Initialize Prisma"
 npx prisma init --datasource-provider postgresql --output ../src/generated/prisma
 ```
 
-这会创建 `prisma/schema.prisma`、`prisma.config.ts` 和 `.env`。在 `.env` 中将
-`DATABASE_URL` 设置为您的 PostgreSQL 连接字符串。
+这会创建 `prisma/schema.prisma`、`prisma7.config.ts` 和 `.env`。Prisma 7.10 之前的版本将配置文件命名为 `prisma.config.ts`。在 `.env` 中将 `DATABASE_URL` 设置为 PostgreSQL 连接字符串。
 
 如果项目中已经配置了 Prisma，请保留现有的数据源和输出路径，并跳过此初始化命令。
 

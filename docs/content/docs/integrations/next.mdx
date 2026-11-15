@@ -94,7 +94,7 @@ export async function ServerComponent() {
 
 ### 服务器操作中的 Cookie
 
-当你在服务器操作中调用需要设置 Cookie 的函数，如 `signInEmail` 或 `signUpEmail`，Cookie 不会被自动设置。因为服务器操作需要使用 Next.js 的 `cookies` 助手来设置 Cookie。
+在服务器操作中调用 `signOut` 等需要设置 Cookie 的函数时，Cookie 不会自动设置。这是因为服务器操作需要使用 Next.js 的 `cookies` 辅助函数来设置 Cookie。
 
 为简化操作，你可以使用 `nextCookies` 插件，它会在响应头中包含 `Set-Cookie` 时自动设置 Cookie。
 
@@ -112,14 +112,12 @@ export const auth = betterAuth({
 
 ```ts
 "use server";
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth"
 
-const signIn = async () => {
-    await auth.api.signInEmail({
-        body: {
-            email: "user@email.com",
-            password: "password",
-        }
+export const signOut = async () => {
+    await auth.api.signOut({
+        headers: await headers()
     })
 }
 ```

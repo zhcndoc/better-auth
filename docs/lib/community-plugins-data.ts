@@ -376,14 +376,13 @@ export const communityPlugins: CommunityPlugin[] = [
 		},
 	},
 	{
-		name: "better-inbox",
-		url: "https://github.com/better-inbox/better-inbox",
-		description:
-			"In-app notifications for Better Auth apps. One plugin, one migration, one component — notifications live in your database, addressed to your users.",
+		name: "BYO (byo-oss)",
+		url: "https://byo.dev",
+		description: "面向 better-auth 应用的开源软件包。",
 		author: {
-			name: "stewartjarod",
-			github: "stewartjarod",
-			avatar: "https://github.com/stewartjarod.png",
+			name: "byo-oss",
+			github: "byo-oss",
+			avatar: "https://github.com/byo-oss.png",
 		},
 	},
 	{
@@ -538,6 +537,28 @@ export const communityPlugins: CommunityPlugin[] = [
 			name: "Daniel Merja",
 			github: "danielmerja",
 			avatar: "https://github.com/danielmerja.png",
+		},
+	},
+	{
+		name: "@mockatoo/connect-better-auth",
+		url: "https://github.com/mockatoo/connectors/tree/main/packages/connectors/better-auth",
+		description:
+			"用于开发、端到端测试、CI 和编程代理的托管 OAuth 模拟提供者。可直接模拟 Google、GitHub、Microsoft、Apple、Discord、LinkedIn、X 和 Facebook 提供者，无需注册应用或使用真实账户，应用代码和实际令牌交换流程也无需更改。",
+		author: {
+			name: "Tianhui Michael Li",
+			github: "tianhuil",
+			avatar: "https://github.com/tianhuil.png",
+		},
+	},
+	{
+		name: "@mailkite/better-auth-inbox",
+		url: "https://github.com/mailkite/mailkite-better-auth-inbox",
+		description:
+			"为应用提供真实邮箱。通过经过签名验证的 webhook 接收邮件，并通过受会话范围限制的端点列出、读取、整理邮件线程和回复邮件；权限可按用户或组织划分。",
+		author: {
+			name: "MailKite",
+			github: "mailkite",
+			avatar: "https://github.com/mailkite.png",
 		},
 	},
 ];

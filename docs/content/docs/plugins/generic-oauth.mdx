@@ -389,11 +389,14 @@ genericOAuth({
 });
 ```
 
-**authorizationHeaders**：（可选）授权请求中包含的自定义头。适用于需要特殊头的提供商。
+**discoveryHeaders**：（可选）发现请求中要包含的自定义请求头，适用于要求特殊请求头的提供商。Better Auth 只会向 `discoveryUrl` 的源（scheme、主机和端口）发送这些请求头：
 
-**overrideUserInfo**：（可选）为 true 时，每次登录时用提供商信息更新数据库中的用户信息。默认 `false`。
+* 发现请求只会跟随同一源内的重定向。如果 `discoveryUrl` 重定向到其他源，发现流程会失败，Better Auth 会记录错误。请将 `discoveryUrl` 设置为最终 URL。
+* 当提供商的签名密钥请求（`jwks_uri`）位于同一源时，也会携带这些请求头。若 `jwks_uri` 位于其他源，则不会携带。
 
-## 安全性：发行者验证
+**authorizationHeaders**：（可选）向令牌端点发送请求时要包含的自定义请求头，适用于授权码兑换和令牌刷新。自定义 `getToken` 会替代默认的授权码兑换逻辑，因此必须自行添加这些请求头。此选项适用于要求特殊请求头的提供商。
+
+**overrideUserInfo**：（可选）为 `true` 时，每次登录都会使用提供商信息更新数据库中的用户信息。默认值为 `false`。
 
 ## 高级用法
 

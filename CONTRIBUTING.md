@@ -206,6 +206,7 @@ LEFTHOOK_EXCLUDE=spell git commit -m "your message"
 - 清晰简洁。
 - 说明发生了什么变化，而不是使用类似提交信息的前缀（例如 `fix:`、`feat:`）。
 - 描述用户遇到的症状，而不是内部原因。
+- 每个 changeset 只描述一项用户可见的改动。如果 PR 修复了多个问题，请为每项改动分别添加 changeset。
 
 如果你不确定改动是否需要 changeset，维护者会在合并前处理。
 

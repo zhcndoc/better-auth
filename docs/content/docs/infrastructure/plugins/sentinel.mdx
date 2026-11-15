@@ -35,7 +35,7 @@ export const auth = betterAuth({
 | `kvOptions`       | `object`               | KV HTTP options. Accepts `timeout?: number` (ms, default `1000`), `retry?: { attempts?: number; baseDelay?: number; maxDelay?: number }`, and `headers?: Record<string, string>`. |
 | `apiTimeout`      | `number`               | Deprecated alias for `apiOptions.timeout`.                                                                                                                                        |
 | `kvTimeout`       | `number`               | Deprecated alias for `kvOptions.timeout`.                                                                                                                                         |
-| `sentinelHeaders` | `"legacy" \| "modern"` | 身份识别和 PoW 使用的请求头名称。默认值：`"legacy"`。必须与客户端一致。请参阅[协议请求头](#protocol-headers-sentinelheaders)。                                                |
+| `sentinelHeaders` | `"legacy" \| "modern"` | 服务器写入的 PoW 挑战请求头名称。`"modern"` 还会写入 `X-Sentinel-PoW-*`，但不会更改身份识别请求头的读取方式。无需与客户端配置一致。请参阅[协议请求头](#protocol-headers-sentinelheaders)。 |
 | `security`        | `SecurityOptions`      | Security feature configuration.                                                                                                                                                   |
 
 ### SecurityOptions
@@ -311,9 +311,7 @@ sentinel({
 
 ## Protocol headers (`sentinelHeaders`)
 
-Sentinel 通过 HTTP 请求头传递访客身份和 PoW 挑战。默认的 `"legacy"` 名称（`X-Request-Id`、`X-Visitor-Id`、`X-PoW-*`）有时会被代理重写。将 `sentinelHeaders` 设为 `"modern"`，即可改用不易被代理改写的 `X-Sentinel-*` 名称。
-
-此选项可用于 `sentinel()`、`sentinelClient()` 和 `sentinelNativeClient()`。默认值：`"legacy"`。服务器和客户端必须使用相同值。写入时只使用已配置的一组名称；读取时两组名称均可识别。
+Sentinel 通过 HTTP 请求头传递访客身份和 PoW 挑战。`sentinelHeaders` 决定 `sentinel()`、`sentinelClient()` 和 `sentinelNativeClient()` 写入的请求头名称。默认值为 `"legacy"`。服务器和客户端的设置彼此独立。
 
 | 用途          | `"legacy"`（默认）  | `"modern"`                |
 | ------------- | -------------------- | -------------------------- |
@@ -323,15 +321,21 @@ Sentinel 通过 HTTP 请求头传递访客身份和 PoW 挑战。默认的 `"leg
 | PoW 原因      | `X-PoW-Reason`       | `X-Sentinel-PoW-Reason`    |
 | PoW 解答      | `X-PoW-Solution`     | `X-Sentinel-PoW-Solution`  |
 
-```ts title="auth.ts"
-sentinel({
-  apiKey: process.env.BETTER_AUTH_API_KEY,
-  sentinelHeaders: "modern",
-})
-```
+客户端只会写入所选协议头组。只有身份识别成功后才会发送请求 ID。
+
+`sentinelHeaders: "modern"` 的服务器仍会发送 `X-PoW-Challenge` 和 `X-PoW-Reason`，并额外发送 `X-Sentinel-PoW-Challenge` 和 `X-Sentinel-PoW-Reason`，以便旧客户端读取挑战。这不会更改身份识别或 PoW 解答请求头的读取方式。`"legacy"` 服务器只会发送 `X-PoW-*`。
+
+访客 ID、PoW 挑战、PoW 原因和 PoW 解答会优先从 `X-Sentinel-*` 读取，然后回退到旧名称。身份识别请求 ID 的规则更严格：即使服务器选项为 `"legacy"`，也会优先使用 `X-Sentinel-Request-Id`。只有设置了 `X-Visitor-Id` 且未设置 `X-Sentinel-Visitor-Id` 时，才会使用 `X-Request-Id`。单独出现的 `X-Request-Id` 会被忽略。如果设置了 `X-Sentinel-Visitor-Id`，却没有 `X-Sentinel-Request-Id`，旁边的 `X-Request-Id` 也会被忽略：这表示客户端没有存储身份识别请求 ID。
+
+<Callout type="warn">
+  Envoy 等代理经常设置或替换 `X-Request-Id`，服务器无法区分代理写入的值与旧客户端发送的值。请保持传入的 `X-Request-Id` 不变，且客户端未发送时不要自行添加。如果代理会替换此请求头，请在 `sentinelClient()` 和 `sentinelNativeClient()` 中设置 `sentinelHeaders: "modern"`。修改服务器选项无法解决此问题，转发代理生成的 ID 也不能替代客户端 ID。
+
+  在所有客户端都改为发送 `X-Sentinel-*` 之前，请转发客户端的 `X-Request-Id`（不要替换）、`X-Visitor-Id` 和 `X-PoW-Solution`，以及 `X-Sentinel-Request-Id`、`X-Sentinel-Visitor-Id` 和 `X-Sentinel-PoW-Solution`。只有同时存在 `X-Visitor-Id` 时，旧版 `X-Request-Id` 才有效。不要从响应中移除 `X-PoW-*` 或 `X-Sentinel-PoW-*`，也不要将代理 ID 复制到 `X-Sentinel-Request-Id`。同源客户端和原生客户端无需配置下方的 CORS 列表。请勿为了规避被重写的 `X-Request-Id` 而关闭安全检查。
+</Callout>
 
 ```ts title="auth-client.ts"
 sentinelClient({
+  // When a proxy rewrites X-Request-Id. Independent of the server option.
   sentinelHeaders: "modern",
   autoSolveChallenge: true,
 })
@@ -344,49 +348,58 @@ sentinelNativeClient({
 })
 ```
 
+```ts title="auth.ts"
+sentinel({
+  apiKey: process.env.BETTER_AUTH_API_KEY,
+  // Optional. Dual-writes challenge headers. Does not change identify reads.
+  sentinelHeaders: "modern",
+})
+```
+
 ### 跨域 CORS
 
-同源浏览器应用和原生客户端无需为 Sentinel 请求头配置 CORS。
+同源浏览器应用和原生客户端无需为这些请求头配置 CORS。跨域浏览器客户端则需要配置，并列出请求头的**确切名称**。带凭据的请求不适用 `Access-Control-Allow-Headers: *` 和 `Access-Control-Expose-Headers: *`。
 
-跨域浏览器客户端则需要配置。访客 ID 和 PoW 请求头不属于简单请求头，因此认证 API 必须列出这些请求头的**确切名称**，浏览器才会发送或读取它们。对于带凭据的请求，不能使用 `Access-Control-Allow-Headers: *` 或 `Access-Control-Expose-Headers: *`。
+请允许客户端发送的请求头，并公开服务器返回的挑战请求头。浏览器只能读取已公开的名称；`"legacy"` 服务器不会发送 `X-Sentinel-PoW-*`。
 
-请根据使用的请求头组（`sentinelHeaders`）配置 CORS：
+| 请求头发送方         | 预检时允许（请求头）                                                        | 响应中公开                                                                           |
+| -------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 旧版客户端           | `X-Request-Id`、`X-Visitor-Id`、`X-PoW-Solution`                             | —                                                                                    |
+| 新版客户端           | `X-Sentinel-Request-Id`、`X-Sentinel-Visitor-Id`、`X-Sentinel-PoW-Solution`  | —                                                                                    |
+| `"legacy"` 服务器   | —                                                                           | `X-PoW-Challenge`、`X-PoW-Reason`                                                     |
+| `"modern"` 服务器   | —                                                                           | `X-PoW-Challenge`、`X-PoW-Reason`、`X-Sentinel-PoW-Challenge`、`X-Sentinel-PoW-Reason` |
 
-|            | 预检时允许（请求头）                                                       | 响应中公开的请求头                                  |
-| ---------- | --------------------------------------------------------------------------- | --------------------------------------------------- |
-| `"legacy"` | `X-Request-Id`, `X-Visitor-Id`, `X-PoW-Solution`                            | `X-PoW-Challenge`, `X-PoW-Reason`                   |
-| `"modern"` | `X-Sentinel-Request-Id`, `X-Sentinel-Visitor-Id`, `X-Sentinel-PoW-Solution` | `X-Sentinel-PoW-Challenge`, `X-Sentinel-PoW-Reason` |
+只要仍有浏览器客户端或服务器使用 `"legacy"`，就要允许并公开两组请求头。只允许新版请求头会阻止旧版浏览器客户端；只公开 `X-Sentinel-PoW-*` 则会让客户端读不到 `"legacy"` 服务器发出的挑战。
 
-* **允许（请求）**：客户端发送的请求头，包括请求 ID、访客 ID，以及重试挑战时发送的 PoW 解答。
-* **公开（响应）**：客户端自动完成挑战时必须读取的请求头，包括 `423` 响应中的 PoW 挑战和原因。
-
-如果服务器和客户端暂时使用不同的 `sentinelHeaders` 值，请同时允许和公开**两组**请求头，以确保双方仍能收发请求头。
-
-`"modern"` 配置示例：
+所有浏览器客户端都改为只发送 `X-Sentinel-*` 后，可以从 `allowedHeaders` 中移除旧版名称。只有服务器已设为 `"modern"` 且 `X-Sentinel-PoW-Challenge` 和 `X-Sentinel-PoW-Reason` 已公开时，才能从 `exposedHeaders` 中移除 `X-PoW-Challenge` 和 `X-PoW-Reason`。
 
 ```ts
 {
   // Your real app origin only — not "*"
+  // Both families while any browser client or the server is still "legacy".
   origin: "https://app.example.com",
   credentials: true,
   allowedHeaders: [
     "Content-Type",
     "Authorization",
+    "X-Request-Id",
+    "X-Visitor-Id",
+    "X-PoW-Solution",
     "X-Sentinel-Request-Id",
     "X-Sentinel-Visitor-Id",
     "X-Sentinel-PoW-Solution",
   ],
   exposedHeaders: [
+    "X-PoW-Challenge",
+    "X-PoW-Reason",
     "X-Sentinel-PoW-Challenge",
     "X-Sentinel-PoW-Reason",
   ],
 }
 ```
 
-若使用 `"legacy"`，请将示例中的 `X-Sentinel-*` 名称替换为表中的旧版名称。
-
 <Callout type="warn">
-  请将 CORS 限制在你控制的来源内（请参阅[受信任来源](/docs/reference/security#trusted-origins)）。请勿在带凭据的认证请求中将 `origin` 设为 `"*"`。
+  请将 CORS 限制在你控制的来源内（请参阅[受信任来源](/docs/reference/security#trusted-origins)）。请勿在带凭据的请求中将 `origin` 设为 `"*"`，也不要为了让这些请求头生效而关闭来源或 CSRF 检查。
 </Callout>
 
 ## Proof-of-Work Challenges
@@ -438,7 +451,7 @@ export const authClient = createAuthClient({
 | --------------------- | ------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `identifyUrl`         | `string`                        | `BETTER_AUTH_KV_URL` or `https://kv.better-auth.com`                       | Base URL for the identify endpoint.                                                                                |
 | `identifyOptions`     | `object`                        | `{ timeout: 1000, retry: { attempts: 2, baseDelay: 400, maxDelay: 600 } }` | Identify HTTP timeout and retry policy.                                                                            |
-| `sentinelHeaders`     | `"legacy" \| "modern"`          | `"legacy"`                                                                 | 访客 ID 和 PoW 的请求头名称。必须与服务器一致。请参阅[协议请求头](#protocol-headers-sentinelheaders)。 |
+| `sentinelHeaders`     | `"legacy" \| "modern"`          | `"legacy"`                                                                 | 客户端发送的请求头名称。`"modern"` 只发送 `X-Sentinel-*`，无需与服务器配置一致。代理重写 `X-Request-Id` 时，请在客户端设置此项。请参阅[协议请求头](#protocol-headers-sentinelheaders)。 |
 | `autoSolveChallenge`  | `boolean`                       | `true`                                                                     | Automatically solve PoW challenges.                                                                                |
 | `kvTimeout`           | `number`                        | `1000`                                                                     | Deprecated alias for `identifyOptions.timeout`.                                                                    |
 | `onChallengeReceived` | `(reason: string) => void`      | —                                                                          | Called when a PoW challenge is received.                                                                           |
@@ -447,7 +460,7 @@ export const authClient = createAuthClient({
 
 ### 浏览器指纹
 
-客户端会通过访客 ID 请求头（`X-Visitor-Id`；当 `sentinelHeaders: "modern"` 时为 `X-Sentinel-Visitor-Id`）自动在请求中附带访客 ID。此指纹用于：
+客户端会在每个请求中发送访客 ID，并在身份识别成功后发送请求 ID（[请求头名称](#protocol-headers-sentinelheaders)）。安全检查使用与身份识别记录关联的访客 ID，而不是单独依赖访客 ID 请求头。Sentinel 会使用该记录进行：
 
 * 凭证填充检测
 * 免费试用滥用防护
@@ -455,7 +468,7 @@ export const authClient = createAuthClient({
 
 ### PoW 解答请求头
 
-启用自动解答后，已解答的挑战会通过 PoW 解答请求头发送（`X-PoW-Solution`；当 `sentinelHeaders: "modern"` 时为 `X-Sentinel-PoW-Solution`）。
+启用自动解答后，重试请求会通过 `X-PoW-Solution` 发送解答；客户端使用 `"modern"` 时则会使用 `X-Sentinel-PoW-Solution`。服务器接受这两种请求头名称。
 
 ### Expo 和 React Native
 
@@ -526,7 +539,7 @@ export const authClient = createAuthClient({
 | --------------------- | ------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `identifyUrl`         | `string`                        | `BETTER_AUTH_KV_URL`, then `https://kv.better-auth.com`                    | Identify endpoint base URL.                                                                                        |
 | `identifyOptions`     | `object`                        | `{ timeout: 1000, retry: { attempts: 2, baseDelay: 400, maxDelay: 600 } }` | Identify HTTP timeout and retry policy.                                                                            |
-| `sentinelHeaders`     | `"legacy" \| "modern"`          | `"legacy"`                                                                 | 访客 ID 和 PoW 的请求头名称。必须与服务器一致。请参阅[协议请求头](#protocol-headers-sentinelheaders)。 |
+| `sentinelHeaders`     | `"legacy" \| "modern"`          | `"legacy"`                                                                 | 客户端发送的请求头名称。`"modern"` 只发送 `X-Sentinel-*`，无需与服务器配置一致。代理重写 `X-Request-Id` 时，请在客户端设置此项。请参阅[协议请求头](#protocol-headers-sentinelheaders)。 |
 | `kvTimeout`           | `number`                        | `1000`                                                                     | Deprecated alias for `identifyOptions.timeout`.                                                                    |
 | `autoSolveChallenge`  | `boolean`                       | `true`                                                                     | On `423` with a PoW challenge header, solve and retry once with the solution header.                               |
 | `onChallengeReceived` | `(reason: string) => void`      | —                                                                          | Called when a PoW challenge is received.                                                                           |
@@ -639,9 +652,10 @@ export const auth = betterAuth({
 
 如果 PoW 挑战无法解决：
 
-1. 验证正确的客户端插件：Web 使用 `sentinelClient()`（来自 `@better-auth/infra/client`），Expo / React Native 使用 `sentinelNativeClient()`（来自 `@better-auth/infra/native`）
+1. 验证使用了正确的客户端插件：Web 使用 `sentinelClient()`（来自 `@better-auth/infra/client`），Expo / React Native 使用 `sentinelNativeClient()`（来自 `@better-auth/infra/native`）
 2. 检查 `autoSolveChallenge` 是否为 `true`
 3. 确保客户端可以访问服务器
+4. 跨域时，公开服务器返回的挑战请求头（`X-PoW-*`，以及服务器使用 `"modern"` 时的 `X-Sentinel-PoW-*`）。请列出确切名称，不要使用 `*`。请参阅[协议请求头](#protocol-headers-sentinelheaders)。
 
 ### 误报率过高
 

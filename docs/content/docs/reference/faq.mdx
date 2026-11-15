@@ -184,16 +184,20 @@ description: 关于 Better Auth 的常见问题。
     <Callout type="warn">
       **对于 Yarn v1 / pnpm v9 用户：**
 
-      手动安装 `better-call` 并将其同时添加到 `dependencies` 和 `resolutions` 中，以强制它提升到顶层：
+      手动安装 `better-call`，并将其同时添加到 `dependencies` 和 `resolutions`，以强制提升到顶层。
+
+      请使用当前 `better-auth` 版本依赖的确切 `better-call` 版本。若要查找该版本，请打开 `node_modules/better-auth/package.json`，查看 `dependencies` 中的 `better-call`。Better Auth 插件声明的 `better-call` 对等依赖版本与之匹配。像 `^1.4.5` 这样的范围可能会解析到插件不支持的较新次要版本。
+
+      例如，`better-auth` 1.7.23 依赖 `better-call` 1.4.5：
 
       ```json title="package.json"
       {
         "dependencies": {
-          "better-call": "^1.1.8",
-          // ... 其他依赖
+          "better-call": "1.4.5",
+          // ... other dependencies
         },
         "resolutions": {
-          "better-call": "^1.1.8"
+          "better-call": "1.4.5"
         }
       }
       ```
@@ -230,11 +234,7 @@ description: 关于 Better Auth 的常见问题。
     <Callout type="info">
       **对于 Cloudflare Workers 用户：**
 
-      确保在 `wrangler.toml` 中启用了 `nodejs_compat` 兼容标志：
-
-      ```toml title="wrangler.toml"
-      compatibility_flags = ["nodejs_compat"]
-      ```
+      请在 Worker 中启用 Node.js 兼容性。详情请参阅 [Cloudflare 指南](/docs/guides/cloudflare#nodejs-compatibility)。
     </Callout>
 
     #### 验证修复

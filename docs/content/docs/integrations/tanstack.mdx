@@ -47,47 +47,62 @@ export const Route = createFileRoute('/api/auth/$')({
 
 ### 使用技巧
 
-* 我们建议使用客户端 SDK 或 `authClient` 来处理身份验证，而不是使用带有 `auth.api` 的服务器操作。
-* 当您调用需要设置 Cookie 的函数（如 `signInEmail` 或 `signUpEmail`）时，您需要为 TanStack Start 处理 Cookie 设置。Better Auth 提供了 `tanstackStartCookies` 插件来自动为您处理此问题。
+* 建议使用客户端 SDK 或 `authClient` 处理身份验证，而不要使用基于 `auth.api` 的服务器操作。
+* 在服务器上调用 `signOut` 等需要设置 Cookie 的函数时，需要为 TanStack Start 处理 Cookie 设置。Better Auth 提供了 `tanstackStartCookies` 插件来自动处理。
 
-React（TanStack Start + React）示例：
+<Tabs items={["React", "Solid"]}>
+  <Tab value="React">
+    ```ts title="src/lib/auth.ts"
+    import { betterAuth } from "better-auth";
+    import { tanstackStartCookies } from "better-auth/tanstack-start";
 
-```ts title="src/lib/auth.ts"
-import { betterAuth } from "better-auth";
-import { tanstackStartCookies } from "better-auth/tanstack-start";
-
-export const auth = betterAuth({
-    //...你的配置
-    plugins: [tanstackStartCookies()] // 确保这是数组中最后一个插件
-})
-```
-
-Solid.js（TanStack Start + Solid）示例：
-
-```ts title="src/lib/auth.ts"
-import { betterAuth } from "better-auth";
-import { tanstackStartCookies } from "better-auth/tanstack-start/solid";
-
-export const auth = betterAuth({
-    //...你的配置
-    plugins: [tanstackStartCookies()] // 确保这是数组中最后一个插件
-})
-```
-
-这样，当您调用设置 Cookie 的函数时，Cookie 会自动通过 TanStack Start 的 Cookie 处理系统进行设置。
-
-```ts
-import { auth } from "@/lib/auth"
-
-const signIn = async () => {
-    await auth.api.signInEmail({
-        body: {
-            email: "user@email.com",
-            password: "password",
-        }
+    export const auth = betterAuth({
+        //...your config
+        plugins: [tanstackStartCookies()] // make sure this is the last plugin in the array
     })
-}
-```
+    ```
+
+    调用设置 Cookie 的函数时，TanStack Start 的 Cookie 处理机制会自动设置 Cookie。
+
+    ```ts title="src/lib/auth.functions.ts"
+    import { createServerFn } from "@tanstack/react-start";
+    import { getRequestHeaders } from "@tanstack/react-start/server";
+    import { auth } from "@/lib/auth"
+
+    export const signOut = createServerFn({ method: "POST" }).handler(async () => {
+        await auth.api.signOut({
+            headers: getRequestHeaders()
+        })
+    })
+    ```
+  </Tab>
+
+  <Tab value="Solid">
+    ```ts title="src/lib/auth.ts"
+    import { betterAuth } from "better-auth";
+    import { tanstackStartCookies } from "better-auth/tanstack-start/solid";
+
+    export const auth = betterAuth({
+        //...your config
+        plugins: [tanstackStartCookies()] // make sure this is the last plugin in the array
+    })
+    ```
+
+    调用设置 Cookie 的函数时，TanStack Start 的 Cookie 处理机制会自动设置 Cookie。
+
+    ```ts title="src/lib/auth.functions.ts"
+    import { createServerFn } from "@tanstack/solid-start";
+    import { getRequestHeaders } from "@tanstack/solid-start/server";
+    import { auth } from "@/lib/auth"
+
+    export const signOut = createServerFn({ method: "POST" }).handler(async () => {
+        await auth.api.signOut({
+            headers: getRequestHeaders()
+        })
+    })
+    ```
+  </Tab>
+</Tabs>
 
 ### 保护资源
 

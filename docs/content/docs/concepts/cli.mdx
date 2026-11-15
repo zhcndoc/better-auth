@@ -191,7 +191,17 @@ CLI 还提供了生成 Better Auth 实例密钥的方法。
 npx auth@latest secret
 ```
 
-## 常见问题 (常见问题)
+## 脚本与 CI
+
+在 CI 等没有交互式终端的环境中，CLI 无法提示输入。请改为通过标志传递答案，例如使用 `--yes` 确认：
+
+```package-install title="Terminal"
+npx auth@latest migrate --yes
+```
+
+如果命令无法继续运行，会报错并指出所需条件，例如某个标志或交互式终端。
+
+## 常见问题
 
 **错误：无法找到模块 X**
 

@@ -230,11 +230,11 @@ export { POST };
 
 `createMcpHandler` 会根据操作需要返回 JSON 或请求范围内的 Server-Sent Events（SSE）；它不需要由 Redis 支持的 MCP 会话存储。如果您要在多个服务器实例之间实现 `subscriptions/listen`，请为该扩展向 SDK 提供共享事件总线。OAuth 客户端、同意记录、授权码、刷新令牌、CIMD 元数据和 DPoP 重放检测仍使用持久化状态，因为它们是授权和安全记录，而不是 MCP 传输会话。
 
-`requireMcpAuth` 会读取 `Authorization` 标头，针对授权服务器的 JSON Web Key Set（JWKS）验证访问令牌，并检查签名、issuer、受众和过期时间。当访问令牌绑定了 DPoP 时，它还会强制执行 [RFC 9449](https://datatracker.ietf.org/doc/html/rfc9449) Demonstrating Proof of Possession（DPoP）。未经身份验证的请求会收到带有 RFC 9728 `WWW-Authenticate` 标头的 JSON-RPC `401`，因此 MCP 客户端可以开始授权流程。缺少必要作用域的令牌会收到带有 [RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750#section-3.1) `insufficient_scope` 质询的 `403`，MCP 客户端会使用该质询提升其授权级别。
+`requireMcpAuth` 会读取 `Authorization` 标头，针对授权服务器的 JSON Web Key Set（JWKS）验证访问令牌，并检查签名、issuer、受众和过期时间。当访问令牌绑定了 DPoP 时，它还会强制执行 [RFC 9449](https://datatracker.ietf.org/doc/html/rfc9449) Demonstrating Proof of Possession（DPoP）。未经身份验证的请求会收到带有 RFC 9728 `WWW-Authenticate` 标头的 JSON-RPC `401`，因此 MCP 客户端可以开始授权流程。缺少必要 scope 的令牌会收到带有 [RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750#section-3.1) `insufficient_scope` 质询的 `403`，MCP 客户端会使用该质询提升授权级别。若客户端使用 `DPoP` scheme 发送令牌，则会收到 `DPoP` 质询（[RFC 9449 §7.1](https://datatracker.ietf.org/doc/html/rfc9449#section-7.1)）。质询会在 `scope` 中列出缺失的 scope，在 `algs` 中列出可接受的证明算法，并且不包含 `resource_metadata`。
 
-包装器会将经过验证的访问令牌声明作为第二个回调参数传递，而不是作为数据库记录传递。示例将身份验证保留在路由边界；如果工具需要令牌上下文，请将这些声明转换为 SDK 的 `AuthInfo`，并通过 `mcpServerHandler.fetch(request, { authInfo })` 传递。`requireMcpAuth` 永远不会暴露刷新令牌，并且会针对 JWKS 在本地检查访问令牌，而无需访问数据库。DPoP 重放保护默认使用您的 auth 实例的数据库适配器，因此可以跨服务器实例工作；只有在需要其他共享存储时，才传入 `dpop.replayStore`。
+包装器会将经过验证的访问令牌声明作为第二个回调参数传递，而不是作为数据库记录传递。示例将身份验证保留在路由边界；如果工具需要令牌上下文，请将这些声明转换为 SDK 的 `AuthInfo`，并通过 `mcpServerHandler.fetch(request, { authInfo })` 传递。`requireMcpAuth` 永远不会暴露刷新令牌，并会根据 JWKS 在本地检查访问令牌。它会从 auth 实例读取签名密钥，而不是请求自身的 `/jwks` 端点，因此也适用于无法向自身主机名发送请求的运行时。密钥会缓存五分钟；如果令牌指定了未知密钥，则会提前重新获取。DPoP 重放保护默认使用 auth 实例的数据库适配器，因此可跨服务器实例生效；只有需要其他共享存储时，才传入 `dpop.replayStore`。
 
-默认情况下，`requireMcpAuth` 会从 auth 上下文读取服务器解析后的 Better Auth URL，并将其用作预期的 issuer、资源和 JWKS 基础 URL。如果 `mcp({ resource })` 使用了不同的标识符，请将相同的值传递给 `requireMcpAuth`，如上所示。当 `jwt.issuer` 为自定义值或授权服务器独立运行时，可以覆盖 issuer 或 JWKS URL：
+默认情况下，`requireMcpAuth` 会从 auth 上下文读取服务器解析后的 Better Auth URL，并将其用作预期的 issuer 和资源。如果 `mcp({ resource })` 使用了不同的标识符，请将相同的值传递给 `requireMcpAuth`，如上所示。`jwt.issuer` 为自定义值时，请覆盖 issuer。若要改为通过 HTTP 获取密钥（例如授权服务器独立运行时），请设置 `jwksUrl`：
 
 ```ts
 requireMcpAuth(auth, handler, {
@@ -344,7 +344,7 @@ export const mcpOauthOptionsType = {
 
 ## 远程 MCP Server
 
-`requireMcpAuth` 会根据你的 Better Auth 服务器的 JWKS 验证令牌，因此只要能够访问该 JWKS URL，MCP 路由就可以在任何地方运行。当资源服务器与授权服务器分开运行，或使用动态的 `baseURL` 时，请使用带有显式验证选项的 `createMcpProtectedRequestHandler`，而不是 `requireMcpAuth`。
+`requireMcpAuth` 使用传入的 auth 实例的签名密钥验证令牌。设置 `jwksUrl`，或 JWT 插件在 `jwks.remoteUrl` 发布密钥时，它会改为通过 HTTP 获取密钥。当资源服务器与授权服务器分开运行，或使用动态 `baseURL` 时，请改用带有显式验证选项的 `createMcpProtectedRequestHandler`。
 
 ```ts title="mcp-server.ts"
 import { createMcpProtectedRequestHandler } from "@better-auth/mcp"; // [!code highlight]
@@ -367,4 +367,15 @@ const handler = createMcpProtectedRequestHandler( // [!code highlight]
 )
 ```
 
-`createMcpProtectedRequestHandler` 会为未经身份验证的请求返回相同的 RFC 9728 `WWW-Authenticate` 响应。在其选项中设置 `requiredScopes` 可要求指定的 scope；缺少其中任意 scope 的令牌会收到与 `requireMcpAuth` 相同的 `403` `insufficient_scope` challenge。在同一个选项对象中设置 `challengeScopes`，可在未经身份验证的 challenge 中公布 scope 提示。
+`createMcpProtectedRequestHandler` 会为未经身份验证的请求返回相同的 RFC 9728 `WWW-Authenticate` 响应。在其选项中设置 `requiredScopes` 可要求指定的 scope；缺少任意一个 scope 的令牌会收到与 `requireMcpAuth` 相同的 `403` `insufficient_scope` 质询。在同一个选项对象中设置 `challengeScopes`，可在未经身份验证的质询中公布 scope 提示。
+
+这两个辅助函数都会向跨源浏览器客户端公开 `WWW-Authenticate`。如果你的 CORS 层设置了 `Access-Control-Expose-Headers`，请参阅[资源服务器](/docs/plugins/oauth-provider/resource-server)，了解需要包含哪些请求头。
+
+<Callout type="warn">
+  为避免捕获到的 DPoP 证明被重复使用，处理器会记录其为绑定 DPoP 的令牌接受过的每个证明。与 `requireMcpAuth` 不同，`createMcpProtectedRequestHandler` 默认将该记录保存在内存中。此默认方式只适用于单个长期运行的实例。其他实例看不到此记录，进程重启也会清除记录。攻击者捕获证明后，可在证明过期前将其重放到其他实例。
+
+  如果处理器运行在多个实例上或 serverless 环境中，请通过 `dpop.replayStore` 传入共享存储：
+
+  * 如果处理器与 Better Auth 服务器运行在同一应用中，请使用 `createDpopReplayStore(await auth.$context)`，如[保护你的 API](/docs/plugins/oauth-provider/resource-server#verify-access-tokens)所示。它会将证明记录在二级存储或数据库中，具体取决于 auth 实例存储验证值的位置。
+  * 否则，请在所有实例都能访问的存储上实现 `DpopReplayStore`。其 `reserve` 方法必须通过一次原子操作将证明的 `key` 记录到至少 `expiresAt`，并在该键已存在时返回 `false`。如果 `reserve` 抛出错误，请求会失败。
+</Callout>

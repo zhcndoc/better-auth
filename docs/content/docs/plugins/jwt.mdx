@@ -146,6 +146,10 @@ await authClient.getSession({
 用于签名 JWT 的密钥 ID (`kid`) 包含在令牌头中。
 如果接收到的 JWT 带有不同的 `kid`，建议重新获取 JWKS。
 
+OAuth 提供者使用 JWT 插件签名令牌时，与 auth 服务器运行在同一进程中的验证器会直接读取密钥，而不会请求 `/jwks`，除非设置了 `jwks.remoteUrl`。这些验证器包括提供者的 introspection、revocation 和 end-session 端点、`oauthProviderResourceClient(auth)` 以及 `requireMcpAuth`。读取密钥时会跳过路由，因此 `/jwks` 上的钩子和速率限制不会生效。向 `oauthProviderResourceClient(auth)` 或 `requireMcpAuth` 显式传入 `jwksUrl` 后，则会改为通过 HTTP 获取密钥。
+
+只有客户端申请了 `resource` 且未启用 `disableJwtPlugin` 时，访问令牌才是 JWT。否则令牌是不透明令牌，没有可读取的签名密钥。请使用 `oauthProviderResourceClient` 或 `createMcpProtectedRequestHandler` 中的 `remoteVerify` 通过 introspection 验证不透明令牌；`requireMcpAuth` 只验证 JWT 访问令牌。
+
 ```json
   {
     "keys": [
@@ -585,3 +589,7 @@ jwt({
   }
 })
 ```
+
+验证器在同一进程中读取密钥时，`getJwks` 会通过 `ctx.request` 和 `ctx.headers` 收到正在验证的请求。这适用于 introspection、revocation、end-session 和 `requireMcpAuth`。`oauthProviderResourceClient(auth)` 不会将其请求传给 `getJwks`，因此此处的 `ctx` 只会在 `ctx.context` 中携带 auth 上下文。
+
+由于 `getJwks` 可能针对每个请求返回不同的密钥（例如按租户区分），这些验证器不会缓存其结果，而会在每次验证时调用它。如果读取开销较大，请在存储中自行缓存，并使用存储选择密钥时所依据的键来区分缓存项。
