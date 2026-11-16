@@ -3,6 +3,7 @@ version: 2
 updates:
   # github-actions
   - package-ecosystem: github-actions
+    open-pull-requests-limit: 0
     directory: "/"
     schedule:
       interval: weekly
@@ -20,6 +21,7 @@ updates:
 
   # npm: root pnpm workspace
   - package-ecosystem: npm
+    open-pull-requests-limit: 0
     directory: "/"
     schedule:
       interval: weekly
